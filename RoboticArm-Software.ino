@@ -4,16 +4,9 @@
 
 
 void setup()
-{ delay(1000);
+{ 
   Serial.begin(9600);
-  DynamixelInit(&wristRight, MX, 1, 7, 1000000);
-  DynamixelInit(&wristLeft, MX, 2, 7, 1000000);
-  DynamixelInit(&elbowLeft, MX, 3, 7, 1000000);
-  DynamixelInit(&elbowRight, MX, 4, 7, 1000000);
-  DynamixelInit(&shoulder, MX, 5, 7, 1000000);
-  DynamixelInit(&dynaAll, MX, 0xFE, 7, 1000000);
-  
-  DynamixelSetMode(dynaAll, Wheel);
+  armInit();
 }
 
 void loop()

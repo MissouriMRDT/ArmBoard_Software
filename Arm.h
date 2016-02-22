@@ -1,15 +1,10 @@
 #include "RoveBoard.h"
 #include "RoveDynamixel.h"
 
-extern Dynamixel shoulder, elbowLeft, elbowRight, wristLeft, wristRight, dynaAll;
-
+void armInit();
 void turnJ1(int speed);
-
 void turnJ3(int speed);
-
 void turnJ4(int speed);
-
 void turnJ5(int speed);
-
 void turnJ6(int speed);
 

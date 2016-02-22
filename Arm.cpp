@@ -2,6 +2,17 @@
 
 Dynamixel shoulder, elbowLeft, elbowRight, wristLeft, wristRight, dynaAll;
 
+void armInit() {
+  DynamixelInit(&wristRight, MX, 1, 7, 1000000);
+  DynamixelInit(&wristLeft, MX, 2, 7, 1000000);
+  DynamixelInit(&elbowLeft, MX, 3, 7, 1000000);
+  DynamixelInit(&elbowRight, MX, 4, 7, 1000000);
+  DynamixelInit(&shoulder, MX, 5, 7, 1000000);
+  DynamixelInit(&dynaAll, MX, 0xFE, 7, 1000000);
+  
+  DynamixelSetMode(dynaAll, Wheel);
+}
+
 void turnJ1(int speed) {
   uint16_t dynaSpeed = ((speed < 0) ? -1 : 1) / 1000 * 1023;
   if (speed < 0)
