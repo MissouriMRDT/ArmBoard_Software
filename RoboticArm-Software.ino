@@ -1,4 +1,5 @@
 
+#include "RoveBoard.h"
 #include "RoveDynamixel.h"
 
 
