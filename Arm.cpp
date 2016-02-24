@@ -43,12 +43,12 @@
 Dynamixel shoulder, elbowLeft, elbowRight, wristLeft, wristRight, dynaAll;
 
 void armInit() {
-  DynamixelInit(&wristRight, MX, 1, 7, 1000000);
-  DynamixelInit(&wristLeft, MX, 2, 7, 1000000);
-  DynamixelInit(&elbowLeft, MX, 3, 7, 1000000);
-  DynamixelInit(&elbowRight, MX, 4, 7, 1000000);
-  DynamixelInit(&shoulder, MX, 5, 7, 1000000);
-  DynamixelInit(&dynaAll, MX, 0xFE, 7, 1000000);
+  DynamixelInit(&wristRight, MX, 1, DYNAMIXEL_SERIAL, 1000000);
+  DynamixelInit(&wristLeft, MX, 2, DYNAMIXEL_SERIAL, 1000000);
+  DynamixelInit(&elbowLeft, MX, 3, DYNAMIXEL_SERIAL, 1000000);
+  DynamixelInit(&elbowRight, MX, 4, DYNAMIXEL_SERIAL, 1000000);
+  DynamixelInit(&shoulder, MX, 5, DYNAMIXEL_SERIAL, 1000000);
+  DynamixelInit(&dynaAll, MX, 0xFE, DYNAMIXEL_SERIAL, 1000000);
   
   DynamixelSetMode(dynaAll, Wheel);
 }
@@ -76,7 +76,7 @@ void turnJ4(int speed) {
   if (speed < 0)
     dynaSpeed = dynaSpeed | 1024;
   dynaSpeed = speed;
-  Serial.println(DynamixelSpinWheel(elbowLeft, 1023, dynaSpeed));
+  DynamixelSpinWheel(elbowLeft, 1023, dynaSpeed);
   DynamixelSpinWheel(elbowRight, 1023, dynaSpeed ^ 1024);
 }
 
