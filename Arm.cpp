@@ -1,5 +1,6 @@
 #include "Arm.h"
 #include <stdlib.h>
+#include <Servo.h>
 
 #define J2_PWM PK_5 //RC1_TO_J2
 
@@ -42,8 +43,16 @@
 #define XBEE_RESET  PD_2 //XB_RESET
 
 Dynamixel shoulder, elbowLeft, elbowRight, wristLeft, wristRight, dynaAll;
+Servo J2;
 
 void armInit() {
+  pinMode(POWER_MAIN_12V, OUTPUT);
+  pinMode(POWER_WRIST, OUTPUT);
+  pinMode(POWER_ELBOW, OUTPUT);
+  pinMode(POWER_J1, OUTPUT);
+  
+  AllPowerOff();
+  
   DynamixelInit(&wristRight, MX, 1, DYNAMIXEL_SERIAL, 1000000);
   DynamixelInit(&wristLeft, MX, 2, DYNAMIXEL_SERIAL, 1000000);
   DynamixelInit(&elbowLeft, MX, 3, DYNAMIXEL_SERIAL, 1000000);
@@ -51,7 +60,44 @@ void armInit() {
   DynamixelInit(&shoulder, MX, 5, DYNAMIXEL_SERIAL, 1000000);
   DynamixelInit(&dynaAll, MX, 0xFE, DYNAMIXEL_SERIAL, 1000000);
   
-  DynamixelSetMode(dynaAll, Wheel);
+  //J2.attach(J2_PWM, 1000, 2000);
+  
+  //DynamixelSetMode(dynaAll, Wheel);
+}
+
+void AllPowerON() {
+  digitalWrite(POWER_MAIN_12V, HIGH);
+  digitalWrite(POWER_WRIST, HIGH);
+  digitalWrite(POWER_ELBOW, HIGH);
+  digitalWrite(POWER_J1, HIGH);
+}
+
+void AllPowerOff() {
+  digitalWrite(POWER_MAIN_12V, LOW);
+  digitalWrite(POWER_WRIST, LOW);
+  digitalWrite(POWER_ELBOW, LOW);
+  digitalWrite(POWER_J1, LOW);
+}
+
+void J1PowerOn() {
+  digitalWrite(POWER_J1, HIGH);
+}
+
+void WristPowerOn() {
+  digitalWrite(POWER_WRIST, HIGH);
+}
+
+void ElbowPowerOn() {
+  digitalWrite(POWER_ELBOW, HIGH);
+}
+
+void MainPowerOn() {
+  digitalWrite(POWER_MAIN_12V, HIGH);
+}
+
+void stopAllMotors() {
+  J2.write(90);
+  DynamixelSpinWheel(dynaAll, 1023, 0);
 }
 
 void turnJ1(int speed) {
@@ -62,16 +108,11 @@ void turnJ1(int speed) {
   DynamixelSpinWheel(shoulder, 1023, dynaSpeed);
 }
 
-void turnJ3(int speed) {
-  uint16_t dynaSpeed = abs(speed) / 1000.0 * 1023;
-  if (speed < 0)
-    dynaSpeed = dynaSpeed | 1024;
-  
-  DynamixelSpinWheel(elbowLeft, 1023, dynaSpeed);
-  DynamixelSpinWheel(elbowRight, 1023, dynaSpeed);
+void turnJ2(int speed) {
+  J2.write(map(speed, -1000, 1000, 0, 180));
 }
 
-void turnJ4(int speed) {
+void turnJ3(int16_t speed) {
   uint16_t dynaSpeed = abs(speed) / 1000.0 * 1023;
   if (speed < 0)
     dynaSpeed = dynaSpeed | 1024;
@@ -80,21 +121,30 @@ void turnJ4(int speed) {
   DynamixelSpinWheel(elbowRight, 1023, dynaSpeed ^ 1024);
 }
 
-void turnJ5(int speed) {
+void turnJ4(int speed) {
   uint16_t dynaSpeed = abs(speed) / 1000.0 * 1023;
-  if (speed < 0)
+  if (speed > 0)
     dynaSpeed = dynaSpeed | 1024;
   
-  DynamixelSpinWheel(wristLeft, 1023, dynaSpeed);
-  DynamixelSpinWheel(wristRight, 1023, dynaSpeed);
+  DynamixelSpinWheel(elbowLeft, 1023, dynaSpeed);
+  DynamixelSpinWheel(elbowRight, 1023, dynaSpeed);
 }
 
-void turnJ6(int speed) {
+void turnJ5(int speed) {
   uint16_t dynaSpeed = abs(speed) / 1000.0 * 1023;
   if (speed < 0)
     dynaSpeed = dynaSpeed | 1024;
    
   DynamixelSpinWheel(wristLeft, 1023, dynaSpeed);
   DynamixelSpinWheel(wristRight, 1023, dynaSpeed ^ 1024);
+}
+
+void turnJ6(int speed) {
+  uint16_t dynaSpeed = abs(speed) / 1000.0 * 1023;
+  if (speed > 0)
+    dynaSpeed = dynaSpeed | 1024;
+  
+  DynamixelSpinWheel(wristLeft, 1023, dynaSpeed);
+  DynamixelSpinWheel(wristRight, 1023, dynaSpeed);
 }
 

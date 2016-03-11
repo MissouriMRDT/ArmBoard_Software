@@ -2,9 +2,19 @@
 #include "RoveDynamixel.h"
 
 void armInit();
-void turnJ1(int speed);
-void turnJ3(int speed);
-void turnJ4(int speed);
-void turnJ5(int speed);
-void turnJ6(int speed);
+
+void AllPowerON();
+void AllPowerOff();
+void J1PowerOn();
+void WristPowerOn();
+void ElbowPowerOn();
+void MainPowerOn();
+
+void stopAllMotors();
+void turnJ1(int16_t speed);
+void turnJ2(int16_t speed);
+void turnJ3(int16_t speed);
+void turnJ4(int16_t speed);
+void turnJ5(int16_t speed);
+void turnJ6(int16_t speed);
 
