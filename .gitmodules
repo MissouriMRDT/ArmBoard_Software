@@ -1,3 +1,6 @@
 [submodule "libraries/RoveBoard"]
 	path = libraries/RoveBoard
 	url = https://github.com/MST-MRDT/RoveBoard-Energia.git
+[submodule "libraries/RoveWare"]
+	path = libraries/RoveWare
+	url = https://github.com/MST-MRDT/RoveWare.git

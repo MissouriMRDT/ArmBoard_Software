@@ -97,7 +97,7 @@ void MainPowerOn() {
 
 void stopAllMotors() {
   J2.write(90);
-  DynamixelSpinWheel(dynaAll, 1023, 0);
+  DynamixelSpinWheel(dynaAll, 0);
 }
 
 void turnJ1(int16_t speed) {
@@ -105,7 +105,7 @@ void turnJ1(int16_t speed) {
   if (speed < 0)
     dynaSpeed = dynaSpeed | 1024;
   
-  DynamixelSpinWheel(shoulder, 1023, dynaSpeed);
+  DynamixelSpinWheel(shoulder, dynaSpeed);
 }
 
 void turnJ2(int16_t speed) {
@@ -117,8 +117,8 @@ void turnJ3(int16_t speed) {
   if (speed < 0)
     dynaSpeed = dynaSpeed | 1024;
   
-  DynamixelSpinWheel(elbowLeft, 1023, dynaSpeed);
-  DynamixelSpinWheel(elbowRight, 1023, dynaSpeed ^ 1024);
+  DynamixelSpinWheel(elbowLeft, dynaSpeed);
+  DynamixelSpinWheel(elbowRight, dynaSpeed ^ 1024);
 }
 
 void turnJ4(int16_t speed) {
@@ -126,8 +126,8 @@ void turnJ4(int16_t speed) {
   if (speed > 0)
     dynaSpeed = dynaSpeed | 1024;
   
-  DynamixelSpinWheel(elbowLeft, 1023, dynaSpeed);
-  DynamixelSpinWheel(elbowRight, 1023, dynaSpeed);
+  DynamixelSpinWheel(elbowLeft, dynaSpeed);
+  DynamixelSpinWheel(elbowRight, dynaSpeed);
 }
 
 void turnJ5(int16_t speed) {
@@ -135,8 +135,8 @@ void turnJ5(int16_t speed) {
   if (speed < 0)
     dynaSpeed = dynaSpeed | 1024;
    
-  DynamixelSpinWheel(wristLeft, 1023, dynaSpeed);
-  DynamixelSpinWheel(wristRight, 1023, dynaSpeed ^ 1024);
+  DynamixelSpinWheel(wristLeft, dynaSpeed);
+  DynamixelSpinWheel(wristRight, dynaSpeed ^ 1024);
 }
 
 void turnJ6(int16_t speed) {
@@ -144,7 +144,7 @@ void turnJ6(int16_t speed) {
   if (speed > 0)
     dynaSpeed = dynaSpeed | 1024;
   
-  DynamixelSpinWheel(wristLeft, 1023, dynaSpeed);
-  DynamixelSpinWheel(wristRight, 1023, dynaSpeed);
+  DynamixelSpinWheel(wristLeft, dynaSpeed);
+  DynamixelSpinWheel(wristRight, dynaSpeed);
 }
 
