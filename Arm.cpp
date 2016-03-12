@@ -100,7 +100,7 @@ void stopAllMotors() {
   DynamixelSpinWheel(dynaAll, 1023, 0);
 }
 
-void turnJ1(int speed) {
+void turnJ1(int16_t speed) {
   uint16_t dynaSpeed = abs(speed) / 1000.0 * 1023;
   if (speed < 0)
     dynaSpeed = dynaSpeed | 1024;
@@ -108,7 +108,7 @@ void turnJ1(int speed) {
   DynamixelSpinWheel(shoulder, 1023, dynaSpeed);
 }
 
-void turnJ2(int speed) {
+void turnJ2(int16_t speed) {
   J2.write(map(speed, -1000, 1000, 0, 180));
 }
 
@@ -121,7 +121,7 @@ void turnJ3(int16_t speed) {
   DynamixelSpinWheel(elbowRight, 1023, dynaSpeed ^ 1024);
 }
 
-void turnJ4(int speed) {
+void turnJ4(int16_t speed) {
   uint16_t dynaSpeed = abs(speed) / 1000.0 * 1023;
   if (speed > 0)
     dynaSpeed = dynaSpeed | 1024;
@@ -130,7 +130,7 @@ void turnJ4(int speed) {
   DynamixelSpinWheel(elbowRight, 1023, dynaSpeed);
 }
 
-void turnJ5(int speed) {
+void turnJ5(int16_t speed) {
   uint16_t dynaSpeed = abs(speed) / 1000.0 * 1023;
   if (speed < 0)
     dynaSpeed = dynaSpeed | 1024;
@@ -139,7 +139,7 @@ void turnJ5(int speed) {
   DynamixelSpinWheel(wristRight, 1023, dynaSpeed ^ 1024);
 }
 
-void turnJ6(int speed) {
+void turnJ6(int16_t speed) {
   uint16_t dynaSpeed = abs(speed) / 1000.0 * 1023;
   if (speed > 0)
     dynaSpeed = dynaSpeed | 1024;

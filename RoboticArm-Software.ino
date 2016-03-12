@@ -49,7 +49,7 @@ void loop()
   if (dataID != 0) {
     switch(dataID) {
       case TURN_J1_ID:
-        turnJ1(*(int16_t*)(&data));
+        turnJ1(*(int16_t*)(data));
         break;
       case TURN_J2_ID:
         //turnJ2(*(int16_t*)(data));
