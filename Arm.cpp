@@ -42,8 +42,37 @@
 #define XBEE_CTS    PE_5 //XB_CTS
 #define XBEE_RESET  PD_2 //XB_RESET
 
+#define ENCODER_RESOLUTION 4096
+
+typedef enum {
+  J1 = 0,
+  J2 = 1, 
+  J3 = 2,
+  J4 = 3,
+  J5 = 4,
+  J6 = 5
+} JointNum;
+
 Dynamixel shoulder, elbowLeft, elbowRight, wristLeft, wristRight, dynaAll;
-Servo J2;
+Servo J2Motor;
+
+const uint16_t encoderZeroPos[6] = {0, 0, 0, 0, 0, 0};
+const int encoderPins[6] = {
+  ENCODER_J1,
+  ENCODER_J2,
+  ENCODER_J3,
+  ENCODER_J4,
+  ENCODER_J5,
+  ENCODER_J6,
+}
+
+uint16_t presentPosition[6];
+uint16_t goalPosition[6];
+int16_t relativePosition[6];
+
+int mod(int x, int a) {
+  return ((x % a) + a) % a;
+}
 
 void armInit() {
   pinMode(POWER_MAIN_12V, OUTPUT);
@@ -51,7 +80,16 @@ void armInit() {
   pinMode(POWER_ELBOW, OUTPUT);
   pinMode(POWER_J1, OUTPUT);
   
+  pinMode(ENCODER_J1, INPUT);
+  pinMode(ENCODER_J2, INPUT);
+  pinMode(ENCODER_J3, INPUT);
+  pinMode(ENCODER_J4, INPUT);
+  pinMode(ENCODER_J5, INPUT);
+  pinMode(ENCODER_J6, INPUT);
+
   AllPowerOff();
+
+  getEncoderValues();
   
   DynamixelInit(&wristRight, MX, 1, DYNAMIXEL_SERIAL, 1000000);
   DynamixelInit(&wristLeft, MX, 2, DYNAMIXEL_SERIAL, 1000000);
@@ -60,7 +98,7 @@ void armInit() {
   DynamixelInit(&shoulder, MX, 5, DYNAMIXEL_SERIAL, 1000000);
   DynamixelInit(&dynaAll, MX, 0xFE, DYNAMIXEL_SERIAL, 1000000);
   
-  //J2.attach(J2_PWM, 1000, 2000);
+  //J2Motor.attach(J2_PWM, 1000, 2000);
   
   //DynamixelSetMode(dynaAll, Wheel);
 }
@@ -95,8 +133,15 @@ void MainPowerOn() {
   digitalWrite(POWER_MAIN_12V, HIGH);
 }
 
+void getEncoderValues() {
+  for (int i = J1; i <= J6; ++i)
+  {
+    presentPosition[i] = mod(pulseIn(encoderPins[i], HIGH) - encoderZeroPos[i], ENCODER_RESOLUTION);
+  }
+}
+
 void stopAllMotors() {
-  J2.write(90);
+  J2Motor.write(90);
   DynamixelSpinWheel(dynaAll, 0);
 }
 
@@ -109,7 +154,7 @@ void turnJ1(int16_t speed) {
 }
 
 void turnJ2(int16_t speed) {
-  J2.write(map(speed, -1000, 1000, 0, 180));
+  J2Motor.write(map(speed, -1000, 1000, 0, 180));
 }
 
 void turnJ3(int16_t speed) {

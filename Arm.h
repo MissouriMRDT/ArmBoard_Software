@@ -10,6 +10,8 @@ void WristPowerOn();
 void ElbowPowerOn();
 void MainPowerOn();
 
+void getEncoderValues();
+
 void stopAllMotors();
 void turnJ1(int16_t speed);
 void turnJ2(int16_t speed);
