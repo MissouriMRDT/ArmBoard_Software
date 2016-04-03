@@ -42,7 +42,7 @@
 #define XBEE_CTS    PE_5 //XB_CTS
 #define XBEE_RESET  PD_2 //XB_RESET
 
-#define ENCODER_RESOLUTION 4096
+#define DYNAMIXEL_BAUD 1000000
 
 typedef enum {
   J1 = 0,
@@ -56,7 +56,7 @@ typedef enum {
 Dynamixel shoulder, elbowLeft, elbowRight, wristLeft, wristRight, dynaAll;
 Servo J2Motor;
 
-const uint16_t encoderZeroPos[6] = {0, 0, 0, 0, 0, 0};
+const uint16_t encoderZeroPos[6] = {0, 0, 0, 0, 2774, 1923};
 const int encoderPins[6] = {
   ENCODER_J1,
   ENCODER_J2,
@@ -64,8 +64,9 @@ const int encoderPins[6] = {
   ENCODER_J4,
   ENCODER_J5,
   ENCODER_J6,
-}
+};
 
+bool closedLoopMove = false;
 uint16_t presentPosition[6];
 uint16_t goalPosition[6];
 int16_t relativePosition[6];
@@ -91,12 +92,12 @@ void armInit() {
 
   getEncoderValues();
   
-  DynamixelInit(&wristRight, MX, 1, DYNAMIXEL_SERIAL, 1000000);
-  DynamixelInit(&wristLeft, MX, 2, DYNAMIXEL_SERIAL, 1000000);
-  DynamixelInit(&elbowLeft, MX, 3, DYNAMIXEL_SERIAL, 1000000);
-  DynamixelInit(&elbowRight, MX, 4, DYNAMIXEL_SERIAL, 1000000);
-  DynamixelInit(&shoulder, MX, 5, DYNAMIXEL_SERIAL, 1000000);
-  DynamixelInit(&dynaAll, MX, 0xFE, DYNAMIXEL_SERIAL, 1000000);
+  DynamixelInit(&wristRight, MX, 1, DYNAMIXEL_SERIAL, DYNAMIXEL_BAUD);
+  DynamixelInit(&wristLeft, MX, 2, DYNAMIXEL_SERIAL, DYNAMIXEL_BAUD);
+  DynamixelInit(&elbowLeft, MX, 3, DYNAMIXEL_SERIAL, DYNAMIXEL_BAUD);
+  DynamixelInit(&elbowRight, MX, 4, DYNAMIXEL_SERIAL, DYNAMIXEL_BAUD);
+  DynamixelInit(&shoulder, MX, 5, DYNAMIXEL_SERIAL, DYNAMIXEL_BAUD);
+  DynamixelInit(&dynaAll, MX, 0xFE, DYNAMIXEL_SERIAL, DYNAMIXEL_BAUD);
   
   //J2Motor.attach(J2_PWM, 1000, 2000);
   
@@ -136,7 +137,7 @@ void MainPowerOn() {
 void getEncoderValues() {
   for (int i = J1; i <= J6; ++i)
   {
-    presentPosition[i] = mod(pulseIn(encoderPins[i], HIGH) - encoderZeroPos[i], ENCODER_RESOLUTION);
+    presentPosition[i] = mod(pulseIn(encoderPins[i], HIGH, 5000) - encoderZeroPos[i] - 2048, 4096);
   }
 }
 
@@ -193,3 +194,100 @@ void turnJ6(int16_t speed) {
   DynamixelSpinWheel(wristRight, dynaSpeed);
 }
 
+void moveToAngle(int16_t * dest) {
+  stopAllMotors();
+  getEncoderValues();
+
+  for (int i = J1; i <= J6; ++i)
+  {
+    goalPosition[i] = mod(map(dest[i], -180, 180, 0, 4096), 4096);
+  }
+
+  goalPosition[J2] = constrain(goalPosition[J2], 2048, 3072);
+  goalPosition[J3] = constrain(goalPosition[J3], 512, 3584);
+  goalPosition[J5] = constrain(goalPosition[J5], 512, 3584);
+  
+  int diff;
+  diff = goalPosition[J5] - presentPosition[J5];
+  relativePosition[J5] = mod(diff + 2048, 4096) - 2048;
+
+  diff = goalPosition[J6] - presentPosition[J6];
+  relativePosition[J6] = mod(diff + 2048, 4096) - 2048;
+
+  int leftWristMovement, rightWristMovement;
+  uint16_t rightWristSpeed, leftWristSpeed;
+  double speedRatio;
+
+  uint16_t speedScale = 256;
+
+  leftWristMovement = relativePosition[J6] + relativePosition[J5];
+  rightWristMovement = relativePosition[J6] - relativePosition[J5];
+
+  speedRatio = (double)(min(abs(leftWristMovement), abs(rightWristMovement))) / max(abs(leftWristMovement), abs(rightWristMovement));
+
+  /*
+  Serial.println("Position Info:");
+  Serial.print(presentPosition[J5]);
+  Serial.print("\t");
+  Serial.println(presentPosition[J6]);
+  Serial.print(goalPosition[J5]);
+  Serial.print("\t");
+  Serial.println(goalPosition[J6]);
+  Serial.print(relativePosition[J5]);
+  Serial.print("\t");
+  Serial.println(relativePosition[J6]);
+  Serial.println();
+  */
+
+  if(abs(leftWristMovement) > abs(rightWristMovement)) {
+    leftWristSpeed = speedScale;
+    rightWristSpeed = speedScale * speedRatio;
+  } else  {
+    leftWristSpeed = speedScale * speedRatio;
+    rightWristSpeed = speedScale;
+  }
+
+  leftWristSpeed |= (leftWristMovement > 0) ? 1024 : 0;
+  rightWristSpeed |= (rightWristMovement > 0) ? 1024 : 0;
+
+  /*
+  Serial.println("Dynamixel Info:");
+  Serial.print(leftWristMovement);
+  Serial.print("\t");
+  Serial.println(rightWristMovement);
+  Serial.print(leftWristSpeed);
+  Serial.print("\t");
+  Serial.println(rightWristSpeed);
+  Serial.println(speedRatio);
+  Serial.println();
+  */
+
+  uint8_t leftError, rightError;
+
+  leftError = DynamixelSpinWheel(wristLeft, leftWristSpeed);
+  rightError = DynamixelSpinWheel(wristRight, rightWristSpeed);
+  
+  Serial.println("2");
+  
+  closedLoopMove = true;
+  
+  while (leftError != DYNAMIXEL_ERROR_SUCCESS && rightError != DYNAMIXEL_ERROR_SUCCESS) {
+    Serial.println(leftError);
+    Serial.println(rightError); 
+    leftError = DynamixelSpinWheel(wristLeft, 0);
+    rightError = DynamixelSpinWheel(wristRight, 0);
+    closedLoopMove = false;
+  }
+}
+
+
+void checkPosition() {
+  if (closedLoopMove == true) {
+    if (presentPosition[J5] < (goalPosition[J5] + 100) && presentPosition[J5] > (goalPosition[J5] - 100))
+      if (presentPosition[J6] < (goalPosition[J6] + 100) && presentPosition[J6] > (goalPosition[J6] - 100))
+      {
+        stopAllMotors();
+        closedLoopMove = false;
+      }
+  }
+}

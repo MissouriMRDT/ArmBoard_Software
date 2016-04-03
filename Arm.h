@@ -20,3 +20,5 @@ void turnJ4(int16_t speed);
 void turnJ5(int16_t speed);
 void turnJ6(int16_t speed);
 
+void moveToAngle(int16_t * relativeAngle);
+void checkPosition();

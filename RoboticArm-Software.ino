@@ -21,13 +21,17 @@
 
 #define ARM_STOP 206
 
+#define ANGLE_MOVEMENT 784
+
 #define ARM_POWER_ON    240
 #define ARM_POWER_OFF   241
 
 uint16_t dataID = 0;
 size_t size = 0;
-char data[8];
+char data[256];
 int counter;
+
+extern uint16_t presentPosition[6];
 
 void setup()
 { 
@@ -44,30 +48,42 @@ void setup()
 
 void loop()
 { 
+  getEncoderValues();
   roveComm_GetMsg(&dataID, &size, data);
   
   if (dataID != 0) {
     switch(dataID) {
       case TURN_J1_ID:
+        Serial.println("J1");
         turnJ1(*(int16_t*)(data));
         break;
       case TURN_J2_ID:
+        Serial.println("J2");
         //turnJ2(*(int16_t*)(data));
         break;
       case TURN_J3_ID:
+        Serial.println("J3");
         turnJ3(*(int16_t*)(data));
         break;
       case TURN_J4_ID:
+        Serial.println("J4");
         turnJ4(*(int16_t*)(data));
         break;
       case TURN_J5_ID:
+        Serial.println("J5");
         turnJ5(*(int16_t*)(data));
         break;
       case TURN_J6_ID:
+        Serial.println("J6");
         turnJ6(*(int16_t*)(data));
         break;
       case ARM_STOP:
         stopAllMotors();
+        break;
+      case ANGLE_MOVEMENT:
+        int16_t temp[6];
+        memcpy(&(temp[4]), data, 2*sizeof(int16_t));
+        moveToAngle(temp);
         break;
       case ARM_POWER_ON:
         AllPowerON();
@@ -86,8 +102,9 @@ void loop()
     delay(5);
   }
   if (counter > 25) {
-    stopAllMotors();
+    //stopAllMotors();
     counter = 0;
   }
-  delay(1);
+  checkPosition();
+  //delay(500);
 }
