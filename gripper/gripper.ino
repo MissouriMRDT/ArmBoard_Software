@@ -19,8 +19,12 @@
 #define CS PE_3
 #define PWM PD_7
 
-
-
+// Current sensing constants
+#define K_FACTOR 770.0
+#define SENSE_RESISTOR 223.0
+#define MAX_RESOLUTION 4096.0
+#define MAX_VOLTAGE 3.3
+#define CURRENT_SENSE_SCALE ((MAX_VOLTAGE*K_FACTOR/MAX_RESOLUTION)/SENSE_RESISTOR)
 
 #define CLOCKWISE 0
 #define COUNTER_CLOCKWISE 1
@@ -35,6 +39,7 @@ int presentDirection = CLOCKWISE;
 
 void setup() {
   Serial.begin(9600);
+
   pinMode(EN_A, INPUT); 
   pinMode(EN_B, INPUT); 
   pinMode(IN_A, OUTPUT); 
@@ -43,17 +48,19 @@ void setup() {
   pinMode(CS_DIS, OUTPUT); 
   pinMode(PWM, OUTPUT); 
   
-  //disable motors and current sense at start
+  //disable motors and enable current sense at start
   digitalWrite(IN_A,0);
   digitalWrite(IN_B,0);
-  digitalWrite(CS_DIS,1);//CS enabled when CS_DIS=0
+  digitalWrite(CS_DIS,0);//CS enabled when CS_DIS=0
   
-  delay(2000);
-
-
-  //rotateMotor(CW, 25);
   
-  //dd(400);
+  
+  
+  delay(1000);
+  
+  
+  
+  
   
 
 
@@ -65,54 +72,22 @@ void setup() {
 
 
 void loop() {
- serialControl();
+  rotateMotor(CW, 50);
+  dd(2000);
+  
+  rotateMotor(CW, 25);
+  dd(2000);
 
 }
 
-int serialDir=CW,serialSpeed=20,serialTime=250;
-void serialControl(){
-  if(Serial.available()>0){
-    String serialValue = Serial.readString();
-    Serial.print("Val: ");
-    Serial.println(serialValue);
-    
-    if(serialValue == "cw"){
-      serialDir = CW;
-    }
-    if(serialValue == "ccw"){
-      serialDir = CCW;
-    }
-    if(serialValue == "speed"){
-      while(Serial.available()<1){
-        delay(10);
-      }
-      serialSpeed = Serial.parseInt();
-      Serial.println(serialSpeed);
-    }
-    if(serialValue == "time"){
-      while(Serial.available()<1){
-        delay(10);
-      }
-      serialTime = Serial.parseInt();
-      Serial.println(serialTime);
-    }
-    
-    if(serialValue == "go"){
-      rotateMotor(serialDir,serialSpeed);
-      dd(serialTime);
-      stopRotation();
-    }
-  }
-}
 
 
-
-int MAX_CURRENT = 100000; //TODO
+float MAX_CURRENT = 5; //max Amps
 void dd(int ms){//"diagnostic delay" constantly checks for over current
 
   //DEBUG: bypasses diagnostic. remove this in the final version!
-  delay(ms);
-  return;
+  //delay(ms);
+  //return;
 
   int t = millis();
   while((t+ms)>millis()){
@@ -126,20 +101,26 @@ void dd(int ms){//"diagnostic delay" constantly checks for over current
       }
       
       stopRotation();      
-      delay(1000);      
+      delay(5000);      
       
     }
-    
-    if(readCurrent()>MAX_CURRENT){
+    else if(readCurrent()>MAX_CURRENT){
+      Serial.println("Warning...");
       delay(10);
       if(readCurrent()>MAX_CURRENT){
+        stopRotation();
+        Serial.println("OVERCURRENT!");
+        delay(5000);
         
       }
-      stopRotation();
+      
     }
+    Serial.print("Amps: ");
+    Serial.println(readCurrent());
+
     
     
-    delay(1);
+    //delay(1);
   }
 }
 
@@ -205,7 +186,7 @@ void stopRotation(){
 
 
 
-int currentTolerance = 10;//TODO: determine appropriate value. the highest value for analog read that will be viewed as overcurrent.
+int currentTolerance = 5; //the highest value for analog read that will be viewed as overcurrent.
 void rotateMotor(int dir, int spd){
   
   if(presentDirection!=dir){
@@ -227,7 +208,8 @@ void rotateMotor(int dir, int spd){
 
 
 
-int incrementAmount=5, delayAmount=50;
+int incrementAmount=5;
+int delayAmount=50;
 void rampPWM(int targetPWM){
   while(true){
     if(presentPWM>targetPWM){
@@ -255,17 +237,19 @@ void rampPWM(int targetPWM){
 
 
 
-
-
-int readCurrent(){
-  digitalWrite(CS_DIS,0);//enable
-  dd(2);
-  int tmp = analogRead(CS);//returns 0-1023
+//returns current in Amps.
+float readCurrent(){
+  float value = 0;//values to be added and averaged
+  int numValues = 40;//number of values to average
   
-  digitalWrite(CS_DIS,1);//disable
-  return tmp;
+  for(int i = 0; i < numValues; i++){
+    float cur = analogRead(CS);
+    value+=analogRead(CS)*CURRENT_SENSE_SCALE;
+    //delay(1);
+  }
+  value/=numValues;
+  return value;
 }
-
 
 
 
