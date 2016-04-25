@@ -11,25 +11,33 @@
 
 
 
-#define EN_A PC_4
-#define EN_B PC_5
-#define IN_A PE_5
-#define IN_B PC_6
-#define CS_DIS PD_3
-#define CS PE_3
-#define PWM PD_7
+#define EN_A 11
+#define EN_B 10
+#define IN_A 13
+#define IN_B 12
+//#define CS_DIS 4
+#define CS A5
+#define PWM 3
 
 // Current sensing constants
 #define K_FACTOR 770.0
 #define SENSE_RESISTOR 223.0
-#define MAX_RESOLUTION 4096.0
-#define MAX_VOLTAGE 3.3
+#define MAX_RESOLUTION 1023.0 //previously 4096
+#define MAX_VOLTAGE 3.3 //previously 3.3
 #define CURRENT_SENSE_SCALE ((MAX_VOLTAGE*K_FACTOR/MAX_RESOLUTION)/SENSE_RESISTOR)
 
 #define CLOCKWISE 0
 #define COUNTER_CLOCKWISE 1
 #define CW 0
 #define CCW 1
+
+
+
+
+
+#define CW_CHAR 'A'
+#define CCW_CHAR 'B'
+#define STOP_CHAR 'X'
 
 
 int presentPWM = 0;
@@ -45,24 +53,30 @@ void setup() {
   pinMode(IN_A, OUTPUT); 
   pinMode(IN_B, OUTPUT); 
   pinMode(CS, INPUT); 
-  pinMode(CS_DIS, OUTPUT); 
+  //pinMode(CS_DIS, OUTPUT); 
   pinMode(PWM, OUTPUT); 
   
   //disable motors and enable current sense at start
   digitalWrite(IN_A,0);
   digitalWrite(IN_B,0);
-  digitalWrite(CS_DIS,0);//CS enabled when CS_DIS=0
+  //digitalWrite(CS_DIS,0);//CS enabled when CS_DIS=0
   
   
   
   
   delay(1000);
-  
-  
-  
-  
-  
 
+  rotateMotor(CW,20);
+  delay(300);
+  rotateMotor(CCW,20);
+  delay(300);
+  stopRotation();
+  
+  
+  
+  
+  
+Serial.println("START");
 
 
 }
@@ -72,22 +86,49 @@ void setup() {
 
 
 void loop() {
-  rotateMotor(CW, 50);
-  dd(2000);
-  
-  rotateMotor(CW, 25);
-  dd(2000);
 
+  serialCheck();
+  //delay(10);
 }
 
+
+
+void serialCheck(){
+  //Serial.println("|");
+  
+  if(Serial.available() > 0){
+    char tmp = Serial.read();
+    Serial.println(tmp);
+
+    if(tmp == CW_CHAR){
+      while(Serial.available()==0);
+      byte spd = Serial.read();
+      Serial.println(spd);
+      rotateMotor(CW,spd*100/255);
+      Serial.println("DONE");
+    }
+    else if(tmp == CCW_CHAR){
+      while(Serial.available()==0);
+      byte spd = Serial.read();
+      Serial.println(spd);
+      rotateMotor(CCW,spd*100/255);
+      Serial.println("DONE");
+    }
+    else if(tmp == STOP_CHAR){
+      stopRotation();
+      
+    }
+
+  }
+}
 
 
 float MAX_CURRENT = 5; //max Amps
 void dd(int ms){//"diagnostic delay" constantly checks for over current
 
   //DEBUG: bypasses diagnostic. remove this in the final version!
-  //delay(ms);
-  //return;
+  delay(ms);
+  return;
 
   int t = millis();
   while((t+ms)>millis()){
@@ -209,7 +250,7 @@ void rotateMotor(int dir, int spd){
 
 
 int incrementAmount=5;
-int delayAmount=50;
+int delayAmount=10;
 void rampPWM(int targetPWM){
   while(true){
     if(presentPWM>targetPWM){
@@ -220,7 +261,7 @@ void rampPWM(int targetPWM){
     }
 
     
-    if(presentPWM < (targetPWM+incrementAmount/2) && presentPWM > (targetPWM-incrementAmount/2)){
+    if(presentPWM < (targetPWM+incrementAmount/2.) && presentPWM > (targetPWM-incrementAmount/2.)){
       presentPWM=targetPWM;
       setMotorSpeed(presentPWM);
       break;
