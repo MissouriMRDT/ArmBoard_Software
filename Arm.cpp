@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <Servo.h>
 
-#define J2_PWM PK_5 //RC1_TO_J2
+#define J2_PWM PM_0 //PK_5 //RC1_TO_J2
 
 #define J2_TTL_SERIAL     3 //RX/TX_J2_TTL
 #define J2_RS232_SERIAL   4 //RX/TX_J2_RS232
@@ -25,7 +25,7 @@
 #define POWER_MAIN_12V  PK_2 //SIG_MAIN
 
 #define CURRENT_SENSOR_MAIN_12V PK_3 //IMEAS_12V_MAIN
-#define CURRENT_SENSOR_EE       PA_6 //IMEAS_12V_EE
+#define CURRENT_SENSOR_ENDEFF   PA_6 //IMEAS_12V_EE
 
 #define XBEE_DIO0 PB_3 //XB_DIO0
 #define XBEE_DIO1 PB_2 //XB_DIO1
@@ -44,6 +44,9 @@
 
 #define DYNAMIXEL_BAUD 1000000
 
+#define ON 1
+#define OFF 0
+
 typedef enum {
   J1 = 0,
   J2 = 1, 
@@ -56,7 +59,7 @@ typedef enum {
 Dynamixel shoulder, elbowLeft, elbowRight, wristLeft, wristRight, dynaAll;
 Servo J2Motor;
 
-const uint16_t encoderZeroPos[6] = {0, 0, 0, 0, 2774, 1923};
+const uint16_t encoderZeroPos[6] = {0, 0, 3845, 1116, 2774, 1923};
 const int encoderPins[6] = {
   ENCODER_J1,
   ENCODER_J2,
@@ -80,6 +83,10 @@ void armInit() {
   pinMode(POWER_WRIST, OUTPUT);
   pinMode(POWER_ELBOW, OUTPUT);
   pinMode(POWER_J1, OUTPUT);
+  pinMode(POWER_J2, OUTPUT);
+  pinMode(POWER_ENDEFF, OUTPUT);
+  
+  pinMode(J2_PWM, OUTPUT);
   
   pinMode(ENCODER_J1, INPUT);
   pinMode(ENCODER_J2, INPUT);
@@ -87,21 +94,27 @@ void armInit() {
   pinMode(ENCODER_J4, INPUT);
   pinMode(ENCODER_J5, INPUT);
   pinMode(ENCODER_J6, INPUT);
+  
+  pinMode(CURRENT_SENSOR_MAIN_12V, INPUT);
+  pinMode(CURRENT_SENSOR_ENDEFF, INPUT);
 
   AllPowerOff();
 
   getEncoderValues();
-  
+  AllPowerON();
   DynamixelInit(&wristRight, MX, 1, DYNAMIXEL_SERIAL, DYNAMIXEL_BAUD);
   DynamixelInit(&wristLeft, MX, 2, DYNAMIXEL_SERIAL, DYNAMIXEL_BAUD);
-  DynamixelInit(&elbowLeft, MX, 3, DYNAMIXEL_SERIAL, DYNAMIXEL_BAUD);
-  DynamixelInit(&elbowRight, MX, 4, DYNAMIXEL_SERIAL, DYNAMIXEL_BAUD);
+  DynamixelInit(&elbowLeft, MX, 4, DYNAMIXEL_SERIAL, DYNAMIXEL_BAUD);
+  DynamixelInit(&elbowRight, MX, 3, DYNAMIXEL_SERIAL, DYNAMIXEL_BAUD);
   DynamixelInit(&shoulder, MX, 5, DYNAMIXEL_SERIAL, DYNAMIXEL_BAUD);
   DynamixelInit(&dynaAll, MX, 0xFE, DYNAMIXEL_SERIAL, DYNAMIXEL_BAUD);
   
-  //J2Motor.attach(J2_PWM, 1000, 2000);
-  
+  analogWrite(J2_PWM, 127);
+  DynamixelSetMaxTorque(elbowLeft, 1023);
+  DynamixelSetMaxTorque(elbowRight, 1023);
   //DynamixelSetMode(dynaAll, Wheel);
+  
+  AllPowerOff();
 }
 
 void AllPowerON() {
@@ -109,6 +122,8 @@ void AllPowerON() {
   digitalWrite(POWER_WRIST, HIGH);
   digitalWrite(POWER_ELBOW, HIGH);
   digitalWrite(POWER_J1, HIGH);
+  digitalWrite(POWER_J2, HIGH);
+  digitalWrite(POWER_ENDEFF, HIGH);
 }
 
 void AllPowerOff() {
@@ -116,22 +131,69 @@ void AllPowerOff() {
   digitalWrite(POWER_WRIST, LOW);
   digitalWrite(POWER_ELBOW, LOW);
   digitalWrite(POWER_J1, LOW);
+  digitalWrite(POWER_J2, LOW);
+  digitalWrite(POWER_ENDEFF, LOW);
 }
 
-void J1PowerOn() {
-  digitalWrite(POWER_J1, HIGH);
+
+void AllPower(uint8_t state){
+  if (state == ON) {
+    digitalWrite(POWER_MAIN_12V, HIGH);
+    digitalWrite(POWER_WRIST, HIGH);
+    digitalWrite(POWER_ELBOW, HIGH);
+    digitalWrite(POWER_J1, HIGH);
+    digitalWrite(POWER_J2, HIGH);
+    digitalWrite(POWER_ENDEFF, HIGH);
+  } else {
+    digitalWrite(POWER_MAIN_12V, LOW);
+    digitalWrite(POWER_WRIST, LOW);
+    digitalWrite(POWER_ELBOW, LOW);
+    digitalWrite(POWER_J1, LOW);
+    digitalWrite(POWER_J2, LOW);
+    digitalWrite(POWER_ENDEFF, LOW);
+  }
 }
 
-void WristPowerOn() {
-  digitalWrite(POWER_WRIST, HIGH);
+void J1Power(uint8_t state) {
+  if (state == ON)
+    digitalWrite(POWER_J1, HIGH);
+  else 
+    digitalWrite(POWER_J1, LOW);
 }
 
-void ElbowPowerOn() {
-  digitalWrite(POWER_ELBOW, HIGH);
+void J2Power(uint8_t state) {
+  if (state == ON)
+    digitalWrite(POWER_J2, HIGH);
+  else 
+    digitalWrite(POWER_J2, LOW);
 }
 
-void MainPowerOn() {
-  digitalWrite(POWER_MAIN_12V, HIGH);
+void WristPower(uint8_t state) {
+  if (state == ON)
+    digitalWrite(POWER_WRIST, HIGH);
+  else 
+    digitalWrite(POWER_WRIST, LOW);
+}
+
+void ElbowPower(uint8_t state) {
+  if (state == ON)
+    digitalWrite(POWER_ELBOW, HIGH);
+  else 
+    digitalWrite(POWER_ELBOW, LOW);
+}
+
+void MainPower(uint8_t state) {
+  if (state == ON)
+    digitalWrite(POWER_MAIN_12V, HIGH);
+  else 
+    digitalWrite(POWER_MAIN_12V, LOW);
+}
+
+void EndEffPower(uint8_t state) {
+  if (state == ON)
+    digitalWrite(POWER_ENDEFF, HIGH);
+  else 
+    digitalWrite(POWER_ENDEFF, LOW);
 }
 
 void getEncoderValues() {
@@ -142,20 +204,59 @@ void getEncoderValues() {
 }
 
 void stopAllMotors() {
-  J2Motor.write(90);
+  //J2Motor.write(90);
   DynamixelSpinWheel(dynaAll, 0);
 }
 
 void turnJ1(int16_t speed) {
-  uint16_t dynaSpeed = abs(speed) / 1000.0 * 1023;
-  if (speed < 0)
+  static int rampedSpeed = 0;
+  static bool spinCW;
+  uint16_t dynaSpeed;
+  
+  rampedSpeed += (speed == 0) ? -20 : 5;
+  rampedSpeed = constrain(rampedSpeed, 0, 200);
+  
+  if (rampedSpeed < 20) {
+    dynaSpeed = 0;
+  } else if (rampedSpeed < 100) {
+    dynaSpeed = 128;
+  } else if (rampedSpeed < 150) {
+    dynaSpeed = 256;
+  } else if (rampedSpeed < 200) {
+    dynaSpeed = 512;
+  }
+  
+  if (speed > 0)
+    spinCW = true;
+  else if (speed < 0)
+    spinCW = false;
+    
+  if (spinCW == true)
     dynaSpeed = dynaSpeed | 1024;
   
   DynamixelSpinWheel(shoulder, dynaSpeed);
 }
 
+unsigned int j2count = 0;
+int j2pwmval = 127;
+
 void turnJ2(int16_t speed) {
-  J2Motor.write(map(speed, -1000, 1000, 0, 180));
+  //J2Motor.write(map(speed, -1000, 1000, 0, 180));
+  if (speed == 0) {
+    j2count = 0;
+    return;
+  }  else 
+    j2count++;
+    
+  //if (j2count % 3 == 2)
+    if(speed > 0)
+      j2pwmval+=2;
+    else
+      j2pwmval-=2;
+  
+  j2pwmval = constrain(j2pwmval, 40, 240);
+  
+  analogWrite(J2_PWM, j2pwmval);//map(speed, -1000, 1000, 0, 255));
 }
 
 void turnJ3(int16_t speed) {
@@ -169,7 +270,7 @@ void turnJ3(int16_t speed) {
 
 void turnJ4(int16_t speed) {
   uint16_t dynaSpeed = abs(speed) / 1000.0 * 1023;
-  if (speed > 0)
+  if (speed < 0)
     dynaSpeed = dynaSpeed | 1024;
   
   DynamixelSpinWheel(elbowLeft, dynaSpeed);
@@ -187,7 +288,7 @@ void turnJ5(int16_t speed) {
 
 void turnJ6(int16_t speed) {
   uint16_t dynaSpeed = abs(speed) / 1000.0 * 1023;
-  if (speed > 0)
+  if (speed < 0)
     dynaSpeed = dynaSpeed | 1024;
   
   DynamixelSpinWheel(wristLeft, dynaSpeed);
@@ -197,6 +298,9 @@ void turnJ6(int16_t speed) {
 void moveToAngle(int16_t * dest) {
   stopAllMotors();
   getEncoderValues();
+
+  uint16_t speedScale = 256;
+  double speedRatio;
 
   for (int i = J1; i <= J6; ++i)
   {
@@ -210,15 +314,16 @@ void moveToAngle(int16_t * dest) {
   int diff;
   diff = goalPosition[J5] - presentPosition[J5];
   relativePosition[J5] = mod(diff + 2048, 4096) - 2048;
-
+  
+  if ((int)relativePosition[J5] + presentPosition[J5] < 512 || (int)relativePosition[J5] + presentPosition[J5] > 3584) {
+    relativePosition[J5] = mod(4096 + relativePosition[J5], 4096);
+  }
+  
   diff = goalPosition[J6] - presentPosition[J6];
   relativePosition[J6] = mod(diff + 2048, 4096) - 2048;
 
   int leftWristMovement, rightWristMovement;
   uint16_t rightWristSpeed, leftWristSpeed;
-  double speedRatio;
-
-  uint16_t speedScale = 256;
 
   leftWristMovement = relativePosition[J6] + relativePosition[J5];
   rightWristMovement = relativePosition[J6] - relativePosition[J5];
@@ -261,13 +366,13 @@ void moveToAngle(int16_t * dest) {
   Serial.println(speedRatio);
   Serial.println();
   */
-
+/*
   uint8_t leftError, rightError;
 
   leftError = DynamixelSpinWheel(wristLeft, leftWristSpeed);
   rightError = DynamixelSpinWheel(wristRight, rightWristSpeed);
   
-  Serial.println("2");
+  //Serial.println("2");
   
   closedLoopMove = true;
   
@@ -278,16 +383,121 @@ void moveToAngle(int16_t * dest) {
     rightError = DynamixelSpinWheel(wristRight, 0);
     closedLoopMove = false;
   }
+  */
+
+
+
+
+  diff = goalPosition[J3] - presentPosition[J3];
+  relativePosition[J3] = mod(diff + 2048, 4096) - 2048;
+  
+  if ((int)relativePosition[J3] + presentPosition[J3] < 512 || (int)relativePosition[J3] + presentPosition[J3] > 3584) {
+    relativePosition[J3] = mod(4096 + relativePosition[J3], 4096);
+  }
+  
+  diff = goalPosition[J4] - presentPosition[J4];
+  relativePosition[J4] = mod(diff + 2048, 4096) - 2048;
+
+  int leftElbowMovement, rightElbowMovement;
+  uint16_t rightElbowSpeed, leftElbowSpeed;
+
+  leftElbowMovement = relativePosition[J4] + relativePosition[J3];
+  rightElbowMovement = relativePosition[J4] - relativePosition[J3];
+
+  speedRatio = (double)(min(abs(leftElbowMovement), abs(rightElbowMovement))) / max(abs(leftElbowMovement), abs(rightElbowMovement));
+
+  
+  Serial.println("Position Info:");
+  Serial.print(presentPosition[J3]);
+  Serial.print("\t");
+  Serial.println(presentPosition[J4]);
+  Serial.print(goalPosition[J3]);
+  Serial.print("\t");
+  Serial.println(goalPosition[J4]);
+  Serial.print(relativePosition[J3]);
+  Serial.print("\t");
+  Serial.println(relativePosition[J4]);
+  Serial.println();
+  
+
+  if(abs(leftElbowMovement) > abs(rightElbowMovement)) {
+    leftElbowSpeed = speedScale;
+    rightElbowSpeed = speedScale * speedRatio;
+  } else  {
+    leftElbowSpeed = speedScale * speedRatio;
+    rightElbowSpeed = speedScale;
+  }
+
+  leftElbowSpeed |= (leftElbowMovement > 0) ? 1024 : 0;
+  rightElbowSpeed |= (rightElbowMovement > 0) ? 1024 : 0;
+
+  
+  Serial.println("Dynamixel Info:");
+  Serial.print(leftElbowMovement);
+  Serial.print("\t");
+  Serial.println(rightElbowMovement);
+  Serial.print(leftElbowSpeed);
+  Serial.print("\t");
+  Serial.println(rightElbowSpeed);
+  Serial.println(speedRatio);
+  Serial.println();
+  
+
+  uint8_t leftError, rightError;
+
+  leftError = DynamixelSpinWheel(elbowLeft, leftElbowSpeed);
+  rightError = DynamixelSpinWheel(elbowRight, rightElbowSpeed);
+  
+  //Serial.println("2");
+  
+  closedLoopMove = true;
+  /*
+  while (leftError != DYNAMIXEL_ERROR_SUCCESS && rightError != DYNAMIXEL_ERROR_SUCCESS) {
+    Serial.println(leftError);
+    Serial.println(rightError); 
+    leftError = DynamixelSpinWheel(elbowLeft, 0);
+    rightError = DynamixelSpinWheel(elbowRight, 0);
+    closedLoopMove = false;
+  }*/
 }
 
 
 void checkPosition() {
   if (closedLoopMove == true) {
-    if (presentPosition[J5] < (goalPosition[J5] + 100) && presentPosition[J5] > (goalPosition[J5] - 100))
-      if (presentPosition[J6] < (goalPosition[J6] + 100) && presentPosition[J6] > (goalPosition[J6] - 100))
+    if (presentPosition[J3] < (goalPosition[J3] + 100) && presentPosition[J3] > (goalPosition[J3] - 100))
+      if (presentPosition[J4] < (goalPosition[J4] + 100) && presentPosition[J4] > (goalPosition[J4] - 100))
       {
         stopAllMotors();
         closedLoopMove = false;
       }
   }
+}
+
+
+float getMainCurrent() {
+  return analogRead(CURRENT_SENSOR_MAIN_12V) * 20.0 / 4096.0;
+}
+
+float getEndEffCurrent() {
+  return analogRead(CURRENT_SENSOR_ENDEFF) * 20.0 / 4096.0;
+}
+
+int gripperPast = 0;
+
+void movegripper(int16_t speed) { //Serial.println(speed);
+  if (speed == 0) {
+    Serial5.write('X');
+    Serial.println('X');
+    gripperPast = 0;
+    return;
+  }
+  //if (millis() % 5 != 0) return;
+  
+  if (speed < gripperPast+10 && speed > gripperPast - 10) return;
+  
+  Serial5.write((speed > 0) ? 'A' : 'B');
+  Serial5.write((byte)map(abs(speed), 0, 1000, 0, 255));
+  Serial.println((speed > 0) ? 'A' : 'B');
+  Serial.println((byte)map(abs(speed), 0, 1000, 0, 255));
+  gripperPast = speed;
 }

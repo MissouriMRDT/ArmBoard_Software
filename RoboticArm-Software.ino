@@ -22,9 +22,18 @@
 #define ARM_STOP 206
 
 #define ANGLE_MOVEMENT 784
+#define GRIPPER_MOVEMENT 208
 
 #define ARM_POWER_ON    240
 #define ARM_POWER_OFF   241
+
+#define ARM_POWER_ALL     816
+#define ARM_POWER_MAIN    817
+#define ARM_POWER_J1      818
+#define ARM_POWER_J2      819
+#define ARM_POWER_ELBOW   820
+#define ARM_POWER_WRIST   821
+#define ARM_POWER_ENDEFF  822
 
 uint16_t dataID = 0;
 size_t size = 0;
@@ -37,6 +46,7 @@ void setup()
 { 
   roveComm_Begin(192,168,1,131);
   Serial.begin(9600);
+  Serial5.begin(9600);
   Ethernet.enableLinkLed();
   Ethernet.enableActivityLed();
   armInit();
@@ -48,42 +58,45 @@ void setup()
 
 void loop()
 { 
-  getEncoderValues();
+  //getEncoderValues();
   roveComm_GetMsg(&dataID, &size, data);
   
   if (dataID != 0) {
     switch(dataID) {
       case TURN_J1_ID:
-        Serial.println("J1");
+        //Serial.println("J1");
         turnJ1(*(int16_t*)(data));
         break;
       case TURN_J2_ID:
-        Serial.println("J2");
-        //turnJ2(*(int16_t*)(data));
+        //Serial.println("J2");
+        turnJ2(*(int16_t*)(data));
         break;
       case TURN_J3_ID:
-        Serial.println("J3");
+        //Serial.println("J3");
         turnJ3(*(int16_t*)(data));
         break;
       case TURN_J4_ID:
-        Serial.println("J4");
+        //Serial.println("J4");
         turnJ4(*(int16_t*)(data));
         break;
       case TURN_J5_ID:
-        Serial.println("J5");
+        //Serial.println("J5");
         turnJ5(*(int16_t*)(data));
         break;
       case TURN_J6_ID:
-        Serial.println("J6");
+        //Serial.println("J6");
         turnJ6(*(int16_t*)(data));
         break;
       case ARM_STOP:
         stopAllMotors();
-        break;
+        break;/*
       case ANGLE_MOVEMENT:
         int16_t temp[6];
-        memcpy(&(temp[4]), data, 2*sizeof(int16_t));
+        memcpy(&(temp[2]), data, 2*sizeof(int16_t));
         moveToAngle(temp);
+        break;*/
+      case GRIPPER_MOVEMENT:
+        movegripper(*(int16_t*)(data)); 
         break;
       case ARM_POWER_ON:
         AllPowerON();
@@ -93,18 +106,52 @@ void loop()
         AllPowerOff();
         Serial.println("Power Off");
         break;
+      case ARM_POWER_ALL:
+        AllPower(*(uint8_t*)data);
+        Serial.println("Power All");
+        break;
+      case ARM_POWER_MAIN:
+        AllPower(*(uint8_t*)data);
+        Serial.println("Power All");
+        break;
+      case ARM_POWER_J1:
+        J1Power(*(uint8_t*)data);
+        Serial.println("Power J1");
+        break;
+      case ARM_POWER_J2:
+        J2Power(*(uint8_t*)data);
+        Serial.println("Power J2");
+        break;
+      case ARM_POWER_WRIST:
+        WristPower(*(uint8_t*)data);
+        Serial.println("Power Wrist");
+        break;
+      case ARM_POWER_ELBOW:
+        ElbowPower(*(uint8_t*)data);
+        Serial.println("Power Elbow");
+        break;
+      case ARM_POWER_ENDEFF:
+        ElbowPower(*(uint8_t*)data);
+        Serial.println("Power Elbow");
+        break;
       default:
         break;
     }  
     counter = 0;
   } else {
     counter++;
-    delay(5);
+    //delay(5);
   }
   if (counter > 25) {
     //stopAllMotors();
     counter = 0;
-  }
-  checkPosition();
+  }//Serial5.print('f');
+  //checkPosition();
   //delay(500);
+  /*
+  Serial.print("Main Current: ");
+  Serial.println(getMainCurrent());
+  Serial.print("EndEffector Current: ");
+  Serial.println(getEndEffCurrent());
+  */
 }
