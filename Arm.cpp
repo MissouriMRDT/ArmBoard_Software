@@ -467,13 +467,18 @@ void moveToAngle(float * dest) {
     rightError = DynamixelSpinWheel(elbowRight, 0);
   //  closedLoopElbow = false;
   //}
+  
+  relativePosition[J1] = goalPosition[J1] - presentPosition[J1];
+  DynamixelSpinWheel(shoulder, speedScale);
+  closedLoopJ1 = true;
 }
 
 
 void checkPosition() {
+  int range = 100;
   if (closedLoopElbow == true) {
-    if (presentPosition[J3] < (goalPosition[J3] + 100) && presentPosition[J3] > (goalPosition[J3] - 100))
-      if (presentPosition[J4] < (goalPosition[J4] + 100) && presentPosition[J4] > (goalPosition[J4] - 100))
+    if (presentPosition[J3] < (goalPosition[J3] + range) && presentPosition[J3] > (goalPosition[J3] - range))
+      if (presentPosition[J4] < (goalPosition[J4] + range) && presentPosition[J4] > (goalPosition[J4] - range))
       {
         DynamixelSpinWheel(elbowLeft, 0);
         DynamixelSpinWheel(elbowRight, 0);
@@ -481,13 +486,18 @@ void checkPosition() {
       }
   }
   if (closedLoopWrist == true) {
-    if (presentPosition[J5] < (goalPosition[J5] + 100) && presentPosition[J5] > (goalPosition[J5] - 100))
-      if (presentPosition[J6] < (goalPosition[J6] + 100) && presentPosition[J6] > (goalPosition[J6] - 100))
+    if (presentPosition[J5] < (goalPosition[J5] + range) && presentPosition[J5] > (goalPosition[J5] - range))
+      if (presentPosition[J6] < (goalPosition[J6] + range) && presentPosition[J6] > (goalPosition[J6] - range))
       {
         DynamixelSpinWheel(wristLeft, 0);
         DynamixelSpinWheel(wristRight, 0);
         closedLoopWrist = false;
       }
+  }
+  if (closedLoopJ1 == true) {
+    if (presentPosition[J1] < (goalPosition[J1] + range) && presentPosition[J1] > (goalPosition[J1] - range))
+      DynamixelSpinWheel(shoulder, 0);
+      closedLoopJ1 = false;
   }
 }
 
