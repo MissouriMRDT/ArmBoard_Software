@@ -60,7 +60,7 @@ void loop()
 { 
   //getEncoderValues();
   roveComm_GetMsg(&dataID, &size, data);
-  
+
   if (dataID != 0) {
     switch(dataID) {
       case TURN_J1_ID:
@@ -89,12 +89,10 @@ void loop()
         break;
       case ARM_STOP:
         stopAllMotors();
-        break;/*
+        break;
       case ANGLE_MOVEMENT:
-        int16_t temp[6];
-        memcpy(&(temp[2]), data, 2*sizeof(int16_t));
-        moveToAngle(temp);
-        break;*/
+       moveToAngle((float*)data);
+       break;
       case GRIPPER_MOVEMENT:
         movegripper(*(int16_t*)(data)); 
         break;
@@ -146,7 +144,7 @@ void loop()
     //stopAllMotors();
     counter = 0;
   }//Serial5.print('f');
-  //checkPosition();
+  checkPosition();
   //delay(500);
   /*
   Serial.print("Main Current: ");
@@ -155,3 +153,4 @@ void loop()
   Serial.println(getEndEffCurrent());
   */
 }
+

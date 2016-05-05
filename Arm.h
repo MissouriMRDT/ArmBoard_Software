@@ -27,7 +27,7 @@ void turnJ6(int16_t speed);
 
 void movegripper(int16_t speed);
 
-void moveToAngle(int16_t * relativeAngle);
+void moveToAngle(float * dest);
 void checkPosition();
 
 float getMainCurrent();
