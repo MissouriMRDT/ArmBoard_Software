@@ -56,7 +56,7 @@ typedef enum {
   J6 = 5
 } JointNum;
 
-Dynamixel shoulder, elbowLeft, elbowRight, wristLeft, wristRight, dynaAll;
+Dynamixel base, elbowLeft, elbowRight, wristLeft, wristRight, dynaAll;
 Servo J2Motor;
 
 const uint16_t encoderZeroPos[6] = {480, 1900, 2994, 1140, 2675, 1055};
@@ -114,7 +114,7 @@ void armInit() {
   DynamixelInit(&wristLeft, MX, 2, DYNAMIXEL_SERIAL, DYNAMIXEL_BAUD);
   DynamixelInit(&elbowLeft, MX, 4, DYNAMIXEL_SERIAL, DYNAMIXEL_BAUD);
   DynamixelInit(&elbowRight, MX, 3, DYNAMIXEL_SERIAL, DYNAMIXEL_BAUD);
-  DynamixelInit(&shoulder, MX, 5, DYNAMIXEL_SERIAL, DYNAMIXEL_BAUD);
+  DynamixelInit(&base, MX, 5, DYNAMIXEL_SERIAL, DYNAMIXEL_BAUD);
   DynamixelInit(&dynaAll, MX, 0xFE, DYNAMIXEL_SERIAL, DYNAMIXEL_BAUD);
   
   analogWrite(J2_PWM, 127);
@@ -242,7 +242,7 @@ void turnJ1(int16_t speed) {
   if (spinCW == true)
     dynaSpeed = dynaSpeed | 1024;
   
-  DynamixelSpinWheel(shoulder, dynaSpeed);
+  DynamixelSpinWheel(base, dynaSpeed);
 }
 
 unsigned int j2count = 0;
@@ -469,7 +469,7 @@ void moveToAngle(float * dest) {
   //}
   
   relativePosition[J1] = goalPosition[J1] - presentPosition[J1];
-  DynamixelSpinWheel(shoulder, speedScale);
+  DynamixelSpinWheel(base, speedScale);
   closedLoopJ1 = true;
 }
 
@@ -496,7 +496,7 @@ void checkPosition() {
   }
   if (closedLoopJ1 == true) {
     if (presentPosition[J1] < (goalPosition[J1] + range) && presentPosition[J1] > (goalPosition[J1] - range))
-      DynamixelSpinWheel(shoulder, 0);
+      DynamixelSpinWheel(base, 0);
       closedLoopJ1 = false;
   }
 }
