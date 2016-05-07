@@ -32,3 +32,4 @@ void checkPosition();
 
 float getMainCurrent();
 float getEndEffCurrent();
+void storePosition (float pos[]);

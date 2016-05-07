@@ -35,18 +35,20 @@
 #define ARM_POWER_WRIST   821
 #define ARM_POWER_ENDEFF  822
 
+#define POSITION_REQUEST  793
+#define POSITION_ANSWER   792
+
 uint16_t dataID = 0;
 size_t size = 0;
 char data[256];
+float pos[6];
 int counter;
-
-extern uint16_t presentPosition[6];
 
 void setup()
 { 
   roveComm_Begin(192,168,1,131);
   Serial.begin(9600);
-  Serial5.begin(9600);
+  Serial6.begin(9600);
   Ethernet.enableLinkLed();
   Ethernet.enableActivityLed();
   armInit();
@@ -109,8 +111,8 @@ void loop()
         Serial.println("Power All");
         break;
       case ARM_POWER_MAIN:
-        AllPower(*(uint8_t*)data);
-        Serial.println("Power All");
+        MainPower(*(uint8_t*)data);
+        Serial.println("Power Main");
         break;
       case ARM_POWER_J1:
         J1Power(*(uint8_t*)data);
@@ -130,7 +132,12 @@ void loop()
         break;
       case ARM_POWER_ENDEFF:
         ElbowPower(*(uint8_t*)data);
-        Serial.println("Power Elbow");
+        Serial.println("Power Endeff");
+        break;
+      case POSITION_REQUEST:
+        Serial.println("Position Request");
+        storePosition(pos);
+        roveComm_SendMsg(POSITION_ANSWER, sizeof(float) *6, pos);
         break;
       default:
         break;
@@ -143,7 +150,7 @@ void loop()
   if (counter > 25) {
     //stopAllMotors();
     counter = 0;
-  }//Serial5.print('f');
+  }//Serial6.print('f');
   checkPosition();
   //delay(500);
   /*
