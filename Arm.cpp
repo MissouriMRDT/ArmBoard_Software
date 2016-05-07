@@ -59,7 +59,7 @@ typedef enum {
 Dynamixel base, elbowLeft, elbowRight, wristLeft, wristRight, dynaAll;
 Servo J2Motor;
 
-const uint16_t encoderZeroPos[6] = {1252, 1900, 2994, 1140, 2675, 1055};
+const uint16_t encoderZeroPos[6] = {3925, 1310, 2994, 1140, 2675, 1055};
 const int encoderPins[6] = {
   ENCODER_J1,
   ENCODER_J2,
@@ -323,7 +323,8 @@ void moveToAngle(float * dest) {
   goalPosition[J3] = constrain(goalPosition[J3], 512, 3584);
   goalPosition[J5] = constrain(goalPosition[J5], 512, 3584);
   
-  analogWrite(J2_PWM, map(goalPosition[J2], 2048, 3072, 40, 210));
+  j2pwmval = map(goalPosition[J2], 2048, 3072, 75, 230);
+  analogWrite(J2_PWM, j2pwmval);
   
   int diff;
   diff = goalPosition[J5] - presentPosition[J5];
