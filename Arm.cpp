@@ -96,12 +96,12 @@ void armInit() {
 
   getEncoderValues();
   AllPowerON();
-  DynamixelInit(&wristRight, MX, 1, DYNAMIXEL_SERIAL, DYNAMIXEL_BAUD);
-  DynamixelInit(&wristLeft, MX, 2, DYNAMIXEL_SERIAL, DYNAMIXEL_BAUD);
-  DynamixelInit(&elbowLeft, MX, 4, DYNAMIXEL_SERIAL, DYNAMIXEL_BAUD);
-  DynamixelInit(&elbowRight, MX, 3, DYNAMIXEL_SERIAL, DYNAMIXEL_BAUD);
-  DynamixelInit(&base, MX, 5, DYNAMIXEL_SERIAL, DYNAMIXEL_BAUD);
-  DynamixelInit(&dynaAll, MX, 0xFE, DYNAMIXEL_SERIAL, DYNAMIXEL_BAUD);
+  DynamixelInit(&wristRight, MX, 1, ELBOW_WRIST_SERIAL, DYNAMIXEL_BAUD);
+  DynamixelInit(&wristLeft, MX, 2, ELBOW_WRIST_SERIAL, DYNAMIXEL_BAUD);
+  DynamixelInit(&elbowLeft, MX, 4, ELBOW_WRIST_SERIAL, DYNAMIXEL_BAUD);
+  DynamixelInit(&elbowRight, MX, 3, ELBOW_WRIST_SERIAL, DYNAMIXEL_BAUD);
+  DynamixelInit(&base, MX, 5, J1_SERIAL, DYNAMIXEL_BAUD);
+  DynamixelInit(&dynaAll, MX, 0xFE, ELBOW_WRIST_SERIAL, DYNAMIXEL_BAUD);
   
   analogWrite(J2_PWM, 127);
   DynamixelSetMaxTorque(elbowLeft, 1023);
@@ -192,8 +192,8 @@ void EndEffPower(uint8_t state) {
 
 void getEncoderValues() {
   for (int i = J1; i <= J6; ++i)
-  {//Serial.println(pulseIn(encoderPins[i], HIGH, 5000));
-    presentPosition[i] = mod(pulseIn(encoderPins[i], HIGH, 5000) - encoderZeroPos[i] - 2048, 4096);
+  {//Serial.println(analogRead(encoderPins[i], HIGH, 5000));
+    presentPosition[i] = mod(analogRead(encoderPins[i]) - encoderZeroPos[i] - 2048, 4096);
   }
 }
 
@@ -203,7 +203,7 @@ void stopAllMotors() {
 }
 
 void turnJ1(int16_t speed) {
-  //Serial.println(pulseIn(ENCODER_J1, HIGH, 5000));
+  //Serial.println(analogRead(ENCODER_J1, HIGH, 5000));
   static int rampedSpeed = 0;
   static bool spinCW;
   uint16_t dynaSpeed;
