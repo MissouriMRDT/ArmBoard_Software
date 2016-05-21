@@ -2,6 +2,10 @@
 #include <Ethernet.h>
 #include <EthernetUdp.h>
 #include <Servo.h>
+#include <driverlib/sysctl.h>
+#include <driverlib/watchdog.h>
+#include <driverlib/rom_map.h>
+
 
 #include "RoveBoard.h"
 #include "RoveEthernet.h"
@@ -42,19 +46,41 @@ uint16_t dataID = 0;
 size_t size = 0;
 char data[256];
 float pos[6];
-int counter;
+
+const uint32_t ROVECOMM_WATCHDOG_TIMEOUT_TICKS = 16400000; 
+const uint32_t ROVECOMM_WATCHDOG = WATCHDOG1_BASE;
+
+void roveWatchdogClear()
+{
+  WatchdogIntClear(ROVECOMM_WATCHDOG);
+}//end fnctn
+
+void RoveCommWatchdog_begin(void (*roveWatchdogIntHandler)(void), const uint32_t time_out_millis)
+{   
+  // Enable Watchdog Timer 1; supposedly timer 0 has a conflict in Energia, unconfirmed
+  SysCtlPeripheralEnable(SYSCTL_PERIPH_WDOG1);  
+  WatchdogUnlock(ROVECOMM_WATCHDOG);
+  WatchdogReloadSet(ROVECOMM_WATCHDOG, ROVECOMM_WATCHDOG_TIMEOUT_TICKS);
+  
+  WatchdogIntRegister(ROVECOMM_WATCHDOG, roveWatchdogIntHandler);
+  
+  WatchdogIntEnable(ROVECOMM_WATCHDOG);
+  WatchdogResetDisable(ROVECOMM_WATCHDOG);
+  WatchdogEnable(ROVECOMM_WATCHDOG);
+
+}
 
 void setup()
 { 
   roveComm_Begin(192,168,1,131);
   Serial.begin(9600);
-  Serial6.begin(9600);
   Ethernet.enableLinkLed();
   Ethernet.enableActivityLed();
   armInit();
   pinMode(PK_3, INPUT);
   delay(1000);
   Serial.println(analogRead(PK_3));
+  RoveCommWatchdog_begin(&armReinit, 3);
 }
 
 
@@ -142,15 +168,11 @@ void loop()
       default:
         break;
     }  
-    counter = 0;
+    roveWatchdogClear();
   } else {
-    counter++;
-    //delay(5);
+    
   }
-  if (counter > 25) {
-    //stopAllMotors();
-    counter = 0;
-  }//Serial6.print('f');
+  
   checkPosition();
   //delay(500);
   /*

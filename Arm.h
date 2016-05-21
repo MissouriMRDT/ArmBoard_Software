@@ -4,6 +4,7 @@
 
 
 void armInit();
+void armReinit();
 
 void AllPowerON();
 void AllPowerOff();

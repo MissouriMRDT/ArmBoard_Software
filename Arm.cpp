@@ -93,6 +93,7 @@ void armInit() {
   pinMode(CURRENT_SENSOR_ENDEFF, INPUT);
 
   AllPowerOff();
+  Serial6.begin(9600);
 
   getEncoderValues();
   AllPowerON();
@@ -109,6 +110,17 @@ void armInit() {
   //DynamixelSetMode(dynaAll, Wheel);
   
   AllPowerOff();
+}
+
+void armReinit() {
+  AllPowerOff();
+  delay(5);
+  Serial3.end();
+  Serial4.end();
+  Serial6.end();
+  Serial7.end();
+  armInit();
+
 }
 
 void AllPowerON() {
