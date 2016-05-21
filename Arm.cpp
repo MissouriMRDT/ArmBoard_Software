@@ -43,7 +43,7 @@ typedef enum {
 Dynamixel base, elbowLeft, elbowRight, wristLeft, wristRight, dynaAll;
 Servo J2Motor;
 
-const uint16_t encoderZeroPos[6] = {3925, 1310, 2994, 1140, 2675, 1055};
+const uint16_t encoderZeroPos[6] = {4000, 1310, 2994, 1140, 2675, 1055};
 const int encoderPins[6] = {
   ENCODER_J1,
   ENCODER_J2,
@@ -216,27 +216,19 @@ void stopAllMotors() {
 
 void turnJ1(int16_t speed) {
   //Serial.println(analogRead(ENCODER_J1, HIGH, 5000));
-  static int rampedSpeed = 0;
+  
   static bool spinCW;
   uint16_t dynaSpeed;
-  
-  rampedSpeed += (speed == 0) ? -20 : 5;
-  rampedSpeed = constrain(rampedSpeed, 0, 200);
-  
-  if (rampedSpeed < 20) {
-    dynaSpeed = 0;
-  } else if (rampedSpeed < 100) {
-    dynaSpeed = 128;
-  } else if (rampedSpeed < 150) {
-    dynaSpeed = 256;
-  } else if (rampedSpeed < 200) {
-    dynaSpeed = 512;
-  }
   
   if (speed > 0)
     spinCW = true;
   else if (speed < 0)
     spinCW = false;
+    
+  if (speed != 0)
+    dynaSpeed = 128;
+  else
+    dynaSpeed = 0;
     
   if (spinCW == true)
     dynaSpeed = dynaSpeed | 1024;
@@ -316,7 +308,7 @@ void moveToAngle(float * dest) {
   }
 
   goalPosition[J2] = constrain(goalPosition[J2], 2048, 3072);
-  goalPosition[J3] = constrain(goalPosition[J3], 512, 3584);
+  goalPosition[J3] = constrain(goalPosition[J3], 768, 3328);
   goalPosition[J5] = constrain(goalPosition[J5], 512, 3584);
   
   j2pwmval = map(goalPosition[J2], 2048, 3072, 75, 230);
