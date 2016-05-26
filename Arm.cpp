@@ -529,24 +529,14 @@ float getEndEffCurrent() {
   return analogRead(CURRENT_SENSOR_ENDEFF) * 20.0 / 4096.0;
 }
 
-int gripperPast = 0;
 
-void movegripper(int16_t speed) { //Serial.println(speed);
+void movegripper(int16_t speed) {
   if (speed == 0) {
-    Serial6.write('X');
-    //Serial.println('X');
-    gripperPast = 0;
+    Serial6.write(128);
     return;
   }
-  //if (millis() % 5 != 0) return;
   
-  if (speed < gripperPast+10 && speed > gripperPast - 10) return;
-  
-  Serial6.write((speed > 0) ? 'A' : 'B');
-  Serial6.write((byte)map(abs(speed), 0, 1000, 0, 255));
-  //Serial.println((speed > 0) ? 'A' : 'B');
-  //Serial.println((byte)map(abs(speed), 0, 1000, 0, 255));
-  gripperPast = speed;
+  Serial6.write((byte)map(speed, -1000, 1000, 0, 255));
 }
 
 void storePosition (float pos[]) {

@@ -80,7 +80,7 @@ void setup()
   pinMode(PK_3, INPUT);
   delay(1000);
   Serial.println(analogRead(PK_3));
-  RoveCommWatchdog_begin(&armReinit, 3);
+  //RoveCommWatchdog_begin(&armReinit, 3);
 }
 
 
@@ -168,7 +168,7 @@ void loop()
       default:
         break;
     }  
-    roveWatchdogClear();
+    //roveWatchdogClear();
   } else {
     
   }
