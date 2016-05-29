@@ -226,7 +226,7 @@ void turnJ1(int16_t speed) {
     spinCW = false;
     
   if (speed != 0)
-    dynaSpeed = 128;
+    dynaSpeed = 256;
   else
     dynaSpeed = 0;
     
