@@ -43,7 +43,7 @@ typedef enum {
 Dynamixel base, elbowLeft, elbowRight, wristLeft, wristRight, dynaAll;
 Servo J2Motor;
 
-const uint16_t encoderZeroPos[6] = {4000, 1310, 2994, 1140, 2675, 1055};
+const uint16_t encoderZeroPos[6] = {2367, 1976, 3970, 3080, 2900, 63};
 const int encoderPins[6] = {
   ENCODER_J1,
   ENCODER_J2,
