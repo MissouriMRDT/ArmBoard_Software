@@ -558,12 +558,12 @@ void IK () {
   float d=13.7348;
   float e=5;
 
-  float x=0;        //input metrics (home position commented out) x=0
-  float y=19.2024;  //y=19.2024
-  float z=25.2722;  //z=25.2722
-  float w=0;        //w=0
-  float p=0;        //p=0
-  float r=0;        //r=0
+  float x=5;        //input metrics (home position commented out) x=0
+  float y=14.2024;  //y=19.2024
+  float z=30.2722;  //z=25.2722
+  float w=0.1;        //w=0
+  float p=0.1;        //p=0
+  float r=0.1;        //r=0
 
 
   float sw=sin(w);
@@ -588,8 +588,8 @@ void IK () {
 
   float R[9];
   //R=Rr*Rp*Rw;
-  Matrix.Multiply(Rr, Rp, 3, 3, 3, tmp1);
-  Matrix.Multiply(tmp1, Rw, 3, 3, 3, R);
+  Matrix.Multiply(Rp, Rw, 3, 3, 3, tmp1);
+  Matrix.Multiply(Rr, tmp1, 3, 3, 3, R);
   //o=[x; y; z];
   float o[]={x, y, z};
   //oc=o-e*R*O*[0; 0; 1];
@@ -648,11 +648,11 @@ void IK () {
   for (int i=0;i<3;i++)
     for(int j=0;j<3;j++)
     {
-      tmp1[3*i+j] = T3[4*i+j];
+      WR[3*i+j] = T3[4*i+j];
     }
-  Matrix.Multiply(R,O,3,3,3,WR);
-  Matrix.Multiply(tmp1, WR, 3,3,3, tmp2);
-  Matrix.Transpose(tmp2, 3, 3, WR);
+  Matrix.Multiply(R,O,3,3,3,tmp1);
+  Matrix.Transpose(WR, 3, 3, tmp2);
+  Matrix.Multiply(tmp2, tmp1, 3,3,3, WR);
 
   float th4, th5, th6;
   //if WR(1,3)<0
@@ -666,8 +666,31 @@ void IK () {
           th4=0;
           th6=-atan2(WR[0],WR[3])+PI/2;
       } else {
-          th4=-atan2(WR[2],WR[6])+PI/2;
+          th4=-atan2(WR[2],WR[5])+PI/2;
           th6=-atan2(-WR[6],WR[7])+PI/2;
       }
   }
+  float s4=sin(th4);
+  float c4=cos(th4);
+  float s5=sin(th5);
+  float c5=cos(th5);
+  float s6=sin(th6);
+  float c6=cos(th6);
+  float A4[]={c4, 0, -s4, 0,   //Transformation matrices 
+      s4, 0, c4, 0,
+      0, -1, 0, d,
+      0, 0, 0, 1};
+  float A5[]={c5, 0, s5, 0,
+      s5, 0, -c5, 0,
+      0, 1, 0, 0,
+      0, 0, 0, 1};
+  float A6[]={c6, -s6, 0, 0,
+      s6, c6, 0, 0,
+      0, 0, 1, e,
+      0, 0, 0, 1};
+  
+  float T4[16],T5[16],T6[16];
+  Matrix.Multiply(T3,A4,4,4,4,T4);
+  Matrix.Multiply(T4,A5,4,4,4,T5);
+  Matrix.Multiply(T5,A6,4,4,4,T6);
 }
