@@ -6,6 +6,7 @@
 #include <driverlib/watchdog.h>
 #include <driverlib/rom_map.h>
 
+#include "MatrixMath.h"
 
 #include "RoveBoard.h"
 #include "RoveEthernet.h"
@@ -173,7 +174,7 @@ void loop()
     
   }
   
-  checkPosition();
+  //checkPosition();
   //delay(500);
   /*
   Serial.print("Main Current: ");

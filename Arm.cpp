@@ -1,6 +1,7 @@
 #include "Arm.h"
 #include <stdlib.h>
 #include <Servo.h>
+#include "MatrixMath.h"
 
 #define J2_PWM PD_5 //PK_5 //RC1_TO_J2
 
@@ -109,7 +110,7 @@ void armInit() {
   DynamixelSetMaxTorque(elbowRight, 1023);
   //DynamixelSetMode(dynaAll, Wheel);
   
-  AllPowerOff();
+  //AllPowerOff();
 }
 
 void armReinit() {
@@ -537,11 +538,136 @@ void movegripper(int16_t speed) {
   }
   
   Serial6.write((byte)map(speed, -1000, 1000, 0, 255));
+  Serial.println((byte)map(speed, -1000, 1000, 0, 255));
 }
 
 void storePosition (float pos[]) {
   getEncoderValues();
   for (int i = J1; i <= J6; i++) {
     pos[i] = map_float(presentPosition[i], 0, 4096, -180, 180);
+  }
+}
+
+void IK () {
+  float tmp1[25];
+  float tmp2[25];
+
+  float a=5.2722;   //Arm lengths
+  float b=.467585;
+  float c=20;
+  float d=13.7348;
+  float e=5;
+
+  float x=0;        //input metrics (home position commented out) x=0
+  float y=19.2024;  //y=19.2024
+  float z=25.2722;  //z=25.2722
+  float w=0;        //w=0
+  float p=0;        //p=0
+  float r=0;        //r=0
+
+
+  float sw=sin(w);
+  float cw=cos(w);
+  float sp=sin(p);
+  float cp=cos(p);
+  float sr=sin(r);
+  float cr=cos(r);
+
+  float Rw[]={1, 0, 0,        //Rotation matrices at wrist
+        0, cw, -sw,
+        0, sw, cw};
+  float Rp[]={cp, 0, sp,
+        0, 1, 0,
+        -sp, 0, cp};
+  float Rr[]={cr, -sr, 0,
+        sr, cr, 0,
+        0, 0, 1};
+  float O[]={0, 1, 0,
+        0, 0, 1,
+        1, 0, 0};
+
+  float R[9];
+  //R=Rr*Rp*Rw;
+  Matrix.Multiply(Rr, Rp, 3, 3, 3, tmp1);
+  Matrix.Multiply(tmp1, Rw, 3, 3, 3, R);
+  //o=[x; y; z];
+  float o[]={x, y, z};
+  //oc=o-e*R*O*[0; 0; 1];
+  float oc[3];
+  tmp1[0] = 0;
+  tmp1[1] = 0;
+  tmp1[2] = 1;
+
+  Matrix.Multiply(O, tmp1, 3, 3, 1, tmp2);
+  Matrix.Multiply(R, tmp2, 3, 3, 1, tmp1);
+  Matrix.Scale(tmp1, 3, 1, e);
+  Matrix.Subtract(o, tmp1, 3, 1, oc);
+
+  float l=sqrt(pow(oc[0],2)+pow(oc[1],2))-b;      //Geomtries to solve position IK
+  float D=sqrt((pow(l,2))+(pow((oc[2]-a),2)));
+  float alp=acos((((pow(c,2))+(pow(d,2))-(pow(D,2)))/(2*d*c)));
+  float gam=asin((d/D)*sin(alp));
+
+  float th1=atan2(-oc[0],oc[1]);         //angls theta 1-3
+  float th2=atan2(oc[2]-a,l)+gam-PI/2;
+  float th3=(alp-PI/2);
+  float s1=sin(th1);
+  float c1=cos(th1);
+  float s2=sin(th2);
+  float c2=cos(th2);
+  float s3=sin(th3);
+  float c3=cos(th3);
+  float A1[] =
+  {
+    -s1,  0, c1,  b*-s1, //Transformation matrices 
+    c1,   0, s1,   b*c1,
+    0,    1, 0,     a,
+    0,    0, 0,     1
+  };
+  float A2[] =
+  {
+    -s2, -c2, 0, -c*s2,
+    c2,  -s2, 0,  c*c2,
+    0,    0,  1,   0,
+    0,    0,  0,   1
+  };
+  float A3[] =
+  {
+    c3, 0, s3,  0,
+    s3, 0, -c3, 0,
+    0,  1,  0,  0,
+    0,  0,  0,  1
+  };
+  float T1[16], T2[16], T3[16];
+  Matrix.Copy(A1, 4, 4, T1);
+  Matrix.Multiply(T1,A2,4,4,4,T2);
+  Matrix.Multiply(T2,A3,4,4,4,T3);
+
+  //WR=transpose(T3(1:3,1:3))*R*O
+  float WR[9];
+  for (int i=0;i<3;i++)
+    for(int j=0;j<3;j++)
+    {
+      tmp1[3*i+j] = T3[4*i+j];
+    }
+  Matrix.Multiply(R,O,3,3,3,WR);
+  Matrix.Multiply(tmp1, WR, 3,3,3, tmp2);
+  Matrix.Transpose(tmp2, 3, 3, WR);
+
+  float th4, th5, th6;
+  //if WR(1,3)<0
+  if (WR[2] < 0) {
+       th5=atan2(WR[8],sqrt(1-(pow(WR[8],2))))-PI/2;
+       th4=-atan2(WR[2],WR[5])-PI/2;
+       th6=-atan2(-WR[6],WR[7])-PI/2;
+  } else {
+      th5=-atan2(WR[8],sqrt(1-(pow(WR[8],2))))+PI/2; 
+      if (th5==0){
+          th4=0;
+          th6=-atan2(WR[0],WR[3])+PI/2;
+      } else {
+          th4=-atan2(WR[2],WR[6])+PI/2;
+          th6=-atan2(-WR[6],WR[7])+PI/2;
+      }
   }
 }
