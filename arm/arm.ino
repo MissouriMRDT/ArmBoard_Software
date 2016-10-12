@@ -1,3 +1,19 @@
+/* Programmers: Drue Satterfield, David Strickland
+ * Date of creation: 10/11/2016
+ * Sub system: arm board
+ * 
+ * program overhead:
+ * The program is fairly simple in concept. We listen for communications from the base station over ethernet using the RoveComm library, and when we get a command from them 
+ * we identify what part of the arm it wants us to move, and proceed to do so. Base station will either say how fast they want the movement to happen, or what position they want
+ * that part of that arm to move to. We tell the joints to move based off of that. The program also monitors and handles communications to and from the endefector board, since 
+ * that board's communications run through the arm board.
+ * 
+ * If we do not get a command within a certain amount of time, the arm shall automatically stop. This is so the arm doesn't simply keep moving in the event of a communications failure.
+ * 
+ * 
+ */
+
+
 #include "arm.h";
 
 void setup() {} //fuck you setup
@@ -11,7 +27,7 @@ void loop() {
   
   initialize();
   
-  while(1)
+  while(1) //main program loop. Listen for communications from the endefector or from base station, and proceed based on that transmission 
   {
     commandSize = 0;
     commandId = 0;
@@ -20,7 +36,7 @@ void loop() {
     roveComm_GetMsg(&commandId, &commandSize, &commandData);
     passEndefToBase();
     
-    if((commandSize == 1 || commandSize == 2) && commandId != 0) //command packets come in 1 or 2 bytes
+    if((commandSize == 1 || commandSize == 2) && commandId != 0) //command packets come in 1 or 2 bytes. If it's any other size, there was probably a comm error
     {
       watchdogTimer_us = 0; //reset watchdog timer since we received a command
       
