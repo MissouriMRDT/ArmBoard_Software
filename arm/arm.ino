@@ -37,8 +37,6 @@ void loop() {
     passEndefToBase();
     if((commandSize == 1 || commandSize == 2) && commandId != 0) //command packets come in 1 or 2 bytes. If it's any other size, there was probably a comm error
     {
-      if(commandData != 0)
-         Serial.println(commandId, DEC);
       watchdogTimer_us = 0; //reset watchdog timer since we received a command
       
       if(commandId == ArmStop || commandId == LY_ArmStop)
@@ -119,35 +117,59 @@ void passEndefToBase()
 
 CommandResult stopArm()
 {
-  //Serial.println("Stop arm");
+  Serial.println("Stop arm");
 }
 
 CommandResult moveJ1(int16_t moveValue)
 {
-  
+  if(moveValue != 0)
+  {
+  Serial.print("Move J1: ");
+  Serial.println(moveValue);
+  }
 }
 
 CommandResult moveJ2(int16_t moveValue)
 {
-  
+  if(moveValue != 0)
+  {
+  Serial.print("Move J2: ");
+  Serial.println(moveValue);
+  }
 }
 
 CommandResult moveJ3(int16_t moveValue)
 {
-  
+  if(moveValue != 0)
+  {
+  Serial.print("Move J3: ");
+  Serial.println(moveValue);
+  }
 }
 
 CommandResult moveJ4(int16_t moveValue)
 {
-  
+  if(moveValue != 0)
+  {
+  Serial.print("Move J4: ");
+  Serial.println(moveValue);
+  }
 }
 
 CommandResult moveJ5(int16_t moveValue)
 {
-  
+  if(moveValue != 0)
+  {
+  Serial.print("Move J5: ");
+  Serial.println(moveValue);
+  }
 }
 
 CommandResult moveJ6(int16_t moveValue)
 {
-  
+  if(moveValue != 0)
+  {
+  Serial.print("Move J6: ");
+  Serial.println(moveValue);
+  }
 }
