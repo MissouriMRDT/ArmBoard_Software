@@ -24,6 +24,7 @@ void setup() {
   roveComm_Begin(192, 168, 1, 83);
   Serial.begin(9600);
   Ethernet.enableActivityLed();
+  while(1);
 }
 
 void loop() {

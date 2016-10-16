@@ -1,7 +1,85 @@
+/* Algorithm description:
+   How this works is that a timer module is set up so that its 
+   timer A (each module actually has 2 mini timers inside, A and  
+   B) will be put into edge-time-capture mode, and timer B gets 
+   put into periodic count up mode. Both timers are loaded with 
+   the same timeout value so they'll loop at about the same 
+   time. 
+
+   What edge-capture-time mode does is it makes the timer 
+   constantly run in the background, and when it detects 
+   either a rising edge pulse or a falling edge pulse (can be 
+   configured for one or another or both, here both) on 
+   its associated GPIO pin it triggers an interrupt for the
+   event, and records into its value register the time it was
+   at when it recieved the pulse. So when it captures the time
+   of when the pulse went high and then when the pulse went low,
+   you can use the two values to calculate the pulse's on period
+   and same for the off period for when the pulse goes low. 
+   The one thing to beware of is that the timer eventually loops
+   in the background, so you have to watch for when that happens
+   as it will make the captured time value be incorrect. 
+   So long as the pulse's period isn't longer than how long it
+   takes the timer to timeout then you can simply look for this
+   condition by noting that the captured value is smaller than
+   the previously captured value, and correct it mathematically.
+   If the pulse period is longer than the timer timeout period, 
+   then you can no longer tell based on the 'is it smaller than
+   previous' technique, restricting the PWM reader library 
+   to only being able to read PWM signals with periods equal to 
+   or smaller than the maximum timer period, which is 2^24 in 
+   clock ticks. 
+
+   While this works for nominal readings, we have to be wary of 
+   non nominal conditions such as 0% duty cycle and 100% duty 
+   cycle, where no edge ever occurs and thus the capture ISR
+   never triggers and the readings look incorrect from the 
+   outside. To take care of this, we set up Timer B to trigger
+   an interrupt at the same rate Timer A times out, IE the 
+   expected amount of time it takes at least one transmission
+   to happen. Timer A will set a flag for 'I recieved a pulse'
+   whenever it does, and Timer B's interrupt will check this 
+   flag when it triggers to make sure transmissions occured. 
+   If it did, then it simply resets the flag and rests for 
+   another presumed PWM reading cycle. If it did not, then
+   it checks to see if our last known reading was high or low.
+   If it was high then it means we're idling at high voltage
+   on the input pin, 100% duty cycle. In that case it resets
+   the data variables for that pwm line so that they will 
+   be ready again for the next reading, and sets the duty 
+   variable for that pwm line to 100 so the user can know.
+   We encounter a problem here when the duty goes back to 
+   anything else however; going from 100% to any other
+   duty cycle renders the first non 100% transmission 
+   unreadable, as we can't tell when the on-pulse actually
+   started as compared to the rest of the 100% pulses. So
+   it tells the capture ISR to skip its calculations for 
+   the next pulse, afterwords it resumes operation as normal.
+   If the last captured edge was low, meanwhile, then it means
+   we are at 0% cycle. It then simply resets the data back into
+   its initial state, sets the duty variable to 0 and that's it.
+
+   Working together, the two interrupts are able to read PWM
+   signals with little data being lost. 
+   
+   The library is built to do this for all 5 timers that can be
+   used if need be. 
+
+*/
+
 #include "PwmReader.h"
 
+//Table for the pin number macros -- the tiva hardware drivers
+//don't take 0-7 for pins but these special constants. 
+//Input: desired pin constant 0-7
+//Output: pin constant that can actually be passed to tiva's 
+//hardware drivers for pins 0-7
 static const uint8_t gpioPinNumberTable[8] = {GPIO_PIN_0 , GPIO_PIN_1 , GPIO_PIN_2 , GPIO_PIN_3 , GPIO_PIN_4 , GPIO_PIN_5 , GPIO_PIN_6 , GPIO_PIN_7 };
 
+//Table for special timer pin names. Use this table to get 
+//the constant needed for the 'GPIOPinConfigure' function
+//input: GPIO port being used (A,B,D,L,M, as 0-4)
+// and pin number being used, 0-7
 static const uint32_t timerPinNameTable[5][8] = 
 {
   {0, 0, GPIO_PA2_T1CCP0, GPIO_PA3_T1CCP1, GPIO_PA4_T2CCP0, GPIO_PA5_T2CCP1, GPIO_PA6_T3CCP0, GPIO_PA7_T3CCP1}, //A0-A7
@@ -11,8 +89,10 @@ static const uint32_t timerPinNameTable[5][8] =
   {GPIO_PM0_T2CCP0, GPIO_PM1_T2CCP1, GPIO_PM2_T3CCP0, GPIO_PM3_T3CCP1, GPIO_PM4_T4CCP0, GPIO_PM5_T4CCP1, GPIO_PM6_T5CCP0, GPIO_PM7_T5CCP1}  //M0-M7
 };
 
+//enum that keeps track of pin's last known reading state
 typedef enum Pinstate {pulseH, pulseL};
 
+//struct that holds all the data for the PWM line
 typedef struct timerData
 {
   uint32_t tOn;
@@ -25,6 +105,8 @@ typedef struct timerData
   bool edgeRecieved;
   Pinstate pinState;
 };
+
+//event handlers
 
 static void timeout1Handler();
 static void edgeCapture1Handler();
@@ -44,23 +126,31 @@ static void edgeCapture5Handler();
 static void timeoutGenHandler(timerData * data);
 static void edgeCaptureGenHandler(timerData * data, uint32_t timerBase);
 
-static bool initGPIO(uint8_t port, uint8_t pinNum);
-static bool initTimer(uint32_t frequency, uint8_t timerNum);
-static void initData(uint8_t timerNum, uint32_t timerLoad);
+//hardware initializing functions and variable init'ing funcs
 
+static bool initGPIO(uint8_t port, uint8_t pinNum, uint8_t * pinInitState);
+static bool initTimer(uint32_t frequency, uint8_t timerNum);
+static void initData(uint8_t timerNum, uint32_t timerLoad, uint8_t pinInitState);
+
+//each timer and through them PWM line has a data struct 
+//for their usage
 static timerData timer1Data, timer2Data, timer3Data, timer4Data, timer5Data;
 
+//interrupt handler for timer 1's timeout event. 
 static void timeout1Handler()
 {
   TimerIntClear(TIMER1_BASE, TIMER_TIMB_TIMEOUT); // clear the timer interrupt
   timeoutGenHandler(&timer1Data);
 }
 
+//interrupt handler for timer 1's edge capture event. 
 static void edgeCapture1Handler()
 {
   TimerIntClear(TIMER1_BASE, TIMER_CAPA_EVENT); // clear the timer interrupt
   edgeCaptureGenHandler(&timer1Data, TIMER1_BASE);
 }
+
+//interrupt handler for timer 2's timeout event. 
 
 static void timeout2Handler()
 {
@@ -68,48 +158,75 @@ static void timeout2Handler()
   timeoutGenHandler(&timer2Data);
 }
 
+//interrupt handler for timer 2's edge capture event. 
 static void edgeCapture2Handler()
 {
   TimerIntClear(TIMER2_BASE, TIMER_CAPA_EVENT); // clear the timer interrupt
   edgeCaptureGenHandler(&timer2Data, TIMER2_BASE);
 }
 
+//interrupt handler for timer 3's timeout event. 
 static void timeout3Handler()
 {
   TimerIntClear(TIMER3_BASE, TIMER_TIMB_TIMEOUT); // clear the timer interrupt
   timeoutGenHandler(&timer3Data);
 }
 
+//interrupt handler for timer 3's edge capture event. 
 static void edgeCapture3Handler()
 {
   TimerIntClear(TIMER3_BASE, TIMER_CAPA_EVENT); // clear the timer interrupt
   edgeCaptureGenHandler(&timer3Data, TIMER3_BASE);
 }
 
+//interrupt handler for timer 4's timeout event. 
 static void timeout4Handler()
 {
   TimerIntClear(TIMER1_BASE, TIMER_TIMB_TIMEOUT); // clear the timer interrupt
   timeoutGenHandler(&timer1Data);
 }
 
+//interrupt handler for timer 4's edge capture event. 
 static void edgeCapture4Handler()
 {
   TimerIntClear(TIMER4_BASE, TIMER_CAPA_EVENT); // clear the timer interrupt
   edgeCaptureGenHandler(&timer4Data, TIMER4_BASE);
 }
 
+//interrupt handler for timer 5's timeout event. 
 static void timeout5Handler()
 {
   TimerIntClear(TIMER5_BASE, TIMER_TIMB_TIMEOUT); // clear the timer interrupt
   timeoutGenHandler(&timer5Data);
 }
 
+//interrupt handler for timer 5's edge capture event. 
 static void edgeCapture5Handler()
 {
   TimerIntClear(TIMER5_BASE, TIMER_CAPA_EVENT); // clear the timer interrupt
   edgeCaptureGenHandler(&timer5Data, TIMER5_BASE);
 }
 
+//procedure for handling a timeout event. 
+//Checks to see if the passed PWM line has 
+//changed states since the last checkup. 
+//If it hasn't, it means either the line is idling low,
+//or we're at 100% duty cycle.
+//If it's the former, simply reset the data structure
+//so it will be ready to begin anew the next time 
+//a pulse is sent. 
+//If it's the latter, then it's impossible to 
+//know the period when the next pwm pulse is sent the first
+//time, as the beginning of the on pulse merges with the 
+//previous always-on pulses with no telling when the two 
+//differ. Reset the data as well, but also hit the 
+//'period incalculable' flag so the edge capture handler
+//won't attempt to calculate anything for the first pulse it
+//gets after dropping from 100% duty cycle. After that first 
+//pulse clears, the period becomes readable again.
+//If the line HAS seen a voltage change since we last checked,
+//then no management is necessary and simply reset the 'pulse 
+//recieved' flag for the next check cycle.
 static void timeoutGenHandler(timerData * data)
 {
   //if the edge received flag is false, it means the edge capture handler hasn't 
@@ -128,6 +245,8 @@ static void timeoutGenHandler(timerData * data)
       data->tOn = 0;
       data->tOff = 0;
       data->duty = 0;
+      data->periodIncalculable = false;
+
     }
 
     //100% duty. Put data back into init state, but note that it's impossible to calculate
@@ -149,6 +268,16 @@ static void timeoutGenHandler(timerData * data)
   }
 }
 
+//general interrupt handler for edge capture events. 
+//Read the current time the captured edge was captured at,
+//and use it to calculate either pulse On period or pulse Off
+//period, depending on if it was a rising or falling edge 
+//captured. Also set the pulse received flag so the 
+//timeout interrupt knows we recieved something since the last
+//time it checked. Calculate duty of the pulse if it was a 
+//rising edge we recieved.
+//Note that if the period is expected to be incalculable for
+//any reason, the calculations are skipped for this one cycle
 static void edgeCaptureGenHandler(timerData * data, uint32_t timerBase)
 {
   data->edgeRecieved = true;
@@ -206,9 +335,13 @@ static void edgeCaptureGenHandler(timerData * data, uint32_t timerBase)
   }
 }
 
+//initializes pwm reading. Inits timer, interrupts, GPIO pins, 
+//and data for the pwm reading. Returns false if 
+//user input a parameter incorrectly
 bool initPwmRead(char gpioPort, uint8_t pinNumber, uint32_t expectedFrequecy, uint8_t timerNumber)
 {
   bool successfulInit;
+  uint8_t pinInitialState;
 
   uint32_t timerLoad = SysClockFreq/expectedFrequecy; //speed of timer ticks (120Mhz) / x freq = amount of timer ticks so that timer hits its load value at x freq. IE 120Mhz / 6000 ticks = 20Khz output
   
@@ -222,13 +355,13 @@ bool initPwmRead(char gpioPort, uint8_t pinNumber, uint32_t expectedFrequecy, ui
     return(false);
   }
   
-  successfulInit = initGPIO(gpioPort, pinNumber);
+  successfulInit = initGPIO(gpioPort, pinNumber, &pinInitialState);
   if(successfulInit == false)
   {
     return (false) ;
   }
   
-  initData(timerNumber, timerLoad);
+  initData(timerNumber, timerLoad, pinInitialState);
   
   successfulInit = initTimer(timerLoad, timerNumber);   
   if(successfulInit == false)
@@ -237,6 +370,8 @@ bool initPwmRead(char gpioPort, uint8_t pinNumber, uint32_t expectedFrequecy, ui
   }
 }
 
+//stops reading pwm on the pin associated with the 
+//passed timer
 void stopPwmRead(uint8_t timerNum)
 {
   uint64_t timerBase;
@@ -277,9 +412,11 @@ void stopPwmRead(uint8_t timerNum)
   TimerIntDisable(timerBase, TIMER_CAPA_EVENT | TIMER_TIMB_TIMEOUT);
   
   //reset data structure for that timer
-  initData(timerNum, data->timerLoad);
+  initData(timerNum, data->timerLoad, 0);
 }
 
+//returns last pwm transmission's duty cycle of the pwm pin
+//associated with the passed timer
 uint8_t getDuty(uint8_t timerNum)
 {
   timerData *data[5] = {&timer1Data, &timer2Data, &timer3Data, &timer4Data, &timer5Data};
@@ -290,6 +427,8 @@ uint8_t getDuty(uint8_t timerNum)
   }
 }
 
+//returns last pwm transmission's total period of the pwm pin
+//associated with the passed timer
 uint16_t getTotalPeriod_us(uint8_t timerNum)
 {
   timerData *data[5] = {&timer1Data, &timer2Data, &timer3Data, &timer4Data, &timer5Data};
@@ -313,6 +452,8 @@ uint16_t getTotalPeriod_us(uint8_t timerNum)
   }
 }
 
+//returns the on period for the last captured PWM pulse
+//on the line associated with the passed timer
 uint16_t getOnPeriod_us(uint8_t timerNum)
 {
   timerData *data[5] = {&timer1Data, &timer2Data, &timer3Data, &timer4Data, &timer5Data};
@@ -335,9 +476,21 @@ uint16_t getOnPeriod_us(uint8_t timerNum)
   }  
 }
 
-static void initData(uint8_t timerNum, uint32_t timerLoad)
+//initializes data for the pwm line associated with the passed
+//timer
+static void initData(uint8_t timerNum, uint32_t timerLoad, uint8_t pinInitState)
 {
   timerData *data[5] = {&timer1Data, &timer2Data, &timer3Data, &timer4Data, &timer5Data};
+  Pinstate pinState;
+
+  if(pinInitState == 0)
+  {
+    pinState = pulseL;
+  }
+  else
+  {
+    pinState = pulseH;
+  }
 
   if(1 <= timerNum && timerNum <= 5)
   {
@@ -349,10 +502,11 @@ static void initData(uint8_t timerNum, uint32_t timerLoad)
     data[timerNum - 1] -> timerLoad = timerLoad;
     data[timerNum - 1] -> periodIncalculable = false;
     data[timerNum - 1] -> edgeRecieved = false;
-    data[timerNum - 1] -> pinState = pulseL;
+    data[timerNum - 1] -> pinState = pinState;
   }
 }
 
+//initializes timer, and turns on its interrupts
 static bool initTimer(uint32_t timerLoad, uint8_t timerNum)
 {
   uint32_t timerBase;
@@ -443,7 +597,9 @@ static bool initTimer(uint32_t timerLoad, uint8_t timerNum)
   return(true);
 }
 
-static bool initGPIO(uint8_t portLetter, uint8_t pinNum)
+//initializes the gpio pin used for reading the pwm pulse, 
+//and configures it for usage by the appropriate timer
+static bool initGPIO(uint8_t portLetter, uint8_t pinNum, uint8_t * pinInitState)
 {
   uint32_t portBase;
   uint8_t portRefNum;
@@ -498,10 +654,25 @@ static bool initGPIO(uint8_t portLetter, uint8_t pinNum)
   //initialize port
   SysCtlPeripheralEnable(portPeriph);
 
+  //get the pin initial reading
+  GPIOPinTypeGPIOInput(portBase, pinMacro);
+  if(((GPIOPinRead(portBase, pinMacro)) & pinMacro) == 0)
+  {
+    *pinInitState = 0; //PinRead returns pinMacro if pin is high, 0 if low, so return & pinMacro == 0 if low
+  }
+  else
+  {
+    *pinInitState = 1;
+  }
+
   //enable pin for timer usage
   GPIOPinTypeTimer(portBase, pinMacro);
 
   //configure pin for timer usage (yes it's a different function)
+  if(timerPinNameTable[portRefNum] [pinNum] == 0)
+  {
+    return(false); //user input a combination that isn't used
+  }
   GPIOPinConfigure(timerPinNameTable[portRefNum] [pinNum]);
 
   return(true);

@@ -15,6 +15,17 @@ typedef enum ArmCommandIds
   ArmJ6 = 0x326
 } ArmCommandIds;
 
+typedef enum ArmCommandIds_LastYear
+{
+  LY_ArmStop = 206,
+  LY_ArmJ1 = 205,
+  LY_ArmJ2 = 207,
+  LY_ArmJ3 = 204,
+  LY_ArmJ4 = 203,
+  LY_ArmJ5 = 202,
+  LY_ArmJ6 = 201
+} ArmCommandIds_LastYear;
+
 //enum representing the different endefector commands we can receive from base station.
 //There is a spreadsheet for these under rovesodrive under software architecture 
 typedef enum EndefCommandIds

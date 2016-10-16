@@ -35,36 +35,37 @@ void loop() {
     
     roveComm_GetMsg(&commandId, &commandSize, &commandData);
     passEndefToBase();
-    
     if((commandSize == 1 || commandSize == 2) && commandId != 0) //command packets come in 1 or 2 bytes. If it's any other size, there was probably a comm error
     {
+      if(commandData != 0)
+         Serial.println(commandId, DEC);
       watchdogTimer_us = 0; //reset watchdog timer since we received a command
       
-      if(commandId == ArmStop)
+      if(commandId == ArmStop || commandId == LY_ArmStop)
       {
         result = stopArm();
       }
-      else if(commandId == ArmJ1)
+      else if(commandId == ArmJ1 || commandId == LY_ArmJ1)
       {
         result = moveJ1(commandData);  
       }
-      else if(commandId == ArmJ2)
+      else if(commandId == ArmJ2 || commandId == LY_ArmJ2)
       {
         result = moveJ2(commandData);
       }
-      else if(commandId == ArmJ3)
+      else if(commandId == ArmJ3 || commandId == LY_ArmJ3)
       {
         result = moveJ3(commandData);
       }
-      else if(commandId == ArmJ4)
+      else if(commandId == ArmJ4 || commandId == LY_ArmJ4)
       {
         result = moveJ4(commandData);
       }
-      else if(commandId == ArmJ5)
+      else if(commandId == ArmJ5 || commandId == LY_ArmJ5)
       {
         result = moveJ5(commandData);
       }
-      else if(commandId == ArmJ6)
+      else if(commandId == ArmJ6 || commandId == LY_ArmJ6)
       {
         result = moveJ6(commandData);
       }
@@ -102,7 +103,8 @@ void loop() {
 
 void initialize()
 {
-  roveComm_Begin(IP_ADDRESS[0], IP_ADDRESS[1], IP_ADDRESS[2], IP_ADDRESS[3]);
+  roveComm_Begin(192, 168, 1, 131);
+  Serial.begin(9600);
 }
 
 CommandResult sendMsgToEndef(uint16_t dataId, size_t dataSize, void * data)
@@ -117,7 +119,7 @@ void passEndefToBase()
 
 CommandResult stopArm()
 {
-  
+  //Serial.println("Stop arm");
 }
 
 CommandResult moveJ1(int16_t moveValue)
