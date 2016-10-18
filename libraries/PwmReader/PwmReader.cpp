@@ -1,4 +1,6 @@
-/* Algorithm description:
+/* Update 10/17/16: under nominal PWM conditions, return values work on timer 1. Edge conditions do not work, timeout interrupt is buggy as hell, currently disabled in timer setup
+ *  
+ *  Algorithm description:
    How this works is that a timer module is set up so that its 
    timer A (each module actually has 2 mini timers inside, A and  
    B) will be put into edge-time-capture mode, and timer B gets 
@@ -136,6 +138,9 @@ static void initData(uint8_t timerNum, uint32_t timerLoad, uint8_t pinInitState)
 //for their usage
 static timerData timer1Data, timer2Data, timer3Data, timer4Data, timer5Data;
 
+static uint8_t pinMacro;
+static uint32_t portBase;
+
 //interrupt handler for timer 1's timeout event. 
 static void timeout1Handler()
 {
@@ -240,6 +245,7 @@ static void timeoutGenHandler(timerData * data)
   {
     if(data->pinState == pulseL) //transmission ended/0% duty. Put data back into init state
     {
+      //Serial.println("Resetting due to 0%");
       data->tr = 0;
       data->tf = 0;
       data->tOn = 0;
@@ -254,6 +260,7 @@ static void timeoutGenHandler(timerData * data)
     //the capture routine to not calculate duty for a cycle
     else if(data->pinState == pulseH)
     {
+      //Serial.println("Resetting due to 100%");
       data->tr = 0;
       data->tf = 0;
       data->tOn = 0;
@@ -280,27 +287,29 @@ static void timeoutGenHandler(timerData * data)
 //any reason, the calculations are skipped for this one cycle
 static void edgeCaptureGenHandler(timerData * data, uint32_t timerBase)
 {
+  uint16_t valueFirst16 = 0;
+  uint8_t valueLast8 = 0;
   data->edgeRecieved = true;
   
-  //if last captured state was low, then it has now triggered on a high
-  //rising edge capture: calculate time of the off period based on the 
+  //If pin is high, we recieved rising edge. Calculate time of the off period based on the 
   //newly captured time of the rise capture minus the time of the last
   //recorded fall capture, IE the time the line was low. 
   //Also since this is usually the end of the PWM period, calculate 
   //duty cycle at this step unless the period was incalculable
-  if(data->pinState == pulseL)
+  if(GPIOPinRead(portBase, pinMacro) > 0)
   {
     data->pinState = pulseH;
-
-     data->tr = TimerValueGet(timerBase, TIMER_A);
+    valueFirst16 = HWREG(timerBase + TIMER_O_TAR); //first 16 bits of timer snapshot in timer register
+    valueLast8 = HWREG(timerBase + TIMER_O_TAPS);  //last 8 bits of timer snapshot in timer prescale snapshot register
+    data->tr = (int64_t)((uint32_t)valueFirst16 + (uint32_t)((uint32_t)valueLast8 << 16)); //put the two together into one 24 bit value
 
     //if the newly read value is less than the last recorded val, timer reset in between readings. For calculation of tOff, set tf down the timer period
     if(data->tr <  data->tf)
     {
-      data->tf -=  data->timerLoad; 
+      data->tf -=  (int64_t) data->timerLoad; 
     }
 
-     data->tOff = data->tr -  data->tf;
+    data->tOff = (uint32_t)(data->tr -  data->tf);
 
     if(!data->periodIncalculable)
     {
@@ -324,13 +333,16 @@ static void edgeCaptureGenHandler(timerData * data, uint32_t timerBase)
           
     if(!data->periodIncalculable) //if period is noted to be incalculable this cycle, skip it
     { 
-      data->tf = TimerValueGet(timerBase, TIMER_A);
+      valueFirst16 = HWREG(timerBase + TIMER_O_TAR);
+      valueLast8 = HWREG(timerBase + TIMER_O_TAPS);
+      data->tf = (int64_t)((uint32_t)valueFirst16 + (uint32_t)((uint32_t)valueLast8 << 16));
+      
       if(data->tf < data->tr)
       {
-        data->tr -= data->timerLoad;
+        data->tr -= (int64_t)data->timerLoad;
       }
 
-      data->tOn = data->tf - data->tr;      
+      data->tOn = (uint32_t)(data->tf - data->tr);     
     }
   }
 }
@@ -343,7 +355,7 @@ bool initPwmRead(char gpioPort, uint8_t pinNumber, uint32_t expectedFrequecy, ui
   bool successfulInit;
   uint8_t pinInitialState;
 
-  uint32_t timerLoad = SysClockFreq/expectedFrequecy; //speed of timer ticks (120Mhz) / x freq = amount of timer ticks so that timer hits its load value at x freq. IE 120Mhz / 6000 ticks = 20Khz output
+  uint32_t timerLoad = 16777215; //2^24 - 1, max load
   
   if(timerNumber > 5 || timerNumber < 1) //can only use timers 1-5
   {
@@ -429,10 +441,10 @@ uint8_t getDuty(uint8_t timerNum)
 
 //returns last pwm transmission's total period of the pwm pin
 //associated with the passed timer
-uint16_t getTotalPeriod_us(uint8_t timerNum)
+uint32_t getTotalPeriod_us(uint8_t timerNum)
 {
   timerData *data[5] = {&timer1Data, &timer2Data, &timer3Data, &timer4Data, &timer5Data};
-  uint16_t totalPeriod_us;
+  uint32_t totalPeriod_us;
   
   if(1 <= timerNum && timerNum <= 5)
   {
@@ -440,38 +452,38 @@ uint16_t getTotalPeriod_us(uint8_t timerNum)
     uint32_t tOff = data[timerNum - 1] -> tOff;
     uint32_t tOn = data[timerNum - 1] -> tOn;
     
-    if(duty == 100 || duty == 0)
+    /*if(duty == 100 || duty == 0)
     {
       return(0);
-    }
+    }*/
 
     //tOff + tOn = period in timer clock ticks (assumed to be using system clock). Divided by SysClockFreq = period in seconds. Times 1,000,000 = period in microseconds
-    totalPeriod_us = ((float)(1000000.0/(float)SysClockFreq) * (float)(tOn + tOff)); 
-    
+    float period_ticks = tOn + tOff;
+    float totalPeriods_s = period_ticks /SysClockFreq;
+    totalPeriod_us = (uint32_t) (1000000.0 * totalPeriods_s); 
     return(totalPeriod_us);
   }
 }
 
 //returns the on period for the last captured PWM pulse
 //on the line associated with the passed timer
-uint16_t getOnPeriod_us(uint8_t timerNum)
+uint32_t getOnPeriod_us(uint8_t timerNum)
 {
   timerData *data[5] = {&timer1Data, &timer2Data, &timer3Data, &timer4Data, &timer5Data};
-  uint16_t onPeriod_us;
+  uint32_t onPeriod_us;
   
   if(1 <= timerNum && timerNum <= 5)
   {
     uint8_t duty = data[timerNum - 1] -> duty;
     uint32_t tOn = data[timerNum - 1] -> tOn;
     
-    if(duty == 100 || duty == 0)
+    /*if(duty == 100 || duty == 0)
     {
       return(0);
-    }
-    
+    }*/
+    float onPeriod_s = (float)tOn / SysClockFreq;
     //tOn = on period in timer clock ticks (assumed to be using system clock). Divided by SysClockFreq = period in seconds. Times 1,000,000 = period in microseconds
-    onPeriod_us = ((float)(1000000.0/(float)SysClockFreq) * (float)(tOn)); 
-    
+    onPeriod_us = (uint32_t)(onPeriod_s * 1000000); 
     return(onPeriod_us);
   }  
 }
@@ -569,6 +581,9 @@ static bool initTimer(uint32_t timerLoad, uint8_t timerNum)
   //enable timer hardware
   SysCtlPeripheralEnable(timerPeriph);
 
+  //set clock to main system clock
+  TimerClockSourceSet(timerBase, TIMER_CLOCK_PIOSC);
+
   //configure timer A for count-up capture edge time, and timer B as count up periodic
   TimerConfigure(timerBase, (TIMER_CFG_SPLIT_PAIR | TIMER_CFG_A_CAP_TIME_UP | TIMER_CFG_B_PERIODIC_UP));
 
@@ -576,23 +591,26 @@ static bool initTimer(uint32_t timerLoad, uint8_t timerNum)
   TimerControlEvent(timerBase, TIMER_A, TIMER_EVENT_BOTH_EDGES);
 
   //set timer loads. Both loads in sync
-  TimerLoadSet(timerBase, TIMER_A, timerLoad);
-  TimerLoadSet(timerBase, TIMER_B, timerLoad);
+
+  TimerLoadSet(timerBase, TIMER_A, (timerLoad & 0xFFFF)); //load register only holds first 16 bits
+  TimerPrescaleSet(timerBase, TIMER_A, (uint8_t)(timerLoad >> 16)); //prescale takes the last 8 bits
+  TimerLoadSet(timerBase, TIMER_B, (timerLoad & 0xFFFF)); //load register only holds first 16 bits
+  TimerPrescaleSet(timerBase, TIMER_B, (uint8_t)(timerLoad >> 16)); //prescale takes the last 8 bits
 
   //set up interrupts
   TimerIntClear(timerBase, TIMER_CAPA_EVENT | TIMER_TIMB_TIMEOUT);
   TimerIntEnable(timerBase, TIMER_CAPA_EVENT | TIMER_TIMB_TIMEOUT);
   IntEnable(enableTimerIntAVal| enableTimerIntBVal);
 
-  //register interrupt functions
+  //register interrupt functions 
   TimerIntRegister(timerBase, TIMER_A, (captureHandler));
-  TimerIntRegister(timerBase, TIMER_B, (timeHandler));
+  //TimerIntRegister(timerBase, TIMER_B, (timeHandler));
   
   //enable master system interrupt
   IntMasterEnable();
 
   //enable both timers -- they both begin after this
-  TimerEnable(timerBase, TIMER_BOTH);
+  TimerEnable(timerBase, TIMER_A);
 
   return(true);
 }
@@ -601,9 +619,7 @@ static bool initTimer(uint32_t timerLoad, uint8_t timerNum)
 //and configures it for usage by the appropriate timer
 static bool initGPIO(uint8_t portLetter, uint8_t pinNum, uint8_t * pinInitState)
 {
-  uint32_t portBase;
   uint8_t portRefNum;
-  uint8_t pinMacro;
   uint32_t portPeriph;
   
   if(pinNum >= 8) //pins have to be 0-7

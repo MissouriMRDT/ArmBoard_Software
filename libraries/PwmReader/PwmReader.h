@@ -36,11 +36,13 @@
 #include <Energia.h>
 #include <stdint.h>
 #include <stdbool.h>
-#include "inc/hw_ints.h"
-#include "inc/hw_memmap.h"
+#include "inc/hw_ints.h" //hardware constants for interrupts
+#include "inc/hw_memmap.h" //hardware memory for things such as peripheral device base address
+#include "inc/hw_types.h" //hardware macros such as HWREG which is a macro used to access registers
+#include "inc/hw_timer.h" //hardware constants for timers
 #include "driverlib/gpio.h"
 #include "driverlib/interrupt.h"
-#include "driverlib/pin_map.h"
+#include "driverlib/pin_map.h" //hardware memory map for things such as alternate pin mode constants, such as timer1 module's base address. No idea why it's not in inc/
 #include "driverlib/rom.h"
 #include "driverlib/sysctl.h"
 #include "driverlib/timer.h"
@@ -50,8 +52,8 @@ const uint8_t PortBRef = 0;
 const uint8_t PortDRef = 0;
 const uint8_t PortLRef = 0;
 const uint8_t PortMRef = 0;
-const uint32_t SysClockFreq = 120000000; //frequency of the system clock, which the timers use
-const uint8_t MinInputFreq = 8; //max value the timer can store is 2^24, which works out to being able to pulse at max 1/8 times a second. So lowest input freq is 8
+const float SysClockFreq = 16000000; //frequency of the internal precision clock, which the timers use
+const uint8_t MinInputFreq = 1; //max value the timer can store is 2^24, which works out to being able to pulse at max 1 times a second. 
 
 //Begins reading pwm pulses on the specified pin.
 //Input: The pin number 0-7
@@ -77,10 +79,10 @@ uint8_t getDuty(uint8_t timerNum);
 //the line being monitored by the specified timer, 1-5
 //Output: period of last transmission in microseconds
 //Note: Period will return 0 if duty is 100% or 0%
-uint16_t getTotalPeriod_us(uint8_t timerNum);
+uint32_t getTotalPeriod_us(uint8_t timerNum);
 
 //Gets the on period of the last tramsittted PWM signal for
 //the line monitored by the specified timer, 1-5
 //Output: On-period of pulse in microseconds
 //Note: Period will return 0 if duty is 100% or 0%
-uint16_t getOnPeriod_us(uint8_t timerNum);
+uint32_t getOnPeriod_us(uint8_t timerNum);
