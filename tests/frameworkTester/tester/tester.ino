@@ -17,9 +17,9 @@
 
 #include "arm.h";
 
-
-interface * inHerFace;
-controllerType * controller;
+FeedbackDevice* feedbackDevice;
+ControlFrameworkInterface * inHerFace;
+OutputDevice * controller;
 
 void setup() {} //fuck you setup
 
@@ -34,7 +34,7 @@ void loop() {
 
   while(1)
   {
-    inHerFace -> mov(100);
+    inHerFace -> runOutputControl(100);
     delay(1000);
   }
   
@@ -118,9 +118,9 @@ void initialize()
   //init control devices
   int pinInFwd = 1;
   int pinInRev = 2;
-  controller = new directDiscreteHBridge(pinInFwd, pinInRev);
-  inHerFace = new interface(spd, noFeed, controller);
-  
+  feedbackDevice = NULL;
+  controller = new DirectDiscreteHBridge(pinInFwd, pinInRev);
+  inHerFace = new ControlFrameworkInterface(spd, feedbackDevice, controller);
 }
 
 CommandResult sendMsgToEndef(uint16_t dataId, size_t dataSize, void * data)
