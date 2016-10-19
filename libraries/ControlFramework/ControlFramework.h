@@ -128,8 +128,20 @@
         controller = cont;
         feedback = feedDevPointer;
 
-        //selects algorithm (only one currently)
-        if((controller->outType == spd) && inType == spd && feedback == NULL)
+        // insert code for feedback device
+      }
+
+      // Constructor for the control framework interface when no feedback device is specified
+      ControlFrameworkInterface(InputType inputType, OutputDevice * cont)
+      {
+        //assignments
+        inType = inputType;
+        controller = cont;
+        feedback = NULL;
+
+
+        //selects algorithm w/o feedback (only one currently)
+        if((controller->outType == spd) && inType == spd)
         {
           manip = new SpdToSpdNoFeedAlgorithm();
         }
