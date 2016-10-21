@@ -1,5 +1,5 @@
 /* Update 10/17/16: under nominal PWM conditions, return values work on timer 1. Edge conditions do not work, timeout interrupt is buggy as hell, currently disabled in timer setup
- * Update 10/20/16: works for 0% and 100%. All pins tested. It appears timer 4 isn't functioning for some reason
+ * Update 10/20/16: works for 0% and 100%. All pins tested. 
  *  Algorithm description:
    How this works is that a timer module is set up so that its 
    timer A (each module actually has 2 mini timers inside, A and  
