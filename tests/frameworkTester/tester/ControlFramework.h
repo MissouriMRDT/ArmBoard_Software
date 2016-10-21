@@ -59,9 +59,10 @@
       //dont confuse with inType from base station.
       InputType outType;
 	  
-	  //used for if the specific controller is mounted upside down (other conversions are take care of elsewhere)
-	  //True means invert the signal (upside down) False means just send the signal
-	  bool invert;
+	    //used for if the specific controller is mounted backwards on a two motor joint. 
+	    //Only one motor should be inverted per two motor joint
+	    //True means invert the signal (backwards) False means just send the signal
+	    bool invert;
   };
 
   //Discrete H Bridge controlled directly by the microcontroller, which has only two inputs to control forward and backwards. 

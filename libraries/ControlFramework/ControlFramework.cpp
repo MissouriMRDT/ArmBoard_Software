@@ -86,10 +86,8 @@ void TiltJoint::runOutputControl(const int movement)
   //contoller 1 and 2 need to be fixed but currently have no defined rule on how each motor is defined.
   //send to the motor move command
   controller1->move(mov);
-  
-  //negate the signal to make motors mounted opposite eachother work together
-  mov = -mov;
-  
+
+  //both the controllers should move the arm in the same direction
   //send command to motor 2
   controller2->move(mov);
   
@@ -140,7 +138,9 @@ void RotateJoint::runOutputControl(const int movement)
   //send to the motor move command
   controller1->move(mov);
   
-  //since the motors are supposed to work against eachother to rotate, the motors which are mounted opposite of eachother can recieve the same input
+  //since the motors are supposed to work against eachother to rotate send the negative to controller 2
+  mov = -mov;
+  
   //send command to motor 2
   controller2->move(mov);
   

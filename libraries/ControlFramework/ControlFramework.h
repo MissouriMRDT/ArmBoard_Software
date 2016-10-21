@@ -59,9 +59,10 @@
       //dont confuse with inType from base station.
       InputType outType;
 	  
-	  //used for if the specific controller is mounted upside down (other conversions are take care of elsewhere)
-	  //True means invert the signal (upside down) False means just send the signal
-	  bool invert;
+	    //used for if the specific controller is mounted backwards on a two motor joint. 
+	    //Only one motor should be inverted per two motor joint
+	    //True means invert the signal (backwards) False means just send the signal
+	    bool invert;
   };
 
   //Discrete H Bridge controlled directly by the microcontroller, which has only two inputs to control forward and backwards. 
@@ -113,27 +114,25 @@
 	  //Called in the constructor for each of the sub classes to determine which algorithm needs to be used.
 	  //Different selectors are used for open loop and feedback methods
 	  //Takes in an output device during the construction of the Joint Interface and selects an algorithm for it
-	  
-	  //really doesnt like having function put in the .cpp when it is part of the base class
 	  void selector(FeedbackDevice* feedback, InputType outputDeviceType, IOAlgorithm *alg)
-      {
+    {
       //selects algorithm (only one currently)
       if((outputDeviceType == spd) && inType == spd)
       {
         alg = new SpdToSpdNoFeedAlgorithm();
       }
-      return;  
-      }
+    return;  
+    }
     
-      void selector(InputType outputDeviceType, IOAlgorithm* alg)
-      {
+    void selector(InputType outputDeviceType, IOAlgorithm* alg)
+    {
       //selects algorithm (not yet implemented)
       if((outputDeviceType == spd) && inType == spd)
       {
         //*alg = new SpdToSpdFeedAlgorithm();
       }
       return;
-      }
+    }
 	  
       //expected input type from base station(speed or position)
       InputType inType;
@@ -147,11 +146,10 @@
       FeedbackDevice* feedback;
 	  
     public:
-
       //pass the input recieved from base station directly to the function. Calls algorithm and move functions within this funciton.
       //Must pass an integer for this implementation. Will break otherwise.
 	    virtual void runOutputControl(const int movement);
-  };
+    };
 	  
   class SingleMotorJoint : public JointInterface{
     protected:
