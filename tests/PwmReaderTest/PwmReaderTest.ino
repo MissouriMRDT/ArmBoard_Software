@@ -1,4 +1,4 @@
-#include <PwmReader.h>
+#include "PwmReader.h"
 #include "driverlib/pwm.h"
 
 float sysClockFreq;
@@ -6,17 +6,14 @@ float sysClockFreq;
 void setup()
 {
   Serial.begin(9600);
-  /*
-  sysClockFreq = SysCtlClockFreqSet(SYSCTL_OSC_INT | SYSCTL_CFG_VCO_320 | SYSCTL_USE_PLL , 15000000); //use the PLL to generate a 320 MHZ clock, with the PLL referencing the internal oscilattor. Convert it into 40,000,000 Mhz for overall system clock
-  setupPwmWrite(4098, 4095);
-  */
-  initPwmRead('A', 2, 1000, 1); //pin A2 -- associated with timer 1 -- shall read a pwm signal with an expected frequency of 500 hz
+  //sysClockFreq = SysCtlClockFreqSet(SYSCTL_OSC_INT | SYSCTL_CFG_VCO_320 | SYSCTL_USE_PLL , 15000000); //use the PLL to generate a 320 MHZ clock, with the PLL referencing the internal oscilattor. Convert it into 40,000,000 Mhz for overall system clock
+  //setupPwmWrite(4098, 10);
+  initPwmRead('M', 4); //pin A2 -- associated with timer 1 -- shall read a pwm signal
 }
 
 void loop()
 {
-  
-  uint32_t onPeriod = getTotalPeriod_us(1);
+  uint32_t onPeriod = getOnPeriod_us('M', 4);
   delay(500);
   Serial.println(onPeriod, DEC);
   
