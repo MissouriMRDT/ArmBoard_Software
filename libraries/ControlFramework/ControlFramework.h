@@ -113,25 +113,27 @@
 	  //Called in the constructor for each of the sub classes to determine which algorithm needs to be used.
 	  //Different selectors are used for open loop and feedback methods
 	  //Takes in an output device during the construction of the Joint Interface and selects an algorithm for it
+	  
+	  //really doesnt like having function put in the .cpp when it is part of the base class
 	  void selector(FeedbackDevice* feedback, InputType outputDeviceType, IOAlgorithm *alg)
-    {
+      {
       //selects algorithm (only one currently)
       if((outputDeviceType == spd) && inType == spd)
       {
         alg = new SpdToSpdNoFeedAlgorithm();
       }
-    return;  
-    }
+      return;  
+      }
     
-    void selector(InputType outputDeviceType, IOAlgorithm* alg)
-    {
+      void selector(InputType outputDeviceType, IOAlgorithm* alg)
+      {
       //selects algorithm (not yet implemented)
       if((outputDeviceType == spd) && inType == spd)
       {
         //*alg = new SpdToSpdFeedAlgorithm();
       }
       return;
-    }
+      }
 	  
       //expected input type from base station(speed or position)
       InputType inType;
@@ -145,46 +147,11 @@
       FeedbackDevice* feedback;
 	  
     public:
-<<<<<<< HEAD
-=======
-      //Constructor for the control framework interface. it is passed an inputType, feedback device pointer and output device pointer
-      //With this info selects an algorithm. 
-      //NOTE: the feedback device pointer should be NULL if no feedback device is used
-      //NOTE: It is inlined due to an error which was not understood. This was the most simple way we found of making it work. Dont move to .cpp unless you can solve the error and test to make sure everything works.
-      ControlFrameworkInterface(InputType inputType, FeedbackDevice * feedDevPointer, OutputDevice * cont)
-      {
-        //assignments
-        inType = inputType;
-        controller = cont;
-        feedback = feedDevPointer;
 
-        // insert code for feedback device
-      }
-
-      // Constructor for the control framework interface when no feedback device is specified
-      ControlFrameworkInterface(InputType inputType, OutputDevice * cont)
-      {
-        //assignments
-        inType = inputType;
-        controller = cont;
-        feedback = NULL;
-
-
-        //selects algorithm w/o feedback (only one currently)
-        if((controller->outType == spd) && inType == spd)
-        {
-          manip = new SpdToSpdNoFeedAlgorithm();
-        }
-      }
-
-      //destructor since there are pointers being used
-      ~ControlFrameworkInterface();       
-
->>>>>>> origin/development
       //pass the input recieved from base station directly to the function. Calls algorithm and move functions within this funciton.
       //Must pass an integer for this implementation. Will break otherwise.
 	    virtual void runOutputControl(const int movement);
-    };
+  };
 	  
   class SingleMotorJoint : public JointInterface{
     protected:
