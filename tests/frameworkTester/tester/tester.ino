@@ -18,7 +18,7 @@
 #include "arm.h";
 
 FeedbackDevice* feedbackDevice;
-ControlFrameworkInterface * inHerFace;
+JointInterface * inHerFace;
 OutputDevice * controller;
 
 void setup() {} //fuck you setup
@@ -119,8 +119,8 @@ void initialize()
   int pinInFwd = 1;
   int pinInRev = 2;
   feedbackDevice = NULL;
-  controller = new DirectDiscreteHBridge(pinInFwd, pinInRev);
-  inHerFace = new ControlFrameworkInterface(spd, feedbackDevice, controller);
+  controller = new DirectDiscreteHBridge(pinInFwd, pinInRev, 0);
+  inHerFace = new SingleMotorJoint(spd, controller);
 }
 
 CommandResult sendMsgToEndef(uint16_t dataId, size_t dataSize, void * data)
