@@ -4,8 +4,8 @@
  * Hardware components used by this file: Internal timers 1-5
  * 
  * Update 10/17/16: under nominal PWM conditions, return values work on timer 1. Edge conditions do not work, timeout interrupt is buggy as hell, currently disabled in timer setup
- * Update 10/20/16: works for 0% and 100%. All pins tested.
-   Update 10/21/16: Works when all 5 are on at once
+ * Update 10/20/16: works for 0% and 100%. All pins tested. It appears timer 4 isn't functioning for some reason
+ 
  * 
  * Description: This library is used to read a pwm signal on 
  * pins utilized by timers 1-5. The program is started by calling the 
@@ -25,9 +25,10 @@
  *
  * Warnings: The file triggers interrupts quite frequently, 
  * once ever time the voltage on the pin changes and a second 
- * timed interrupt that occurs roughly once every half a second
- * (it's there to basically monitor the line and detect
- * if the line has 0% or 100% duty). It can be processor-intensive.
+ * timed interrupt that occurs roughly once the same time as the edge-monitoring timer
+ * period (it's there to basically monitor the line and detect
+ * if the line has 0% or 100% duty). It can be processor-
+ * intensive, depending on how fast the pwm frequency is.
  * Also the first pulse of a transmission can sometimes be 
  * disregarded as garbage data depending on conditions, 
  * though this doesn't tend to matter in pwm transmissions.
@@ -48,6 +49,9 @@
 #include "driverlib/rom.h"
 #include "driverlib/sysctl.h"
 #include "driverlib/timer.h"
+
+const float SysClockFreq = 16000000; //frequency of the internal precision clock, which the timers use
+const uint8_t MinInputFreq = 1; //max value the timer can store is 2^24-1, which works out to being able to pulse at max 1 times a second with SysClockFreq of 16,000,000 hz
 
 //Begins reading pwm pulses on the specified pin.
 //Input: The pin number 0-7

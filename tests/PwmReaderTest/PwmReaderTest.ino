@@ -8,40 +8,15 @@ void setup()
   Serial.begin(9600);
   //sysClockFreq = SysCtlClockFreqSet(SYSCTL_OSC_INT | SYSCTL_CFG_VCO_320 | SYSCTL_USE_PLL , 15000000); //use the PLL to generate a 320 MHZ clock, with the PLL referencing the internal oscilattor. Convert it into 40,000,000 Mhz for overall system clock
   //setupPwmWrite(4098, 10);
-
-  
-  initPwmRead('A', 2); //pin A2 -- associated with timer 1 -- shall read a pwm signal
-  initPwmRead('A', 4); //pin A4 -- associated with timer 2 -- shall read a pwm signal
-  initPwmRead('A', 6); //pin A6 -- associated with timer 3 -- shall read a pwm signal
-  initPwmRead('B', 0); //pin B0 -- associated with timer 4 -- shall read a pwm signal
-  initPwmRead('B', 2); //pin B2 -- associated with timer 5 -- shall read a pwm signal
+  initPwmRead('M', 4); //pin A2 -- associated with timer 1 -- shall read a pwm signal
 }
 
 void loop()
 {
-  
-  uint32_t onPeriod;
+  uint32_t onPeriod = getOnPeriod_us('M', 4);
   delay(500);
+  Serial.println(onPeriod, DEC);
   
-  onPeriod = getOnPeriod_us('A', 2);
-  Serial.print("timer1: ");
-  Serial.println(onPeriod, DEC);
-
-  onPeriod = getOnPeriod_us('A', 4);
-  Serial.print("timer2: ");
-  Serial.println(onPeriod, DEC);
-
-  onPeriod = getOnPeriod_us('A', 6);
-  Serial.print("timer3: ");
-  Serial.println(onPeriod, DEC);
-
-  onPeriod = getOnPeriod_us('B', 0);
-  Serial.print("timer4: ");
-  Serial.println(onPeriod, DEC);
-
-  onPeriod = getOnPeriod_us('B', 2);
-  Serial.print("timer5: ");
-  Serial.println(onPeriod, DEC);
 }
 
 void setupPwmWrite(float totalPulsePeriod_us, float onPeriod_us)
