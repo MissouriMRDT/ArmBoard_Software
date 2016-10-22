@@ -1,0 +1,9 @@
+Algorithms:
+*Spd to Spd no feedback: For inputting speed and outputting speed without feedback. Open loop speed control.
+
+
+
+Devices:
+*DirectDiscreteHBridge: An h bridge made out of discrete components (not an IC), and the microcontroller lines directly
+control it (no other devices in between them). Two inputs, N transistor 1 and N transistor 2. It's assumed the other 
+two transistors will be P transistors so they don't need control lines to the microcontroller. 
