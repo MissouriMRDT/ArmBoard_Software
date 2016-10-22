@@ -1,5 +1,6 @@
 /* Update 10/17/16: under nominal PWM conditions, return values work on timer 1. Edge conditions do not work, timeout interrupt is buggy as hell, currently disabled in timer setup
- * Update 10/20/16: works for 0% and 100%. All pins tested. It appears timer 4 isn't functioning for some reason
+ * Update 10/20/16: works for 0% and 100%. All pins tested. 
+ * Update 10/21/16: Works when all 5 are on at once
  *  Algorithm description:
    How this works is that a timer module is set up so that its 
    timer A (each module actually has 2 mini timers inside, A and  
@@ -29,8 +30,8 @@
    then you can no longer tell based on the 'is it smaller than
    previous' technique, restricting the PWM reader library 
    to only being able to read PWM signals with periods equal to 
-   or smaller than the maximum timer period, which is 2^24 in 
-   clock ticks. 
+   or smaller than the maximum timer period, which is 2^24-1 in 
+   clock ticks or a pulse of 1.04 seconds with the 16Mhz clock. 
 
    While this works for nominal readings, we have to be wary of 
    non nominal conditions such as 0% duty cycle and 100% duty 
@@ -67,6 +68,11 @@
    The library is built to do this for all 5 timers that can be
    used if need be. 
 
+   I also made a bunch of static const lookup tables for the 
+   hardware references, just so the user of this library could 
+   have very general inputs without having to worry about 
+   setting the hardware up
+
 */
 
 #include "PwmReader.h"
@@ -77,20 +83,30 @@ const uint8_t PortDRef = 2;
 const uint8_t PortLRef = 3;
 const uint8_t PortMRef = 4;
 
+const float SysClockFreq = 16000000; //frequency of the internal precision clock, which the timers use
+
 //Table for the pin number macros -- the tiva hardware drivers
 //don't take 0-7 for pins but these special constants. 
 //Input: desired pin constant 0-7
 //Output: pin constant that can actually be passed to tiva's 
 //hardware drivers for pins 0-7
-static const uint8_t gpioPinNumberTable[8] = {GPIO_PIN_0 , GPIO_PIN_1 , GPIO_PIN_2 , GPIO_PIN_3 , GPIO_PIN_4 , GPIO_PIN_5 , GPIO_PIN_6 , GPIO_PIN_7 };
+static const uint8_t pinMacroTable[8] = {GPIO_PIN_0 , GPIO_PIN_1 , GPIO_PIN_2 , GPIO_PIN_3 , GPIO_PIN_4 , GPIO_PIN_5 , GPIO_PIN_6 , GPIO_PIN_7 };
 
+//table containing base addresses of the GPIO port's peripheral enable constants.
+//input: reference number for gpio port, based on the 'PortXRef' constants
+//output: constant used with the 'SysCtlPeriphEnable' function to turn on this gpio port
+static const uint32_t pinPortPeriphTable[5] = {SYSCTL_PERIPH_GPIOA, SYSCTL_PERIPH_GPIOB, SYSCTL_PERIPH_GPIOD, SYSCTL_PERIPH_GPIOL, SYSCTL_PERIPH_GPIOM};
+
+//table containing the base addresses of the GPIO ports used in this program
+//input: 0-4, representing port a, b, d, l, and m
+//output: base hardware address of the port
 static const uint32_t pinPortBaseTable[5] = {GPIO_PORTA_BASE, GPIO_PORTB_BASE, GPIO_PORTD_BASE, GPIO_PORTL_BASE, GPIO_PORTM_BASE};
 
 //Table for special timer pin names. Use this table to get 
 //the constant needed for the 'GPIOPinConfigure' function
 //input: GPIO port being used (A,B,D,L,M, as 0-4)
 // and pin number being used, 0-7
-static const uint32_t timerPinNameTable[5][8] = 
+static const uint32_t timerPinConfigTable[5][8] = 
 {
   {0, 0, GPIO_PA2_T1CCP0, GPIO_PA3_T1CCP1, GPIO_PA4_T2CCP0, GPIO_PA5_T2CCP1, GPIO_PA6_T3CCP0, GPIO_PA7_T3CCP1}, //A0-A7
   {GPIO_PB0_T4CCP0, GPIO_PB1_T4CCP1, GPIO_PB2_T5CCP0, GPIO_PB3_T5CCP1, 0, 0, 0, 0}, //B0-B7
@@ -99,7 +115,9 @@ static const uint32_t timerPinNameTable[5][8] =
   {GPIO_PM0_T2CCP0, GPIO_PM1_T2CCP1, GPIO_PM2_T3CCP0, GPIO_PM3_T3CCP1, GPIO_PM4_T4CCP0, GPIO_PM5_T4CCP1, GPIO_PM6_T5CCP0, GPIO_PM7_T5CCP1}  //M0-M7
 };
 
-//table for referencing which timer number is related to which 
+//table for referencing which timer number is related to which gpio port and pin
+//input: [0-4 for a,b,d,l, and m] [0-7 for pins 0-7]
+//output: 1 for timer 1, 2 for timer 2, etc. 0 if nothing on that port-pin combo
 static const uint8_t pinToTimerNumberTable[5][8] = 
 {
   {0, 0, 1, 0, 2, 0, 3, 0}, //A0-A7
@@ -109,8 +127,12 @@ static const uint8_t pinToTimerNumberTable[5][8] =
   {2, 0, 3, 0, 4, 0, 5, 0}  //M0-M7
 };
 
+//table for referencing timer number to their hardware base addresses
+//input: 0-4 for timer 1, 2, 3, 4, 5
+//output: base hardware address of the timer
 static const uint32_t timerBaseTable[5] = {TIMER1_BASE, TIMER2_BASE, TIMER3_BASE, TIMER4_BASE, TIMER5_BASE};
 
+//number of timers used in this program
 static const int NumberOfTimersUsed = 5;
 
 //enum that keeps track of pin's last known reading state
@@ -354,7 +376,7 @@ static void edgeCaptureGenHandler(timerData * data, uint32_t timerBase)
   {
     data->pinState = pulseH;
     valueFirst16 = HWREG(timerBase + TIMER_O_TAR); //first 16 bits of timer snapshot in timer register
-    valueLast8 = HWREG(timerBase + TIMER_O_TAPS);  //last 8 bits of timer snapshot in timer prescale snapshot register
+    valueLast8 = HWREG(timerBase + TIMER_O_TAPS);  //last 8 bits of timer snapshot in timer prescale snapshot register. This was NOT in the driverlib, before anyone whines
     data->tr = (int64_t)((uint32_t)valueFirst16 + (uint32_t)((uint32_t)valueLast8 << 16)); //put the two together into one 24 bit value
 
     //if the newly read value is less than the last recorded val, timer reset in between readings. For calculation of tOff, set tf down the timer period
@@ -438,24 +460,6 @@ bool initPwmRead(char gpioPort, uint8_t pinNumber)
   }
 }
 
-//pass in a gpioport letter and number such as 'a' and '2', and it returns
-//which timer is associated from it, 1 - 5. Returns 0 if no timer uses that pin port and pin number
-static uint8_t getTimerNumber(char portLetter, uint8_t pinNumber)
-{
-  uint8_t portRefNum;
-  uint8_t timerNumber;
-
-  portRefNum = getPortRefNum(portLetter);
-  if(portRefNum == -1)
-  {
-    return(0);
-  }
-
-  timerNumber = pinToTimerNumberTable[portRefNum][pinNumber];
-
-  return(timerNumber);
-}
-
 //stops reading pwm on the pin associated with the 
 //passed timer
 void stopPwmRead(char portLetter, uint8_t pinNumber)
@@ -482,7 +486,7 @@ void stopPwmRead(char portLetter, uint8_t pinNumber)
   {
     return;
   }
-  pinMacro = gpioPinNumberTable[pinNumber];
+  pinMacro = pinMacroTable[pinNumber];
 
   
   for(int i = 0; i < NumberOfTimersUsed; i++)
@@ -509,38 +513,6 @@ void stopPwmRead(char portLetter, uint8_t pinNumber)
   
   //reset data structure for that timer
   initData(timerNum, dataUsed->timerLoad, 0, 0, 0);
-}
-
-static int getPortRefNum(char portLetter)
-{
-  int portRefNum;
-  
-  if(portLetter == 'A' || portLetter == 'a')
-  {
-    portRefNum = PortARef;
-  }
-  else if (portLetter == 'B' || portLetter == 'b')
-  {
-    portRefNum = PortBRef;
-  }
-  else if(portLetter == 'D' || portLetter == 'd')
-  {
-    portRefNum = PortDRef;
-  }
-  else if(portLetter == 'L' || portLetter == 'l')
-  {
-    portRefNum = PortLRef;
-  }
-  else if(portLetter == 'M' || portLetter == 'm')
-  {
-    portRefNum = PortMRef;
-  }
-  else
-  {
-    portRefNum = -1;
-  }
-
-  return(portRefNum);
 }
 
 //returns last pwm transmission's duty cycle of the pwm pin
@@ -570,7 +542,7 @@ uint8_t getDuty(char portLetter, uint8_t pinNumber)
   {
     return 0;
   }
-  pinMacro = gpioPinNumberTable[pinNumber];
+  pinMacro = pinMacroTable[pinNumber];
 
   
   for(int i = 0; i < NumberOfTimersUsed; i++)
@@ -623,7 +595,7 @@ uint32_t getTotalPeriod_us(char portLetter, uint8_t pinNumber)
   {
     return 0;
   }
-  pinMacro = gpioPinNumberTable[pinNumber];
+  pinMacro = pinMacroTable[pinNumber];
   
   for(int i = 0; i < NumberOfTimersUsed; i++)
   {
@@ -681,7 +653,7 @@ uint32_t getOnPeriod_us(char portLetter, uint8_t pinNumber)
   {
     return 0;
   }
-  pinMacro = gpioPinNumberTable[pinNumber];
+  pinMacro = pinMacroTable[pinNumber];
   
   for(int i = 0; i < NumberOfTimersUsed; i++)
   {
@@ -706,6 +678,60 @@ uint32_t getOnPeriod_us(char portLetter, uint8_t pinNumber)
   onPeriod_us = (uint32_t)(onPeriod_s * 1000000); 
   return(onPeriod_us);
   
+}
+
+//returns the reference number choresponding to the port letter passed.
+//Use the reference number to sub in for ports when accessing tables that 
+//take in a gpio port reference.
+//Returns -1 if passed letter doesn't correspond to any port
+static int getPortRefNum(char portLetter)
+{
+  int portRefNum;
+  
+  if(portLetter == 'A' || portLetter == 'a')
+  {
+    portRefNum = PortARef;
+  }
+  else if (portLetter == 'B' || portLetter == 'b')
+  {
+    portRefNum = PortBRef;
+  }
+  else if(portLetter == 'D' || portLetter == 'd')
+  {
+    portRefNum = PortDRef;
+  }
+  else if(portLetter == 'L' || portLetter == 'l')
+  {
+    portRefNum = PortLRef;
+  }
+  else if(portLetter == 'M' || portLetter == 'm')
+  {
+    portRefNum = PortMRef;
+  }
+  else
+  {
+    portRefNum = -1;
+  }
+
+  return(portRefNum);
+}
+
+//pass in a gpioport letter and number such as 'a' and '2', and it returns
+//which timer is associated from it. Returns 0 if no timer uses that pin port and pin number
+static uint8_t getTimerNumber(char portLetter, uint8_t pinNumber)
+{
+  uint8_t portRefNum;
+  uint8_t timerNumber;
+
+  portRefNum = getPortRefNum(portLetter);
+  if(portRefNum == -1)
+  {
+    return(0);
+  }
+
+  timerNumber = pinToTimerNumberTable[portRefNum][pinNumber];
+
+  return(timerNumber);
 }
 
 //initializes data for the pwm line associated with the passed timer
@@ -840,7 +866,7 @@ static bool initTimer(uint32_t timerLoad, uint8_t timerNum)
 //and configures it for usage by the appropriate timer
 static bool initGPIO(uint8_t portLetter, uint8_t pinNum, uint8_t * pinInitState, uint32_t * port_base, uint8_t * pin_macro)
 {
-  uint8_t portRefNum;
+  int portRefNum;
   uint32_t portPeriph;
   uint32_t portBase;
   uint8_t pinMacro;  
@@ -848,46 +874,19 @@ static bool initGPIO(uint8_t portLetter, uint8_t pinNum, uint8_t * pinInitState,
   {
     return(false);
   }
-  
-  //acquire the port address based off of the port letter. If it's not port a,b,d,l, or m, then it's not a port 
-  //with an existing timer pin and we can't read pwm from it
-  if(portLetter == 'A' || portLetter == 'a')
-  {
-    portRefNum = PortARef;
-    portBase = GPIO_PORTA_BASE;
-    portPeriph = SYSCTL_PERIPH_GPIOA;
-  }
-  else if (portLetter == 'B' || portLetter == 'b')
-  {
-    portRefNum = PortBRef;
-    portBase = GPIO_PORTB_BASE;
-    portPeriph = SYSCTL_PERIPH_GPIOB;
-  }
-  else if(portLetter == 'D' || portLetter == 'd')
-  {
-    portRefNum = PortDRef;
-    portBase = GPIO_PORTD_BASE;
-    portPeriph = SYSCTL_PERIPH_GPIOD;
-  }
-  else if(portLetter == 'L' || portLetter == 'l')
-  {
-    portRefNum = PortLRef;
-    portBase = GPIO_PORTL_BASE;
-    portPeriph = SYSCTL_PERIPH_GPIOL;
-  }
-  else if(portLetter == 'M' || portLetter == 'm')
-  {
-    portRefNum = PortMRef;
-    portBase = GPIO_PORTM_BASE;
-    portPeriph = SYSCTL_PERIPH_GPIOM;
-  }
-  else
+
+  //get hardware constants associated with this port letter
+  portRefNum = getPortRefNum(portLetter);
+  if(portRefNum == -1)
   {
     return(false);
   }
 
+  portBase = pinPortBaseTable[portRefNum];
+  portPeriph = pinPortPeriphTable[portRefNum];
+
   //acquire the actual macro for the pin number -- it's not 0,1,2,3, etc, because that'd be too easy
-  pinMacro = gpioPinNumberTable[pinNum];
+  pinMacro = pinMacroTable[pinNum];
 
   //initialize port
   SysCtlPeripheralEnable(portPeriph);
@@ -907,11 +906,11 @@ static bool initGPIO(uint8_t portLetter, uint8_t pinNum, uint8_t * pinInitState,
   GPIOPinTypeTimer(portBase, pinMacro);
 
   //configure pin for timer usage (yes it's a different function)
-  if(timerPinNameTable[portRefNum] [pinNum] == 0)
+  if(timerPinConfigTable[portRefNum] [pinNum] == 0)
   {
     return(false); //user input a combination that isn't used
   }
-  GPIOPinConfigure(timerPinNameTable[portRefNum] [pinNum]);
+  GPIOPinConfigure(timerPinConfigTable[portRefNum] [pinNum]);
 
   *pin_macro = pinMacro;
   *port_base = portBase;
