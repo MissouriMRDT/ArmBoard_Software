@@ -7,3 +7,6 @@ Devices:
 *DirectDiscreteHBridge: An h bridge made out of discrete components (not an IC), and the microcontroller lines directly
 control it (no other devices in between them). Two inputs, N transistor 1 and N transistor 2. It's assumed the other 
 two transistors will be P transistors so they don't need control lines to the microcontroller. 
+
+*Sdc2130: A brushed DC motor controller, capable of being controlled via pwm or serial, and controlling the motor
+based on speed, position, or torque with feedback capabilities. Unfortunatley, it kind of sucks. Best we got it working is to make it slightly increment position when we tell it to move. So the only set up movement is for the device to take in a speed value, look at the value and if it's greater than 0, slightly move it up, and if it's less than 0 slightly move it down.

@@ -78,6 +78,39 @@ class OutputDevice
 		bool invert;
 };
 
+//SDC2130 motor controller. Capable of moving based on torque, speed,
+//or position. Unfortunately it's kind of shitty, best we have right now
+//is budging it slowly with input speed commands that output just making 
+//it move position slightly. Only implemented modes are controlling it
+//via pwm and moving by taking in a speed position
+class Sdc2130: public OutputDevice
+{
+	private:
+		int PWM_PIN, TX_PIN, RX_PIN;
+		int pwmVal;
+		
+		const int PWM_MIN = 0, PWM_MAX = 255;
+		const int POS_INC = 2;
+		
+		enum ControlTypes {Pwm, c_Serial};
+		ControlTypes controlType;
+	protected:
+		//general move command
+		void move(const int movement);
+		
+		//move command if inputting speed
+		void moveSpeed(const int movement);
+		
+		//move command if inputting position
+		//void movePos(const int movement); not implemented
+	public:
+		//constructor for controlling it via pwm
+		Sdc2130(const int pwmPin, InputType inType, bool upsideDown);
+		
+		//constructor for controlling it via serial
+		//Sdc2130(const int txPin, const int rxPin, InputType inType, bool upsideDown); not implemented
+};
+
 //Discrete H Bridge controlled directly by the microcontroller, which has only two inputs to control forward and backwards. 
 //Has two pins (one forward, one backwards). Outputs a pwm signal on one pin or another. 
 class DirectDiscreteHBridge : public OutputDevice
@@ -90,10 +123,11 @@ class DirectDiscreteHBridge : public OutputDevice
 		//Value ranges for conversting input to expected output when sending 
 		const int PWM_MIN = 0, PWM_MAX = 255;
 
-		protected:
+	protected:
 		//function which directly moves the device. 
 		void move(const int movement);
-		public:
+		
+	public:
 		//constructor, user must give pin assignments with the first pin being the forward pin and the second being the reverse pin.
 		//Must specify the physical orientation of the device as well, if it is mounted in reverse or not
 		DirectDiscreteHBridge(const int FPIN, const int RPIN, bool upsideDown);  

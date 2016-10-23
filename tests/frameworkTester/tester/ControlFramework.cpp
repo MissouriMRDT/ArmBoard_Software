@@ -162,6 +162,76 @@ void RotateJoint::runOutputControl(const int movement)
 	return;
 }
 
+//constructor for the Sdc2130 when controlled via pwm.
+//Note that inType of speed is the only one currently implemented
+Sdc2130::Sdc2130(const int pwmPin, InputType inType, bool upsideDown): OutputDevice()
+{
+	PWM_PIN = pwmPin;
+	outType = inType;
+	invert = upsideDown;
+	controlType = Pwm;
+	pwmVal = 0;
+}
+
+//sdc2130 general move function. Selects the specific move function
+//based on the specified movement type, such as speed or position
+void Sdc2130::move(const int movement)
+{
+	if(outType == spd)
+	{
+		moveSpeed(movement);
+	}
+	//position-input movement not implemented
+	else if(outType == pos)
+	{
+		
+	}
+}
+
+//sdc2130 movement command for moving based on a speed input.
+//Simply causes the joint to move a couple of positional ticks,
+//as true speed based movement is not implemented due to strange delays in sdc2130 response
+void Sdc2130::moveSpeed(const int movement)
+{
+	int speed = movement;
+	
+	if(invert)
+	{
+		speed = -speed;
+	}
+	
+	if(controlType == Pwm)
+	{
+		if(speed > 0)
+		{
+			pwmVal+=POS_INC;
+		}
+		else
+		{
+			pwmVal-=POS_INC;
+		}
+		
+		if(pwmVal < PWM_MIN)
+		{
+			pwmVal = PWM_MIN;
+		}
+		else if(pwmVal > PWM_MAX)
+		{
+			pwmVal = PWM_MAX;
+		}
+		
+		analogWrite(PWM_PIN, pwmVal);
+		
+	}
+	
+	//serial control not implemented
+	else
+	{
+		
+	}
+}
+
+
 //Creates the device. Assigns the pins correctly.
 //Make sure to put pins in correctly
 DirectDiscreteHBridge::DirectDiscreteHBridge(const int FPIN, const int RPIN, bool upsideDown) : OutputDevice()
