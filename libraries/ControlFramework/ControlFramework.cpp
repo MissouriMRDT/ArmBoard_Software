@@ -162,6 +162,80 @@ void RotateJoint::runOutputControl(const int movement)
 	return;
 }
 
+//constructor for a dynamixel for any mode
+//Calls the init function from RoveDynamixel.h to initialize the dynamixel
+DynamixelController::DynamixelController(const int Tx, const int Rx, bool upsideDown, DynamixelType type, uint8_t id, uint8_t uartIndex, int baud, DynamixelMode mode) : OutputDevice()
+{
+  //assignments
+  Tx_PIN = Tx;
+  Rx_PIN = Rx;  
+  baudRate = baud;
+  invert = upsideDown;
+
+  //selects the outType based on the inputed mode
+  if(mode == Wheel)
+    outType = spd;
+
+  else if(mode == Joint)
+    outType = pos;
+    
+  //view RoveDynamixel.h for details on all functions called here
+  //note: no comments in RoveDynamixel
+  DynamixelInit(&dynamixel, type, id, uartIndex, baud);
+
+  //actually sets the values correctly for the dynamixel
+  DynamixelSetId(&dynamixel, id);
+  DynamixelSetBaudRate(dynamixel, baud);
+  DynamixelSetMode(dynamixel, mode);  
+}
+
+//sends the move command for the wheel mode based on a speed
+//clockwise will be considered forward and ccw is reverse
+void DynamixelController::move(const int movement)
+{
+  //stores the error returned by the spin wheel function	
+  uint8_t errorMessageIgnore;
+  int mov = movement;
+  uint16_t send;
+  
+  //if mounted upside down then invert the signal passed to it and move accordingly
+  if (invert)
+  {
+	//inverts the input easily
+	mov = -mov;
+  }
+
+  //if supposed to move backwards(ccw)
+  if(mov < 0)
+  {
+	send = map(mov, SPEED_MIN, SPEED_MAX, DYNA_SPEED_CCW_MAX, DYNA_SPEED_CCW_MIN);
+	
+	//calls spin wheel function from RoveDynamixel
+    //can take up to a uint16_t which exceeds a standard int but 
+    errorMessageIgnore = DynamixelSpinWheel(dynamixel, movement);
+  }
+
+  //if forwards (cw)
+  else if(mov > 0)
+  {
+    send = map(mov, SPEED_MIN, SPEED_MAX, DYNA_SPEED_CW_MAX, DYNA_SPEED_CW_MIN);
+	
+	//calls spin wheel function from RoveDynamixel
+    //can take up to a uint16_t which exceeds a standard int but 
+    errorMessageIgnore = DynamixelSpinWheel(dynamixel, movement);
+  }
+
+  //stop
+  else if(mov == 0)
+  {
+    //calls spin wheel function from RoveDynamixel
+    //can take up to a uint16_t which exceeds a standard int but 
+    errorMessageIgnore = DynamixelSpinWheel(dynamixel, 0);
+  }
+  
+  return;
+}
+
 //constructor for the Sdc2130 when controlled via pwm.
 //Note that inType of speed is the only one currently implemented
 Sdc2130::Sdc2130(const int pwmPin, InputType inType, bool upsideDown): OutputDevice()

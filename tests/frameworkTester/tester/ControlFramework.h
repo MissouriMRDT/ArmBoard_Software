@@ -1,4 +1,5 @@
 #include "Energia.h"
+#include "RoveDynamixel.h"
 /*  
  *   
  *   This is the library for the Joint Interface Framework. 
@@ -109,6 +110,37 @@ class Sdc2130: public OutputDevice
 		
 		//constructor for controlling it via serial
 		//Sdc2130(const int txPin, const int rxPin, InputType inType, bool upsideDown); not implemented
+};
+
+//Standard dynamixel capable of wheel, joint, and multi-turn modes of operation.
+//RoveDynamixel causes some issues to interface with but not worth rewriting it to work with classes better
+//Note: Requires use of RoveDynamixel which is hard to read and understand. Edit at own risk.
+class DynamixelController : public OutputDevice{
+  private:
+    //Only Important pin for dynamixel is the Tx/Rx pin other two are just power and not important logically
+    int Tx_PIN;
+	int Rx_PIN;
+	int baudRate;
+	
+	//values which the dynamixel expects the speed to be between. CW = clockwise/positive/forward  CCW = counter-clockwise/negative/backwards
+	const int DYNA_SPEED_CW_MAX = 1023;
+	const int DYNA_SPEED_CW_MIN = 0;
+	const int DYNA_SPEED_CCW_MAX = 2047;
+	const int DYNA_SPEED_CCW_MIN = 1024;
+	
+	//need to have in order to interface with RoveDynamixel since it uses structs and pointers as opposed to classes
+	Dynamixel dynamixel;
+  
+  protected:
+    //movement command based on a speed input and wheel mode
+	//this will be the defaut assumption, other modes with other methods of movement will be 
+	//made into other functions not simply move.
+    void move(const int movement);
+	
+  public:
+	//constructor for a dynamixel which takes in a move type and other things needed for dynamixels
+	//Sets up uart on the board and baud rate at the same time
+	DynamixelController(const int Tx, const int Rx, bool upsideDown, DynamixelType type, uint8_t id, uint8_t uartIndex, int baud, DynamixelMode mode);	
 };
 
 //Discrete H Bridge controlled directly by the microcontroller, which has only two inputs to control forward and backwards. 
