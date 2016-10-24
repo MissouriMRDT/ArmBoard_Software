@@ -10,3 +10,6 @@ two transistors will be P transistors so they don't need control lines to the mi
 
 *Sdc2130: A brushed DC motor controller, capable of being controlled via pwm or serial, and controlling the motor
 based on speed, position, or torque with feedback capabilities. Unfortunatley, it kind of sucks. Best we got it working is to make it slightly increment position when we tell it to move. So the only set up movement is for the device to take in a speed value, look at the value and if it's greater than 0, slightly move it up, and if it's less than 0 slightly move it down.
+
+*DynamixelController: Interfaces with either MX or AX dynamixel. They can operate a in Wheel, Joint, and Multi-rotation modes which take speed, position, and position respectively. 
+Complicated. Interfaces with RoveDynamixel.h so you need to look at those functions to get a better understanding of how the functions work.
