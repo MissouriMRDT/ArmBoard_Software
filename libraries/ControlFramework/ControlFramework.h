@@ -21,10 +21,10 @@
  *   
 */  
 
-//All the types of inputType that can be expected and selected
+//All the types of values that can be passed to and be returned from the clases in the control framework 
 enum InputType{spd, pos};
 
-//used later for maping in move commands. constants so they can be easily changed if something changes on input or expected output.
+//Constants representing the ranges for the different input types.
 //The common inputs and outputs between classes will fall between these limits, class should not expect to take or return values outside of these
 const int SPEED_MIN = -1000, SPEED_MAX = 1000; 
 const int POS_MIN = 0, POS_MAX = 10000;
@@ -43,15 +43,16 @@ class FeedbackDevice
 		FeedbackDevice() {} ;
 
 		//returns feedback. Public because all the IOAlgorithm classes need to be able to call it,
-		//and friend isn't inherited so we can't just make the abstract class our friend
+		//and friend isn't inherited so we can't just make the abstract class our friend.
+    //returns: a value representing feedback, the range of the value depends on what input type this device returns.
+    //For example, if this device returns speed feedback, the values shall be in the range between SPEED_MIN and SPEED_MAX
 		virtual int getFeedback();
 
-		//expected type of output the feedbackDevice is expected to return
-		enum FeedType {};
-		FeedType fType;
+		InputType fType;
 };
  
-//Class containing the devices which move the arm and how they are controlled. Part of the joint interface framework
+//Class containing the devices which move the arm and how they are controlled, such as motor controllers, and the hardware specifics of the devices
+//such as what GPIO pins are used by the microcontroller to control them. Part of the joint interface framework
 class OutputDevice
 {
 	//Joint interface needs access to its functions
@@ -60,21 +61,19 @@ class OutputDevice
 	friend class RotateJoint;
 	
 	protected:
-	
-		//all the controllers have different ways of movement controlled by algorithms. The algorithm will spit out the speed 
-		//or position that device will use, which will always be an int.
-		//The pins are taken care of directly by the controller instance. The polarity by the sign of the integer for the move command.
+
+    //calls the device to move the motor, based on the passed value of movement.
+		//Input: Can be values based on any of the input types as defined in the enum above, and the ranges for these values
+    //should stay within the max and min constants for each type
 		virtual void move(const int movement);
 
 		//blank constructor for the base class
 		OutputDevice() {};
 
 		//expected input that the output device wants.
-		//dont confuse with inType from base station.
 		InputType outType;
 
-		//used for if the specific controller is mounted backwards on a two motor joint. 
-		//Only one motor should be inverted per two motor joint
+		//used for if the specific controller is mounted backwards on the motor joint.
 		//True means invert the signal (backwards) False means just send the signal
 		bool invert;
 };
@@ -96,16 +95,21 @@ class Sdc2130: public OutputDevice
 		enum ControlTypes {Pwm, c_Serial};
 		ControlTypes controlType;
 	protected:
-		//general move command
+  
+		//general move command. Pass in either speed or position values
 		void move(const int movement);
 		
-		//move command if inputting speed
+		//move command if inputting speed, input movement is in the range of SPEED_MIN to SPEED_MAX
 		void moveSpeed(const int movement);
 		
-		//move command if inputting position
+		//move command if inputting position, input movement is in the range of POS_MIN to POS_MAX
 		//void movePos(const int movement); not implemented
 	public:
 		//constructor for controlling it via pwm
+    //inputs:
+    //pwmPin: GPIO pin that's connected to the pwm input of the SDC2130 device. GPIO pin number id's are defined by energia's pinmapping
+    //inType: instance of the InputType enum that defines what kind of input the device should take, currently pos or spd. The motor controller can move based on either, so pick one
+    //upside down: whether or not the motor is mounted in reverse so the input values would also need to be inverted
 		Sdc2130(const int pwmPin, InputType inType, bool upsideDown);
 		
 		//constructor for controlling it via serial
@@ -132,14 +136,25 @@ class DynamixelController : public OutputDevice{
 	Dynamixel dynamixel;
   
   protected:
-    //movement command based on a speed input and wheel mode
+  //movement command based on a speed input and wheel mode. Input should be in the range between SPEED_MIN and SPEED_MAX
 	//this will be the defaut assumption, other modes with other methods of movement will be 
 	//made into other functions not simply move.
     void move(const int movement);
 	
   public:
+  
 	//constructor for a dynamixel which takes in a move type and other things needed for dynamixels
 	//Sets up uart on the board and baud rate at the same time
+  /*Inputs: 
+          TX -> tx pin numerical id, as defined by energia's pinmapping
+          RX -> tx pin numerical id, as defined by energia's pinmapping
+          upsideDown -> Whether or not the dyna is mounted in reverse and thus the inputs need to be reversed as well
+          type -> Instance of the DynamixelType enum that defines the dynamixel brand such as AX, MX, etc
+          id -> id of the dynamixel. Note that if you aren't sure, you'll need to use a different program to set the id yourself
+          uartIndex -> which hardware uart to use when talking to it, 0-7
+          baud -> baud rate of the serial communication
+          mode -> instance of the DynamixelMode enum that defines the dynamixel's mode such as Wheel, Joint, etc
+  */
 	DynamixelController(const int Tx, const int Rx, bool upsideDown, DynamixelType type, uint8_t id, uint8_t uartIndex, int baud, DynamixelMode mode);	
 };
 
@@ -181,6 +196,9 @@ class IOAlgorithm
 		IOAlgorithm() {};
 
 		//run whatever algorithm this implements, returns value that can be directly passed to an output device
+    //input: int representing the input values that need to be converted into output values. 
+    //The specific value constraints depend on the input and output types the algorithm implements; for example if an algorithm
+    //is supposed to take in speed and output position, then its input is constrained by SPEED_MIN and SPEED_MAX, and its output is constrained by POS_MIN and POS_MAX
 		virtual int runAlgorithm(const int in);
 };
 
@@ -256,15 +274,23 @@ class SingleMotorJoint : public JointInterface
 	
 		//Constructor for the single motor joint. it is passed an inputType, feedback device pointer and output device pointer
 		//With this info selects an algorithm. 
+    //inputType: What kind of movement this joint should be controlled by, such as speed or position input.
+    //cont: The output device controlling the motor on this joint
 		SingleMotorJoint(InputType inputType, OutputDevice * cont);
 
-		//constructor for with feedback      
+		//constructor for with feedback    
+    //inputType: What kind of movement this joint should be controlled by, such as speed or position input.
+    //cont: The output device controlling the motor on this joint
+    //feed: The feedback device used with this joint  
 		SingleMotorJoint(InputType inputType, OutputDevice* cont, FeedbackDevice* feed);
 
 		//destructor since there are pointers being used
 		~SingleMotorJoint();       
 
 		//runs algorithm for movement for a singlular motor
+    //input: an int that represents the desired movement. What values this int is constrained to depends on what this joint was set up to take as an input.
+    //For example, if this joint runs off of speed input then the values are constrained between SPEED_MIN and SPEED_MAX, and otherwise for the similar 
+    //ranges defined in the framework's .h file
 		void runOutputControl(const int movement);    
 };
   
@@ -280,15 +306,25 @@ class TiltJoint : public JointInterface
 	
 		//Constructor for a tilt joint. it is passed an expected input type, two output devices, and possibly a feedback device
 		//algorithm selection remains the same as expeted input to both the devices should be the same.
+    //inputType: What kind of movement this joint should be controlled by, such as speed or position input.
+    //cont1: The first output device controlling the first motor on this joint
+    //cont2: The second output device controlling the second motor on this joint
+    //feed: The feedback device used with this joint
 		TiltJoint(InputType inputType, OutputDevice* cont1, OutputDevice* cont2, FeedbackDevice* feed);
 
 		//constructor without feedback
+    //inputType: What kind of movement this joint should be controlled by, such as speed or position input.
+    //cont1: The first output device controlling the first motor on this joint
+    //cont2: The second output device controlling the second motor on this joint
 		TiltJoint(InputType inputType, OutputDevice* cont1, OutputDevice* cont2);	  
 
 		//need to use a destructor to remove the pointers used
 		~TiltJoint();
 
-		//runs algorithm for moving two motors together so that it tilts the joint	  
+		//runs algorithm for moving two motors together so that it tilts the joint	
+    //input: an int that represents the desired movement. What values this int is constrained to depends on what this joint was set up to take as an input.
+    //For example, if this joint runs off of speed input then the values are constrained between SPEED_MIN and SPEED_MAX, and otherwise for the similar 
+    //ranges defined in the framework's .h file  
 		void runOutputControl(const int movement);
 };  
   
@@ -306,15 +342,25 @@ class RotateJoint : public JointInterface
 		// constructor for a rotating joint. pass it a input type, two output devices of the same type 
 		// (dont put one device that wants a spd and another which wants a pos) and a feedback device. 
 		// These are all pointers other than the input type. Algorithm selection is same for all joints.
+    //inputType: What kind of movement this joint should be controlled by, such as speed or position input.
+    //cont1: The first output device controlling the first motor on this joint
+    //cont2: The second output device controlling the second motor on this joint
+    //feed: The feedback device used with this joint
 		RotateJoint(InputType inputType, OutputDevice* cont1, OutputDevice* cont2, FeedbackDevice* feed);
 
 		//constructor without feedback
+    //inputType: What kind of movement this joint should be controlled by, such as speed or position input.
+    //cont1: The first output device controlling the first motor on this joint
+    //cont2: The second output device controlling the second motor on this joint
 		RotateJoint(InputType inputType, OutputDevice* cont1, OutputDevice* cont2);
 
 		//deletes pointers used in the joint
 		~RotateJoint();
 
 		//moves two motors together so that they rotate the joint. Motors will spin the opposite direction 
+    //input: an int that represents the desired movement. What values this int is constrained to depends on what this joint was set up to take as an input.
+    //For example, if this joint runs off of speed input then the values are constrained between SPEED_MIN and SPEED_MAX, and otherwise for the similar 
+    //ranges defined in the framework's .h file
 		void runOutputControl(const int movement);
 };
   

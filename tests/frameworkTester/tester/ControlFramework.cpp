@@ -1,6 +1,9 @@
 #include "ControlFramework.h";
 
 //constructor for single motor joints with feedback device
+//inputType: What kind of movement this joint should be controlled by, such as speed or position input.
+//cont: The output device controlling the motor on this joint
+//feed: The feedback device used with this joint
 SingleMotorJoint::SingleMotorJoint(InputType inputType, OutputDevice* cont, FeedbackDevice* feed) : JointInterface()
 {
 	//assignments
@@ -13,6 +16,9 @@ SingleMotorJoint::SingleMotorJoint(InputType inputType, OutputDevice* cont, Feed
 }
 
 //constructor for single motor joints without feedback
+//inputType: What kind of movement this joint should be controlled by, such as speed or position input.
+//cont: The output device controlling the motor on this joint
+//feed: The feedback device used with this joint
 SingleMotorJoint::SingleMotorJoint(InputType inputType, OutputDevice* cont) : JointInterface()
 {
 	//assignments
@@ -33,6 +39,9 @@ SingleMotorJoint::~SingleMotorJoint()
 
 //run the output algorithm for this tilt joint correctly (I mean, hopefully).
 //calls the algorithm to manipulate the input and sends it to the motor device.
+//input: an int that represents the desired movement. What values this int is constrained to depends on what this joint was set up to take as an input.
+//For example, if this joint runs off of speed input then the values are constrained between SPEED_MIN and SPEED_MAX, and otherwise for the similar 
+//ranges defined in the framework's .h file
 void SingleMotorJoint::runOutputControl(const int movement) 
 {
 	//var used as interrum value since algorithm can change the value
@@ -49,6 +58,10 @@ void SingleMotorJoint::runOutputControl(const int movement)
 
 //creates the joint interface for a tilt joint with a feedback device.
 //Note both output devices are assumed to have the same input type
+//inputType: What kind of movement this joint should be controlled by, such as speed or position input.
+//cont1: The first output device controlling the first motor on this joint
+//cont2: The second output device controlling the second motor on this joint
+//feed: The feedback device used with this joint
 TiltJoint::TiltJoint(InputType inputType, OutputDevice* cont1, OutputDevice* cont2, FeedbackDevice* feed) : JointInterface()
 {
 	//assignments
@@ -63,6 +76,9 @@ TiltJoint::TiltJoint(InputType inputType, OutputDevice* cont1, OutputDevice* con
 
 //creates joint interface for a tilt joint with no feedback.
 //Note both output devices are assumed to have the same input type
+//inputType: What kind of movement this joint should be controlled by, such as speed or position input.
+//cont1: The first output device controlling the first motor on this joint
+//cont2: The second output device controlling the second motor on this joint
 TiltJoint::TiltJoint(InputType inputType, OutputDevice* cont1, OutputDevice* cont2) : JointInterface()
 {
 	//assignments
@@ -86,6 +102,9 @@ TiltJoint::~TiltJoint()
 //run the output algorithm for this tilt joint correctly (I mean, hopefully).
 //calls the algorithm to manipulate the input and sends it to each controller.
 //Both devices get the same command since they're supposed to move together.
+//input: an int that represents the desired movement. What values this int is constrained to depends on what this joint was set up to take as an input.
+//For example, if this joint runs off of speed input then the values are constrained between SPEED_MIN and SPEED_MAX, and otherwise for the similar 
+//ranges defined in the framework's .h file
 void TiltJoint::runOutputControl(const int movement)
 {
 	//largely a temp value to store any modifications made to the input
@@ -105,6 +124,9 @@ void TiltJoint::runOutputControl(const int movement)
 
 //constructor for the rotate joint class without feedback.
 //Assumes both passed devices have the same input type
+//inputType: What kind of movement this joint should be controlled by, such as speed or position input.
+//cont1: The first output device controlling the first motor on this joint
+//cont2: The second output device controlling the second motor on this joint
 RotateJoint::RotateJoint(InputType inputType, OutputDevice* cont1, OutputDevice* cont2) : JointInterface()
 {
 	//assignments
@@ -118,6 +140,10 @@ RotateJoint::RotateJoint(InputType inputType, OutputDevice* cont1, OutputDevice*
 
 //constructor for the rotate joint class with feedback.
 //Assumes both passed devices have the same input type.
+//inputType: What kind of movement this joint should be controlled by, such as speed or position input.
+//cont1: The first output device controlling the first motor on this joint
+//cont2: The second output device controlling the second motor on this joint
+//feed: A pointer to the feedback device used on this joint.
 RotateJoint::RotateJoint(InputType inputType, OutputDevice* cont1, OutputDevice* cont2, FeedbackDevice* feed) : JointInterface()
 {
 	//assignments
@@ -142,6 +168,9 @@ RotateJoint::~RotateJoint()
 //run the output algorithm for this tilt joint correctly (I mean, hopefully).
 //calls the algorithm to manipulate the input and sends it to each controller.
 //One device gets an inverted direction from the other, since they move in opposite tandem on rotate joints.
+//input: an int that represents the desired movement. What values this int is constrained to depend on what this joint was set up to take as an input.
+//For example, if this joint runs off of speed input then the values are constrained between SPEED_MIN and SPEED_MAX, and otherwise for the similar 
+//ranges defined in the framework's .h file
 void RotateJoint::runOutputControl(const int movement)
 {
 	//largely a temp value to store any modifications made to the input
@@ -197,7 +226,7 @@ DynamixelController::DynamixelController(const int Tx, const int Rx, bool upside
   DynamixelSetMode(dynamixel, mode);  
 }
 
-//sends the move command for the wheel mode based on a speed
+//sends the move command for the wheel mode based on a speed, an int constrained between the SPEED_MIN and SPEED_MAX constants.
 //clockwise will be considered forward and ccw is reverse
 void DynamixelController::move(const int movement)
 {
@@ -244,8 +273,13 @@ void DynamixelController::move(const int movement)
   return;
 }
 
-//constructor for the Sdc2130 when controlled via pwm.
-//Note that inType of speed is the only one currently implemented
+/*constructor for the Sdc2130 when controlled via pwm.
+  Note that inType of speed is the only one currently implemented.
+  inputs:
+  pwmPin: GPIO pin that's connected to the pwm input of the SDC2130 device. GPIO pin number id's are defined by energia's pinmapping
+  inType: instance of the InputType enum that defines what kind of input the device should take, currently pos or spd. The motor controller can move based on either, so pick one
+  upside down: whether or not the motor is mounted in reverse so the input values would also need to be inverted
+ */
 Sdc2130::Sdc2130(const int pwmPin, InputType inType, bool upsideDown): OutputDevice()
 {
 	PWM_PIN = pwmPin;
@@ -257,6 +291,7 @@ Sdc2130::Sdc2130(const int pwmPin, InputType inType, bool upsideDown): OutputDev
 
 //sdc2130 general move function. Selects the specific move function
 //based on the specified movement type, such as speed or position
+//Input: Can be either position or speed values constrained between SPEED_MIN and SPEED_MAX or POS_MIN and POS_MAX
 void Sdc2130::move(const int movement)
 {
 	if(outType == spd)
@@ -270,7 +305,7 @@ void Sdc2130::move(const int movement)
 	}
 }
 
-//sdc2130 movement command for moving based on a speed input.
+//sdc2130 movement command for moving based on a speed input, IE a value constrained between the SPEED_MIN and SPEED_MAX constants.
 //Simply causes the joint to move a couple of positional ticks,
 //as true speed based movement is not implemented due to strange delays in sdc2130 response
 void Sdc2130::moveSpeed(const int movement)
@@ -317,6 +352,7 @@ void Sdc2130::moveSpeed(const int movement)
 /* Creates the device. Assigns the pins correctly. 
  * int FPIN: the GPIO pin connected to the H bridge's forward transistor, pin number is defined by energia's pinmapping
  * int RPIN: the GPIO pin connected to the H bridge's forward transistor, pin number is defined by energia's pinmapping
+ * bool upside down: Whether or not the motor is mounted in reverse and as such the inputs also need to be reversed
  */
 DirectDiscreteHBridge::DirectDiscreteHBridge(const int FPIN, const int RPIN, bool upsideDown) : OutputDevice()
 {
