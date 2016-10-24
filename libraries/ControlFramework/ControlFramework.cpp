@@ -202,7 +202,7 @@ void RotateJoint::runOutputControl(const int movement)
           baud -> baud rate of the serial communication
           mode -> instance of the DynamixelMode enum that defines the dynamixel's mode such as Wheel, Joint, etc
 */
-DynamixelController::DynamixelController(const int Tx, const int Rx, bool upsideDown, DynamixelType type, uint8_t id, uint8_t uartIndex, int baud, DynamixelMode mode) : OutputDevice()
+DynamixelController::DynamixelController(const int Tx, const int Rx, bool upsideDown, DynamixelType type, uint8_t id, uint8_t uartIndex, uint32_t baud, DynamixelMode mode) : OutputDevice()
 {
   //assignments
   Tx_PIN = Tx;

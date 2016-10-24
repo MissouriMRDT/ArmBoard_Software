@@ -124,7 +124,7 @@ class DynamixelController : public OutputDevice{
     //Only Important pin for dynamixel is the Tx/Rx pin other two are just power and not important logically
     int Tx_PIN;
 	int Rx_PIN;
-	int baudRate;
+	uint32_t baudRate;
 	
 	//values which the dynamixel expects the speed to be between. CW = clockwise/positive/forward  CCW = counter-clockwise/negative/backwards
 	const int DYNA_SPEED_CW_MAX = 1023;
@@ -155,7 +155,7 @@ class DynamixelController : public OutputDevice{
           baud -> baud rate of the serial communication
           mode -> instance of the DynamixelMode enum that defines the dynamixel's mode such as Wheel, Joint, etc
   */
-	DynamixelController(const int Tx, const int Rx, bool upsideDown, DynamixelType type, uint8_t id, uint8_t uartIndex, int baud, DynamixelMode mode);	
+	DynamixelController(const int Tx, const int Rx, bool upsideDown, DynamixelType type, uint8_t id, uint8_t uartIndex, uint32_t baud, DynamixelMode mode);	
 };
 
 //Discrete H Bridge controlled directly by the microcontroller, which has only two inputs to control forward and backwards. 
