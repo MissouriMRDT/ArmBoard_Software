@@ -164,6 +164,15 @@ void RotateJoint::runOutputControl(const int movement)
 
 //constructor for a dynamixel for any mode
 //Calls the init function from RoveDynamixel.h to initialize the dynamixel
+/*Inputs: TX -> tx pin numerical id, as defined by energia's pinmapping
+          RX -> tx pin numerical id, as defined by energia's pinmapping
+          upsideDown -> Whether or not the dyna is mounted in reverse and thus the inputs need to be reversed as well
+          type -> Instance of the DynamixelType enum that defines the dynamixel brand such as AX, MX, etc
+          id -> id of the dynamixel. Note that if you aren't sure, you'll need to use a different program to set the id yourself
+          uartIndex -> which hardware uart to use when talking to it, 0-7
+          baud -> baud rate of the serial communication
+          mode -> instance of the DynamixelMode enum that defines the dynamixel's mode such as Wheel, Joint, etc
+*/
 DynamixelController::DynamixelController(const int Tx, const int Rx, bool upsideDown, DynamixelType type, uint8_t id, uint8_t uartIndex, int baud, DynamixelMode mode) : OutputDevice()
 {
   //assignments
@@ -172,7 +181,6 @@ DynamixelController::DynamixelController(const int Tx, const int Rx, bool upside
   baudRate = baud;
   invert = upsideDown;
 
-  //selects the outType based on the inputed mode
   if(mode == Wheel)
     outType = spd;
 
@@ -201,18 +209,18 @@ void DynamixelController::move(const int movement)
   //if mounted upside down then invert the signal passed to it and move accordingly
   if (invert)
   {
-	//inverts the input easily
-	mov = -mov;
+	  //inverts the input easily
+  	mov = -mov;
   }
 
   //if supposed to move backwards(ccw)
   if(mov < 0)
   {
-	send = map(mov, SPEED_MIN, SPEED_MAX, DYNA_SPEED_CCW_MAX, DYNA_SPEED_CCW_MIN);
+	  send = map(mov, SPEED_MIN, SPEED_MAX, DYNA_SPEED_CCW_MAX, DYNA_SPEED_CCW_MIN);
 	
-	//calls spin wheel function from RoveDynamixel
+	  //calls spin wheel function from RoveDynamixel
     //can take up to a uint16_t which exceeds a standard int but 
-    errorMessageIgnore = DynamixelSpinWheel(dynamixel, movement);
+    errorMessageIgnore = DynamixelSpinWheel(dynamixel, send);
   }
 
   //if forwards (cw)
@@ -220,9 +228,9 @@ void DynamixelController::move(const int movement)
   {
     send = map(mov, SPEED_MIN, SPEED_MAX, DYNA_SPEED_CW_MAX, DYNA_SPEED_CW_MIN);
 	
-	//calls spin wheel function from RoveDynamixel
+	  //calls spin wheel function from RoveDynamixel
     //can take up to a uint16_t which exceeds a standard int but 
-    errorMessageIgnore = DynamixelSpinWheel(dynamixel, movement);
+    errorMessageIgnore = DynamixelSpinWheel(dynamixel, send);
   }
 
   //stop
@@ -306,8 +314,10 @@ void Sdc2130::moveSpeed(const int movement)
 }
 
 
-//Creates the device. Assigns the pins correctly.
-//Make sure to put pins in correctly
+/* Creates the device. Assigns the pins correctly. 
+ * int FPIN: the GPIO pin connected to the H bridge's forward transistor, pin number is defined by energia's pinmapping
+ * int RPIN: the GPIO pin connected to the H bridge's forward transistor, pin number is defined by energia's pinmapping
+ */
 DirectDiscreteHBridge::DirectDiscreteHBridge(const int FPIN, const int RPIN, bool upsideDown) : OutputDevice()
 {
 	FPWM_PIN = FPIN;
@@ -316,7 +326,8 @@ DirectDiscreteHBridge::DirectDiscreteHBridge(const int FPIN, const int RPIN, boo
 	invert = upsideDown;
 }
 
-//moves by passing a pwm signal to the H bridge
+//moves by passing a pwm signal to the H bridge.
+//Input: expects int values constrained between the SPEED_MIN and SPEED_MAX constants
 void DirectDiscreteHBridge::move(const int movement)
 {
 	int mov = movement;
@@ -362,6 +373,8 @@ void DirectDiscreteHBridge::move(const int movement)
 
 
 //speed to speed algorithm with no feedback just returns the input
+//input: expects speed values, constrained between the global SPEED_MIN and SPEED_MAX values
+//output: Actually just returns the same values. Meh
 int SpdToSpdNoFeedAlgorithm::runAlgorithm(const int input)
 {
   return input;

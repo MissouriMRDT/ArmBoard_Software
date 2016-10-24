@@ -133,7 +133,8 @@ class DynamixelController : public OutputDevice{
   
   protected:
     //movement command based on a speed input and wheel mode
-	//this will be the defaut assumption
+	//this will be the defaut assumption, other modes with other methods of movement will be 
+	//made into other functions not simply move.
     void move(const int movement);
 	
   public:
