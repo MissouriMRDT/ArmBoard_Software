@@ -2,17 +2,16 @@
 
 //constructor for single motor joints with feedback device
 //inputType: What kind of movement this joint should be controlled by, such as speed or position input.
+//alg: The IOAlgorithm to be used by this joint
 //cont: The output device controlling the motor on this joint
 //feed: The feedback device used with this joint
-SingleMotorJoint::SingleMotorJoint(InputType inputType, OutputDevice* cont, FeedbackDevice* feed) : JointInterface()
+SingleMotorJoint::SingleMotorJoint(InputType inputType, IOAlgorithm *alg, OutputDevice* cont, FeedbackDevice* feed) : JointInterface()
 {
 	//assignments
 	inType = inputType;
-	controller = cont;
+	controller1 = cont;
 	feedback = feed;
-		
-	//selects algorithm 
-	selector(feedback, controller->outType, manip);
+	manip = alg;
 }
 
 //constructor for single motor joints without feedback
@@ -23,16 +22,16 @@ SingleMotorJoint::SingleMotorJoint(InputType inputType, OutputDevice* cont) : Jo
 {
 	//assignments
 	inType = inputType;
-	controller = cont;
+	controller1 = cont;
 
-	//selects algorithm (only spd to spd is implemented)
-	selector(controller->outType, manip);
+	//algorithm selected internally
+	algorithmSelector();
 }
 
 //deletes pointers used in single motor joint to 'prevent memory leaks'. Most likely not neccessary but good practice.
 SingleMotorJoint::~SingleMotorJoint()
 {
-	delete controller;
+	delete controller1;
 	delete manip;
 	delete feedback;
 }
@@ -51,7 +50,7 @@ void SingleMotorJoint::runOutputControl(const int movement)
 	mov = manip->runAlgorithm(movement);
 
 	//moves device with output decided on by the algorithm
-	controller->move(mov);
+	controller1->move(mov);
 
 	return;
 }
@@ -59,19 +58,18 @@ void SingleMotorJoint::runOutputControl(const int movement)
 //creates the joint interface for a tilt joint with a feedback device.
 //Note both output devices are assumed to have the same input type
 //inputType: What kind of movement this joint should be controlled by, such as speed or position input.
+//alg: the IOAlgorithm used by this joint
 //cont1: The first output device controlling the first motor on this joint
 //cont2: The second output device controlling the second motor on this joint
 //feed: The feedback device used with this joint
-TiltJoint::TiltJoint(InputType inputType, OutputDevice* cont1, OutputDevice* cont2, FeedbackDevice* feed) : JointInterface()
+TiltJoint::TiltJoint(InputType inputType, IOAlgorithm *alg, OutputDevice* cont1, OutputDevice* cont2, FeedbackDevice* feed) : JointInterface()
 {
 	//assignments
 	inType = inputType;
 	controller1 = cont1;
 	controller2 = cont2;
 	feedback = feed;	
-
-	//select algorithm
-	selector(feedback, controller1->outType, manip);    
+	manip = alg;
 }
 
 //creates joint interface for a tilt joint with no feedback.
@@ -85,9 +83,9 @@ TiltJoint::TiltJoint(InputType inputType, OutputDevice* cont1, OutputDevice* con
 	inType = inputType;
 	controller1 = cont1;
 	controller2 = cont2;
-	
-	//select algorithm
-	selector(controller1->outType, manip);
+  
+	//internally selects algorithm
+	algorithmSelector();
 }
 
 //Destructor for the tilt joint since it has pointers
@@ -134,26 +132,25 @@ RotateJoint::RotateJoint(InputType inputType, OutputDevice* cont1, OutputDevice*
 	controller1 = cont1;
 	controller2 = cont2;
 
-	//since both of the controllers use the same inputType, then just use one (the first one)
-	selector(controller1->outType, manip);
+	//internally selects algorithm
+	algorithmSelector();
 }
 
 //constructor for the rotate joint class with feedback.
 //Assumes both passed devices have the same input type.
 //inputType: What kind of movement this joint should be controlled by, such as speed or position input.
+//alg: the IOAlgorithm this joint should use
 //cont1: The first output device controlling the first motor on this joint
 //cont2: The second output device controlling the second motor on this joint
 //feed: A pointer to the feedback device used on this joint.
-RotateJoint::RotateJoint(InputType inputType, OutputDevice* cont1, OutputDevice* cont2, FeedbackDevice* feed) : JointInterface()
+RotateJoint::RotateJoint(InputType inputType, IOAlgorithm *alg, OutputDevice* cont1, OutputDevice* cont2, FeedbackDevice* feed) : JointInterface()
 {
 	//assignments
 	inType = inputType;
 	controller1 = cont1;
 	controller2 = cont2;
 	feedback = feed;
-
-	//just use the first controller
-	selector(feedback, controller1->outType, manip);
+	manip = alg;
 }
 
 //rotate joint deconstructor. Deletes pointers
@@ -257,7 +254,7 @@ void DynamixelController::move(const int movement)
   {
     send = map(mov, SPEED_MIN, SPEED_MAX, DYNA_SPEED_CW_MAX, DYNA_SPEED_CW_MIN);
 	
-	  //calls spin wheel function from RoveDynamixel
+	//calls spin wheel function from RoveDynamixel
     //can take up to a uint16_t which exceeds a standard int but 
     errorMessageIgnore = DynamixelSpinWheel(dynamixel, send);
   }

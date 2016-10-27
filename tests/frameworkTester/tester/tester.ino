@@ -20,6 +20,7 @@
 FeedbackDevice* feedbackDevice;
 JointInterface * inHerFace;
 OutputDevice * controller;
+IOAlgorithm * algorithm;
 
 void setup() {} //fuck you setup
 
