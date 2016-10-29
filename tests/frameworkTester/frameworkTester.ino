@@ -1,4 +1,4 @@
-#include "ControlFramework.h"
+#include "JointControlFramework.h"
 
 /* Programmers: Drue Satterfield, David Strickland
  * Date of creation: 10/11/2016

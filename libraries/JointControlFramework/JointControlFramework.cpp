@@ -1,24 +1,37 @@
-#include "ControlFramework.h";
+#include "JointControlFramework.h"
 
 //constructor for single motor joints with feedback device
 //inputType: What kind of movement this joint should be controlled by, such as speed or position input.
 //alg: The IOAlgorithm to be used by this joint
 //cont: The output device controlling the motor on this joint
 //feed: The feedback device used with this joint
-SingleMotorJoint::SingleMotorJoint(InputType inputType, IOAlgorithm *alg, OutputDevice* cont, FeedbackDevice* feed) : JointInterface()
+SingleMotorJoint::SingleMotorJoint(ValueType inputType, IOAlgorithm *alg, OutputDevice* cont, FeedbackDevice* feed) : JointInterface()
 {
 	//assignments
 	inType = inputType;
 	controller1 = cont;
 	feedback = feed;
 	manip = alg;
+  manip -> feedbackDev = feed;
+  
+  //checks to make sure the passed arguments all work with each other, that is that the algorithm's input type is the same as what the user is putting in, and
+  //that the algorithm's output value type is what the output device expects to take in, etc
+  if((inputType == alg->inType) && (cont->inType == alg->outType) && (alg->feedbackInType == feed->fType))
+  {
+    validConstruction = true;
+  }
+  else
+  {
+    validConstruction = false;
+  }
 }
 
-//constructor for single motor joints without feedback
+//constructor for single motor joints without feedback.
+//Constructor automatically chooses an open loop algorithm that inputs the specified inputType and outputs the values the output device accepts
 //inputType: What kind of movement this joint should be controlled by, such as speed or position input.
 //cont: The output device controlling the motor on this joint
 //feed: The feedback device used with this joint
-SingleMotorJoint::SingleMotorJoint(InputType inputType, OutputDevice* cont) : JointInterface()
+SingleMotorJoint::SingleMotorJoint(ValueType inputType, OutputDevice* cont) : JointInterface()
 {
 	//assignments
 	inType = inputType;
@@ -26,6 +39,19 @@ SingleMotorJoint::SingleMotorJoint(InputType inputType, OutputDevice* cont) : Jo
 
 	//algorithm selected internally
 	algorithmSelector();
+
+  //checks to make sure the passed arguments all work with each other, that is that the algorithm's input type is the same as what the user is putting in, and
+  //that the algorithm's output value type is what the output device expects to take in, etc. 
+  //Technically this should never go wrong as long as the algorithmSelector is working properly, but it never hurts to double check. If indeed the construction
+  //winds up being invalid, for debugging try checking the algorithm selector method for bugs
+  if((inputType == manip->inType) && (manip->outType == cont->inType))
+  {
+    validConstruction = true;
+  }
+  else
+  {
+    validConstruction = false;
+  }
 }
 
 //deletes pointers used in single motor joint to 'prevent memory leaks'. Most likely not neccessary but good practice.
@@ -41,18 +67,43 @@ SingleMotorJoint::~SingleMotorJoint()
 //input: an int that represents the desired movement. What values this int is constrained to depends on what this joint was set up to take as an input.
 //For example, if this joint runs off of speed input then the values are constrained between SPEED_MIN and SPEED_MAX, and otherwise for the similar 
 //ranges defined in the framework's .h file
-void SingleMotorJoint::runOutputControl(const int movement) 
+//returns: The status of attempting to control this joint. Such as if the output is now running, or if it's complete, or if there was an error
+JointControlStatus SingleMotorJoint::runOutputControl(const int movement) 
 {
-	//var used as interrum value since algorithm can change the value
-	int mov;
+	int mov; //var used as interrum value since algorithm can change the value
+  bool motionComplete;
+  JointControlStatus returnStatus;
 
-	//calls algorithm
-	mov = manip->runAlgorithm(movement);
+  if(verifyInput(movement) == false)
+  {
+    returnStatus = InvalidInput;
+  }
+  
+  else if(validConstruction)
+  {
+  	//calls algorithm
+  	mov = manip->runAlgorithm(movement, &motionComplete);
+  
+  	//moves device with output decided on by the algorithm
+  	controller1->move(mov);
+  
+    if(motionComplete == true)
+    {
+      returnStatus = OutputComplete;
+    }
+    else
+    {
+      returnStatus = OutputRunning;
+    }
+  }
 
-	//moves device with output decided on by the algorithm
-	controller1->move(mov);
-
-	return;
+  //if this joint wasn't properly constructed, nothing is run
+  else
+  {
+    returnStatus = InvalidConstruction;
+  }
+  
+	return(returnStatus);
 }
 
 //creates the joint interface for a tilt joint with a feedback device.
@@ -62,7 +113,7 @@ void SingleMotorJoint::runOutputControl(const int movement)
 //cont1: The first output device controlling the first motor on this joint
 //cont2: The second output device controlling the second motor on this joint
 //feed: The feedback device used with this joint
-TiltJoint::TiltJoint(InputType inputType, IOAlgorithm *alg, OutputDevice* cont1, OutputDevice* cont2, FeedbackDevice* feed) : JointInterface()
+TiltJoint::TiltJoint(ValueType inputType, IOAlgorithm *alg, OutputDevice* cont1, OutputDevice* cont2, FeedbackDevice* feed) : JointInterface()
 {
 	//assignments
 	inType = inputType;
@@ -70,14 +121,27 @@ TiltJoint::TiltJoint(InputType inputType, IOAlgorithm *alg, OutputDevice* cont1,
 	controller2 = cont2;
 	feedback = feed;	
 	manip = alg;
+  manip -> feedbackDev = feed;
+
+  //checks to make sure the passed arguments all work with each other, that is that the algorithm's input type is the same as what the user is putting in, and
+  //that the algorithm's output value type is what the output device expects to take in, etc
+  if((inputType == alg->inType) && (cont1->inType == alg->outType) && (alg->feedbackInType == feed->fType) && (cont1->inType == cont2->inType))
+  {
+    validConstruction = true;
+  }
+  else
+  {
+    validConstruction = false;
+  }
 }
 
 //creates joint interface for a tilt joint with no feedback.
+//Constructor automatically chooses an open loop algorithm that inputs the specified inputType and outputs the values the output device accepts
 //Note both output devices are assumed to have the same input type
 //inputType: What kind of movement this joint should be controlled by, such as speed or position input.
 //cont1: The first output device controlling the first motor on this joint
 //cont2: The second output device controlling the second motor on this joint
-TiltJoint::TiltJoint(InputType inputType, OutputDevice* cont1, OutputDevice* cont2) : JointInterface()
+TiltJoint::TiltJoint(ValueType inputType, OutputDevice* cont1, OutputDevice* cont2) : JointInterface()
 {
 	//assignments
 	inType = inputType;
@@ -86,6 +150,17 @@ TiltJoint::TiltJoint(InputType inputType, OutputDevice* cont1, OutputDevice* con
   
 	//internally selects algorithm
 	algorithmSelector();
+
+  //checks to make sure the passed arguments all work with each other, that is that the algorithm's input type is the same as what the user is putting in, and
+  //that the algorithm's output value type is what the output device expects to take in, both output devices line up properly, etc
+  if((inputType == manip->inType) && (manip->outType == cont1->inType) && (cont1->inType == cont2->inType))
+  {
+    validConstruction = true;
+  }
+  else
+  {
+    validConstruction = false;
+  }
 }
 
 //Destructor for the tilt joint since it has pointers
@@ -103,29 +178,57 @@ TiltJoint::~TiltJoint()
 //input: an int that represents the desired movement. What values this int is constrained to depends on what this joint was set up to take as an input.
 //For example, if this joint runs off of speed input then the values are constrained between SPEED_MIN and SPEED_MAX, and otherwise for the similar 
 //ranges defined in the framework's .h file
-void TiltJoint::runOutputControl(const int movement)
+//returns: The status of attempting to control this joint. Such as if the output is now running, or if it's complete, or if there was an error
+JointControlStatus TiltJoint::runOutputControl(const int movement)
 {
-	//largely a temp value to store any modifications made to the input
-	int mov;
+  int mov; //var used as interrum value since algorithm can change the value
+  bool motionComplete;
+  JointControlStatus returnStatus;
 
-	//runs the algorithm on the input
-	mov = manip->runAlgorithm(movement);
+  if(verifyInput(movement) == false)
+  {
+    returnStatus = InvalidInput;
+  }
+  else if(validConstruction)
+  {
+  	//largely a temp value to store any modifications made to the input
+  	int mov;
+  
+  	//runs the algorithm on the input
+  	mov = manip->runAlgorithm(movement, &motionComplete);
+  
+  	//send to the motor move command
+  	controller1->move(mov);
+  
+  	//both the controllers should move the arm in the same direction. send command to motor 2
+  	controller2->move(mov);
+   
+    if(motionComplete == true)
+    {
+      returnStatus = OutputComplete;
+    }
+    else
+    {
+      returnStatus = OutputRunning;
+    }
+  }
 
-	//send to the motor move command
-	controller1->move(mov);
-
-	//both the controllers should move the arm in the same direction. send command to motor 2
-	controller2->move(mov);
-
-	return;
+  //if this joint wasn't properly constructed, nothing is run
+  else
+  {
+    returnStatus = InvalidConstruction;
+  }
+  
+  return(returnStatus);
 }
 
 //constructor for the rotate joint class without feedback.
+//Constructor automatically chooses an open loop algorithm that inputs the specified inputType and outputs the values the output device accepts
 //Assumes both passed devices have the same input type
 //inputType: What kind of movement this joint should be controlled by, such as speed or position input.
 //cont1: The first output device controlling the first motor on this joint
 //cont2: The second output device controlling the second motor on this joint
-RotateJoint::RotateJoint(InputType inputType, OutputDevice* cont1, OutputDevice* cont2) : JointInterface()
+RotateJoint::RotateJoint(ValueType inputType, OutputDevice* cont1, OutputDevice* cont2) : JointInterface()
 {
 	//assignments
 	inType = inputType;
@@ -134,6 +237,17 @@ RotateJoint::RotateJoint(InputType inputType, OutputDevice* cont1, OutputDevice*
 
 	//internally selects algorithm
 	algorithmSelector();
+
+  //checks to make sure the passed arguments all work with each other, that is that the algorithm's input type is the same as what the user is putting in, and
+  //that the algorithm's output value type is what the output device expects to take in, both output devices line up properly, etc
+  if((inputType == manip->inType) && (manip->outType == cont1->inType) && (cont1->inType == cont2->inType))
+  {
+    validConstruction = true;
+  }
+  else
+  {
+    validConstruction = false;
+  }
 }
 
 //constructor for the rotate joint class with feedback.
@@ -143,7 +257,7 @@ RotateJoint::RotateJoint(InputType inputType, OutputDevice* cont1, OutputDevice*
 //cont1: The first output device controlling the first motor on this joint
 //cont2: The second output device controlling the second motor on this joint
 //feed: A pointer to the feedback device used on this joint.
-RotateJoint::RotateJoint(InputType inputType, IOAlgorithm *alg, OutputDevice* cont1, OutputDevice* cont2, FeedbackDevice* feed) : JointInterface()
+RotateJoint::RotateJoint(ValueType inputType, IOAlgorithm *alg, OutputDevice* cont1, OutputDevice* cont2, FeedbackDevice* feed) : JointInterface()
 {
 	//assignments
 	inType = inputType;
@@ -151,6 +265,18 @@ RotateJoint::RotateJoint(InputType inputType, IOAlgorithm *alg, OutputDevice* co
 	controller2 = cont2;
 	feedback = feed;
 	manip = alg;
+  manip -> feedbackDev = feed;
+
+  //checks to make sure the passed arguments all work with each other, that is that the algorithm's input type is the same as what the user is putting in, and
+  //that the algorithm's output value type is what the output device expects to take in, etc
+  if((inputType == alg->inType) && (cont1->inType == alg->outType) && (alg->feedbackInType == feed->fType) && (cont1->inType == cont2->inType))
+  {
+    validConstruction = true;
+  }
+  else
+  {
+    validConstruction = false;
+  }
 }
 
 //rotate joint deconstructor. Deletes pointers
@@ -168,24 +294,48 @@ RotateJoint::~RotateJoint()
 //input: an int that represents the desired movement. What values this int is constrained to depend on what this joint was set up to take as an input.
 //For example, if this joint runs off of speed input then the values are constrained between SPEED_MIN and SPEED_MAX, and otherwise for the similar 
 //ranges defined in the framework's .h file
-void RotateJoint::runOutputControl(const int movement)
+//returns: The status of attempting to control this joint. Such as if the output is now running, or if it's complete, or if there was an error
+JointControlStatus RotateJoint::runOutputControl(const int movement)
 {
-	//largely a temp value to store any modifications made to the input
-	int mov;
+  int mov; //var used as interrum value since algorithm can change the value
+  bool motionComplete;
+  JointControlStatus returnStatus;
 
-	//runs the algorithm on the input
-	mov = manip->runAlgorithm(movement);
+  if(verifyInput(movement) == false)
+  {
+    returnStatus = InvalidInput;
+  }
+  else if(validConstruction)
+  {
+    //largely a temp value to store any modifications made to the input
+    int mov;
+  
+    //runs the algorithm on the input
+    mov = manip->runAlgorithm(movement, &motionComplete);
+  
+    //send to the motor move command
+    controller1->move(mov);
+  
+    //send command to motor 2. Since this is a rotate joint, the motors need to go in opposite directions so send the second one a negafied value
+    controller2->move(-1 * mov);
+   
+    if(motionComplete == true)
+    {
+      returnStatus = OutputComplete;
+    }
+    else
+    {
+      returnStatus = OutputRunning;
+    }
+  }
 
-	//send to the motor move command
-	controller1->move(mov);
-
-	//since the motors are supposed to work against eachother to rotate send the negative to controller 2
-	mov = -mov;
-
-	//send command to motor 2
-	controller2->move(mov);
-
-	return;
+  //if this joint wasn't properly constructed, nothing is run
+  else
+  {
+    returnStatus = InvalidConstruction;
+  }
+  
+  return(returnStatus);
 }
 
 //constructor for a dynamixel for any mode
@@ -208,10 +358,10 @@ DynamixelController::DynamixelController(const int Tx, const int Rx, bool upside
   invert = upsideDown;
 
   if(mode == Wheel)
-    outType = spd;
+    inType = spd;
 
   else if(mode == Joint)
-    outType = pos;
+    inType = pos;
     
   //view RoveDynamixel.h for details on all functions called here
   //note: no comments in RoveDynamixel
@@ -274,13 +424,13 @@ void DynamixelController::move(const int movement)
   Note that inType of speed is the only one currently implemented.
   inputs:
   pwmPin: GPIO pin that's connected to the pwm input of the SDC2130 device. GPIO pin number id's are defined by energia's pinmapping
-  inType: instance of the InputType enum that defines what kind of input the device should take, currently pos or spd. The motor controller can move based on either, so pick one
+  inType: instance of the ValueType enum that defines what kind of input the device should take, currently pos or spd. The motor controller can move based on either, so pick one
   upside down: whether or not the motor is mounted in reverse so the input values would also need to be inverted
  */
-Sdc2130::Sdc2130(const int pwmPin, InputType inType, bool upsideDown): OutputDevice()
+Sdc2130::Sdc2130(const int pwmPin, ValueType inType, bool upsideDown): OutputDevice()
 {
 	PWM_PIN = pwmPin;
-	outType = inType;
+	inType = inType;
 	invert = upsideDown;
 	controlType = Pwm;
 	pwmVal = 0;
@@ -291,12 +441,12 @@ Sdc2130::Sdc2130(const int pwmPin, InputType inType, bool upsideDown): OutputDev
 //Input: Can be either position or speed values constrained between SPEED_MIN and SPEED_MAX or POS_MIN and POS_MAX
 void Sdc2130::move(const int movement)
 {
-	if(outType == spd)
+	if(inType == spd)
 	{
 		moveSpeed(movement);
 	}
 	//position-input movement not implemented
-	else if(outType == pos)
+	else if(inType == pos)
 	{
 		
 	}
@@ -355,7 +505,7 @@ DirectDiscreteHBridge::DirectDiscreteHBridge(const int FPIN, const int RPIN, boo
 {
 	FPWM_PIN = FPIN;
 	RPWM_PIN = RPIN;
-	outType = spd;
+	inType = spd;
 	invert = upsideDown;
 }
 
@@ -408,8 +558,10 @@ void DirectDiscreteHBridge::move(const int movement)
 //speed to speed algorithm with no feedback just returns the input
 //input: expects speed values, constrained between the global SPEED_MIN and SPEED_MAX values
 //output: Actually just returns the same values. Meh
-int SpdToSpdNoFeedAlgorithm::runAlgorithm(const int input)
+int SpdToSpdNoFeedAlgorithm::runAlgorithm(const int input, bool * ret_OutputFinished)
 {
+  //since there's no feedback, there's no output control so just automatically return true
+  *ret_OutputFinished = true;
   return input;
 }
 
