@@ -15,10 +15,10 @@ void JointInterface::algorithmSelector()
 
 //function that checks to see if the user put in a proper input value when calling the runOutputControl function
 //returns true if the input is in a valid range, false if it's not
-bool JointInterface::verifyInput(int inputToVerify)
+bool JointInterface::verifyInput(long inputToVerify)
 {
-  int valueMin;
-  int valueMax;
+  long valueMin;
+  long valueMax;
   
   if(inType == spd)
   {
@@ -111,13 +111,13 @@ SingleMotorJoint::~SingleMotorJoint()
 
 //run the output algorithm for this tilt joint correctly (I mean, hopefully).
 //calls the algorithm to manipulate the input and sends it to the motor device.
-//input: an int that represents the desired movement. What values this int is constrained to depends on what this joint was set up to take as an input.
+//input: a long that represents the desired movement. What values this int is constrained to depends on what this joint was set up to take as an input.
 //For example, if this joint runs off of speed input then the values are constrained between SPEED_MIN and SPEED_MAX, and otherwise for the similar 
 //ranges defined in the framework's .h file
 //returns: The status of attempting to control this joint. Such as if the output is now running, or if it's complete, or if there was an error
-JointControlStatus SingleMotorJoint::runOutputControl(const int movement) 
+JointControlStatus SingleMotorJoint::runOutputControl(const long movement) 
 {
-	int mov; //var used as interrum value since algorithm can change the value
+	long mov; //var used as interrum value since algorithm can change the value
   bool motionComplete;
   JointControlStatus returnStatus;
 
@@ -222,11 +222,11 @@ TiltJoint::~TiltJoint()
 //run the output algorithm for this tilt joint correctly (I mean, hopefully).
 //calls the algorithm to manipulate the input and sends it to each controller.
 //Both devices get the same command since they're supposed to move together.
-//input: an int that represents the desired movement. What values this int is constrained to depends on what this joint was set up to take as an input.
+//input: a long that represents the desired movement. What values this int is constrained to depends on what this joint was set up to take as an input.
 //For example, if this joint runs off of speed input then the values are constrained between SPEED_MIN and SPEED_MAX, and otherwise for the similar 
 //ranges defined in the framework's .h file
 //returns: The status of attempting to control this joint. Such as if the output is now running, or if it's complete, or if there was an error
-JointControlStatus TiltJoint::runOutputControl(const int movement)
+JointControlStatus TiltJoint::runOutputControl(const long movement)
 {
   int mov; //var used as interrum value since algorithm can change the value
   bool motionComplete;
@@ -338,13 +338,13 @@ RotateJoint::~RotateJoint()
 //run the output algorithm for this tilt joint correctly (I mean, hopefully).
 //calls the algorithm to manipulate the input and sends it to each controller.
 //One device gets an inverted direction from the other, since they move in opposite tandem on rotate joints.
-//input: an int that represents the desired movement. What values this int is constrained to depend on what this joint was set up to take as an input.
+//input: a long that represents the desired movement. What values this int is constrained to depend on what this joint was set up to take as an input.
 //For example, if this joint runs off of speed input then the values are constrained between SPEED_MIN and SPEED_MAX, and otherwise for the similar 
 //ranges defined in the framework's .h file
 //returns: The status of attempting to control this joint. Such as if the output is now running, or if it's complete, or if there was an error
-JointControlStatus RotateJoint::runOutputControl(const int movement)
+JointControlStatus RotateJoint::runOutputControl(const long movement)
 {
-  int mov; //var used as interrum value since algorithm can change the value
+  long mov; //var used as interrum value since algorithm can change the value
   bool motionComplete;
   JointControlStatus returnStatus;
 
@@ -354,8 +354,6 @@ JointControlStatus RotateJoint::runOutputControl(const int movement)
   }
   else if(validConstruction)
   {
-    //largely a temp value to store any modifications made to the input
-    int mov;
   
     //runs the algorithm on the input
     mov = manip->runAlgorithm(movement, &motionComplete);
@@ -422,11 +420,11 @@ DynamixelController::DynamixelController(const int Tx, const int Rx, bool upside
 
 //sends the move command for the wheel mode based on a speed, an int constrained between the SPEED_MIN and SPEED_MAX constants.
 //clockwise will be considered forward and ccw is reverse
-void DynamixelController::move(const int movement)
+void DynamixelController::move(const long movement)
 {
   //stores the error returned by the spin wheel function	
   uint8_t errorMessageIgnore;
-  int mov = movement;
+  long mov = movement;
   uint16_t send;
   
   //if mounted upside down then invert the signal passed to it and move accordingly
@@ -486,7 +484,7 @@ Sdc2130::Sdc2130(const int pwmPin, ValueType inType, bool upsideDown): OutputDev
 //sdc2130 general move function. Selects the specific move function
 //based on the specified movement type, such as speed or position
 //Input: Can be either position or speed values constrained between SPEED_MIN and SPEED_MAX or POS_MIN and POS_MAX
-void Sdc2130::move(const int movement)
+void Sdc2130::move(const long movement)
 {
 	if(inType == spd)
 	{
@@ -558,7 +556,7 @@ DirectDiscreteHBridge::DirectDiscreteHBridge(const int FPIN, const int RPIN, boo
 
 //moves by passing a pwm signal to the H bridge.
 //Input: expects int values constrained between the SPEED_MIN and SPEED_MAX constants
-void DirectDiscreteHBridge::move(const int movement)
+void DirectDiscreteHBridge::move(const long movement)
 {
 	int mov = movement;
 	int pwm = 0;
@@ -605,7 +603,7 @@ void DirectDiscreteHBridge::move(const int movement)
 //speed to speed algorithm with no feedback just returns the input
 //input: expects speed values, constrained between the global SPEED_MIN and SPEED_MAX values
 //output: Actually just returns the same values. Meh
-int SpdToSpdNoFeedAlgorithm::runAlgorithm(const int input, bool * ret_OutputFinished)
+long SpdToSpdNoFeedAlgorithm::runAlgorithm(const long input, bool * ret_OutputFinished)
 {
   //since there's no feedback, there's no output control so just automatically return true
   *ret_OutputFinished = true;

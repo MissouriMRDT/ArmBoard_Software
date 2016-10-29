@@ -68,7 +68,7 @@ enum JointControlStatus
 //Constants representing the ranges for the different input types.
 //The common inputs and outputs between classes will fall between these limits, class should not expect to take or return values outside of these
 const int SPEED_MIN = -1000, SPEED_MAX = 1000; 
-const int POS_MIN = 0, POS_MAX = 10000;
+const long POS_MIN = 0, POS_MAX = 10000;
 
 //class prototypes:
   //joint interface and derived classes
@@ -113,7 +113,7 @@ class JointInterface
 
     //function that checks to see if the user put in a proper input value when calling the runOutputControl function
     //returns true if the input is in a valid range, false if it's not
-    bool verifyInput(int inputToVerify);
+    bool verifyInput(long inputToVerify);
 
     //if the constructor wasn't passed an ioalgorithm to use, then this function selects one.
     //Basic algorithms only; if it's one that uses feedback then it needs to be passed in by the user, 
@@ -127,7 +127,7 @@ class JointInterface
     //this joint is deemed to be, it runs it.
     //Must pass an integer for this implementation. Will break otherwise.
     //returns: The status of attempting to control this joint. Such as if the output is now running, or if it's complete, or if there was an error
-    virtual JointControlStatus runOutputControl(const int movement);
+    virtual JointControlStatus runOutputControl(const long movement);
 };
 
 //feedback devices used to help determine where the arm is and what steps need to be taken
@@ -148,7 +148,7 @@ class FeedbackDevice
 		//and friend isn't inherited so we can't just make the abstract class our friend.
 		//returns: a value representing feedback, the range of the value depends on what input type this device returns.
 		//For example, if this device returns speed feedback, the values shall be in the range between SPEED_MIN and SPEED_MAX
-		virtual int getFeedback();
+		virtual long getFeedback();
 
 		ValueType fType;
 };
@@ -168,7 +168,7 @@ class OutputDevice
 		//calls the device to move the motor, based on the passed value of movement.
 		//Input: Can be values based on any of the input types as defined in the enum above, and the ranges for these values
 		//should stay within the max and min constants for each type
-		virtual void move(const int movement);
+		virtual void move(const long movement);
 
 		//blank constructor for the base class
 		OutputDevice() {};
@@ -213,7 +213,7 @@ class IOAlgorithm
 		//is supposed to take in speed and output position, then its input is constrained by SPEED_MIN and SPEED_MAX, and its output is constrained by POS_MIN and POS_MAX
     //bool * ret_outputFinished: parameter passed by pointer, returns true if the joint has finished its controlled movement and ready to exit the control loop, 
     //false if it's still in the middle of getting to its desired finished state IE in the middle of moving to a desired end position or reaching a desired end speed
-		virtual int runAlgorithm(const int in, bool * ret_OutputFinished);
+		virtual long runAlgorithm(const int long, bool * ret_OutputFinished);
 };
 
 
@@ -248,11 +248,11 @@ class SingleMotorJoint : public JointInterface
 		~SingleMotorJoint();       
 
 		//runs algorithm for movement for a singlular motor
-		//input: an int that represents the desired movement. What values this int is constrained to depends on what this joint was set up to take as an input.
+		//input: a long that represents the desired movement. What values this int is constrained to depends on what this joint was set up to take as an input.
 		//For example, if this joint runs off of speed input then the values are constrained between SPEED_MIN and SPEED_MAX, and otherwise for the similar 
 		//ranges defined in the framework's .h file
     //returns: The status of attempting to control this joint. Such as if the output is now running, or if it's complete, or if there was an error
-		JointControlStatus runOutputControl(const int movement);    
+		JointControlStatus runOutputControl(const long movement);    
 };
   
 //Two motor device joint, where they move in the same direction to control the joint
@@ -283,11 +283,11 @@ class TiltJoint : public JointInterface
 		~TiltJoint();
 
 		//runs algorithm for moving two motors together so that it tilts the joint	
-		//input: an int that represents the desired movement. What values this int is constrained to depends on what this joint was set up to take as an input.
+		//input: a long that represents the desired movement. What values this int is constrained to depends on what this joint was set up to take as an input.
 		//For example, if this joint runs off of speed input then the values are constrained between SPEED_MIN and SPEED_MAX, and otherwise for the similar 
 		//ranges defined in the framework's .h file  
     //returns: The status of attempting to control this joint. Such as if the output is now running, or if it's complete, or if there was an error
-		JointControlStatus runOutputControl(const int movement);
+		JointControlStatus runOutputControl(const long movement);
 };  
   
 //represents a joint where two motor devices move in opposite directions to control the joint. 
@@ -319,11 +319,11 @@ class RotateJoint : public JointInterface
 		~RotateJoint();
 
 		//moves two motors together so that they rotate the joint. Motors will spin the opposite direction 
-		//input: an int that represents the desired movement. What values this int is constrained to depends on what this joint was set up to take as an input.
+		//input: a long that represents the desired movement. What values this int is constrained to depends on what this joint was set up to take as an input.
 		//For example, if this joint runs off of speed input then the values are constrained between SPEED_MIN and SPEED_MAX, and otherwise for the similar 
 		//ranges defined in the framework's .h file
     //returns: The status of attempting to control this joint. Such as if the output is now running, or if it's complete, or if there was an error
-		JointControlStatus runOutputControl(const int movement);
+		JointControlStatus runOutputControl(const long movement);
 };
 
                                           /******************************************************************************
@@ -342,7 +342,7 @@ class SpdToSpdNoFeedAlgorithm : public IOAlgorithm
   protected:
     //since nothing needs to change the input (what is recieved from base station) is directly returned
     //implemented to preserve modularity and uniformity in code.
-    int runAlgorithm(const int input, bool * ret_OutputFinished);
+    long runAlgorithm(const long input, bool * ret_OutputFinished);
 
     //constructor, nothing special in particular
     SpdToSpdNoFeedAlgorithm(): IOAlgorithm()
@@ -380,13 +380,13 @@ class Sdc2130: public OutputDevice
   protected:
   
     //general move command. Pass in either speed or position values
-    void move(const int movement);
+    void move(const long movement);
     
     //move command if inputting speed, input movement is in the range of SPEED_MIN to SPEED_MAX
     void moveSpeed(const int movement);
     
     //move command if inputting position, input movement is in the range of POS_MIN to POS_MAX
-    //void movePos(const int movement); not implemented
+    //void movePos(const long movement); not implemented
    
   public:
     //constructor for controlling it via pwm
@@ -424,7 +424,7 @@ class DynamixelController : public OutputDevice
     //movement command based on a speed input and wheel mode. Input should be in the range between SPEED_MIN and SPEED_MAX
     //this will be the defaut assumption, other modes with other methods of movement will be 
     //made into other functions not simply move.
-    void move(const int movement);
+    void move(const long movement);
   
   public:
   
@@ -457,7 +457,7 @@ class DirectDiscreteHBridge : public OutputDevice
 
   protected:
     //function which directly moves the device. 
-    void move(const int movement);
+    void move(const long movement);
     
   public:
     //constructor, user must give pin assignments with the first pin being the forward pin and the second being the reverse pin.
