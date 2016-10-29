@@ -1,5 +1,52 @@
 #include "JointControlFramework.h"
 
+//if the constructor wasn't passed an ioalgorithm to use, then this function selects one.
+//Basic algorithms only; if it's one that uses feedback then it needs to be passed in by the user, 
+//as feedback based algorithms typically are complex enough to require user-dictated initialization
+void JointInterface::algorithmSelector()
+{
+  //selects algorithm]
+  if((controller1->inType == spd) && inType == spd)
+  {
+    manip = new SpdToSpdNoFeedAlgorithm();
+  }
+  return;
+}
+
+//function that checks to see if the user put in a proper input value when calling the runOutputControl function
+//returns true if the input is in a valid range, false if it's not
+bool JointInterface::verifyInput(int inputToVerify)
+{
+  int valueMin;
+  int valueMax;
+  
+  if(inType == spd)
+  {
+    valueMin = SPEED_MIN;
+    valueMax = SPEED_MAX;
+  }
+  else if(inType == pos)
+  {
+    valueMin = POS_MIN;
+    valueMax = POS_MAX;
+  }
+  //if any other intypes are made, put them here
+  else
+  {
+    valueMin = 0;
+    valueMax = 0;
+  }
+
+  if(valueMin <= inputToVerify && inputToVerify <= valueMax)
+  {
+    return(true);
+  }
+  else
+  {
+    return(false);
+  }
+}
+
 //constructor for single motor joints with feedback device
 //inputType: What kind of movement this joint should be controlled by, such as speed or position input.
 //alg: The IOAlgorithm to be used by this joint

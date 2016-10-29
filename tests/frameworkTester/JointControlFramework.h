@@ -70,6 +70,66 @@ enum JointControlStatus
 const int SPEED_MIN = -1000, SPEED_MAX = 1000; 
 const int POS_MIN = 0, POS_MAX = 10000;
 
+//class prototypes:
+  //joint interface and derived classes
+class JointInterface; 
+class TiltJoint;
+class SingleMotorJoint;
+class RotateJoint;
+  //IOAlgorithm and derived classes
+class IOAlgorithm; 
+class SpdToSpdNoFeedAlgorithm;
+  //output device and derived classes
+class OutputDevice; 
+class DirectDiscreteHBridge;
+class DynamixelController;
+class Sdc2130;
+  //feedback devices and derived classes
+class FeedbackDevice;
+
+//Interface for controlling the joint overall from the main program's perspective.
+//It handles all duties of controlling the joint; the main program just has to pass it a value to respond to.
+//This class is supposed to be thought of as abstract; base classes determine what type of joint is used.
+class JointInterface
+{
+  protected:
+    
+    //expected input type from base station
+    ValueType inType;
+
+    //algorithm is either passed in, or created dymanically based on what is passed to the control framework interface. 
+    //called in runOutputControl
+    IOAlgorithm* manip;
+
+    //Passed to the framework interface if feedback is used. Used when looping in certain algorithms
+    FeedbackDevice* feedback;
+
+    //pointer to the output device instance which is passed in when creating the framework interface
+    //called in runOutputControl
+    OutputDevice* controller1;
+
+    //tracks whether or not the parameters passed via construction were valid
+    bool validConstruction;
+
+    //function that checks to see if the user put in a proper input value when calling the runOutputControl function
+    //returns true if the input is in a valid range, false if it's not
+    bool verifyInput(int inputToVerify);
+
+    //if the constructor wasn't passed an ioalgorithm to use, then this function selects one.
+    //Basic algorithms only; if it's one that uses feedback then it needs to be passed in by the user, 
+    //as feedback based algorithms typically are complex enough to require user-dictated initialization
+    void algorithmSelector();
+    
+  public:
+  
+    //Runs the output control for this joint, IE making it move or checking 
+    //feedback to see if it needs to move, whatever the algorithm for 
+    //this joint is deemed to be, it runs it.
+    //Must pass an integer for this implementation. Will break otherwise.
+    //returns: The status of attempting to control this joint. Such as if the output is now running, or if it's complete, or if there was an error
+    virtual JointControlStatus runOutputControl(const int movement);
+};
+
 //feedback devices used to help determine where the arm is and what steps need to be taken
 //Used by the IOAlgorithm class to perform looping. Part of the JointInterface framework
 class FeedbackDevice
@@ -121,111 +181,6 @@ class OutputDevice
 		bool invert;
 };
 
-//SDC2130 motor controller. Capable of moving based on torque, speed,
-//or position. Unfortunately it's kind of shitty, best we have right now
-//is budging it slowly with input speed commands that output just making 
-//it move position slightly. Only implemented modes are controlling it
-//via pwm and moving by taking in a speed position
-class Sdc2130: public OutputDevice
-{
-	private:
-		int PWM_PIN, TX_PIN, RX_PIN;
-		int pwmVal;
-		
-		const int PWM_MIN = 0, PWM_MAX = 255;
-		const int POS_INC = 2;
-		
-		enum ControlTypes {Pwm, c_Serial};
-		ControlTypes controlType;
-   
-	protected:
-  
-		//general move command. Pass in either speed or position values
-		void move(const int movement);
-		
-		//move command if inputting speed, input movement is in the range of SPEED_MIN to SPEED_MAX
-		void moveSpeed(const int movement);
-		
-		//move command if inputting position, input movement is in the range of POS_MIN to POS_MAX
-		//void movePos(const int movement); not implemented
-   
-	public:
-		//constructor for controlling it via pwm
-		//inputs:
-		//pwmPin: GPIO pin that's connected to the pwm input of the SDC2130 device. GPIO pin number id's are defined by energia's pinmapping
-		//inType: instance of the ValueType enum that defines what kind of input the device should take, currently pos or spd. The motor controller can move based on either, so pick one
-		//upside down: whether or not the motor is mounted in reverse so the input values would also need to be inverted
-		Sdc2130(const int pwmPin, ValueType inType, bool upsideDown);
-		
-		//constructor for controlling it via serial
-		//Sdc2130(const int txPin, const int rxPin, ValueType inType, bool upsideDown); not implemented
-};
-
-//Standard dynamixel capable of wheel, joint, and multi-turn modes of operation.
-//RoveDynamixel causes some issues to interface with but not worth rewriting it to work with classes better
-//Note: Requires use of RoveDynamixel which is hard to read and understand. Edit at own risk.
-class DynamixelController : public OutputDevice
-{
-  private:
-    //Only Important pin for dynamixel is the Tx/Rx pin other two are just power and not important logically
-    int Tx_PIN;
-  	int Rx_PIN;
-  	uint32_t baudRate;
-  	
-  	//values which the dynamixel expects the speed to be between. CW = clockwise/positive/forward  CCW = counter-clockwise/negative/backwards
-  	const int DYNA_SPEED_CW_MAX = 1023;
-  	const int DYNA_SPEED_CW_MIN = 0;
-  	const int DYNA_SPEED_CCW_MAX = 2047;
-  	const int DYNA_SPEED_CCW_MIN = 1024;
-  	
-  	//need to have in order to interface with RoveDynamixel since it uses structs and pointers as opposed to classes
-  	Dynamixel dynamixel;
-  
-  protected:
-  	//movement command based on a speed input and wheel mode. Input should be in the range between SPEED_MIN and SPEED_MAX
-  	//this will be the defaut assumption, other modes with other methods of movement will be 
-  	//made into other functions not simply move.
-    void move(const int movement);
-	
-  public:
-  
-  	//constructor for a dynamixel which takes in a move type and other things needed for dynamixels
-  	//Sets up uart on the board and baud rate at the same time
-  	/*Inputs: 
-  	  TX -> tx pin numerical id, as defined by energia's pinmapping
-  	  RX -> tx pin numerical id, as defined by energia's pinmapping
-  	  upsideDown -> Whether or not the dyna is mounted in reverse and thus the inputs need to be reversed as well
-  	  type -> Instance of the DynamixelType enum that defines the dynamixel brand such as AX, MX, etc
-  	  id -> id of the dynamixel. Note that if you aren't sure, you'll need to use a different program to set the id yourself
-  	  uartIndex -> which hardware uart to use when talking to it, 0-7
-  	  baud -> baud rate of the serial communication
-  	  mode -> instance of the DynamixelMode enum that defines the dynamixel's mode such as Wheel, Joint, etc
-  	*/
-  	DynamixelController(const int Tx, const int Rx, bool upsideDown, DynamixelType type, uint8_t id, uint8_t uartIndex, uint32_t baud, DynamixelMode mode);	
-};
-
-//Discrete H Bridge controlled directly by the microcontroller, which has only two inputs to control forward and backwards. 
-//Has two pins (one forward, one backwards). Outputs a pwm signal on one pin or another. 
-class DirectDiscreteHBridge : public OutputDevice
-{
-	private:
-
-		//FPWM_PIN the forward PWM and RPWM is the reverse PWM
-		int FPWM_PIN, RPWM_PIN;
-
-		//Value ranges for conversting input to expected output when sending 
-		const int PWM_MIN = 0, PWM_MAX = 255;
-
-	protected:
-		//function which directly moves the device. 
-		void move(const int movement);
-		
-	public:
-		//constructor, user must give pin assignments with the first pin being the forward pin and the second being the reverse pin.
-		//Must specify the physical orientation of the device as well, if it is mounted in reverse or not
-		DirectDiscreteHBridge(const int FPIN, const int RPIN, bool upsideDown);  
-
-};
   
 //Base class for all algorithms. Algorithms take the input from base station and do whatever computation is 
 //needed to interpret the command such as controls. 
@@ -261,106 +216,15 @@ class IOAlgorithm
 		virtual int runAlgorithm(const int in, bool * ret_OutputFinished);
 };
 
-//Algorithm used when speed is recieved from base station and speed is expected to be sent to the device without any feedback. 
-//Open loop speed control.  
-class SpdToSpdNoFeedAlgorithm : public IOAlgorithm
-{
-  friend class JointInterface;
+
+                                           /******************************************************************************
+                                           * 
+                                           * Joint Interface derived classes
+                                           * 
+                                           ******************************************************************************/
+
+
     
-  protected:
-    //since nothing needs to change the input (what is recieved from base station) is directly returned
-    //implemented to preserve modularity and uniformity in code.
-    int runAlgorithm(const int input, bool * ret_OutputFinished);
-
-    //constructor, nothing special in particular
-    SpdToSpdNoFeedAlgorithm(): IOAlgorithm()
-    {
-      inType = spd;
-      outType = spd;
-    }
-};
-  
-//Interface for controlling the joint overall from the main program's perspective.
-//It handles all duties of controlling the joint; the main program just has to pass it a value to respond to.
-//This class is supposed to be thought of as abstract; base classes determine what type of joint is used.
-class JointInterface
-{
-	protected:
-	  
-		//expected input type from base station
-		ValueType inType;
-
-		//algorithm is either passed in, or created dymanically based on what is passed to the control framework interface. 
-		//called in runOutputControl
-		IOAlgorithm* manip;
-
-		//Passed to the framework interface if feedback is used. Used when looping in certain algorithms
-		FeedbackDevice* feedback;
-
-		//pointer to the output device instance which is passed in when creating the framework interface
-		//called in runOutputControl
-		OutputDevice* controller1;
-
-    //tracks whether or not the parameters passed via construction were valid
-    bool validConstruction;
-
-    //function that checks to see if the user put in a proper input value when calling the runOutputControl function
-    //returns true if the input is in a valid range, false if it's not
-    bool verifyInput(int inputToVerify)
-    {
-      int valueMin;
-      int valueMax;
-      
-      if(inType == spd)
-      {
-        valueMin = SPEED_MIN;
-        valueMax = SPEED_MAX;
-      }
-      else if(inType == pos)
-      {
-        valueMin = POS_MIN;
-        valueMax = POS_MAX;
-      }
-      //if any other intypes are made, put them here
-      else
-      {
-        valueMin = 0;
-        valueMax = 0;
-      }
-
-      if(valueMin <= inputToVerify && inputToVerify <= valueMax)
-      {
-        return(true);
-      }
-      else
-      {
-        return(false);
-      }
-    }
-
-		//if the constructor wasn't passed an ioalgorithm to use, then this function selects one.
-		//Basic algorithms only; if it's one that uses feedback then it needs to be passed in by the user, 
-		//as feedback based algorithms typically are complex enough to require user-dictated initialization
-		void algorithmSelector()
-		{
-		  //selects algorithm]
-		  if((controller1->inType == spd) && inType == spd)
-		  {
-			  manip = new SpdToSpdNoFeedAlgorithm();
-		  }
-		  return;
-		}
-    
-	public:
-	
-		//Runs the output control for this joint, IE making it move or checking 
-		//feedback to see if it needs to move, whatever the algorithm for 
-		//this joint is deemed to be, it runs it.
-		//Must pass an integer for this implementation. Will break otherwise.
-    //returns: The status of attempting to control this joint. Such as if the output is now running, or if it's complete, or if there was an error
-		virtual JointControlStatus runOutputControl(const int movement);
-};
-	  
 //this derivation of jointInterface represents joints where a singular motor device moves the joint.
 class SingleMotorJoint : public JointInterface
 {
@@ -461,4 +325,143 @@ class RotateJoint : public JointInterface
     //returns: The status of attempting to control this joint. Such as if the output is now running, or if it's complete, or if there was an error
 		JointControlStatus runOutputControl(const int movement);
 };
+
+                                          /******************************************************************************
+                                           * 
+                                           * Algorithm derived classes
+                                           * 
+                                           ******************************************************************************/
+
+
+//Algorithm used when speed is recieved from base station and speed is expected to be sent to the device without any feedback. 
+//Open loop speed control.  
+class SpdToSpdNoFeedAlgorithm : public IOAlgorithm
+{
+  friend class JointInterface;
+    
+  protected:
+    //since nothing needs to change the input (what is recieved from base station) is directly returned
+    //implemented to preserve modularity and uniformity in code.
+    int runAlgorithm(const int input, bool * ret_OutputFinished);
+
+    //constructor, nothing special in particular
+    SpdToSpdNoFeedAlgorithm(): IOAlgorithm()
+    {
+      inType = spd;
+      outType = spd;
+    }
+};
+
+
+                                           /******************************************************************************
+                                           * 
+                                           * Output Device derived classes
+                                           * 
+                                           ******************************************************************************/
+                                           
+
+//SDC2130 motor controller. Capable of moving based on torque, speed,
+//or position. Unfortunately it's kind of shitty, best we have right now
+//is budging it slowly with input speed commands that output just making 
+//it move position slightly. Only implemented modes are controlling it
+//via pwm and moving by taking in a speed position
+class Sdc2130: public OutputDevice
+{
+  private:
+    int PWM_PIN, TX_PIN, RX_PIN;
+    int pwmVal;
+    
+    const int PWM_MIN = 0, PWM_MAX = 255;
+    const int POS_INC = 2;
+    
+    enum ControlTypes {Pwm, c_Serial};
+    ControlTypes controlType;
+   
+  protected:
   
+    //general move command. Pass in either speed or position values
+    void move(const int movement);
+    
+    //move command if inputting speed, input movement is in the range of SPEED_MIN to SPEED_MAX
+    void moveSpeed(const int movement);
+    
+    //move command if inputting position, input movement is in the range of POS_MIN to POS_MAX
+    //void movePos(const int movement); not implemented
+   
+  public:
+    //constructor for controlling it via pwm
+    //inputs:
+    //pwmPin: GPIO pin that's connected to the pwm input of the SDC2130 device. GPIO pin number id's are defined by energia's pinmapping
+    //inType: instance of the ValueType enum that defines what kind of input the device should take, currently pos or spd. The motor controller can move based on either, so pick one
+    //upside down: whether or not the motor is mounted in reverse so the input values would also need to be inverted
+    Sdc2130(const int pwmPin, ValueType inType, bool upsideDown);
+    
+    //constructor for controlling it via serial
+    //Sdc2130(const int txPin, const int rxPin, ValueType inType, bool upsideDown); not implemented
+};
+
+//Standard dynamixel capable of wheel, joint, and multi-turn modes of operation.
+//RoveDynamixel causes some issues to interface with but not worth rewriting it to work with classes better
+//Note: Requires use of RoveDynamixel which is hard to read and understand. Edit at own risk.
+class DynamixelController : public OutputDevice
+{
+  private:
+    //Only Important pin for dynamixel is the Tx/Rx pin other two are just power and not important logically
+    int Tx_PIN;
+    int Rx_PIN;
+    uint32_t baudRate;
+    
+    //values which the dynamixel expects the speed to be between. CW = clockwise/positive/forward  CCW = counter-clockwise/negative/backwards
+    const int DYNA_SPEED_CW_MAX = 1023;
+    const int DYNA_SPEED_CW_MIN = 0;
+    const int DYNA_SPEED_CCW_MAX = 2047;
+    const int DYNA_SPEED_CCW_MIN = 1024;
+    
+    //need to have in order to interface with RoveDynamixel since it uses structs and pointers as opposed to classes
+    Dynamixel dynamixel;
+  
+  protected:
+    //movement command based on a speed input and wheel mode. Input should be in the range between SPEED_MIN and SPEED_MAX
+    //this will be the defaut assumption, other modes with other methods of movement will be 
+    //made into other functions not simply move.
+    void move(const int movement);
+  
+  public:
+  
+    //constructor for a dynamixel which takes in a move type and other things needed for dynamixels
+    //Sets up uart on the board and baud rate at the same time
+    /*Inputs: 
+      TX -> tx pin numerical id, as defined by energia's pinmapping
+      RX -> tx pin numerical id, as defined by energia's pinmapping
+      upsideDown -> Whether or not the dyna is mounted in reverse and thus the inputs need to be reversed as well
+      type -> Instance of the DynamixelType enum that defines the dynamixel brand such as AX, MX, etc
+      id -> id of the dynamixel. Note that if you aren't sure, you'll need to use a different program to set the id yourself
+      uartIndex -> which hardware uart to use when talking to it, 0-7
+      baud -> baud rate of the serial communication
+      mode -> instance of the DynamixelMode enum that defines the dynamixel's mode such as Wheel, Joint, etc
+    */
+    DynamixelController(const int Tx, const int Rx, bool upsideDown, DynamixelType type, uint8_t id, uint8_t uartIndex, uint32_t baud, DynamixelMode mode); 
+};
+
+//Discrete H Bridge controlled directly by the microcontroller, which has only two inputs to control forward and backwards. 
+//Has two pins (one forward, one backwards). Outputs a pwm signal on one pin or another. 
+class DirectDiscreteHBridge : public OutputDevice
+{
+  private:
+
+    //FPWM_PIN the forward PWM and RPWM is the reverse PWM
+    int FPWM_PIN, RPWM_PIN;
+
+    //Value ranges for conversting input to expected output when sending 
+    const int PWM_MIN = 0, PWM_MAX = 255;
+
+  protected:
+    //function which directly moves the device. 
+    void move(const int movement);
+    
+  public:
+    //constructor, user must give pin assignments with the first pin being the forward pin and the second being the reverse pin.
+    //Must specify the physical orientation of the device as well, if it is mounted in reverse or not
+    DirectDiscreteHBridge(const int FPIN, const int RPIN, bool upsideDown);  
+
+};  
