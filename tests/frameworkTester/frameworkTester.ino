@@ -5,14 +5,7 @@
  * Sub system: arm board
  * 
  * program overhead:
- * The program is fairly simple in concept. We listen for communications from the base station over ethernet using the RoveComm library, and when we get a command from them 
- * we identify what part of the arm it wants us to move, and proceed to do so. Base station will either say how fast they want the movement to happen, or what position they want
- * that part of that arm to move to. We tell the joints to move based off of that. The program also monitors and handles communications to and from the endefector board, since 
- * that board's communications run through the arm board.
- * 
- * If we do not get a command within a certain amount of time, the arm shall automatically stop. This is so the arm doesn't simply keep moving in the event of a communications failure.
- * 
- * 
+ * Basically this is just a model of the main-ish program with the framework incorporated
  */
 
 #include "arm.h";
