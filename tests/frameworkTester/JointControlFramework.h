@@ -38,6 +38,8 @@
 
 #include "Energia.h"
 #include "RoveDynamixel.h"
+#include <PwmReader.h>
+
 
 //All the types of values that can be passed to and be returned from the clases in the control framework 
 enum ValueType{spd, pos};
@@ -142,6 +144,7 @@ class FeedbackDevice
 	public:
 	
 		//blank constructor for the base class
+    //todo: make this protected
 		FeedbackDevice() {} ;
 
 		//returns feedback. Public because all the IOAlgorithm classes need to be able to call it,
@@ -465,3 +468,38 @@ class DirectDiscreteHBridge : public OutputDevice
     DirectDiscreteHBridge(const int FPIN, const int RPIN, bool upsideDown);  
 
 };  
+
+                                           /******************************************************************************
+                                           * 
+                                           * Feedback Device derived classes
+                                           * 
+                                           ******************************************************************************/
+
+//feedback device for the MA3 encoder, 12 bit version
+//note: this class uses the pwm reader library. It will not compile without it.
+class Ma3Encoder12b: public FeedbackDevice
+{
+  private:
+    char PWM_PIN_PORT;
+    int PWM_PIN_NUM;
+    const int PWM_READ_MAX = 4097;
+    const int PWM_READ_MIN = 1;
+    
+  public:
+
+    //constructor. Public, to be called by main before passing into joint interface
+    //input: char representing which GPIO pin port connects to the encoder and an int representing the pin's number. Ex: PC_2 would be 'c', 2. Remember that the encoder outputs pwm signals,
+    //so the pin it connects to must be capable of reading pwm. A list of which pins are compatible are in the pwm reader library.
+    Ma3Encoder12b(const char PwmReadPin_Port, const int PwmReadPin_PinNumber)
+    {
+      initPwmRead(PwmReadPin_Port, PwmReadPin_PinNumber); //function in the pwm reader library
+      PWM_PIN_PORT = PwmReadPin_Port; 
+      PWM_PIN_NUM =  PwmReadPin_PinNumber;
+      fType = pos;
+    }
+
+    //gets the positional feedback from the encoder. Returns positional values from POS_MIN and POS_MAX.
+    //Note that the feedback can fluctuate a bit due to encoder's natural error tolerance. If unreliable results are returned consistently,
+    //taking an average of returned values might work in your favor
+    long getFeedback();
+};
