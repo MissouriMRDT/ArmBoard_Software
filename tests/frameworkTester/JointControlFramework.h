@@ -140,12 +140,12 @@ class FeedbackDevice
 	friend class TiltJoint;
 	friend class RotateJoint;
   friend class JointInterface;
+
+  protected:
+    //blank constructor for the base class
+    FeedbackDevice() {} ;
   
 	public:
-	
-		//blank constructor for the base class
-    //todo: make this protected
-		FeedbackDevice() {} ;
 
 		//returns feedback. Public because all the IOAlgorithm classes need to be able to call it,
 		//and friend isn't inherited so we can't just make the abstract class our friend.
@@ -490,7 +490,7 @@ class Ma3Encoder12b: public FeedbackDevice
     //constructor. Public, to be called by main before passing into joint interface
     //input: char representing which GPIO pin port connects to the encoder and an int representing the pin's number. Ex: PC_2 would be 'c', 2. Remember that the encoder outputs pwm signals,
     //so the pin it connects to must be capable of reading pwm. A list of which pins are compatible are in the pwm reader library.
-    Ma3Encoder12b(const char PwmReadPin_Port, const int PwmReadPin_PinNumber)
+    Ma3Encoder12b(const char PwmReadPin_Port, const int PwmReadPin_PinNumber): FeedbackDevice()
     {
       initPwmRead(PwmReadPin_Port, PwmReadPin_PinNumber); //function in the pwm reader library
       PWM_PIN_PORT = PwmReadPin_Port; 
