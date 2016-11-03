@@ -216,7 +216,7 @@ class IOAlgorithm
 		//is supposed to take in speed and output position, then its input is constrained by SPEED_MIN and SPEED_MAX, and its output is constrained by POS_MIN and POS_MAX
     //bool * ret_outputFinished: parameter passed by pointer, returns true if the joint has finished its controlled movement and ready to exit the control loop, 
     //false if it's still in the middle of getting to its desired finished state IE in the middle of moving to a desired end position or reaching a desired end speed
-		virtual long runAlgorithm(const int long, bool * ret_OutputFinished);
+		virtual long runAlgorithm(const long input, bool * ret_OutputFinished);
 };
 
 
