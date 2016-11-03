@@ -1,6 +1,7 @@
 /* Update 10/17/16: under nominal PWM conditions, return values work on timer 1. Edge conditions do not work, timeout interrupt is buggy as hell, currently disabled in timer setup
  * Update 10/20/16: works for 0% and 100%. All pins tested. 
  * Update 10/21/16: Works when all 5 are on at once
+ * Update 11/3/16: added pin map layer so the user now only has to pass in one argument
  *  Algorithm description:
    How this works is that a timer module is set up so that its 
    timer A (each module actually has 2 mini timers inside, A and  
@@ -961,7 +962,7 @@ uint32_t getOnPeriod_us(uint8_t mappedPin)
 	{
 		return(false); //255 is error value for this table
 	}
-	
+ 
 	return(getOnPeriod_us(gpioPort, pinNumber));
 }
 
