@@ -480,8 +480,7 @@ class DirectDiscreteHBridge : public OutputDevice
 class Ma3Encoder12b: public FeedbackDevice
 {
   private:
-    char PWM_PIN_PORT;
-    int PWM_PIN_NUM;
+    uint8_t pwmMappedPin;
     const int PWM_READ_MAX = 4097;
     const int PWM_READ_MIN = 1;
     
@@ -490,11 +489,10 @@ class Ma3Encoder12b: public FeedbackDevice
     //constructor. Public, to be called by main before passing into joint interface
     //input: char representing which GPIO pin port connects to the encoder and an int representing the pin's number. Ex: PC_2 would be 'c', 2. Remember that the encoder outputs pwm signals,
     //so the pin it connects to must be capable of reading pwm. A list of which pins are compatible are in the pwm reader library.
-    Ma3Encoder12b(const char PwmReadPin_Port, const int PwmReadPin_PinNumber): FeedbackDevice()
+    Ma3Encoder12b(uint8_t mappedPinNumber): FeedbackDevice()
     {
-      initPwmRead(PwmReadPin_Port, PwmReadPin_PinNumber); //function in the pwm reader library
-      PWM_PIN_PORT = PwmReadPin_Port; 
-      PWM_PIN_NUM =  PwmReadPin_PinNumber;
+      initPwmRead(mappedPinNumber); //function in the pwm reader library
+      pwmMappedPin = mappedPinNumber;
       fType = pos;
     }
 

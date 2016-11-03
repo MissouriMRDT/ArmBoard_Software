@@ -112,7 +112,7 @@ void initialize()
   //init control devices
   int pinInFwd = 1;
   int pinInRev = 2;
-  feedbackDevice = new Ma3Encoder12b('c', 3); //used for absolutely nothing, but hey demonstration of setting it up. No idea of c 3 is a valid combo in reality
+  feedbackDevice = new Ma3Encoder12b(PA_2); //used for absolutely nothing, but hey demonstration of setting it up. 
   controller = new DirectDiscreteHBridge(pinInFwd, pinInRev, 0);
   inHerFace = new SingleMotorJoint(spd, controller);
 }

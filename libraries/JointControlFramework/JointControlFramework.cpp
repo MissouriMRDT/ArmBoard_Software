@@ -613,7 +613,7 @@ long SpdToSpdNoFeedAlgorithm::runAlgorithm(const long input, bool * ret_OutputFi
 //gets the positional feedback from the encoder. Returns positional values from POS_MIN and POS_MAX
 long Ma3Encoder12b::getFeedback()
 {
-  uint32_t readOnPeriod = getOnPeriod_us(PWM_PIN_PORT, PWM_PIN_NUM); //function part of the pwm reader library
+  uint32_t readOnPeriod = getOnPeriod_us(pwmMappedPin); //function part of the pwm reader library
 
   //values will be between PWM_READ_MIN and PWM_READ_MAX, that is 1 and 4097. Or at least they should be; if it's above there was slight comm error and it can be scaled down to the max val.
   if(readOnPeriod > PWM_READ_MAX)
@@ -625,7 +625,7 @@ long Ma3Encoder12b::getFeedback()
   //If it's 0%, then use min value. If it's 100%, use max value.
   else if(readOnPeriod == 0)
   {
-    if(getDuty(PWM_PIN_PORT, PWM_PIN_NUM) == 0)
+    if(getDuty(pwmMappedPin) == 0)
     {
       readOnPeriod = PWM_READ_MIN;
     }
