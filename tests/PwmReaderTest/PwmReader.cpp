@@ -127,6 +127,214 @@ static const uint8_t pinToTimerNumberTable[5][8] =
   {2, 0, 3, 0, 4, 0, 5, 0}  //M0-M7
 };
 
+//Table for referencing energia-style pin constant mapping to 
+//what port the pin number represents. Refer to this link to see 
+//energia's pin constant mapping for the TM4C1294: https://github.com/energia/Energia/blob/master/hardware/lm4f/variants/launchpad_129/pins_energia.h
+//input: pin 0-96
+//output: letter for the related pin port, like 'P' for port P. 0 (null in ascii) if not a usable pin
+static const char pinMapToPort[]       = {
+    0,      		// dummy 
+    0,      		// 01 - 3.3v       X8_01
+    'E',            // 02 - PE_4       X8_03
+    'C',            // 03 - PC_4       X8_05
+    'C',            // 04 - PC_5       X8_07
+    'C',            // 05 - PC_6       X8_09
+    'E',            // 06 - PE_5       X8_11
+    'D',            // 07 - PD_3       X8_13
+    'C',            // 08 - PC_7       X8_15
+    'B',            // 09 - PB_2       X8_17
+    'B',            // 10 - PB_3       X8_19
+    'P',            // 11 - PP_2       X9_20
+    'N',            // 12 - PN_3       X9_18
+    'N',            // 13 - PN_2       X9_16
+    'D',            // 14 - PD_0       X9_14
+    'D',            // 15 - PD_1       X9_12
+    0,      		// 16 - RST        X9_10
+    'H',            // 17 - PH_3       X9_08
+    'H',            // 18 - PH_2       X9_06
+    'M',            // 19 - PM_3       X9_04
+    0,      		// 20 - GND        X9_02
+    0,     		 	// 21 - 5v         X8_02
+    0,      		// 22 - GND        X8_04
+    'E',            // 23 - PE_0       X8_06
+    'E',            // 24 - PE_1       X8_08
+    'E',            // 25 - PE_2       X8_10
+    'E',            // 26 - PE_3       X8_12
+    'D',            // 27 - PD_7       X8_14
+    'A',            // 28 - PA_6       X8_16
+    'M',            // 29 - PM_4       X8_18
+    'M',            // 30 - PM_5       X8_20
+    'L',            // 31 - PL_3       X9_19
+    'L',            // 32 - PL_2       X9_17
+    'L',            // 33 - PL_1       X9_15
+    'L',            // 34 - PL_0       X9_13
+    'L',            // 35 - PL_5       X9_11
+    'L',            // 36 - PL_4       X9_09
+    'G',            // 37 - PG_0       X9_07
+    'F',            // 38 - PF_3       X9_05
+    'F',            // 39 - PF_2       X9_03
+    'F',            // 40 - PF_1       X9_01
+    0,     			// 41 - 3.3v       X6_01
+    'D',            // 42 - PD_2       X6_03
+    'P',            // 43 - PP_0       X6_05
+    'P',            // 44 - PP_1       X6_07
+    'D',            // 45 - PD_4       X6_09
+    'D',            // 46 - PD_5       X6_11
+    'Q',            // 47 - PQ_0       X6_13
+    'P',            // 48 - PP_4       X6_15
+    'N',            // 49 - PN_5       X6_17
+    'N',            // 50 - PN_4       X6_19
+    'M',            // 51 - PM_6       X7_20
+    'Q',            // 52 - PQ_1       X7_18
+    'P',            // 53 - PP_3       X7_16
+    'Q',            // 54 - PQ_3       X7_14
+    'Q',            // 55 - PQ_2       X7_12
+    0,     			// 56 - RESET      X7_10
+    'A',            // 57 - PA_7       X7_08
+    'P',            // 58 - PP_5       X7_06
+    'M',            // 59 - PM_7       X7_04
+    0,      		// 6Z - GND        X7_02
+    0,      		// 61 - 5v         X6_02
+    0,      		// 62 - GND        X6_04
+    'B',            // 63 - PB_4       X6_06
+    'B',            // 64 - PB_5       X6_08
+    'K',            // 65 - PK_0       X6_10
+    'K',            // 66 - PK_1       X6_12
+    'K',            // 67 - PK_2       X6_14
+    'K',            // 68 - PK_3       X6_16
+    'A',            // 69 - PA_4       X6_18
+    'A',            // 70 - PA_5       X6_20
+    'K',            // 71 - PK_7       X7_19
+    'K',            // 72 - PK_6       X7_17
+    'H',            // 73 - PH_1       X7_15
+    'H',            // 74 - PH_0       X7_13
+    'M',            // 75 - PM_2       X7_11
+    'M',            // 76 - PM_1       X7_09
+    'M',            // 77 - PM_0       X7_07
+    'K',            // 78 - PK_5       X7_05
+    'K',            // 79 - PK_4       X7_03
+    'G',            // 80 - PG_1       X7_01
+    'N',            // 81 - PN_1       LED1
+    'N',            // 82 - PN_0       LED2
+    'F',            // 83 - PF_4       LED3
+    'F',            // 84 - PF_0       LED4
+    'J',            // 85 - PJ_0       USR_SW1
+    'J',            // 86 - PJ_1       USR_SW2
+    'D',            // 87 - PD_6       AIN5
+    'A',            // 88 - PA_0       JP4
+    'A',            // 89 - PA_1       JP5
+    'A',            // 90 - PA_2       X11_06
+    'A',            // 91 - PA_3       X11_08
+    'L',            // 92 - PL_6       unrouted
+    'L',            // 93 - PL_7       unrouted
+    'B',            // 94 - PB_0       X11_58
+    'B',            // 95 - PB_1       unrouted
+};
+ 
+//Table for referencing energia-style pin constant mapping to 
+//what pin number (0-7) the pin map number represents. Refer to this link to see 
+//energia's pin constant mapping for the TM4C1294: https://github.com/energia/Energia/blob/master/hardware/lm4f/variants/launchpad_129/pins_energia.h
+//input: pins mapped 0-96
+//output: 0-7, for pin 0,1,2,3...7. 255 if not a usable pin
+static const uint8_t pinMapToPinNum[]   = {
+    255,    	  // dummy 
+    255,    	  // 01 - 3.3v       X8_01
+    (4),          // 02 - PE_4       X8_03
+    (4),          // 03 - PC_4       X8_05
+    (5),          // 04 - PC_5       X8_07
+    (6),          // 05 - PC_6       X8_09
+    (5),          // 06 - PE_5       X8_11
+    (3),          // 07 - PD_3       X8_13
+    (7),          // 08 - PC_7       X8_15
+    (2),          // 09 - PB_2       X8_17
+    (3),          // 10 - PB_3       X8_19
+    (2),          // 11 - PP_2       X9_20
+    (3),          // 12 - PN_3       X9_18
+    (2),          // 13 - PN_2       X9_16
+    (0),          // 14 - PD_0       X9_14
+    (1),          // 15 - PD_1       X9_12
+    255,    	  // 16 - RST        X9_10
+    (3),          // 17 - PH_3       X9_08
+    (2),          // 18 - PH_2       X9_06
+    (3),          // 19 - PM_3       X9_04
+    255,      	  // 20 - GND        X9_02
+    255,      	  // 21 - 5v         X8_02
+    255,    	  // 22 - GND        X8_04
+    (0),          // 23 - PE_0       X8_06
+    (1),          // 24 - PE_1       X8_08
+    (2),          // 25 - PE_2       X8_10
+    (3),          // 26 - PE_3       X8_12
+    (7),          // 27 - PD_7       X8_14
+    (6),          // 28 - PA_6       X8_16
+    (4),          // 29 - PM_4       X8_18
+    (5),          // 30 - PM_5       X8_20
+    (3),          // 31 - PL_3       X9_19
+    (2),          // 32 - PL_2       X9_17
+    (1),          // 33 - PL_1       X9_15
+    (0),          // 34 - PL_0       X9_13
+    (5),          // 35 - PL_5       X9_11
+    (4),          // 36 - PL_4       X9_09
+    (0),          // 37 - PG_0       X9_07
+    (3),          // 38 - PF_3       X9_05
+    (2),          // 39 - PF_2       X9_03
+    (1),          // 40 - PF_1       X9_01
+    255,      	  // 41 - 3.3v       X6_01
+    (2),          // 42 - PD_2       X6_03
+    (0),          // 43 - PP_0       X6_05
+    (1),          // 44 - PP_1       X6_07
+    (4),          // 45 - PD_4       X6_09
+    (5),          // 46 - PD_5       X6_11
+    (0),          // 47 - PQ_0       X6_13
+    (4),          // 48 - PP_4       X6_15
+    (5),          // 49 - PN_5       X6_17
+    (4),          // 50 - PN_4       X6_19
+    (6),          // 51 - PM_6       X7_20
+    (1),          // 52 - PQ_1       X7_18
+    (3),          // 53 - PP_3       X7_16
+    (3),          // 54 - PQ_3       X7_14
+    (2),          // 55 - PQ_2       X7_12
+    255,      	  // 56 - RESET      X7_10
+    (7),          // 57 - PA_7       X7_08
+    (5),          // 58 - PP_5       X7_06
+    (7),          // 59 - PM_7       X7_04
+    255,      	  // 60 - GND        X7_02
+    255,      	  // 61 - 5v         X6_02
+    255,      	  // 62 - GND        X6_04
+    (4),          // 63 - PB_4       X6_06
+    (5),          // 64 - PB_5       X6_08
+    (0),          // 65 - PK_0       X6_10
+    (1),          // 66 - PK_1       X6_12
+    (2),          // 67 - PK_2       X6_14
+    (3),          // 68 - PK_3       X6_16
+    (4),          // 69 - PA_4       X6_18
+    (5),          // 70 - PA_5       X6_20
+    (7),          // 71 - PK_7       X7_19
+    (6),          // 72 - PK_6       X7_17
+    (1),          // 73 - PH_1       X7_15
+    (0),          // 74 - PH_0       X7_13
+    (2),          // 75 - PM_2       X7_11
+    (1),          // 76 - PM_1       X7_09
+    (0),          // 77 - PM_0       X7_07
+    (5),          // 78 - PK_5       X7_05
+    (4),          // 79 - PK_4       X7_03
+    (1),          // 80 - PG_1       X7_01
+    (1),          // 81 - PN_1       LED1
+    (0),          // 82 - PN_0       LED2
+    (4),          // 83 - PF_4       LED3
+    (0),          // 84 - PF_0       LED4
+    (0),          // 85 - PJ_0       USR_SW1
+    (1),          // 86 - PJ_1       USR_SW2
+    (6),          // 87 - PD_6       AIN5
+    (0),          // 88 - PA_0       JP4
+    (1),          // 89 - PA_1       JP5
+    (2),          // 90 - PA_2       X11_06
+    (3),          // 91 - PA_3       X11_08
+    (6),          // 92 - PL_6       unrouted
+    (7),          // 93 - PL_7       unrouted
+    (0),          // 94 - PB_0       X11_58
+    (1),          // 95 - PB_1       unrouted
+};
+
 //table for referencing timer number to their hardware base addresses
 //input: 0-4 for timer 1, 2, 3, 4, 5
 //output: base hardware address of the timer
@@ -178,6 +386,13 @@ static void edgeCaptureGenHandler(timerData * data, uint32_t timerBase);
 static bool initGPIO(uint8_t portLetter, uint8_t pinNum, uint8_t * pinInitState, uint32_t * port_base, uint8_t * pin_macro);
 static bool initTimer(uint32_t frequency, uint8_t timerNum);
 static void initData(uint8_t timerNum, uint32_t timerLoad, uint8_t pinInitState, uint32_t port_base, uint8_t pin_macro);
+
+//second layer of main functions
+static bool initPwmRead(char gpioPort, uint8_t pinNumber);
+static void stopPwmRead(char portLetter, uint8_t pinNumber);
+static uint8_t getDuty(char portLetter, uint8_t pinNumber);
+static uint32_t getTotalPeriod_us(char portLetter, uint8_t pinNumber);
+static uint32_t getOnPeriod_us(char portLetter, uint8_t pinNumber);
 
 //pass in a gpioport letter and number such as 'a' and '2', and it returns
 //which timer is associated from it, 1 - 5. Returns 0 if no timer uses that pin port and pin number
@@ -422,11 +637,37 @@ static void edgeCaptureGenHandler(timerData * data, uint32_t timerBase)
     }
   }
 }
+//Wrapper for internal initPwmRead, added layer to let the user pass
+//an energia pin map value. Returns false if user input a parameter incorrectly
+bool initPwmRead(uint8_t mappedPin)
+{	
+	if(mappedPin > 95) //only 95 mapped pins
+	{
+		return(false);
+	}
+	
+	char gpioPort = pinMapToPort[mappedPin];
+	if(gpioPort == 0) //0 is error value for this table
+	{
+		return(false);
+	}
+	
+	uint8_t pinNumber = pinMapToPinNum[mappedPin];
+	if(pinNumber == 255)
+	{
+		return(false); //255 is error value for this table
+	}
+	
+	return(initPwmRead(gpioPort, pinNumber));
+}
 
-//initializes pwm reading. Inits timer, interrupts, GPIO pins, 
-//and data for the pwm reading. Returns false if 
-//user input a parameter incorrectly
-bool initPwmRead(char gpioPort, uint8_t pinNumber)
+//Begins reading pwm pulses on the specified pin. Inits timer, interrupts, GPIO pins, 
+//and data for the pwm reading.
+//Input: The pin number 0-7
+//       The pin port, which for timers 1-5 is A,B,D,L, or M
+//Output: True if initialized successfully, false if error
+//occured (most likely you input a parameter at an incorrect value)
+static bool initPwmRead(char gpioPort, uint8_t pinNumber)
 {
   bool successfulInit;
   uint8_t pinInitialState;
@@ -460,9 +701,34 @@ bool initPwmRead(char gpioPort, uint8_t pinNumber)
   }
 }
 
-//stops reading pwm on the pin associated with the 
-//passed timer
-void stopPwmRead(char portLetter, uint8_t pinNumber)
+//wrapper for internal stopPwmRead function, added layer to allow 
+//the user to pass an energia pin map value 
+void stopPwmRead(uint8_t mappedPin)
+{	
+	if(mappedPin > 95) //only 95 mapped pins
+	{
+		return;
+	}
+	
+	char gpioPort = pinMapToPort[mappedPin];
+	if(gpioPort == 0) //0 is error value for this table
+	{
+		return;
+	}
+	
+	uint8_t pinNumber = pinMapToPinNum[mappedPin];
+	if(pinNumber == 255)
+	{
+		return; //255 is error value for this table
+	}
+	
+	stopPwmRead(gpioPort, pinNumber);
+}
+
+//Stops reading pwm. 
+//Input: The port letter and pin number of the pin to cease 
+//reading pwm on
+static void stopPwmRead(char portLetter, uint8_t pinNumber)
 {
   uint32_t timerBase = 0;
   uint8_t timerNum;
@@ -515,9 +781,34 @@ void stopPwmRead(char portLetter, uint8_t pinNumber)
   initData(timerNum, dataUsed->timerLoad, 0, 0, 0);
 }
 
-//returns last pwm transmission's duty cycle of the pwm pin
-//associated with the passed timer
-uint8_t getDuty(char portLetter, uint8_t pinNumber)
+//wrapper for internal getDuty function, added layer to allow 
+//the user to pass an energia pin map value 
+uint8_t getDuty(uint8_t mappedPin)
+{	
+	if(mappedPin > 95) //only 95 mapped pins
+	{
+		return(false);
+	}
+	
+	char gpioPort = pinMapToPort[mappedPin];
+	if(gpioPort == 0) //0 is error value for this table
+	{
+		return(false);
+	}
+	
+	uint8_t pinNumber = pinMapToPinNum[mappedPin];
+	if(pinNumber == 255)
+	{
+		return(false); //255 is error value for this table
+	}
+	
+	return(getDuty(gpioPort, pinNumber));
+}
+
+//gets the duty cycle being read on the specified pin.
+//Input: The port letter and pin number of the pin
+//Output: 0-100 duty cycle
+static uint8_t getDuty(char portLetter, uint8_t pinNumber)
 {
   uint32_t timerBase = 0;
   uint8_t timerNum;
@@ -565,9 +856,35 @@ uint8_t getDuty(char portLetter, uint8_t pinNumber)
   return(duty);
 }
 
-//returns last pwm transmission's total period of the pwm pin
-//associated with the passed timer
-uint32_t getTotalPeriod_us(char portLetter, uint8_t pinNumber)
+//wrapper for internal getTotalPeriod_us function, added layer to allow 
+//the user to pass an energia pin map value 
+uint32_t getTotalPeriod_us(uint8_t mappedPin)
+{	
+	if(mappedPin > 95) //only 95 mapped pins
+	{
+		return(false);
+	}
+	
+	char gpioPort = pinMapToPort[mappedPin];
+	if(gpioPort == 0) //0 is error value for this table
+	{
+		return(false);
+	}
+	
+	uint8_t pinNumber = pinMapToPinNum[mappedPin];
+	if(pinNumber == 255)
+	{
+		return(false); //255 is error value for this table
+	}
+	
+	return(getTotalPeriod_us(gpioPort, pinNumber));
+}
+
+//gets the total period of the PWM signal last transmitted for 
+//the specified pin
+//Input: The port letter and pin number of the pin
+//Output: period of last transmission in microseconds
+static uint32_t getTotalPeriod_us(char portLetter, uint8_t pinNumber)
 {
   uint32_t timerBase = 0;
   uint32_t totalPeriod_us;
@@ -624,9 +941,35 @@ uint32_t getTotalPeriod_us(char portLetter, uint8_t pinNumber)
   return(totalPeriod_us);
 }
 
-//returns the on period for the last captured PWM pulse
-//on the line associated with the passed timer
-uint32_t getOnPeriod_us(char portLetter, uint8_t pinNumber)
+//wrapper for internal getOnPeriod_s function, added layer to allow 
+//the user to pass an energia pin map value 
+uint32_t getOnPeriod_us(uint8_t mappedPin)
+{	
+	if(mappedPin > 95) //only 95 mapped pins
+	{
+		return(false);
+	}
+	
+	char gpioPort = pinMapToPort[mappedPin];
+	if(gpioPort == 0) //0 is error value for this table
+	{
+		return(false);
+	}
+	
+	uint8_t pinNumber = pinMapToPinNum[mappedPin];
+	if(pinNumber == 255)
+	{
+		return(false); //255 is error value for this table
+	}
+	
+	return(getOnPeriod_us(gpioPort, pinNumber));
+}
+
+//Gets the on period of the last tramsittted PWM signal for
+//the specified pin
+//Input: The port letter and pin number of the pin
+//Output: On-period of pulse in microseconds
+static uint32_t getOnPeriod_us(char portLetter, uint8_t pinNumber)
 {
   uint32_t timerBase = 0;
   uint32_t totalPeriod_us;
