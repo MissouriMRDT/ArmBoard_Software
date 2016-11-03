@@ -7,7 +7,7 @@ void setup()
 {
   Serial.begin(9600);
   //sysClockFreq = SysCtlClockFreqSet(SYSCTL_OSC_INT | SYSCTL_CFG_VCO_320 | SYSCTL_USE_PLL , 15000000); //use the PLL to generate a 320 MHZ clock, with the PLL referencing the internal oscilattor. Convert it into 40,000,000 Mhz for overall system clock
-  //setupPwmWrite(4098, 10);
+  //setupPwmWrite(4098, 4000);
   initPwmRead(PA_2); //pin A2 -- associated with timer 1 -- shall read a pwm signal
   initPwmRead(PA_4); //associated with timer 2 
   initPwmRead(PA_6); //associated with timer 3
