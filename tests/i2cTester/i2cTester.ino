@@ -1,4 +1,4 @@
-#include "i2cComm.h"
+#include "I2CComm.h"
 
 void setup() {
   // put your setup code here, to run once:
