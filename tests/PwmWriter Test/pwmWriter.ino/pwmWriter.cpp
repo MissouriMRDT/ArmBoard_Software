@@ -15,8 +15,8 @@ static uint32_t pinMapToAlignment[]
 };
 
 
-//Returns the 32bit address for the specific memory location retrieved from pin_map.h
-static uint32_t pinMapToGPIOPinConfig[]
+//Returns the contant that can be passed to the GPIOPinConfigure function to set up the pin for pwm usage
+static uint32_t pinMapToPwmPinConfig[]
 {
     0,   // dummy 
     0,   // 01 - 3.3v       X8_01   
@@ -217,6 +217,7 @@ static uint8_t pinMapToGPIOPinMask[]
     0,   // 95 - PB_1       unrouted
 };
 
+//returns the port base const for the port base used by the passed mapped pin
 static uint32_t pinMapToGPIOPortBase[]
 {
     0,   // dummy 
@@ -317,7 +318,7 @@ static uint32_t pinMapToGPIOPortBase[]
     0,   // 95 - PB_1       unrouted
 };
 
-//retreives generator related to the specific pwm pin
+//retreives generator related to the specific mapped pin
 static uint32_t pinMapToPwmGen[]
 {
     0,   // dummy 
@@ -620,7 +621,7 @@ static uint32_t pinMapToPWMPinBit[]
     0,   // 95 - PB_1       unrouted
 };
 
-//returns the GPIO port used by the each pin.
+//returns the GPIO port peripheral const used by the mapped pin
 static uint32_t pinMapToPinPortPeriph[]
 {
     0,   // dummy 
@@ -726,70 +727,74 @@ static uint32_t pinMapToPinPortPeriph[]
 static const uint32_t PWMBase = PWM0_BASE;
 static const uint32_t PWMPeriph = SYSCTL_PERIPH_PWM0;
 
-//accesses the GPIO Port for the specified input pin and returns by reference.
-//if 0 is returned for the port then returns a false and error will be thrown.
+//accesses the GPIO Port periph constant for the specified mapped pin and returns by reference.
+//returns false if invalid pin
 static bool getPortPeriph(uint32_t &portPeriph, uint8_t pin)
 {
-  portPeriph = pinMapToPinPortPeriph[pin];
-  if(portPeriph == 0)
+  if(pinMapToPinPortPeriph[pin] == 0)
     return false;
+  portPeriph = pinMapToPinPortPeriph[pin];
   return true;
 }
 
-//accesses the GPIO Pin name for the specified input pin and returns by reference.
-//if 0 is returned for the pin then returns a false and error will be thrown.
+//accesses the GPIO pin mask for the specified mapped pin and returns by reference.
+//returns false if invalid pin
 static bool getGPIOPinMask(uint8_t &pinMask, uint8_t pin)
 {
-  pinMask = pinMapToGPIOPinMask[pin];
-  if(pinMask == 0)
+  if(pinMapToGPIOPinMask[pin] == 0)
     return false;
+  pinMask = pinMapToGPIOPinMask[pin];
   return true;
 }
 
+//accesses the GPIO Port base constant for the specified mapped pin and returns by reference.
+//returns false if invalid pin
 static bool getGPIOPortBase(uint32_t &portBase, uint8_t pin)
 {
+  if(pinMapToGPIOPortBase[pin] == 0)
+    return false;
   portBase = pinMapToGPIOPortBase[pin];
-  if(portBase == 0)
-    return false;
-  return true;
-}
-//accesses the GPIO Mem Location for the specified input pin and returns by reference.
-//if 0 is returned for the location then returns a false and error will be thrown.
-static bool getGPIOPinConfig(uint32_t &pinConfigConst, uint8_t pin)
-{
-  pinConfigConst = pinMapToGPIOPinConfig[pin];
-  if(pinConfigConst == 0)
-    return false;
   return true;
 }
 
-//accesses the Generator for the specified input pin and returns by reference.
-//if 0 is returned for the gen then returns a false and error will be thrown.
+//accesses the pwm pin config constant (the one used by the GPIOPinConfigure function) for the specified mapped pin and returns by reference.
+//returns false if invalid pin
+static bool getPwmPinConfig(uint32_t &pinConfigConst, uint8_t pin)
+{
+  if(pinMapToPwmPinConfig[pin] == 0)
+    return false;
+  pinConfigConst = pinMapToPwmPinConfig[pin];
+  return true;
+}
+
+//accesses the PWM generator constant for the specified mapped pin and returns by reference.
+//returns false if invalid pin
 static bool getPwmGen(uint32_t &gen, uint8_t pin)
 {
-  gen = pinMapToPwmGen[pin];
-  if(gen == 0)
+  if(pinMapToPwmGen[pin] == 0)
     return false;
+  gen = pinMapToPwmGen[pin];
   return true;
 }
 
-//accesses the PWM pin offset address for the specified input pin and returns by reference.
-//if 0 is returned for the pwm pin then returns a false and error will be thrown.
+//accesses the pwm pin offset constant for the specified mapped pin and returns by reference.
+//returns false if invalid pin
 static bool getPwmPin(uint32_t &PwmPin, uint8_t pin)
 {
-  PwmPin = pinMapToPWMPin[pin];
-  if(PwmPin == 0)
+  if(pinMapToPWMPin[pin] == 0)
     return false;
+  PwmPin = pinMapToPWMPin[pin];
   return true;
 }
 
-//accesses the bitwise PWM pin for the specified input pin and returns by reference.
-//if 0 is returned for the PWM pin then returns a false and error will be thrown.
+//accesses the bitwise pwm pin constant for the specified mapped pin and returns by reference.
+//returns false if invalid pin
 bool getPwmPinBit(uint32_t &PwmPinBit, uint8_t pin)
 {
-  PwmPinBit = pinMapToPWMPinBit[pin];
-  if(PwmPinBit == 0)
+  if(pinMapToPWMPinBit[pin] == 0)
     return false;
+    
+  PwmPinBit = pinMapToPWMPinBit[pin];
   return true;  
 }
 
@@ -800,8 +805,7 @@ static void getAlignment(uint32_t &alignment, pwmAlignment align)
   return;
 }
 
-//convets the input micro second (us) value to the number of clock ticks
-//clock ticks is the input value for both pulse width and pulse period
+//convets the input micro second (us) value to the number of clock ticks that value represents based on the amount of CPU clock ticks it will take to reach that amount of time
 uint32_t convertUsToClockTicks(uint32_t us)
 {
   //return value
@@ -846,14 +850,13 @@ void PwmWrite(uint8_t pin, uint32_t PulseW_us, uint32_t PulsePeriod_us)
   PwmWrite(pin, PulseW_us, PulsePeriod_us, LeftAligned, false);
 }
 
-//Most complex of the three write functions
 //Takes in a uint8_t pin, uint32_t Pulse Width, uint32_t Pulse Period, pwmAlignemnet enum, and bool for inverting the PWM
 //The uint8_t pin should be one of the 8 available pins on the board(1-95) that is capable of supporting PWM module
 //Thes pin are 37,38,39,40,78,79,80,84
 //PulseW_us is the time in microseconds which you want the PWM to be high. 0 for 0% duty cycle and = to the PulsePeriod_us for 100% duty cycle.
 //PulsePeriod_us is the period in microseconds which the PWM will be read. Should never exceed 32 bits(3 min or so)
-//pwmAlignemt is an enum to select the desired alignment of the PWM. LeftAligned gives left alignement and CenterAligned makes center aligned.
-//invertOutput inverts the output. Makes wave either act as active low for certain components as well as right align the wave (when left aligned).
+//pwmAlignemt is an enum to select the desired alignment of the PWM pulses. LeftAligned gives left alignement and CenterAligned makes center aligned.
+//invertOutput inverts the output. If true, makes wave act as active low for certain components as well as right align the wave (when left aligned).
 void PwmWrite(uint8_t pin, uint32_t pulseW_us, uint32_t pulsePeriod_us, pwmAlignment alignment, bool invertOutput)
 {
   uint32_t gpioPortBase, gpioPortPeriph, gpioConfigConst, gen, pwmPin, pwmPinBit, alignValue, pulseW_Ticks, pulseP_Ticks; 
@@ -873,7 +876,7 @@ void PwmWrite(uint8_t pin, uint32_t pulseW_us, uint32_t pulsePeriod_us, pwmAlign
   
   getGPIOPinMask(pinMask, pin);
   getGPIOPortBase(gpioPortBase, pin);
-  getGPIOPinConfig(gpioConfigConst, pin);
+  getPwmPinConfig(gpioConfigConst, pin);
   getPwmGen(gen, pin);
   getPwmPin(pwmPin, pin);
   getPwmPinBit(pwmPinBit, pin);
