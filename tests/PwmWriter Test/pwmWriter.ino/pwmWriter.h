@@ -5,6 +5,10 @@
 **There are a total of eight GPIO pins which are capable of using the PWM function,
 **and eight possible PWM waves can be generated at a single time. 
 *
+*
+*The library is split into 3 functions. The first one is the simplest, emulating the arduino standard of just putting in the duty cycle and the pin to output it on, using the arduino
+*default pwm frequency of 490 hz. The next two let you specify more advanced functionalities.
+*
 *Warning: While 8 outputs can be made at once, and they can all have unique pulse widths, two of each are paired and will have the same pulse frequency and 
 *other pulse settings. This is because the pwm module on the tiva has four internal generators: These generators are what make the pwm output. Each generator 
 *has two pwm outputs, and is capable of making them have different pulse widths, but it forces them to share the same settings otherwise.  
