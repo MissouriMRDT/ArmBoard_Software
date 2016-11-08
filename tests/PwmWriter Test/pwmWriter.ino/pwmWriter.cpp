@@ -1,14 +1,11 @@
 #include "pwmWriter.h"
 
-//The default CPU frequency
-static const int CPU_FREQ = F_CPU; //F_CPU is value used in energia to represent system speed
-
 static const float DEFAULT_WAVE_FREQ = 490.0;//the default pwm frequency if none specified
 
 ////////////////////////constant static lookup tables//////////////
 
 //look up table to convert the enum to the desired value for configuring the gnerator
-static uint32_t pinMapToAlignment[]
+static uint32_t pinMapToAlignment[] =
 {
   PWM_GEN_MODE_DOWN,         //LeftAligned
   PWM_GEN_MODE_UP_DOWN,      //CenterAligned
@@ -16,10 +13,10 @@ static uint32_t pinMapToAlignment[]
 
 
 //Returns the contant that can be passed to the GPIOPinConfigure function to set up the pin for pwm usage
-static uint32_t pinMapToPwmPinConfig[]
+static uint32_t pinMapToPwmPinConfig[] =
 {
-    0,   // dummy 
-    0,   // 01 - 3.3v       X8_01   
+    0,   // dummy
+    0,   // 01 - 3.3v       X8_01
     0,   // 02 - PE_4       X8_03
     0,   // 03 - PC_4       X8_05
     0,   // 04 - PC_5       X8_07
@@ -117,10 +114,10 @@ static uint32_t pinMapToPwmPinConfig[]
 };
 
 //Pin masks used by the mapped pin
-static uint8_t pinMapToGPIOPinMask[]
+static uint8_t pinMapToGPIOPinMask[] =
 {
-    0,   // dummy 
-    0,   // 01 - 3.3v       X8_01   
+    0,   // dummy
+    0,   // 01 - 3.3v       X8_01
     0,   // 02 - PE_4       X8_03
     0,   // 03 - PC_4       X8_05
     0,   // 04 - PC_5       X8_07
@@ -218,10 +215,10 @@ static uint8_t pinMapToGPIOPinMask[]
 };
 
 //returns the port base const for the port base used by the passed mapped pin
-static uint32_t pinMapToGPIOPortBase[]
+static uint32_t pinMapToGPIOPortBase[] =
 {
-    0,   // dummy 
-    0,   // 01 - 3.3v       X8_01   
+    0,   // dummy
+    0,   // 01 - 3.3v       X8_01
     0,   // 02 - PE_4       X8_03
     0,   // 03 - PC_4       X8_05
     0,   // 04 - PC_5       X8_07
@@ -319,10 +316,10 @@ static uint32_t pinMapToGPIOPortBase[]
 };
 
 //retreives generator related to the specific mapped pin
-static uint32_t pinMapToPwmGen[]
+static uint32_t pinMapToPwmGen[] =
 {
-    0,   // dummy 
-    0,   // 01 - 3.3v       X8_01   
+    0,   // dummy
+    0,   // 01 - 3.3v       X8_01
     0,   // 02 - PE_4       X8_03
     0,   // 03 - PC_4       X8_05
     0,   // 04 - PC_5       X8_07
@@ -420,10 +417,10 @@ static uint32_t pinMapToPwmGen[]
 };
 
 //Returns the Pwm pin offset address
-static uint32_t pinMapToPWMPin[]
+static uint32_t pinMapToPWMPin[] =
 {
-    0,   // dummy 
-    0,   // 01 - 3.3v       X8_01   
+    0,   // dummy
+    0,   // 01 - 3.3v       X8_01
     0,   // 02 - PE_4       X8_03
     0,   // 03 - PC_4       X8_05
     0,   // 04 - PC_5       X8_07
@@ -520,11 +517,11 @@ static uint32_t pinMapToPWMPin[]
     0,   // 95 - PB_1       unrouted
 };
 
-//Bitwise ID for the PWM pin 
-static uint32_t pinMapToPWMPinBit[]
+//Bitwise ID for the PWM pin
+static uint32_t pinMapToPWMPinBit[] =
 {
-    0,   // dummy 
-    0,   // 01 - 3.3v       X8_01   
+    0,   // dummy
+    0,   // 01 - 3.3v       X8_01
     0,   // 02 - PE_4       X8_03
     0,   // 03 - PC_4       X8_05
     0,   // 04 - PC_5       X8_07
@@ -622,10 +619,10 @@ static uint32_t pinMapToPWMPinBit[]
 };
 
 //returns the GPIO port peripheral const used by the mapped pin
-static uint32_t pinMapToPinPortPeriph[]
+static uint32_t pinMapToPinPortPeriph[] =
 {
-    0,   // dummy 
-    0,   // 01 - 3.3v       X8_01   
+    0,   // dummy
+    0,   // 01 - 3.3v       X8_01
     0,   // 02 - PE_4       X8_03
     0,   // 03 - PC_4       X8_05
     0,   // 04 - PC_5       X8_07
@@ -722,10 +719,18 @@ static uint32_t pinMapToPinPortPeriph[]
     0,   // 95 - PB_1       unrouted
 };
 
+uint32_t setupPwmClock(long f_cpu);
+
 //the base address and peripheral address for the PWM module
 //hard coded since there is only one module
 static const uint32_t PWMBase = PWM0_BASE;
 static const uint32_t PWMPeriph = SYSCTL_PERIPH_PWM0;
+
+//Desired pwm clock at about 1.875 Mhz; that's the lowest value we can set it that still
+//gets us 1 microseconds of accuracy when the system clock is at its max of 120Mhz, which most people will probably be using and as
+//such is the minimum value we can possibly get it without breaking at 120Mhz while still having that 1 microsecond of accuracy
+//The pwm clock is based on the system clock divided by some value of 2^n from 64 to 1
+const uint32_t PWM_CLOCK_DESIRED_FREQ = 1875000;
 
 //accesses the GPIO Port periph constant for the specified mapped pin and returns by reference.
 //returns false if invalid pin
@@ -793,9 +798,9 @@ bool getPwmPinBit(uint32_t &PwmPinBit, uint8_t pin)
 {
   if(pinMapToPWMPinBit[pin] == 0)
     return false;
-    
+
   PwmPinBit = pinMapToPWMPinBit[pin];
-  return true;  
+  return true;
 }
 
 //accesses the look up table for the alignment, converting the enum to the desired uint32_t value
@@ -805,40 +810,24 @@ static void getAlignment(uint32_t &alignment, pwmAlignment align)
   return;
 }
 
-//convets the input micro second (us) value to the number of clock ticks that value represents based on the amount of CPU clock ticks it will take to reach that amount of time
-uint32_t convertUsToClockTicks(uint32_t us)
-{
-  //return value
-  uint32_t clockTicks;
-  
-  //interum value for the conversions which will include decimal places
-  double tmp = (double)us;
-  
-  //convet usec to sec and multiply by clock frequency
-  //truncation error is expected but hopefully will not cause too many problems
-  clockTicks = (tmp/1000000.0)*CPU_FREQ;
-
-  return clockTicks;  
-}
-
 //most basic of the pwmWrite functions it only takes a pin and a duty cycle.
 //uses left alignment as wave alignment default, and default hz of 490
 void PwmWrite(uint8_t pin, uint8_t duty)
 {
   uint32_t pulseW_us;
   uint32_t wavePeriod_us;
-  
+
   //convert duty cycle into a percentage
   float percentDuty = (float)duty/255.0; //0-255 is input for duty, being 8 bit
 
   //get the waveperiod in microseconds
-  wavePeriod_us = (1.0/DEFAULT_WAVE_FREQ) * 1000000.0; //1/wavePeriod_hz = wavePeriod_s 
-  
+  wavePeriod_us = (1.0/DEFAULT_WAVE_FREQ) * 1000000.0; //1/wavePeriod_hz = wavePeriod_s
+
   //get the microseconds that the pulse is high, which is duty percentage * wavePeriod_us
   //since duty percentage = (on period_us / wavePeriod_us)
   pulseW_us = (percentDuty * (float)wavePeriod_us);
-  
-  //calls more complex function using defaults  
+
+  //calls more complex function using defaults
   PwmWrite(pin, pulseW_us, wavePeriod_us, LeftAligned, false);
 }
 
@@ -857,23 +846,25 @@ void PwmWrite(uint8_t pin, uint32_t PulseW_us, uint32_t PulsePeriod_us)
 //PulsePeriod_us is the period in microseconds which the PWM will be read. Should never exceed 32 bits(3 min or so)
 //pwmAlignemt is an enum to select the desired alignment of the PWM pulses. LeftAligned gives left alignement and CenterAligned makes center aligned.
 //invertOutput inverts the output. If true, makes wave act as active low for certain components as well as right align the wave (when left aligned).
-void PwmWrite(uint8_t pin, uint32_t pulseW_us, uint32_t pulsePeriod_us, pwmAlignment alignment, bool invertOutput)
+void PwmWrite(uint8_t pin, float pulseW_us, float pulsePeriod_us, pwmAlignment alignment, bool invertOutput)
 {
-  uint32_t gpioPortBase, gpioPortPeriph, gpioConfigConst, gen, pwmPin, pwmPinBit, alignValue, pulseW_Ticks, pulseP_Ticks; 
+  uint32_t gpioPortBase, gpioPortPeriph, gpioConfigConst, gen, pwmPin, pwmPinBit, alignValue, pulseW_Ticks, pulseP_Ticks;
   uint8_t pinMask;
 
   if(pin > 95) //energia pinmap for tm4c1294ncpdt only goes up to 95
   {
     return;
   }
-  
+
   //get values from look up tables and store in variables
   //checks first value and if valid then all others are good
   if(getPortPeriph(gpioPortPeriph, pin) == false)
   {
     return; //invalid pin input
   }
-  
+
+  //get the necessary hardware constants for the hardware setup functions based off of the
+  //users pin
   getGPIOPinMask(pinMask, pin);
   getGPIOPortBase(gpioPortBase, pin);
   getPwmPinConfig(gpioConfigConst, pin);
@@ -881,26 +872,26 @@ void PwmWrite(uint8_t pin, uint32_t pulseW_us, uint32_t pulsePeriod_us, pwmAlign
   getPwmPin(pwmPin, pin);
   getPwmPinBit(pwmPinBit, pin);
   getAlignment(alignValue, alignment);
-  
-  //Enable PWM 
+
+  //Enable PWM
   SysCtlPeripheralEnable(PWMPeriph);
-  
+
   //Enable GPIO port
   SysCtlPeripheralEnable(gpioPortPeriph);
-  
+
   //checks if the pulse width is larger than the pulse period
   //if yes diable PWM output, set GPIO pin to output and write 1 to pin.
   if(pulseW_us >= pulsePeriod_us)
   {
-  	PWMOutputState(PWMBase, pwmPinBit, false);
-  	GPIOPinTypeGPIOOutput(gpioPortBase, pinMask);
-  	GPIOPinWrite(gpioPortBase, pinMask, pinMask);
+    PWMOutputState(PWMBase, pwmPinBit, false);
+    GPIOPinTypeGPIOOutput(gpioPortBase, pinMask);
+    GPIOPinWrite(gpioPortBase, pinMask, pinMask);
   }
-  
+
   //if pulse width is 0 or less disable the PWM out set GPIO to output and write 0 to pin
   else if(pulseW_us <= 0)
   {
-  	PWMOutputState(PWMBase, pwmPinBit, false);
+    PWMOutputState(PWMBase, pwmPinBit, false);
     GPIOPinTypeGPIOOutput(gpioPortBase, pinMask);
     GPIOPinWrite(gpioPortBase, pinMask, 0);
   }
@@ -912,38 +903,90 @@ void PwmWrite(uint8_t pin, uint32_t pulseW_us, uint32_t pulsePeriod_us, pwmAlign
     //and configure it
     GPIOPinTypePWM(gpioPortBase, pinMask);
     GPIOPinConfigure(gpioConfigConst);
-  
+
     //Configure Generator no sync and no gen sync, no Deadband sync, and sets the alignment for the generator
-    PWMGenConfigure(PWMBase, gen, PWM_GEN_MODE_NO_SYNC | PWM_GEN_MODE_GEN_NO_SYNC | alignValue | PWM_GEN_MODE_DB_NO_SYNC);
-    
-	  //disable the dead band
+    PWMGenConfigure(PWMBase, gen, PWM_GEN_MODE_NO_SYNC | alignValue);
+
+    //disable the dead band
     PWMDeadBandDisable(PWMBase, gen);
 
-    //get period and pulse width in clock ticks
-    pulseP_Ticks = convertUsToClockTicks(pulsePeriod_us);
-    pulseW_Ticks = convertUsToClockTicks(pulseW_us);
-    
-    //for center alignment, the pwm counter will count down and then up rather than just down. This effectively doubles all values, so divide the ticks by two to account for that effect
-    if(alignment == CenterAligned)
-    {
-      pulseW_Ticks /= 2; 
-      pulseP_Ticks /= 2;
-    }
-    
+    //setup pwm clock, and calculate the period and pulse width values in ticks based off of
+    //the calculated pwm clock
+    uint32_t f_cpuAdjusted = setupPwmClock(F_cpu);
+    pulseP_Ticks = f_cpuAdjusted * (pulsePeriod_us/1000000.0); // Freq * totalPulsePeriod_s = SysFreq * (totalPulsePeriod_us / 1,000,000) = (system ticks/second) * ( totalPulsePeriod_seconds) = ticks needed
+    pulseW_Ticks = f_cpuAdjusted * (pulseW_us/1000000.0);
+
     //Set period
     PWMGenPeriodSet(PWMBase, gen, pulseP_Ticks);
-      
+
     //Set Pulse width
     PWMPulseWidthSet(PWMBase, pwmPin, pulseW_Ticks);
-  
+
     //output Invert if needed
     PWMOutputInvert(PWMBase , pwmPinBit, invertOutput);
-  
+
     //Enable generator
     PWMGenEnable(PWMBase, gen);
-  
+
     //Enable Output
     PWMOutputState(PWMBase, pwmPinBit, true);
   }
 }
+
+//configures the pwm clock source for operation. 
+//input: frequency of the main system clock in hz, which for the tm4c1294 is max at 120Mhz. Min for this library is 1.875 Mhz
+//returns: the frequency of the pwm clock, for calculating pwm loads
+uint32_t setupPwmClock(long f_cpu)
+{
+  uint32_t clockDivisor;
+  uint32_t f_cpuAdjusted;
+
+  //try to get the pwm clock as close to the desired freq as possible. 
+  //We can only change the clock by dividing the system clock by 2^n 1-64, so we have to 
+  //simply get it as close as possible. 
+  //Deliberately put into ascending order, starting at the lowest value we can get and going up
+  if((f_cpu / 64) >=PWM_CLOCK_DESIRED_FREQ)
+  {
+    clockDivisor = PWM_SYSCLK_DIV_64;
+    f_cpuAdjusted = (f_cpu / 64);
+  }
+  else if((f_cpu / 32) >=PWM_CLOCK_DESIRED_FREQ)
+  {
+    clockDivisor = PWM_SYSCLK_DIV_32;
+    f_cpuAdjusted = (f_cpu / 32);
+  }
+  else if((f_cpu / 16) >=PWM_CLOCK_DESIRED_FREQ)
+  {
+    clockDivisor = PWM_SYSCLK_DIV_16;
+    f_cpuAdjusted = (f_cpu / 16);
+  }
+  else if((f_cpu / 8) >=PWM_CLOCK_DESIRED_FREQ)
+  {
+    clockDivisor = PWM_SYSCLK_DIV_8;
+    f_cpuAdjusted = (f_cpu / 8);
+  }
+  else if((f_cpu / 4) >=PWM_CLOCK_DESIRED_FREQ)
+  {
+    clockDivisor = PWM_SYSCLK_DIV_4;
+    f_cpuAdjusted = (f_cpu / 4);
+  }
+  else if((f_cpu / 2) >=PWM_CLOCK_DESIRED_FREQ)
+  {
+    clockDivisor = PWM_SYSCLK_DIV_2;
+    f_cpuAdjusted = (f_cpu / 2);
+  }
+  else if(f_cpu >= PWM_CLOCK_DESIRED_FREQ)
+  {
+    clockDivisor = PWM_SYSCLK_DIV_1;
+    f_cpuAdjusted = (f_cpu);
+  }
+  else
+  {
+    return 0; //f_cpu is too damn small
+  }
+
+  PWMClockSet(PWM0_BASE, clockDivisor);
+  return(f_cpuAdjusted);
+}
+
 
