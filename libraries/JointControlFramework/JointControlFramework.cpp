@@ -529,7 +529,7 @@ void Sdc2130::moveSpeed(const int movement)
 			pwmVal = PWM_MAX;
 		}
 		
-		analogWrite(PWM_PIN, pwmVal);
+		PwmWrite(PWM_PIN, pwmVal);
 		
 	}
 	
@@ -575,8 +575,8 @@ void DirectDiscreteHBridge::move(const long movement)
 		pwm = map(mov, SPEED_MIN, SPEED_MAX, PWM_MIN, PWM_MAX);
 
 		//stop the transistor for the other direction -- if both were on, the h bridge would short out
-		analogWrite(FPWM_PIN, 0);    
-		analogWrite(RPWM_PIN, pwm);
+		PwmWrite(FPWM_PIN, 0);    
+		PwmWrite(RPWM_PIN, pwm);
 	}
 
 	//if forwards
@@ -585,15 +585,15 @@ void DirectDiscreteHBridge::move(const long movement)
 		pwm = map(mov, SPEED_MIN, SPEED_MAX, PWM_MIN, PWM_MAX);
 
 		//stop the transistor for the other direction -- if both were on, the h bridge would short out
-		analogWrite(FPWM_PIN, pwm);
-		analogWrite(RPWM_PIN, 0);    
+		PwmWrite(FPWM_PIN, pwm);
+		PwmWrite(RPWM_PIN, 0);    
 	}
 
 	//stop
 	else if(mov == 0)
 	{
-		analogWrite(RPWM_PIN, 0);
-		analogWrite(FPWM_PIN, 0);
+		PwmWrite(RPWM_PIN, 0);
+		PwmWrite(FPWM_PIN, 0);
 	}
 
 	return;

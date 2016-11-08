@@ -6,7 +6,7 @@
  *   Joint Interface, which keeps track of an output device which moves that joint, and an algorithm for controlling that joint.
  *   
  *   necessary libraries:
- *   This program is meant to use energia libraries as well as the RoveDynamixel library
+ *   This program is meant to use energia libraries as well as the RoveDynamixel library and the PwmReader library and the PwmWriter library
  *   
  *   implemenation notes:
  *   The user is supposed to use the library in this fashion: 
@@ -39,6 +39,7 @@
 #include "Energia.h"
 #include "RoveDynamixel.h"
 #include <PwmReader.h>
+#include <pwmWriter.h>
 
 
 //All the types of values that can be passed to and be returned from the clases in the control framework 
