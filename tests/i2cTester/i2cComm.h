@@ -1,3 +1,6 @@
+#ifndef I2CCOMM_H_
+#define I2CCOMM_H_
+
 #define PART_TM4C1294NCPDT //the part to use, replace if you're using a different part
 
 #include <stdarg.h>
@@ -16,26 +19,23 @@ class I2CComm
 {
   private:
     uint32_t i2cBase;
-    
+
   public:
     bool init(uint8_t PinSCL, uint8_t PinSDA);
+
     void send(uint8_t SlaveAddr, uint8_t msg);
     void send(uint8_t SlaveAddr, uint8_t msg, uint8_t reg);
-    void send(uint8_t SlaveAddr, uint8_t msg[]);
-    void send(uint8_t SlaveAddr, uint8_t msg[], uint8_t reg);
+    void sendBurst(uint8_t SlaveAddr, uint8_t msg[], uint32_t msgSize);
+    void sendBurst(uint8_t SlaveAddr, uint8_t msg[], uint32_t msgSize, uint8_t reg);
+
     uint32_t receive(uint8_t SlaveAddr);
     uint32_t receive(uint8_t SlaveAddr, uint8_t reg);
-    uint32_t* receive(uint8_t SlaveAddr, uint32_t sizeOfReceive);
-    uint32_t* receive(uint8_t SlaveAddr, uint32_t sizeOfReceive, uint8_t reg);
-    I2CComm();
-    ~I2CComm();
+    uint32_t* receiveBurst(uint8_t SlaveAddr, uint32_t sizeOfReceive);
+    uint32_t* receiveBurst(uint8_t SlaveAddr, uint32_t sizeOfReceive, uint8_t reg);
 };
 
 
-
-
-
-
+#endif
 
 
 

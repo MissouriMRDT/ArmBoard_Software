@@ -1,11 +1,11 @@
 #include "I2CComm.h"
 
-#define getArraySize(a)	(sizeof(a)/sizeof(0[a])) //0[a] because that works if a is an array, but throws errors if it's another type instead
+//static long F_CPU = 120000000;
 
 static const uint32_t pinMapToI2cBase[] = {
-	
-	0,      	   // dummy 
-    0,      	   // 01 - 3.3v       X8_01
+
+  0,           // dummy
+    0,           // 01 - 3.3v       X8_01
     0,             // 02 - PE_4       X8_03
     0,             // 03 - PC_4       X8_05
     0,             // 04 - PC_5       X8_07
@@ -20,13 +20,13 @@ static const uint32_t pinMapToI2cBase[] = {
     0,             // 13 - PN_2       X9_16
     I2C7_BASE,             // 14 - PD_0       X9_14
     I2C7_BASE,             // 15 - PD_1       X9_12
-    0,      	   // 16 - RST        X9_10
+    0,           // 16 - RST        X9_10
     0,             // 17 - PH_3       X9_08
     0,             // 18 - PH_2       X9_06
     0,             // 19 - PM_3       X9_04
-    0,      	   // 20 - GND        X9_02
-    0,      	   // 21 - 5v         X8_02
-    0,      	   // 22 - GND        X8_04
+    0,           // 20 - GND        X9_02
+    0,           // 21 - 5v         X8_02
+    0,           // 22 - GND        X8_04
     0,             // 23 - PE_0       X8_06
     0,             // 24 - PE_1       X8_08
     0,             // 25 - PE_2       X8_10
@@ -45,7 +45,7 @@ static const uint32_t pinMapToI2cBase[] = {
     0,             // 38 - PF_3       X9_05
     0,             // 39 - PF_2       X9_03
     0,             // 40 - PF_1       X9_01
-    0,      	   // 41 - 3.3v       X6_01
+    0,           // 41 - 3.3v       X6_01
     I2C8_BASE,             // 42 - PD_2       X6_03
     0,             // 43 - PP_0       X6_05
     0,             // 44 - PP_1       X6_07
@@ -60,12 +60,12 @@ static const uint32_t pinMapToI2cBase[] = {
     0,             // 53 - PP_3       X7_16
     0,             // 54 - PQ_3       X7_14
     0,             // 55 - PQ_2       X7_12
-    0,      	   // 56 - RESET      X7_10
+    0,           // 56 - RESET      X7_10
     I2C6_BASE,             // 57 - PA_7       X7_08
     I2C2_BASE,             // 58 - PP_5       X7_06
     0,             // 59 - PM_7       X7_04
-    0,      	   // 60 - GND        X7_02
-    0,      	   // 61 - 5v         X6_02
+    0,           // 60 - GND        X7_02
+    0,           // 61 - 5v         X6_02
     0,             // 62 - GND        X6_04
     I2C5_BASE,             // 63 - PB_4       X6_06
     I2C5_BASE,             // 64 - PB_5       X6_08
@@ -104,9 +104,9 @@ static const uint32_t pinMapToI2cBase[] = {
 };
 
 static const uint32_t pinMapToI2cPeriph[] = {
-	
-	0,      	   // dummy 
-    0,      	   // 01 - 3.3v       X8_01
+
+  0,           // dummy
+    0,           // 01 - 3.3v       X8_01
     0,             // 02 - PE_4       X8_03
     0,             // 03 - PC_4       X8_05
     0,             // 04 - PC_5       X8_07
@@ -121,13 +121,13 @@ static const uint32_t pinMapToI2cPeriph[] = {
     0,             // 13 - PN_2       X9_16
     SYSCTL_PERIPH_I2C7,             // 14 - PD_0       X9_14
     SYSCTL_PERIPH_I2C7,             // 15 - PD_1       X9_12
-    0,      	   // 16 - RST        X9_10
+    0,           // 16 - RST        X9_10
     0,             // 17 - PH_3       X9_08
     0,             // 18 - PH_2       X9_06
     0,             // 19 - PM_3       X9_04
-    0,      	   // 20 - GND        X9_02
-    0,      	   // 21 - 5v         X8_02
-    0,      	   // 22 - GND        X8_04
+    0,           // 20 - GND        X9_02
+    0,           // 21 - 5v         X8_02
+    0,           // 22 - GND        X8_04
     0,             // 23 - PE_0       X8_06
     0,             // 24 - PE_1       X8_08
     0,             // 25 - PE_2       X8_10
@@ -146,7 +146,7 @@ static const uint32_t pinMapToI2cPeriph[] = {
     0,             // 38 - PF_3       X9_05
     0,             // 39 - PF_2       X9_03
     0,             // 40 - PF_1       X9_01
-    0,      	   // 41 - 3.3v       X6_01
+    0,           // 41 - 3.3v       X6_01
     SYSCTL_PERIPH_I2C8,             // 42 - PD_2       X6_03
     0,             // 43 - PP_0       X6_05
     0,             // 44 - PP_1       X6_07
@@ -161,12 +161,12 @@ static const uint32_t pinMapToI2cPeriph[] = {
     0,             // 53 - PP_3       X7_16
     0,             // 54 - PQ_3       X7_14
     0,             // 55 - PQ_2       X7_12
-    0,      	   // 56 - RESET      X7_10
+    0,           // 56 - RESET      X7_10
     SYSCTL_PERIPH_I2C6,             // 57 - PA_7       X7_08
     SYSCTL_PERIPH_I2C2,             // 58 - PP_5       X7_06
     0,             // 59 - PM_7       X7_04
-    0,      	   // 60 - GND        X7_02
-    0,      	   // 61 - 5v         X6_02
+    0,           // 60 - GND        X7_02
+    0,           // 61 - 5v         X6_02
     0,             // 62 - GND        X6_04
     SYSCTL_PERIPH_I2C5,             // 63 - PB_4       X6_06
     SYSCTL_PERIPH_I2C5,             // 64 - PB_5       X6_08
@@ -205,9 +205,9 @@ static const uint32_t pinMapToI2cPeriph[] = {
 };
 
 static const uint32_t pinMapToPortBase[] = {
-	
-	0,      	   // dummy 
-    0,      	   // 01 - 3.3v       X8_01
+
+  0,           // dummy
+    0,           // 01 - 3.3v       X8_01
     0,             // 02 - PE_4       X8_03
     0,             // 03 - PC_4       X8_05
     0,             // 04 - PC_5       X8_07
@@ -222,13 +222,13 @@ static const uint32_t pinMapToPortBase[] = {
     0,             // 13 - PN_2       X9_16
     GPIO_PORTD_BASE,             // 14 - PD_0       X9_14
     GPIO_PORTD_BASE,             // 15 - PD_1       X9_12
-    0,      	   // 16 - RST        X9_10
+    0,           // 16 - RST        X9_10
     0,             // 17 - PH_3       X9_08
     0,             // 18 - PH_2       X9_06
     0,             // 19 - PM_3       X9_04
-    0,      	   // 20 - GND        X9_02
-    0,      	   // 21 - 5v         X8_02
-    0,      	   // 22 - GND        X8_04
+    0,           // 20 - GND        X9_02
+    0,           // 21 - 5v         X8_02
+    0,           // 22 - GND        X8_04
     0,             // 23 - PE_0       X8_06
     0,             // 24 - PE_1       X8_08
     0,             // 25 - PE_2       X8_10
@@ -247,7 +247,7 @@ static const uint32_t pinMapToPortBase[] = {
     0,             // 38 - PF_3       X9_05
     0,             // 39 - PF_2       X9_03
     0,             // 40 - PF_1       X9_01
-    0,      	   // 41 - 3.3v       X6_01
+    0,           // 41 - 3.3v       X6_01
     GPIO_PORTD_BASE,             // 42 - PD_2       X6_03
     0,             // 43 - PP_0       X6_05
     0,             // 44 - PP_1       X6_07
@@ -262,12 +262,12 @@ static const uint32_t pinMapToPortBase[] = {
     0,             // 53 - PP_3       X7_16
     0,             // 54 - PQ_3       X7_14
     0,             // 55 - PQ_2       X7_12
-    0,      	   // 56 - RESET      X7_10
+    0,           // 56 - RESET      X7_10
     GPIO_PORTA_BASE,             // 57 - PA_7       X7_08
     GPIO_PORTP_BASE,             // 58 - PP_5       X7_06
     0,             // 59 - PM_7       X7_04
-    0,      	   // 60 - GND        X7_02
-    0,      	   // 61 - 5v         X6_02
+    0,           // 60 - GND        X7_02
+    0,           // 61 - 5v         X6_02
     0,             // 62 - GND        X6_04
     GPIO_PORTB_BASE,             // 63 - PB_4       X6_06
     GPIO_PORTB_BASE,             // 64 - PB_5       X6_08
@@ -305,9 +305,9 @@ static const uint32_t pinMapToPortBase[] = {
 };
 
 const static uint32_t pinMapToPortPeriph[] = {
-	
-	0,      	   // dummy 
-    0,      	   // 01 - 3.3v       X8_01
+
+  0,           // dummy
+    0,           // 01 - 3.3v       X8_01
     0,             // 02 - PE_4       X8_03
     0,             // 03 - PC_4       X8_05
     0,             // 04 - PC_5       X8_07
@@ -322,13 +322,13 @@ const static uint32_t pinMapToPortPeriph[] = {
     0,             // 13 - PN_2       X9_16
     SYSCTL_PERIPH_GPIOD,             // 14 - PD_0       X9_14
     SYSCTL_PERIPH_GPIOD,             // 15 - PD_1       X9_12
-    0,      	   // 16 - RST        X9_10
+    0,           // 16 - RST        X9_10
     0,             // 17 - PH_3       X9_08
     0,             // 18 - PH_2       X9_06
     0,             // 19 - PM_3       X9_04
-    0,      	   // 20 - GND        X9_02
-    0,      	   // 21 - 5v         X8_02
-    0,      	   // 22 - GND        X8_04
+    0,           // 20 - GND        X9_02
+    0,           // 21 - 5v         X8_02
+    0,           // 22 - GND        X8_04
     0,             // 23 - PE_0       X8_06
     0,             // 24 - PE_1       X8_08
     0,             // 25 - PE_2       X8_10
@@ -347,7 +347,7 @@ const static uint32_t pinMapToPortPeriph[] = {
     0,             // 38 - PF_3       X9_05
     0,             // 39 - PF_2       X9_03
     0,             // 40 - PF_1       X9_01
-    0,      	   // 41 - 3.3v       X6_01
+    0,           // 41 - 3.3v       X6_01
     SYSCTL_PERIPH_GPIOD,             // 42 - PD_2       X6_03
     0,             // 43 - PP_0       X6_05
     0,             // 44 - PP_1       X6_07
@@ -362,12 +362,12 @@ const static uint32_t pinMapToPortPeriph[] = {
     0,             // 53 - PP_3       X7_16
     0,             // 54 - PQ_3       X7_14
     0,             // 55 - PQ_2       X7_12
-    0,      	   // 56 - RESET      X7_10
+    0,           // 56 - RESET      X7_10
     SYSCTL_PERIPH_GPIOA,             // 57 - PA_7       X7_08
     SYSCTL_PERIPH_GPIOP,             // 58 - PP_5       X7_06
     0,             // 59 - PM_7       X7_04
-    0,      	   // 60 - GND        X7_02
-    0,      	   // 61 - 5v         X6_02
+    0,           // 60 - GND        X7_02
+    0,           // 61 - 5v         X6_02
     0,             // 62 - GND        X6_04
     SYSCTL_PERIPH_GPIOB,             // 63 - PB_4       X6_06
     SYSCTL_PERIPH_GPIOB,             // 64 - PB_5       X6_08
@@ -406,9 +406,9 @@ const static uint32_t pinMapToPortPeriph[] = {
 };
 
 static const uint32_t pinMapToI2cConfig[] = {
-	
-	0,      	   // dummy 
-    0,      	   // 01 - 3.3v       X8_01
+
+  0,           // dummy
+    0,           // 01 - 3.3v       X8_01
     0,             // 02 - PE_4       X8_03
     0,             // 03 - PC_4       X8_05
     0,             // 04 - PC_5       X8_07
@@ -423,13 +423,13 @@ static const uint32_t pinMapToI2cConfig[] = {
     0,             // 13 - PN_2       X9_16
     GPIO_PD0_I2C7SCL,             // 14 - PD_0       X9_14
     GPIO_PD1_I2C7SDA,             // 15 - PD_1       X9_12
-    0,      	   // 16 - RST        X9_10
+    0,           // 16 - RST        X9_10
     0,             // 17 - PH_3       X9_08
     0,             // 18 - PH_2       X9_06
     0,             // 19 - PM_3       X9_04
-    0,      	   // 20 - GND        X9_02
-    0,      	   // 21 - 5v         X8_02
-    0,      	   // 22 - GND        X8_04
+    0,           // 20 - GND        X9_02
+    0,           // 21 - 5v         X8_02
+    0,           // 22 - GND        X8_04
     0,             // 23 - PE_0       X8_06
     0,             // 24 - PE_1       X8_08
     0,             // 25 - PE_2       X8_10
@@ -448,7 +448,7 @@ static const uint32_t pinMapToI2cConfig[] = {
     0,             // 38 - PF_3       X9_05
     0,             // 39 - PF_2       X9_03
     0,             // 40 - PF_1       X9_01
-    0,      	   // 41 - 3.3v       X6_01
+    0,           // 41 - 3.3v       X6_01
     GPIO_PD2_I2C8SCL,             // 42 - PD_2       X6_03
     0,             // 43 - PP_0       X6_05
     0,             // 44 - PP_1       X6_07
@@ -463,12 +463,12 @@ static const uint32_t pinMapToI2cConfig[] = {
     0,             // 53 - PP_3       X7_16
     0,             // 54 - PQ_3       X7_14
     0,             // 55 - PQ_2       X7_12
-    0,      	   // 56 - RESET      X7_10
+    0,           // 56 - RESET      X7_10
     GPIO_PA7_I2C6SDA,             // 57 - PA_7       X7_08
     GPIO_PP5_I2C2SCL,             // 58 - PP_5       X7_06
     0,             // 59 - PM_7       X7_04
-    0,      	   // 60 - GND        X7_02
-    0,      	   // 61 - 5v         X6_02
+    0,           // 60 - GND        X7_02
+    0,           // 61 - 5v         X6_02
     0,             // 62 - GND        X6_04
     GPIO_PB4_I2C5SCL,             // 63 - PB_4       X6_06
     GPIO_PB5_I2C5SDA,             // 64 - PB_5       X6_08
@@ -507,9 +507,9 @@ static const uint32_t pinMapToI2cConfig[] = {
 };
 
 const static uint32_t pinMapToPinMask[] = {
-	
-	0,      	   // dummy 
-    0,      	   // 01 - 3.3v       X8_01
+
+  0,           // dummy
+    0,           // 01 - 3.3v       X8_01
     0,             // 02 - PE_4       X8_03
     0,             // 03 - PC_4       X8_05
     0,             // 04 - PC_5       X8_07
@@ -524,13 +524,13 @@ const static uint32_t pinMapToPinMask[] = {
     0,             // 13 - PN_2       X9_16
     GPIO_PIN_0,             // 14 - PD_0       X9_14
     GPIO_PIN_1,             // 15 - PD_1       X9_12
-    0,      	   // 16 - RST        X9_10
+    0,           // 16 - RST        X9_10
     0,             // 17 - PH_3       X9_08
     0,             // 18 - PH_2       X9_06
     0,             // 19 - PM_3       X9_04
-    0,      	   // 20 - GND        X9_02
-    0,      	   // 21 - 5v         X8_02
-    0,      	   // 22 - GND        X8_04
+    0,           // 20 - GND        X9_02
+    0,           // 21 - 5v         X8_02
+    0,           // 22 - GND        X8_04
     0,             // 23 - PE_0       X8_06
     0,             // 24 - PE_1       X8_08
     0,             // 25 - PE_2       X8_10
@@ -549,7 +549,7 @@ const static uint32_t pinMapToPinMask[] = {
     0,             // 38 - PF_3       X9_05
     0,             // 39 - PF_2       X9_03
     0,             // 40 - PF_1       X9_01
-    0,      	   // 41 - 3.3v       X6_01
+    0,           // 41 - 3.3v       X6_01
     GPIO_PIN_2,             // 42 - PD_2       X6_03
     0,             // 43 - PP_0       X6_05
     0,             // 44 - PP_1       X6_07
@@ -564,12 +564,12 @@ const static uint32_t pinMapToPinMask[] = {
     0,             // 53 - PP_3       X7_16
     0,             // 54 - PQ_3       X7_14
     0,             // 55 - PQ_2       X7_12
-    0,      	   // 56 - RESET      X7_10
+    0,           // 56 - RESET      X7_10
     GPIO_PIN_7,             // 57 - PA_7       X7_08
     GPIO_PIN_5,             // 58 - PP_5       X7_06
     0,             // 59 - PM_7       X7_04
-    0,      	   // 60 - GND        X7_02
-    0,      	   // 61 - 5v         X6_02
+    0,           // 60 - GND        X7_02
+    0,           // 61 - 5v         X6_02
     0,             // 62 - GND        X6_04
     GPIO_PIN_4,             // 63 - PB_4       X6_06
     GPIO_PIN_5,             // 64 - PB_5       X6_08
@@ -609,387 +609,358 @@ const static uint32_t pinMapToPinMask[] = {
 
 bool I2CComm::init(uint8_t pinSCL, uint8_t pinSDA)
 {
-	
-	//verify that the inputs correspond to a i2c module. If they don't, then they can't be used
-	if(pinMapToI2cPeriph[pinSCL] == 0 || pinMapToI2cPeriph[pinSDA] == 0) //0 is bad return value for periph table
-	{
-		return(false);
-	}
 
-	//need to figure out which i2c module is being used based on the pins
-	if(pinMapToI2cBase[pinSCL] == pinMapToI2cBase[pinSDA]) //these pins must be a part of the same i2c base for it to work
-	{
-		//then we're good
-		i2cBase = pinMapToI2cBase[pinSCL];
-	}
-	else
-	{
-		return false;//the user chose incompatible pins for i2c 
-	}
-	
+  //verify that the inputs correspond to a i2c module. If they don't, then they can't be used
+  if(pinMapToI2cPeriph[pinSCL] == 0 || pinMapToI2cPeriph[pinSDA] == 0) //0 is bad return value for periph table
+  {
+    return(false);
+  }
 
-	
-	//enable the i2c module
-	SysCtlPeripheralEnable(pinMapToI2cPeriph[pinSCL]);
-	
-	//reset the i2c module
-	SysCtlPeripheralReset(pinMapToI2cPeriph[pinSCL]);
-	
-	
-	//enable gpio module	
-	SysCtlPeripheralEnable(pinMapToPortPeriph[pinSCL]);
-	SysCtlPeripheralEnable(pinMapToPortPeriph[pinSDA]);
-	
-	//configure the gpio pins for using the i2c module as a source
-	GPIOPinConfigure(pinMapToI2cConfig[pinSCL]);
-	GPIOPinConfigure(pinMapToI2cConfig[pinSDA]);
+  //need to figure out which i2c module is being used based on the pins
+  if(pinMapToI2cBase[pinSCL] == pinMapToI2cBase[pinSDA]) //these pins must be a part of the same i2c base for it to work
+  {
+    //then we're good
+    i2cBase = pinMapToI2cBase[pinSCL];
+  }
+  else
+  {
+    return false;//the user chose incompatible pins for i2c
+  }
 
-	//configure the gpio pins for i2c operation
-	GPIOPinTypeI2CSCL(pinMapToPortBase[pinSCL], pinMapToPinMask[pinSCL]);
-	GPIOPinTypeI2C(pinMapToPortBase[pinSDA], pinMapToPinMask[pinSDA]);
-	
-	// Enable and initialize the I2C0 master module.  Use the system clock for
+
+
+  //enable the i2c module
+  SysCtlPeripheralEnable(pinMapToI2cPeriph[pinSCL]);
+
+  //reset the i2c module
+  SysCtlPeripheralReset(pinMapToI2cPeriph[pinSCL]);
+
+
+  //enable gpio module
+  SysCtlPeripheralEnable(pinMapToPortPeriph[pinSCL]);
+  SysCtlPeripheralEnable(pinMapToPortPeriph[pinSDA]);
+
+  //configure the gpio pins for using the i2c module as a source
+  GPIOPinConfigure(pinMapToI2cConfig[pinSCL]);
+  GPIOPinConfigure(pinMapToI2cConfig[pinSDA]);
+
+  //configure the gpio pins for i2c operation
+  GPIOPinTypeI2CSCL(pinMapToPortBase[pinSCL], pinMapToPinMask[pinSCL]);
+  GPIOPinTypeI2C(pinMapToPortBase[pinSDA], pinMapToPinMask[pinSDA]);
+
+  // Enable and initialize the I2C0 master module.  Use the system clock for
     // the I2C0 module.  The last parameter sets the I2C data transfer rate.
     // If false the data rate is set to 100kbps and if true the data rate will
     // be set to 400kbps.
     // F_CPU is the constant used by energia to represent the global clock rate
-	I2CMasterInitExpClk(i2cBase, F_CPU, false);
-	
-	//clear I2C FIFOs
+  I2CMasterInitExpClk(i2cBase, F_CPU, false);
+
+  //clear I2C FIFOs
     HWREG(i2cBase + I2C_O_FIFOCTL) = 80008000;
-	
+    return(true);
+
 }
 
 
 //function to send one uint8_t message via i2c to slave w/o a register specified
 void I2CComm::send(uint8_t SlaveAddr, uint8_t msg)
 {
-	
-	// Tell the master module what address it will place on the bus when
+
+  // Tell the master module what address it will place on the bus when
     // communicating with the slave.
     I2CMasterSlaveAddrSet(i2cBase, SlaveAddr, false);
-     
+
     //put data to be sent into FIFO
     I2CMasterDataPut(i2cBase, msg);
- 
+
     //Initiate send of data from the MCU
     I2CMasterControl(i2cBase, I2C_MASTER_CMD_SINGLE_SEND);
-    
-	//wait for MCU to start transaction
+
+  //wait for MCU to start transaction
     while(!I2CMasterBusy(i2cBase));
-	 
+
     // Wait until MCU is done transferring.
     while(I2CMasterBusy(i2cBase));
-     
+
 }
 
 //function to send 1 byte of data to a slave with the register specified
 void I2CComm::send(uint8_t SlaveAddr, uint8_t msg, uint8_t reg)
 {
-	uint8_t singleByteMsg[1];
-	singleByteMsg[0] = msg;
-	//call the function to send multiple bytes of data from this function...
-	send(SlaveAddr, singleByteMsg, reg);
-     
+  uint8_t compactedMsg[2];
+  compactedMsg[0] = reg;
+  compactedMsg[1] = msg;
+
+  //call the function to send multiple bytes of data from this function...
+  sendBurst(SlaveAddr, compactedMsg, 2);
+
+
 }
 
 
 //send function to send multiple bytes of data to a slave w/o a register specified
-void I2CComm::send(uint8_t SlaveAddr, uint8_t msg[])
+void I2CComm::sendBurst(uint8_t SlaveAddr, uint8_t msg[], uint32_t msgSize)
 {
-	
-	//get the size of the array
-	uint32_t msgSize = getArraySize(msg);
-	
-	// Tell the master module what address it will place on the bus when
+
+  //slave address is bits 6:0 of byte
+  SlaveAddr = SlaveAddr & 0b01111111;
+
+  //if array size is 1, just call the send single byte function
+  if(msgSize == 1)
+  {
+    send(SlaveAddr, msg[0]);
+    return;
+  }
+
+  // Tell the master module what address it will place on the bus when
     // communicating with the slave.
     I2CMasterSlaveAddrSet(i2cBase, SlaveAddr, false);
-    
+
     //put first byte of data to be sent into FIFO
     I2CMasterDataPut(i2cBase, msg[0]);
-    
+
     //Initiate burst message send from the MCU
     I2CMasterControl(i2cBase, I2C_MASTER_CMD_BURST_SEND_START);
-    
-	//wait for MCU to start transaction
+
+    //wait for MCU to start transaction
     while(!I2CMasterBusy(i2cBase));
-	 
+
     // Wait until MCU is done transferring.
     while(I2CMasterBusy(i2cBase));
-     
-     
-     
+
+
+
     //send more of the data, up till the last byte, using the
     //BURST_SEND_CONT command of the I2C module
     for(uint32_t i = 1; i < (msgSize) - 1; i++)
     {
         //put next piece of data into I2C FIFO
         I2CMasterDataPut(i2cBase, msg[i]);
-        
+
         //send next data that was just placed into FIFO
         I2CMasterControl(i2cBase, I2C_MASTER_CMD_BURST_SEND_CONT);
-	 		
-		//wait for MCU to start transaction
-    	while(!I2CMasterBusy(i2cBase));
- 		
+
+        //wait for MCU to start transaction
+        while(!I2CMasterBusy(i2cBase));
+
         // Wait until MCU is done transferring.
         while(I2CMasterBusy(i2cBase));
     }
- 
     //put last piece of data into I2C FIFO
     I2CMasterDataPut(i2cBase, msg[msgSize-1]);
-    
+
     //send next data that was just placed into FIFO
     I2CMasterControl(i2cBase, I2C_MASTER_CMD_BURST_SEND_FINISH);
-    
+
     //wait for MCU to start transaction
     while(!I2CMasterBusy(i2cBase));
-    
+
     // Wait until MCU is done transferring.
     while(I2CMasterBusy(i2cBase));
-	
+
 }
 
 //send function to send multiple bytes of data to a slave with a register specified
-void I2CComm::send(uint8_t SlaveAddr, uint8_t msg[], uint8_t reg)
+void I2CComm::sendBurst(uint8_t SlaveAddr, uint8_t msg[], uint32_t msgSize, uint8_t reg)
 {
-	
-	//get the size of the array
-	uint32_t msgSize = getArraySize(msg);
-	
-	// Tell the master module what address it will place on the bus when
-    // communicating with the slave.
-    I2CMasterSlaveAddrSet(i2cBase, SlaveAddr, false);
-    
-    //put first byte of data to be sent into FIFO
-    //the first byte is actually the register specified
-    I2CMasterDataPut(i2cBase, reg);
-    
-    //Initiate burst message send from the MCU
-    I2CMasterControl(i2cBase, I2C_MASTER_CMD_BURST_SEND_START);
-    
-	//wait for MCU to start transaction
-    while(!I2CMasterBusy(i2cBase));
-	 
-    // Wait until MCU is done transferring.
-    while(I2CMasterBusy(i2cBase));
-     
-     
-     
-    //send more of the data, up till the last byte, using the
-    //BURST_SEND_CONT command of the I2C module
-    //start at 0 because the first element is actually the register we sent above
-    for(uint32_t i = 0; i < (msgSize) - 1; i++)
-    {
-        //put next piece of data into I2C FIFO
-        I2CMasterDataPut(i2cBase, msg[i]);
-        
-        //send next data that was just placed into FIFO
-        I2CMasterControl(i2cBase, I2C_MASTER_CMD_BURST_SEND_CONT);
-	 		
-		//wait for MCU to start transaction
-    	while(!I2CMasterBusy(i2cBase));
- 		
-        // Wait until MCU is done transferring.
-        while(I2CMasterBusy(i2cBase));
-    }
- 
-    //put last piece of data into I2C FIFO
-    I2CMasterDataPut(i2cBase, msg[msgSize-1]);
-    
-    //send next data that was just placed into FIFO
-    I2CMasterControl(i2cBase, I2C_MASTER_CMD_BURST_SEND_FINISH);
-    
-    //wait for MCU to start transaction
-    while(!I2CMasterBusy(i2cBase));
-    
-    // Wait until MCU is done transferring.
-    while(I2CMasterBusy(i2cBase));
-	
+
+  //make an array big enough to hold the message plus the register address
+  uint8_t compactedMsg[msgSize+1];
+
+  //transfer data array into the compacted message array, with the first element being the reg and all elements after being the msg array concacted on
+  compactedMsg[0] = reg;
+  for(int i = 0; i < msgSize; i++)
+  {
+    compactedMsg[i+1] = msg[i];
+  }
+
+  //call the multi byte send function. It will send the register address first, followed by the actual message
+  sendBurst(SlaveAddr, compactedMsg, msgSize+1);
+
 }
 
 //receive function for one byte w/o a specified register
 uint32_t I2CComm::receive(uint8_t SlaveAddr)
-{    
+{
     //specify that we are going to read from slave device with 3rd argument = true
     I2CMasterSlaveAddrSet(i2cBase, SlaveAddr, true);
-     
+
     //send control byte and read from the register we specified earlier
     I2CMasterControl(i2cBase, I2C_MASTER_CMD_SINGLE_RECEIVE);
-    
-	//wait for MCU to start transaction
+
+  //wait for MCU to start transaction
     while(!I2CMasterBusy(i2cBase));
-	 
+
     //wait for MCU to finish transaction
     while(I2CMasterBusy(i2cBase));
-     
+
     //return data pulled from the specified register, returns uint32_t
     return I2CMasterDataGet(i2cBase);
-	
+
 }
 
 //receive one byte by telling slave to send a specific register
 uint32_t I2CComm::receive(uint8_t SlaveAddr, uint8_t reg)
 {
-	
-	//specify that we are writing (a register address) to the
+
+  //specify that we are writing (a register address) to the
     //slave device
     I2CMasterSlaveAddrSet(i2cBase, SlaveAddr, false);
- 
+
     //specify register to be read on the slave device
     I2CMasterDataPut(i2cBase, reg);
- 
+
     //send control byte and register address byte to slave device
     I2CMasterControl(i2cBase, I2C_MASTER_CMD_BURST_SEND_START);
-     
+
     //wait for MCU to start transaction
     while(!I2CMasterBusy(i2cBase));
-	
-	//wait for MCU to finish transaction
+
+  //wait for MCU to finish transaction
     while(I2CMasterBusy(i2cBase));
-     
+
     //specify that we are going to read from slave device with 3rd argument (read/~write)= true
     I2CMasterSlaveAddrSet(i2cBase, SlaveAddr, true);
-     
+
     //send control byte and read from the register we specified earlier
     I2CMasterControl(i2cBase, I2C_MASTER_CMD_SINGLE_RECEIVE);
-    
-	//wait for MCU to start transaction
+
+  //wait for MCU to start transaction
     while(!I2CMasterBusy(i2cBase));
-	 
+
     //wait for MCU to finish transaction
     while(I2CMasterBusy(i2cBase));
-     
+
     //return data pulled from the specified register, returns uint32_t
     return I2CMasterDataGet(i2cBase);
-	
+
 }
 
 //receive multiple bytes, return a pointer to an array where data is held
 //for a device which doesn't allow a register to be specified
-uint32_t* I2CComm::receive(uint8_t SlaveAddr, uint32_t sizeOfReceive)
+uint32_t* I2CComm::receiveBurst(uint8_t SlaveAddr, uint32_t sizeOfReceive)
 {
-	
-	uint32_t receivedData[sizeOfReceive];
-    
+
+  uint32_t receivedData[sizeOfReceive];
+
     //specify that we are going to read from slave device with 3rd argument = true
     I2CMasterSlaveAddrSet(i2cBase, SlaveAddr, true);
-    
+
     //receive control byte and read from the register we specified earlier
     I2CMasterControl(i2cBase, I2C_MASTER_CMD_BURST_RECEIVE_START);
-    
-	//wait for MCU to start transaction
+
+  //wait for MCU to start transaction
     while(!I2CMasterBusy(i2cBase));
-	 
+
     //wait for MCU to finish transaction
     while(I2CMasterBusy(i2cBase));
-    
+
     //return data pulled from the specified register, returns uint32_t
     receivedData[0] = I2CMasterDataGet(i2cBase);
-     
-    
+
+
         for(uint32_t i = 1; i < (sizeOfReceive) - 1; i++)
     {
         //send next data that was just placed into FIFO
-        I2CMasterControl(i2cBase, I2C_MASTER_CMD_BURST_RECEIVE_CONT);        
- 		
- 		//wait for MCU to start transaction
-    	while(!I2CMasterBusy(i2cBase));
- 		
+        I2CMasterControl(i2cBase, I2C_MASTER_CMD_BURST_RECEIVE_CONT);
+
+    //wait for MCU to start transaction
+      while(!I2CMasterBusy(i2cBase));
+
         // Wait until MCU is done transferring.
         while(I2CMasterBusy(i2cBase));
-        
+
         //return data pulled from specified register
         receivedData [i] = I2CMasterDataGet(i2cBase);
     }
-    
+
     //send next data that was just placed into FIFO
-    I2CMasterControl(i2cBase, I2C_MASTER_CMD_BURST_RECEIVE_FINISH);        
-	
-	//wait for MCU to start transaction
-	while(!I2CMasterBusy(i2cBase));
-	
+    I2CMasterControl(i2cBase, I2C_MASTER_CMD_BURST_RECEIVE_FINISH);
+
+  //wait for MCU to start transaction
+  while(!I2CMasterBusy(i2cBase));
+
     // Wait until MCU is done transferring.
     while(I2CMasterBusy(i2cBase));
-    
+
     //return data pulled from specified register
     receivedData [sizeOfReceive-1] = I2CMasterDataGet(i2cBase);
-    
+
     return (uint32_t *)receivedData;
-	
-	
+
+
 }
 
 
 //receive multiple bytes, return a pointer to an array where data is held
 //specify which register the data starts at within the slave's memory
-uint32_t* I2CComm::receive(uint8_t SlaveAddr, uint32_t sizeOfReceive, uint8_t reg)
+uint32_t* I2CComm::receiveBurst(uint8_t SlaveAddr, uint32_t sizeOfReceive, uint8_t reg)
 {
-	
-	uint32_t receivedData[sizeOfReceive];
-		
-	//specify that we are writing (a register address) to the
+
+  uint32_t receivedData[sizeOfReceive];
+
+  //specify that we are writing (a register address) to the
     //slave device
     I2CMasterSlaveAddrSet(i2cBase, SlaveAddr, false);
- 
+
     //specify register to be read on the slave device
     I2CMasterDataPut(i2cBase, reg);
- 
+
     //send control byte and register address byte to slave device
     I2CMasterControl(i2cBase, I2C_MASTER_CMD_BURST_SEND_START);
-     
+
     //wait for MCU to start transaction
     while(!I2CMasterBusy(i2cBase));
-     
+
     //wait for MCU to finish transaction
     while(I2CMasterBusy(i2cBase));
-    
+
     //specify that we are going to read from slave device with 3rd argument = true
     I2CMasterSlaveAddrSet(i2cBase, SlaveAddr, true);
-    
+
     //receive control byte and read from the register we specified earlier
     I2CMasterControl(i2cBase, I2C_MASTER_CMD_BURST_RECEIVE_START);
-    
-	//wait for MCU to start transaction
+
+  //wait for MCU to start transaction
     while(!I2CMasterBusy(i2cBase));
-	 
+
     //wait for MCU to finish transaction
     while(I2CMasterBusy(i2cBase));
-    
+
     //return data pulled from the specified register, returns uint32_t
     receivedData[0] = I2CMasterDataGet(i2cBase);
-     
-    
+
+
         for(uint32_t i = 1; i < (sizeOfReceive) - 1; i++)
     {
         //send next data that was just placed into FIFO
-        I2CMasterControl(i2cBase, I2C_MASTER_CMD_BURST_RECEIVE_CONT);        
- 		
- 		//wait for MCU to start transaction
-    	while(!I2CMasterBusy(i2cBase));
- 		
+        I2CMasterControl(i2cBase, I2C_MASTER_CMD_BURST_RECEIVE_CONT);
+
+    //wait for MCU to start transaction
+      while(!I2CMasterBusy(i2cBase));
+
         // Wait until MCU is done transferring.
         while(I2CMasterBusy(i2cBase));
-        
+
         //return data pulled from specified register
         receivedData [i] = I2CMasterDataGet(i2cBase);
     }
-    
+
     //send next data that was just placed into FIFO
-    I2CMasterControl(i2cBase, I2C_MASTER_CMD_BURST_RECEIVE_FINISH);        
-	
-	//wait for MCU to start transaction
-	while(!I2CMasterBusy(i2cBase));
-	
+    I2CMasterControl(i2cBase, I2C_MASTER_CMD_BURST_RECEIVE_FINISH);
+
+  //wait for MCU to start transaction
+  while(!I2CMasterBusy(i2cBase));
+
     // Wait until MCU is done transferring.
     while(I2CMasterBusy(i2cBase));
-    
+
     //return data pulled from specified register
     receivedData [sizeOfReceive-1] = I2CMasterDataGet(i2cBase);
-    
+
     return (uint32_t *)receivedData;
-	
-	
+
+
 }
 
 
