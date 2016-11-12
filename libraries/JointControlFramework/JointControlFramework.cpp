@@ -383,6 +383,13 @@ JointControlStatus RotateJoint::runOutputControl(const long movement)
   return(returnStatus);
 }
 
+//if this IOAlgorithm uses feedback device, this function is used by the joint interface to set it, and sets the feedbackInitialized flag to true
+void IOAlgorithm::setFeedDevice(FeedbackDevice fdDev)
+{
+  *feedbackDev = fdDev;
+  feedbackInitialized = true;
+}
+
 //constructor for a dynamixel for any mode
 //Calls the init function from RoveDynamixel.h to initialize the dynamixel
 /*Inputs: TX -> tx pin numerical id, as defined by energia's pinmapping

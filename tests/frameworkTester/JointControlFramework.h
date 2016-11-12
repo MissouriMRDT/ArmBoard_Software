@@ -36,6 +36,9 @@
  *   Once you do implement a new module, make sure to record it in the modules in the framework text file that should be in the framework libarary's directory
 */  
 
+#ifndef JOINTCONTROLFRAMEWORK_H_
+#define JOINTCONTROLFRAMEWORK_H_
+
 #include "Energia.h"
 #include "RoveDynamixel.h"
 #include <PwmReader.h>
@@ -211,6 +214,9 @@ class IOAlgorithm
     //the types of values that the algorithm expects to take in as feedback, if feedback is used
     ValueType feedbackInType;
     
+    //if this IOAlgorithm uses a feedback device, this flag tracks whether or not the feedback device has been passed into the class yet
+    bool feedbackInitialized = false;
+    
 		//run whatever algorithm this implements, returns value that can be directly passed to an output device
 		//input: int in, representing the input values that need to be converted into output values. 
 		//The specific value constraints depend on the input and output types the algorithm implements; for example if an algorithm
@@ -218,6 +224,9 @@ class IOAlgorithm
     //bool * ret_outputFinished: parameter passed by pointer, returns true if the joint has finished its controlled movement and ready to exit the control loop, 
     //false if it's still in the middle of getting to its desired finished state IE in the middle of moving to a desired end position or reaching a desired end speed
 		virtual long runAlgorithm(const long input, bool * ret_OutputFinished);
+    
+    //if this IOAlgorithm uses feedback device, this function is used by the joint interface to set it, and sets the feedbackInitialized flag to true
+    void setFeedDevice(FeedbackDevice fdDev);
 };
 
 
@@ -502,3 +511,5 @@ class Ma3Encoder12b: public FeedbackDevice
     //taking an average of returned values might work in your favor
     long getFeedback();
 };
+
+#endif
