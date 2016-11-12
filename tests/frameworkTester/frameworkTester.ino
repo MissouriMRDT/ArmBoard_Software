@@ -115,6 +115,11 @@ void initialize()
   feedbackDevice = new Ma3Encoder12b(PA_2); //used for absolutely nothing, but hey demonstration of setting it up. 
   controller = new DirectDiscreteHBridge(pinInFwd, pinInRev, 0);
   inHerFace = new SingleMotorJoint(spd, controller);
+  
+  delete inHerFace;
+  
+  algorithm = new PIAlgorithm(3,3,3);
+  inHerFace = new SingleMotorJoint(pos, algorithm, controller, feedbackDevice);
 }
 
 CommandResult sendMsgToEndef(uint16_t dataId, size_t dataSize, void * data)

@@ -1,6 +1,6 @@
 Algorithms:
 *Spd to Spd no feedback: For inputting speed and outputting speed without feedback. Open loop speed control.
-
+PIAlgorithm: closed loop algorithm, using PI logic. Logic is generalized, PI constants are accepted through constructors.
 
 
 Output Devices:
