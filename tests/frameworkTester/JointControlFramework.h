@@ -344,7 +344,9 @@ class RotateJoint : public JointInterface
                                            * Algorithm derived classes
                                            *
                                            ******************************************************************************/
-
+//Algorithm used to create a closed-loop feedback method.  Used when speed is recieved from the base station and the speed is
+// to be sent to the device, which in turn returns feedback of the device's current location and speed.
+//Closed loop speed control.
 class PIAlgorithm : public IOAlgorithm
 {
 
@@ -355,14 +357,18 @@ class PIAlgorithm : public IOAlgorithm
     int KI, KP, speed_minMag;
     float DT, errorSummation;
 
-    // define
+    // Function that converts rotation units into something that can be worked with more easily—such as degrees.
     float dist360(int pos_ru);
 
-    // define
+    // Full function that takes an input (an value for the gear to move to) as well as a boolean to check if the movement
+    // of the gear has been succeeded. If the bool "ret_OutputFinished" is true, then
     long runAlgorithm(const long input, bool * ret_OutputFinished);
 
   public:
+    // Constructor for the PIAlgorithm in the case that a inSpeed_minMag is not provided. In that case, a default value for
+    // speed_minMag will be provided instead. Sets KI and PI as well so the runAlgorithm can function with specific constants.
     PIAlgorithm(int inKI, int inKP, float inDT);
+    // Same as above, but if the speed_minMag is provided.
     PIAlgorithm(int inKI, int inKP, float inDT, int inSpeed_minMag);
 };
 

@@ -608,6 +608,10 @@ void DirectDiscreteHBridge::move(const long movement)
 
 PIAlgorithm::PIAlgorithm(int inKI, int inKP, float inDT) : IOAlgorithm()
 {
+  // Assign the values of the PIAlgorithm class to the ones provided to the constructor.
+  // Sets errorSummation to be zero so that the error can be accurately accouted for for each phase of the
+  // closed loop algorithm.
+  // speed_minMag is not provided to the constructor, so a default value is assumed.
   KI = inKI;
   KP = inKP;
   DT = inDT;
@@ -619,6 +623,9 @@ PIAlgorithm::PIAlgorithm(int inKI, int inKP, float inDT) : IOAlgorithm()
 }
 PIAlgorithm::PIAlgorithm(int inKI, int inKP, float inDT, int inSpeed_minMag) : IOAlgorithm()
 {
+  // Assign the values of the PIAlgorithm class to the ones provided to the constructor.
+  // Sets errorSummation to be zero so that the error can be accurately accouted for for each phase of the
+  // closed loop algorithm.
   KI = inKI;
   KP = inKP;
   DT = inDT;
@@ -637,24 +644,32 @@ float PIAlgorithm::dist360(int pos_rotationUnits)
 
 long PIAlgorithm::runAlgorithm(const long input, bool * ret_OutputFinished)
 {
+  // Check if the Algorithm class has actually been initialized or not. If not, kill the function.
   if (feedbackInitialized == false)
   {
     return 0;
   }
+  // Create local variables for the function to work with, as well as convert values to degrees.
   long posDest = input;
   long posNow = feedbackDev->getFeedback();
   float deg_posDest = dist360(posDest);
   float deg_posNow = dist360(posNow);
   float deg_disToDest = deg_posDest - deg_posNow;
-  
+
+  // Check if the current value of the rotation is within the margin-of-error acceptable for the location.
+  // If so, set the value to be OutputFinished to be true, so that the function does not run again.
   if (-DEG_DEADBAND < deg_disToDest && deg_disToDest < -DEG_DEADBAND)
   {
     *ret_OutputFinished = true;
     return 0;
   }
 
+  // Calculate the value of how fast the motor needs to turn at the given interval.
   int spd_out = (KP * deg_disToDest + KI * errorSummation);
 
+
+  // Check for fringe cases if the speed out value is outside of the acceptable range,
+  // forcing the value to return back into the acceptable range.
   if (spd_out > SPEED_MAX)
   {
     spd_out = SPEED_MAX;
@@ -669,9 +684,13 @@ long PIAlgorithm::runAlgorithm(const long input, bool * ret_OutputFinished)
     spd_out = -speed_minMag;
   }
   else
+    // Calculate and add the value to the errorSummation so that we can keep track
+    // of how much of an error has been accumulated.
     errorSummation+=(deg_disToDest * DT);
-
+  // Ensure that the output is not finished (since it has gotten this far) so that the function
+  // will be run once again.
   *ret_OutputFinished = false;
+  // return the value of the current speed we have used.
   return spd_out;
 }
 
