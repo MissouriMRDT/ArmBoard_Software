@@ -344,31 +344,50 @@ class RotateJoint : public JointInterface
                                            * Algorithm derived classes
                                            *
                                            ******************************************************************************/
-//Algorithm used to create a closed-loop feedback method.  Used when speed is recieved from the base station and the speed is
-// to be sent to the device, which in turn returns feedback of the device's current location and speed.
-//Closed loop speed control.
+//Algorithm used to create a closed-loop feedback method.  Used when position is recieved from the base station and the speed is
+// to be sent to the device, which in turn returns feedback of the device's current location.
+// Note that this algorithm needs to be looped externally until joint interface returns a status saying that the movement is complete,
+// as each call only iterates through the PI loop once instead of waiting until completion.
+//Closed loop positional control.
 class PIAlgorithm : public IOAlgorithm
 {
 
   private:
-    const float DEG_DEADBAND = 1;
-    const int DEFAULT_MINMAG = (SPEED_MAX * .1);// 10% of motor power
+    const float DEG_DEADBAND = 1; //when the joint is within this many degrees of its destination, it stops
+    const int DEFAULT_MINMAG = (SPEED_MAX * .1); //The default min magnitude of speed the motor is allowed to move at. 10% of motor power
 
-    int KI, KP, speed_minMag;
+    //Ki and Kp are PI loop values needed to calculate the output. SpeedMinMag represents the smallest speed (absolute value) that the
+    //motor is allowed to move at when it's not simply stopping. This is because on most joints, the motor probably won't even move
+    //below a certain speed rating
+    int KI, KP, speed_minMag; 
+    
+    //dT represents the time slice constant in seconds for this control loop. It should be externally looped, with dt representing 
+    //how many seconds pass in between calls to the control loop. 
+    //ErrorSummation keeps track of how large our previous errors were when trying to get to the desired destination, used to 
+    //calculate speed output in the PI loop
     float DT, errorSummation;
 
     // Function that converts rotation units into something that can be worked with more easily—such as degrees.
     float dist360(int pos_ru);
 
-    // Full function that takes an input (an value for the gear to move to) as well as a boolean to check if the movement
+    // Full function that takes a postion input (an value for the gear to move to) as well as a boolean to check if the movement
     // of the gear has been succeeded. If the bool "ret_OutputFinished" is true, then
+    // the joint has reached its desired position and the method will return 0 speed.
+    // Upon being called, the method will run PI logic on the passed input and return a value of speed for how fast
+    // the motor controlling this joint should move
     long runAlgorithm(const long input, bool * ret_OutputFinished);
 
   public:
-    // Constructor for the PIAlgorithm in the case that a inSpeed_minMag is not provided. In that case, a default value for
-    // speed_minMag will be provided instead. Sets KI and PI as well so the runAlgorithm can function with specific constants.
+    // Constructor. 
+    // Input: inKI, the integer representing the PI constant Ki
+    //        inKP, the integer representing the PI constant Kp
+    //        inDt, the float value representing the time differential between calls of the runAlgorithm method. 
+    //        The PI Algorithm is meant to be put into a loop by the main program until it is finished, and dt represents 
+    //        the amount of time that passes in between the calls to the algorithm in that loop, in seconds.
     PIAlgorithm(int inKI, int inKP, float inDT);
-    // Same as above, but if the speed_minMag is provided.
+    
+    // Same as above, but if the speed_minMag is provided. speedMinMag is an int -- representing speed values -- where 
+    // the value passed is the slowest speed the motor is allowed to move when not simply stopping.
     PIAlgorithm(int inKI, int inKP, float inDT, int inSpeed_minMag);
 };
 
