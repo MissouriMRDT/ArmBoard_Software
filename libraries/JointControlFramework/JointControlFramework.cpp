@@ -606,6 +606,12 @@ void DirectDiscreteHBridge::move(const long movement)
 	return;
 }
 
+// Constructor. 
+// Input: inKI, the integer representing the PI constant Ki
+//        inKP, the integer representing the PI constant Kp
+//        inDt, the float value representing the time differential between calls of the runAlgorithm method. 
+//        The PI Algorithm is meant to be put into a loop by the main program until it is finished, and dt represents 
+//        the amount of time that passes in between the calls to the algorithm in that loop, in seconds.
 PIAlgorithm::PIAlgorithm(int inKI, int inKP, float inDT) : IOAlgorithm()
 {
   // Assign the values of the PIAlgorithm class to the ones provided to the constructor.
@@ -621,6 +627,9 @@ PIAlgorithm::PIAlgorithm(int inKI, int inKP, float inDT) : IOAlgorithm()
   outType = spd;
   feedbackInType = pos;
 }
+
+// Same as above, but if the speed_minMag is provided. speedMinMag is an int -- representing speed values -- where 
+// the value passed is the slowest speed the motor is allowed to move when not simply stopping.
 PIAlgorithm::PIAlgorithm(int inKI, int inKP, float inDT, int inSpeed_minMag) : IOAlgorithm()
 {
   // Assign the values of the PIAlgorithm class to the ones provided to the constructor.
@@ -636,19 +645,26 @@ PIAlgorithm::PIAlgorithm(int inKI, int inKP, float inDT, int inSpeed_minMag) : I
   feedbackInType = pos;
 }
 
-
+// Function that converts rotation units into something that can be worked with more easily—such as degrees.
 float PIAlgorithm::dist360(int pos_rotationUnits)
 {
   return (static_cast<float>(pos_rotationUnits)*360.0/(POS_MAX-POS_MIN));
 }
 
+// Full function that takes a postion input (an value for the gear to move to) as well as a boolean to check if the movement
+// of the gear has been succeeded. If the bool "ret_OutputFinished" is true, then
+// the joint has reached its desired position and the method will return 0 speed.
+// Upon being called, the method will run PI logic on the passed input and return a value of speed for how fast
+// the motor controlling this joint should move
 long PIAlgorithm::runAlgorithm(const long input, bool * ret_OutputFinished)
 {
   // Check if the Algorithm class has actually been initialized or not. If not, kill the function.
   if (feedbackInitialized == false)
   {
+    *ret_OutputFinished = false;	  
     return 0;
   }
+	
   // Create local variables for the function to work with, as well as convert values to degrees.
   long posDest = input;
   long posNow = feedbackDev->getFeedback();
@@ -657,16 +673,15 @@ long PIAlgorithm::runAlgorithm(const long input, bool * ret_OutputFinished)
   float deg_disToDest = deg_posDest - deg_posNow;
 
   // Check if the current value of the rotation is within the margin-of-error acceptable for the location.
-  // If so, set the value to be OutputFinished to be true, so that the function does not run again.
-  if (-DEG_DEADBAND < deg_disToDest && deg_disToDest < -DEG_DEADBAND)
+  // If so, set the value to be OutputFinished to be true, so that the function should not run again.
+  if (-DEG_DEADBAND < deg_disToDest && deg_disToDest < DEG_DEADBAND)
   {
     *ret_OutputFinished = true;
     return 0;
   }
 
-  // Calculate the value of how fast the motor needs to turn at the given interval.
+  // Calculate the value of how fast the motor needs to turn at its current interval
   int spd_out = (KP * deg_disToDest + KI * errorSummation);
-
 
   // Check for fringe cases if the speed out value is outside of the acceptable range,
   // forcing the value to return back into the acceptable range.
@@ -684,13 +699,17 @@ long PIAlgorithm::runAlgorithm(const long input, bool * ret_OutputFinished)
     spd_out = -speed_minMag;
   }
   else
+  {
     // Calculate and add the value to the errorSummation so that we can keep track
     // of how much of an error has been accumulated.
     errorSummation+=(deg_disToDest * DT);
+  }
+	
   // Ensure that the output is not finished (since it has gotten this far) so that the function
-  // will be run once again.
+  // should be run once again.
   *ret_OutputFinished = false;
-  // return the value of the current speed we have used.
+	
+  // return the value of the speed we calculated
   return spd_out;
 }
 
