@@ -1,4 +1,4 @@
-#include "JointControlFramework.h"
+﻿#include "JointControlFramework.h"
 
 //if the constructor wasn't passed an ioalgorithm to use, then this function selects one.
 //Basic algorithms only; if it's one that uses feedback then it needs to be passed in by the user,
@@ -444,7 +444,7 @@ void DynamixelController::move(const long movement)
   //if supposed to move backwards(ccw)
   if(mov < 0)
   {
-	  send = map(mov, SPEED_MIN, SPEED_MAX, DYNA_SPEED_CCW_MAX, DYNA_SPEED_CCW_MIN);
+	  send = map(mov, 0, SPEED_MAX, DYNA_SPEED_CCW_MAX, DYNA_SPEED_CCW_MIN);
 
 	  //calls spin wheel function from RoveDynamixel
     //can take up to a uint16_t which exceeds a standard int but
@@ -454,7 +454,7 @@ void DynamixelController::move(const long movement)
   //if forwards (cw)
   else if(mov > 0)
   {
-    send = map(mov, SPEED_MIN, SPEED_MAX, DYNA_SPEED_CW_MAX, DYNA_SPEED_CW_MIN);
+    send = map(mov, 0, SPEED_MAX, DYNA_SPEED_CW_MAX, DYNA_SPEED_CW_MIN);
 
 	//calls spin wheel function from RoveDynamixel
     //can take up to a uint16_t which exceeds a standard int but
@@ -579,7 +579,7 @@ void DirectDiscreteHBridge::move(const long movement)
 	if(mov < 0)
 	{
 		mov = abs(mov);
-		pwm = map(mov, SPEED_MIN, SPEED_MAX, PWM_MIN, PWM_MAX);
+		pwm = map(mov, 0, SPEED_MAX, PWM_MIN, PWM_MAX);
 
 		//stop the transistor for the other direction -- if both were on, the h bridge would short out
 		PwmWrite(FPWM_PIN, 0);
@@ -589,7 +589,7 @@ void DirectDiscreteHBridge::move(const long movement)
 	//if forwards
 	else if(mov > 0)
 	{
-		pwm = map(mov, SPEED_MIN, SPEED_MAX, PWM_MIN, PWM_MAX);
+		pwm = map(mov, 0, SPEED_MAX, PWM_MIN, PWM_MAX);
 
 		//stop the transistor for the other direction -- if both were on, the h bridge would short out
 		PwmWrite(FPWM_PIN, pwm);
