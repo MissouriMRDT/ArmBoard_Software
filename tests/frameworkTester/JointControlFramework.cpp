@@ -1,4 +1,13 @@
-#include "JointControlFramework.h"
+﻿#include "JointControlFramework.h"
+
+
+                                           /*****************************
+                                            *
+                                            *
+                                            *     JOINT INTERFACES BELOW 
+                                            *           |
+                                            *           V
+                                            ****************************/
 
 //if the constructor wasn't passed an ioalgorithm to use, then this function selects one.
 //Basic algorithms only; if it's one that uses feedback then it needs to be passed in by the user,
@@ -382,13 +391,13 @@ JointControlStatus RotateJoint::runOutputControl(const long movement)
 
   return(returnStatus);
 }
-
-//if this IOAlgorithm uses feedback device, this function is used by the joint interface to set it, and sets the feedbackInitialized flag to true
-void IOAlgorithm::setFeedDevice(FeedbackDevice fdDev)
-{
-  *feedbackDev = fdDev;
-  feedbackInitialized = true;
-}
+                                           /*****************************
+                                            *
+                                            *
+                                            *     OUTPUT DEVICES BELOW 
+                                            *           |
+                                            *           V
+                                            ****************************/
 
 //constructor for a dynamixel for any mode
 //Calls the init function from RoveDynamixel.h to initialize the dynamixel
@@ -444,7 +453,7 @@ void DynamixelController::move(const long movement)
   //if supposed to move backwards(ccw)
   if(mov < 0)
   {
-	  send = map(mov, SPEED_MIN, SPEED_MAX, DYNA_SPEED_CCW_MAX, DYNA_SPEED_CCW_MIN);
+	  send = map(mov, 0, SPEED_MAX, DYNA_SPEED_CCW_MAX, DYNA_SPEED_CCW_MIN);
 
 	  //calls spin wheel function from RoveDynamixel
     //can take up to a uint16_t which exceeds a standard int but
@@ -454,7 +463,7 @@ void DynamixelController::move(const long movement)
   //if forwards (cw)
   else if(mov > 0)
   {
-    send = map(mov, SPEED_MIN, SPEED_MAX, DYNA_SPEED_CW_MAX, DYNA_SPEED_CW_MIN);
+    send = map(mov, 0, SPEED_MAX, DYNA_SPEED_CW_MAX, DYNA_SPEED_CW_MIN);
 
 	//calls spin wheel function from RoveDynamixel
     //can take up to a uint16_t which exceeds a standard int but
@@ -579,7 +588,7 @@ void DirectDiscreteHBridge::move(const long movement)
 	if(mov < 0)
 	{
 		mov = abs(mov);
-		pwm = map(mov, SPEED_MIN, SPEED_MAX, PWM_MIN, PWM_MAX);
+		pwm = map(mov, 0, SPEED_MAX, PWM_MIN, PWM_MAX);
 
 		//stop the transistor for the other direction -- if both were on, the h bridge would short out
 		PwmWrite(FPWM_PIN, 0);
@@ -589,7 +598,7 @@ void DirectDiscreteHBridge::move(const long movement)
 	//if forwards
 	else if(mov > 0)
 	{
-		pwm = map(mov, SPEED_MIN, SPEED_MAX, PWM_MIN, PWM_MAX);
+		pwm = map(mov, 0, SPEED_MAX, PWM_MIN, PWM_MAX);
 
 		//stop the transistor for the other direction -- if both were on, the h bridge would short out
 		PwmWrite(FPWM_PIN, pwm);
@@ -606,6 +615,95 @@ void DirectDiscreteHBridge::move(const long movement)
 	return;
 }
 
+
+//DRV8388 constructor here
+// pin asignments for enable pin and phase pin, also a bool to determine the orientation of da motor
+DRV8388::DRV8388 (const int EN_PIN, const int PH_PIN, bool upsideDown) : OutputDevice()
+{
+  ENABLE_PIN = EN_PIN;
+  PHASE_PIN = PH_PIN;
+  inType = spd;
+  invert = upsideDown;
+
+  pinMode(PHASE_PIN, OUTPUT);
+}
+
+
+//move function which passes in speed ( which is converted to phase and PWM) to move device
+void DRV8388::move(const long movement)
+{
+  int mov = movement;
+  int pwm = 0;
+  
+  //if mounted upside down then invert the signal passed to it and move accordingly
+  if (invert)
+  {
+    //inverts the input easily
+    mov = -mov;
+  }
+  
+  //if supposed to move backwards
+  if(mov < 0)
+  {
+    mov = abs(mov);
+    pwm = map(mov, 0, SPEED_MAX, PWM_MIN, PWM_MAX);
+
+    //set phase to 1 for "reverse" rotation
+    digitalWrite(PHASE_PIN, HIGH);
+    
+    //pulsate enable pin to control motor
+    PwmWrite(ENABLE_PIN, pwm);
+  }
+  
+  //if forwards
+  else if(mov > 0)
+  {
+    pwm = map(mov, 0, SPEED_MAX, PWM_MIN, PWM_MAX);
+      
+    //set phase to 0 for "forward" rotation
+    digitalWrite(PHASE_PIN, LOW);
+    
+    //pulsate enable pin to control motor
+    PwmWrite(ENABLE_PIN, pwm);
+  }
+  
+  //stop
+  else if(mov == 0)
+  {
+    PwmWrite(ENABLE_PIN, 0);//set enable to 0 to brake motor
+    //phase don't matter
+  }
+  
+  return;
+}
+
+
+
+
+
+                                           /*****************************
+                                            *
+                                            *
+                                            *     ALGORITHMS BELOW 
+                                            *           |
+                                            *           V
+                                            ****************************/
+
+                                            
+//if this IOAlgorithm uses feedback device, this function is used by the joint interface to set it, and sets the feedbackInitialized flag to true
+void IOAlgorithm::setFeedDevice(FeedbackDevice fdDev)
+{
+  *feedbackDev = fdDev;
+  feedbackInitialized = true;
+}
+
+
+// Constructor. 
+// Input: inKI, the integer representing the PI constant Ki
+//        inKP, the integer representing the PI constant Kp
+//        inDt, the float value representing the time differential between calls of the runAlgorithm method. 
+//        The PI Algorithm is meant to be put into a loop by the main program until it is finished, and dt represents 
+//        the amount of time that passes in between the calls to the algorithm in that loop, in seconds.
 PIAlgorithm::PIAlgorithm(int inKI, int inKP, float inDT) : IOAlgorithm()
 {
   // Assign the values of the PIAlgorithm class to the ones provided to the constructor.
@@ -621,6 +719,9 @@ PIAlgorithm::PIAlgorithm(int inKI, int inKP, float inDT) : IOAlgorithm()
   outType = spd;
   feedbackInType = pos;
 }
+
+// Same as above, but if the speed_minMag is provided. speedMinMag is an int -- representing speed values -- where 
+// the value passed is the slowest speed the motor is allowed to move when not simply stopping.
 PIAlgorithm::PIAlgorithm(int inKI, int inKP, float inDT, int inSpeed_minMag) : IOAlgorithm()
 {
   // Assign the values of the PIAlgorithm class to the ones provided to the constructor.
@@ -636,19 +737,26 @@ PIAlgorithm::PIAlgorithm(int inKI, int inKP, float inDT, int inSpeed_minMag) : I
   feedbackInType = pos;
 }
 
-
+// Function that converts rotation units into something that can be worked with more easily—such as degrees.
 float PIAlgorithm::dist360(int pos_rotationUnits)
 {
   return (static_cast<float>(pos_rotationUnits)*360.0/(POS_MAX-POS_MIN));
 }
 
+// Full function that takes a postion input (an value for the gear to move to) as well as a boolean to check if the movement
+// of the gear has been succeeded. If the bool "ret_OutputFinished" is true, then
+// the joint has reached its desired position and the method will return 0 speed.
+// Upon being called, the method will run PI logic on the passed input and return a value of speed for how fast
+// the motor controlling this joint should move
 long PIAlgorithm::runAlgorithm(const long input, bool * ret_OutputFinished)
 {
   // Check if the Algorithm class has actually been initialized or not. If not, kill the function.
   if (feedbackInitialized == false)
   {
+    *ret_OutputFinished = false;	  
     return 0;
   }
+	
   // Create local variables for the function to work with, as well as convert values to degrees.
   long posDest = input;
   long posNow = feedbackDev->getFeedback();
@@ -657,16 +765,15 @@ long PIAlgorithm::runAlgorithm(const long input, bool * ret_OutputFinished)
   float deg_disToDest = deg_posDest - deg_posNow;
 
   // Check if the current value of the rotation is within the margin-of-error acceptable for the location.
-  // If so, set the value to be OutputFinished to be true, so that the function does not run again.
-  if (-DEG_DEADBAND < deg_disToDest && deg_disToDest < -DEG_DEADBAND)
+  // If so, set the value to be OutputFinished to be true, so that the function should not run again.
+  if (-DEG_DEADBAND < deg_disToDest && deg_disToDest < DEG_DEADBAND)
   {
     *ret_OutputFinished = true;
     return 0;
   }
 
-  // Calculate the value of how fast the motor needs to turn at the given interval.
+  // Calculate the value of how fast the motor needs to turn at its current interval
   int spd_out = (KP * deg_disToDest + KI * errorSummation);
-
 
   // Check for fringe cases if the speed out value is outside of the acceptable range,
   // forcing the value to return back into the acceptable range.
@@ -684,13 +791,17 @@ long PIAlgorithm::runAlgorithm(const long input, bool * ret_OutputFinished)
     spd_out = -speed_minMag;
   }
   else
+  {
     // Calculate and add the value to the errorSummation so that we can keep track
     // of how much of an error has been accumulated.
     errorSummation+=(deg_disToDest * DT);
+  }
+	
   // Ensure that the output is not finished (since it has gotten this far) so that the function
-  // will be run once again.
+  // should be run once again.
   *ret_OutputFinished = false;
-  // return the value of the current speed we have used.
+	
+  // return the value of the speed we calculated
   return spd_out;
 }
 
@@ -703,6 +814,15 @@ long SpdToSpdNoFeedAlgorithm::runAlgorithm(const long input, bool * ret_OutputFi
   *ret_OutputFinished = true;
   return input;
 }
+
+                                           /*****************************
+                                            *
+                                            *
+                                            *     FEEDBACK DEVICE(S) BELOW 
+                                            *           |
+                                            *           V
+                                            ****************************/
+                                            
 
 //gets the positional feedback from the encoder. Returns positional values from POS_MIN and POS_MAX
 long Ma3Encoder12b::getFeedback()

@@ -117,6 +117,12 @@ void initialize()
   inHerFace = new SingleMotorJoint(spd, controller);
   
   delete inHerFace;
+  delete controller;
+
+  controller = new DRV8388(PA_4, PK_2, false);
+  inHerFace = new SingleMotorJoint(spd, controller);
+
+  delete inHerFace;
   
   algorithm = new PIAlgorithm(3,3,3);
   inHerFace = new SingleMotorJoint(pos, algorithm, controller, feedbackDevice);

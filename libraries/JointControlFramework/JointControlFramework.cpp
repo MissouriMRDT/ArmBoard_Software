@@ -1,5 +1,14 @@
 ﻿#include "JointControlFramework.h"
 
+
+                                           /*****************************
+                                            *
+                                            *
+                                            *     JOINT INTERFACES BELOW 
+                                            *           |
+                                            *           V
+                                            ****************************/
+
 //if the constructor wasn't passed an ioalgorithm to use, then this function selects one.
 //Basic algorithms only; if it's one that uses feedback then it needs to be passed in by the user,
 //as feedback based algorithms typically are complex enough to require user-dictated initialization
@@ -382,13 +391,13 @@ JointControlStatus RotateJoint::runOutputControl(const long movement)
 
   return(returnStatus);
 }
-
-//if this IOAlgorithm uses feedback device, this function is used by the joint interface to set it, and sets the feedbackInitialized flag to true
-void IOAlgorithm::setFeedDevice(FeedbackDevice fdDev)
-{
-  *feedbackDev = fdDev;
-  feedbackInitialized = true;
-}
+                                           /*****************************
+                                            *
+                                            *
+                                            *     OUTPUT DEVICES BELOW 
+                                            *           |
+                                            *           V
+                                            ****************************/
 
 //constructor for a dynamixel for any mode
 //Calls the init function from RoveDynamixel.h to initialize the dynamixel
@@ -606,6 +615,89 @@ void DirectDiscreteHBridge::move(const long movement)
 	return;
 }
 
+
+//DRV8388 constructor here
+// pin asignments for enable pin and phase pin, also a bool to determine the orientation of da motor
+DRV8388::DRV8388 (const int EN_PIN, const int PH_PIN, bool upsideDown) : OutputDevice()
+{
+  ENABLE_PIN = EN_PIN;
+  PHASE_PIN = PH_PIN;
+  inType = spd;
+  invert = upsideDown;
+
+  pinMode(PHASE_PIN, OUTPUT);
+}
+
+
+//move function which passes in speed ( which is converted to phase and PWM) to move device
+void DRV8388::move(const long movement)
+{
+  int mov = movement;
+  int pwm = 0;
+  
+  //if mounted upside down then invert the signal passed to it and move accordingly
+  if (invert)
+  {
+    //inverts the input easily
+    mov = -mov;
+  }
+  
+  //if supposed to move backwards
+  if(mov < 0)
+  {
+    mov = abs(mov);
+    pwm = map(mov, 0, SPEED_MAX, PWM_MIN, PWM_MAX);
+
+    //set phase to 1 for "reverse" rotation
+    digitalWrite(PHASE_PIN, HIGH);
+    
+    //pulsate enable pin to control motor
+    PwmWrite(ENABLE_PIN, pwm);
+  }
+  
+  //if forwards
+  else if(mov > 0)
+  {
+    pwm = map(mov, 0, SPEED_MAX, PWM_MIN, PWM_MAX);
+      
+    //set phase to 0 for "forward" rotation
+    digitalWrite(PHASE_PIN, LOW);
+    
+    //pulsate enable pin to control motor
+    PwmWrite(ENABLE_PIN, pwm);
+  }
+  
+  //stop
+  else if(mov == 0)
+  {
+    PwmWrite(ENABLE_PIN, 0);//set enable to 0 to brake motor
+    //phase don't matter
+  }
+  
+  return;
+}
+
+
+
+
+
+                                           /*****************************
+                                            *
+                                            *
+                                            *     ALGORITHMS BELOW 
+                                            *           |
+                                            *           V
+                                            ****************************/
+
+                                            
+//if this IOAlgorithm uses feedback device, this function is used by the joint interface to set it, and sets the feedbackInitialized flag to true
+void IOAlgorithm::setFeedDevice(FeedbackDevice fdDev)
+{
+  *feedbackDev = fdDev;
+  feedbackInitialized = true;
+}
+
+
 // Constructor. 
 // Input: inKI, the integer representing the PI constant Ki
 //        inKP, the integer representing the PI constant Kp
@@ -722,6 +814,15 @@ long SpdToSpdNoFeedAlgorithm::runAlgorithm(const long input, bool * ret_OutputFi
   *ret_OutputFinished = true;
   return input;
 }
+
+                                           /*****************************
+                                            *
+                                            *
+                                            *     FEEDBACK DEVICE(S) BELOW 
+                                            *           |
+                                            *           V
+                                            ****************************/
+                                            
 
 //gets the positional feedback from the encoder. Returns positional values from POS_MIN and POS_MAX
 long Ma3Encoder12b::getFeedback()
