@@ -1,20 +1,19 @@
+#include "JointControlFramework.h"
+
 /* Programmers: Drue Satterfield, David Strickland
  * Date of creation: 10/11/2016
  * Sub system: arm board
  * 
  * program overhead:
- * The program is fairly simple in concept. We listen for communications from the base station over ethernet using the RoveComm library, and when we get a command from them 
- * we identify what part of the arm it wants us to move, and proceed to do so. Base station will either say how fast they want the movement to happen, or what position they want
- * that part of that arm to move to. We tell the joints to move based off of that. The program also monitors and handles communications to and from the endefector board, since 
- * that board's communications run through the arm board.
- * 
- * If we do not get a command within a certain amount of time, the arm shall automatically stop. This is so the arm doesn't simply keep moving in the event of a communications failure.
- * 
- * 
+ * Example of the code that was used to successfully test open loop control
  */
 
-
 #include "arm.h";
+
+FeedbackDevice* feedbackDevice;
+JointInterface * inHerFace;
+OutputDevice * controller;
+IOAlgorithm * algorithm;
 
 void setup() {} //fuck you setup
 
@@ -25,7 +24,7 @@ void loop() {
   int16_t commandData;
   uint32_t watchdogTimer_us = 0; //increment this value everytime we don't get a command. When we've waited for a command for longer than our timeout value, stop all arm movement
   
-  initialize();
+  initialize(); //control devices initted in here
   
   while(1) //main program loop. Listen for communications from the endefector or from base station, and proceed based on that transmission 
   {
@@ -96,13 +95,31 @@ void loop() {
       }
     }//end else
   }//end while
-  
+ 
 }
 
 void initialize()
 {
   roveComm_Begin(192, 168, 1, 131);
   Serial.begin(9600);
+
+  //init control devices
+  int pinInFwd = 1;
+  int pinInRev = 2;
+  feedbackDevice = new Ma3Encoder12b(PA_2); //used for absolutely nothing, but hey demonstration of setting it up. 
+  controller = new DirectDiscreteHBridge(pinInFwd, pinInRev, 0);
+  inHerFace = new SingleMotorJoint(spd, controller);
+  
+  delete inHerFace;
+  delete controller;
+
+  controller = new DRV8388(PA_4, PK_2, false);
+  inHerFace = new SingleMotorJoint(spd, controller);
+
+  delete inHerFace;
+  
+  algorithm = new PIAlgorithm(3,3,3);
+  inHerFace = new SingleMotorJoint(pos, algorithm, controller, feedbackDevice);
 }
 
 CommandResult sendMsgToEndef(uint16_t dataId, size_t dataSize, void * data)
