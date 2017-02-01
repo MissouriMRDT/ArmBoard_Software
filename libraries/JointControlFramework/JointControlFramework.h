@@ -118,6 +118,12 @@ class JointInterface
     //tracks whether or not the parameters passed via construction were valid
     bool validConstruction;
 
+    //the other joint with which this joint may be coupled with
+    JointInterface* coupledJoint;
+
+    //tracks whether or not the joint is coupled with another joint
+    bool coupled = false;
+
     //function that checks to see if the user put in a proper input value when calling the runOutputControl function
     //returns true if the input is in a valid range, false if it's not
     bool verifyInput(long inputToVerify);
@@ -129,12 +135,20 @@ class JointInterface
 
   public:
 
+    //variables to store the speed of either motor
+    int motorOneSpeed = 0;
+    int motorTwoSpeed = 0;
+
     //Runs the output control for this joint, IE making it move or checking
     //feedback to see if it needs to move, whatever the algorithm for
     //this joint is deemed to be, it runs it.
     //Must pass an integer for this implementation. Will break otherwise.
     //returns: The status of attempting to control this joint. Such as if the output is now running, or if it's complete, or if there was an error
     virtual JointControlStatus runOutputControl(const long movement);
+
+    //couples this joint with the other joint
+    //so they can point to eachother
+    void coupleJoint(JointInterface* otherJoint);
 };
 
 //feedback devices used to help determine where the arm is and what steps need to be taken

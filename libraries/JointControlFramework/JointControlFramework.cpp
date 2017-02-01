@@ -56,6 +56,17 @@ bool JointInterface::verifyInput(long inputToVerify)
   }
 }
 
+void JointInterface::coupleJoint(JointInterface* otherJoint)
+{
+  //only couple the joint if it isn't already coupled to avoid infinite recursion
+  if(!coupled)
+  {
+    coupledJoint = otherJoint;
+    coupled = true;
+    otherJoint -> coupleJoint(this);
+  }
+}
+
 //constructor for single motor joints with feedback device
 //inputType: What kind of movement this joint should be controlled by, such as speed or position input.
 //alg: The IOAlgorithm to be used by this joint
@@ -253,11 +264,41 @@ JointControlStatus TiltJoint::runOutputControl(const long movement)
   	//runs the algorithm on the input
   	mov = manip->runAlgorithm(movement, &motionComplete);
 
+    motorOneSpeed = mov;
+    motorTwoSpeed = mov;
+
+    //this only happens if this joint has been coupled with another joint
+    //the coupled logic will modify the speed calculated by the algorithm
+    //to allow smooth tilting and rotating at the same time
+    if(coupled)
+    {
+      motorOneSpeed += coupledJoint->motorOneSpeed;
+      if (motorOneSpeed > 1000)
+      {
+        motorOneSpeed = 1000;
+      }
+      if (motorOneSpeed < -1000)
+      {
+        motorOneSpeed = -1000;
+      }
+
+      motorTwoSpeed += coupledJoint->motorTwoSpeed;
+      if (motorTwoSpeed > 1000)
+      {
+        motorTwoSpeed = 1000;
+      }
+      if (motorTwoSpeed < -1000)
+      {
+        motorTwoSpeed = -1000;
+      }
+    }
+    
+
   	//send to the motor move command
-  	controller1->move(mov);
+  	controller1->move(motorOneSpeed);
 
   	//both the controllers should move the arm in the same direction. send command to motor 2
-  	controller2->move(mov);
+  	controller2->move(motorTwoSpeed);
 
     if(motionComplete == true)
     {
@@ -367,11 +408,40 @@ JointControlStatus RotateJoint::runOutputControl(const long movement)
     //runs the algorithm on the input
     mov = manip->runAlgorithm(movement, &motionComplete);
 
+    motorOneSpeed = mov;
+    motorTwoSpeed = -mov;
+
+    //this only happens if this joint has been coupled with another joint
+    //the coupled logic will modify the speed calculated by the algorithm
+    //to allow smooth tilting and rotating at the same time
+    if(coupled)
+    {
+      motorOneSpeed += coupledJoint->motorOneSpeed;
+      if (motorOneSpeed > 1000)
+      {
+        motorOneSpeed = 1000;
+      }
+      if (motorOneSpeed < -1000)
+      {
+        motorOneSpeed = -1000;
+      }
+
+      motorTwoSpeed += coupledJoint->motorTwoSpeed;
+      if (motorTwoSpeed > 1000)
+      {
+        motorTwoSpeed = 1000;
+      }
+      if (motorTwoSpeed < -1000)
+      {
+        motorTwoSpeed = -1000;
+      }
+    }
+
     //send to the motor move command
-    controller1->move(mov);
+    controller1->move(motorOneSpeed);
 
     //send command to motor 2. Since this is a rotate joint, the motors need to go in opposite directions so send the second one a negafied value
-    controller2->move(-1 * mov);
+    controller2->move(motorTwoSpeed);
 
     if(motionComplete == true)
     {
