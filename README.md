@@ -3,8 +3,9 @@ Software Control for Robotic Arm
 
 Welcome to the arm board software repo. As the name implies, this is where development on the arm board software happens. Very titular like that.
 
-Repo overview: The repo is split into developmental branches for in progress programs, and the master branch is reserved for code that is
-actually working in some form or another. If it's blank, it means everything is in development.
+Repo overview: The repo is split into developmental branches as well as the master branch. The master branch is for development of the main arm program; peripheral software is developed in their own developmental branches.
+
+--------------------------------------------------------------------------------------------------------------------------------
 
 The arm board's primary task is simple in concept. The base station will tell the arm how it wants to move, and the arm board makes it 
 happen. The devil pops up a little in the details; how the arm is to move is something that varies depending on how the user wants
