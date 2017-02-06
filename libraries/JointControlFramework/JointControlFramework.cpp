@@ -79,8 +79,9 @@ SingleMotorJoint::SingleMotorJoint(ValueType inputType, IOAlgorithm *alg, Output
 	controller1 = cont;
 	feedback = feed;
 	manip = alg;
-  manip -> setFeedDevice(*feed);
-
+	//Serial.println("Setting feedback device");
+	manip -> setFeedDevice(feed);
+	//Serial.println("Feedback device complete");
   //checks to make sure the passed arguments all work with each other, that is that the algorithm's input type is the same as what the user is putting in, and
   //that the algorithm's output value type is what the output device expects to take in, etc
   if((inputType == alg->inType) && (cont->inType == alg->outType) && (alg->feedbackInType == feed->fType))
@@ -91,6 +92,7 @@ SingleMotorJoint::SingleMotorJoint(ValueType inputType, IOAlgorithm *alg, Output
   {
     validConstruction = false;
   }
+  //Serial.println("Single motor joint successfully set up");
 }
 
 //constructor for single motor joints without feedback.
@@ -188,7 +190,7 @@ TiltJoint::TiltJoint(ValueType inputType, IOAlgorithm *alg, OutputDevice* cont1,
 	controller2 = cont2;
 	feedback = feed;
 	manip = alg;
-  manip -> setFeedDevice(*feed);
+  manip -> setFeedDevice(feed);
 
   //checks to make sure the passed arguments all work with each other, that is that the algorithm's input type is the same as what the user is putting in, and
   //that the algorithm's output value type is what the output device expects to take in, etc
@@ -362,7 +364,7 @@ RotateJoint::RotateJoint(ValueType inputType, IOAlgorithm *alg, OutputDevice* co
 	controller2 = cont2;
 	feedback = feed;
 	manip = alg;
-  manip -> setFeedDevice(*feed);
+  manip -> setFeedDevice(feed);
 
   //checks to make sure the passed arguments all work with each other, that is that the algorithm's input type is the same as what the user is putting in, and
   //that the algorithm's output value type is what the output device expects to take in, etc
@@ -761,9 +763,9 @@ void DRV8388::move(const long movement)
 
                                             
 //if this IOAlgorithm uses feedback device, this function is used by the joint interface to set it, and sets the feedbackInitialized flag to true
-void IOAlgorithm::setFeedDevice(FeedbackDevice fdDev)
+void IOAlgorithm::setFeedDevice(FeedbackDevice* fdDev)
 {
-  *feedbackDev = fdDev;
+  feedbackDev = fdDev;
   feedbackInitialized = true;
 }
 
@@ -898,7 +900,6 @@ long SpdToSpdNoFeedAlgorithm::runAlgorithm(const long input, bool * ret_OutputFi
 long Ma3Encoder12b::getFeedback()
 {
   uint32_t readOnPeriod = getOnPeriod_us(pwmMappedPin); //function part of the pwm reader library
-
   //values will be between PWM_READ_MIN and PWM_READ_MAX, that is 1 and 4097. Or at least they should be; if it's above there was slight comm error and it can be scaled down to the max val.
   if(readOnPeriod > PWM_READ_MAX)
   {
@@ -918,7 +919,8 @@ long Ma3Encoder12b::getFeedback()
       readOnPeriod = PWM_READ_MAX;
     }
   }
-
+  Serial.print("Encoder value: ");
+  Serial.println(map(readOnPeriod, PWM_READ_MIN, PWM_READ_MAX, POS_MIN, POS_MAX));
   //scale the values from the pwm values to the common position values, IE 1-4097 to POS_MIN-POS_MAX, and return it
   return(map(readOnPeriod, PWM_READ_MIN, PWM_READ_MAX, POS_MIN, POS_MAX));
 }

@@ -69,7 +69,7 @@ enum JointControlStatus
   //no errors encountered. The joint has reached the desired end state, IE it has reached the user specified speed or position, etc.
   //If the joint is open loop controlled, this is the default non-error return
   OutputComplete
-};
+  };
 
 //Constants representing the ranges for the different input types.
 //The common inputs and outputs between classes will fall between these limits, class should not expect to take or return values outside of these
@@ -241,7 +241,7 @@ class IOAlgorithm
 		virtual long runAlgorithm(const long input, bool * ret_OutputFinished);
 
     //if this IOAlgorithm uses feedback device, this function is used by the joint interface to set it, and sets the feedbackInitialized flag to true
-    void setFeedDevice(FeedbackDevice fdDev);
+    void setFeedDevice(FeedbackDevice *fdDev);
 };
 
 
