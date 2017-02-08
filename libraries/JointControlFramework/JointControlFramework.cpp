@@ -152,7 +152,8 @@ JointControlStatus SingleMotorJoint::runOutputControl(const long movement)
   {
   	//calls algorithm
   	mov = manip->runAlgorithm(movement, &motionComplete);
-
+    Serial.print("Algorithm Returns: ");
+    Serial.println(mov);
   	//moves device with output decided on by the algorithm
   	controller1->move(mov);
 
@@ -687,6 +688,78 @@ void DirectDiscreteHBridge::move(const long movement)
 	return;
 }
 
+//constructor for VNH5019 motor driver. Inputs are pin asignments for hardware pins, also a bool to determine the orientation of da motor
+VNH5019::VNH5019(const int PwmPin, const int InaPin, const int InbPin, bool upsideDown)
+{
+  PWM_PIN = PwmPin;
+  INA_PIN = InaPin;
+  INB_PIN = InbPin;
+  
+  inType = spd;
+  invert = upsideDown;
+
+  pinMode(INA_PIN, OUTPUT);
+  pinMode(INB_PIN, OUTPUT);
+  
+  //brake motor by default
+  digitalWrite(INA_PIN, LOW);
+  digitalWrite(INB_PIN, LOW);
+}
+
+//move function which passes in speed ( which is converted to phase and PWM) to move device
+void VNH5019::move(const long movement)
+{
+  int mov = movement;
+  int pwm = 0;
+  
+  //if mounted upside down then invert the signal passed to it and move accordingly
+  if (invert)
+  {
+    //inverts the input easily
+    mov = -mov;
+  }
+  
+  //if supposed to move backwards
+  if(mov < 0)
+  {
+    mov = abs(mov);
+    pwm = map(mov, 0, SPEED_MAX, PWM_MIN, PWM_MAX);
+
+    //set InB to 0 and InA to 1 for "reverse" rotation
+    digitalWrite(INA_PIN, HIGH);
+    digitalWrite(INB_PIN, LOW);
+    
+    //pulsate enable pin to control motor
+    Serial.print("Motor Speed: -");
+    Serial.println(movement);
+    PwmWrite(PWM_PIN, pwm);
+  }
+  
+  //if forwards
+  else if(mov > 0)
+  {
+    pwm = map(mov, 0, SPEED_MAX, PWM_MIN, PWM_MAX);
+      
+    //set InB to 1 and InA to 0 for forward rotation
+    digitalWrite(INA_PIN, LOW);
+    digitalWrite(INB_PIN, HIGH);
+    
+    //pulsate enable pin to control motor
+    Serial.print("Motor Speed: ");
+    Serial.println(movement);
+    PwmWrite(PWM_PIN, pwm);
+  }
+  
+  //stop
+  else if(mov == 0)
+  {
+    PwmWrite(PWM_PIN, 0);//set all pins to 0 to brake motor
+    digitalWrite(INA_PIN, LOW);
+    digitalWrite(INB_PIN, LOW);
+  }
+  
+  return;
+}
 
 //DRV8388 constructor here
 // pin asignments for enable pin and phase pin, also a bool to determine the orientation of da motor
@@ -776,7 +849,7 @@ void IOAlgorithm::setFeedDevice(FeedbackDevice* fdDev)
 //        inDt, the float value representing the time differential between calls of the runAlgorithm method. 
 //        The PI Algorithm is meant to be put into a loop by the main program until it is finished, and dt represents 
 //        the amount of time that passes in between the calls to the algorithm in that loop, in seconds.
-PIAlgorithm::PIAlgorithm(int inKI, int inKP, float inDT) : IOAlgorithm()
+PIAlgorithm::PIAlgorithm(int inKP, int inKI, float inDT) : IOAlgorithm()
 {
   // Assign the values of the PIAlgorithm class to the ones provided to the constructor.
   // Sets errorSummation to be zero so that the error can be accurately accouted for for each phase of the
@@ -794,7 +867,7 @@ PIAlgorithm::PIAlgorithm(int inKI, int inKP, float inDT) : IOAlgorithm()
 
 // Same as above, but if the speed_minMag is provided. speedMinMag is an int -- representing speed values -- where 
 // the value passed is the slowest speed the motor is allowed to move when not simply stopping.
-PIAlgorithm::PIAlgorithm(int inKI, int inKP, float inDT, int inSpeed_minMag) : IOAlgorithm()
+PIAlgorithm::PIAlgorithm(int inKP, int inKI, float inDT, int inSpeed_minMag) : IOAlgorithm()
 {
   // Assign the values of the PIAlgorithm class to the ones provided to the constructor.
   // Sets errorSummation to be zero so that the error can be accurately accouted for for each phase of the
@@ -825,7 +898,8 @@ long PIAlgorithm::runAlgorithm(const long input, bool * ret_OutputFinished)
   // Check if the Algorithm class has actually been initialized or not. If not, kill the function.
   if (feedbackInitialized == false)
   {
-    *ret_OutputFinished = false;	  
+    *ret_OutputFinished = false;	
+    Serial.println("not initialized right");
     return 0;
   }
 	
@@ -843,10 +917,21 @@ long PIAlgorithm::runAlgorithm(const long input, bool * ret_OutputFinished)
     *ret_OutputFinished = true;
     return 0;
   }
-
+  Serial.print("degrees to destination: ");
+  Serial.println(deg_disToDest);
+  Serial.print("KI Value: ");
+  Serial.println(KI);
+  Serial.print("KP Value: ");
+  Serial.println(KP);
+  Serial.print("KP * deg_disToDest: ");
+  Serial.println(KP * deg_disToDest);
+  Serial.print("KI * errorSummation: ");
+  Serial.println(KI* errorSummation);
   // Calculate the value of how fast the motor needs to turn at its current interval
   int spd_out = (KP * deg_disToDest + KI * errorSummation);
-
+  
+  Serial.print("Calculated speed is: ");
+  Serial.println(spd_out);
   // Check for fringe cases if the speed out value is outside of the acceptable range,
   // forcing the value to return back into the acceptable range.
   if (spd_out > SPEED_MAX)
@@ -874,6 +959,8 @@ long PIAlgorithm::runAlgorithm(const long input, bool * ret_OutputFinished)
   *ret_OutputFinished = false;
 	
   // return the value of the speed we calculated
+  Serial.print("alg returning value: ");
+  Serial.println(spd_out);
   return spd_out;
 }
 

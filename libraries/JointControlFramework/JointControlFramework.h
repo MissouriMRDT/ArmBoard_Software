@@ -399,11 +399,11 @@ class PIAlgorithm : public IOAlgorithm
     //        inDt, the float value representing the time differential between calls of the runAlgorithm method. 
     //        The PI Algorithm is meant to be put into a loop by the main program until it is finished, and dt represents 
     //        the amount of time that passes in between the calls to the algorithm in that loop, in seconds.
-    PIAlgorithm(int inKI, int inKP, float inDT);
+    PIAlgorithm(int inKP, int inKI, float inDT);
     
     // Same as above, but if the speed_minMag is provided. speedMinMag is an int -- representing speed values -- where 
     // the value passed is the slowest speed the motor is allowed to move when not simply stopping.
-    PIAlgorithm(int inKI, int inKP, float inDT, int inSpeed_minMag);
+    PIAlgorithm(int inKP, int inKI, float inDT, int inSpeed_minMag);
 };
 
 //Algorithm used when speed is recieved from base station and speed is expected to be sent to the device without any feedback.
@@ -538,6 +538,28 @@ class DirectDiscreteHBridge : public OutputDevice
     DirectDiscreteHBridge(const int FPIN, const int RPIN, bool upsideDown);
 
 };
+
+//VNH5019 H bridge IC
+class VNH5019 : public OutputDevice
+{
+  private:
+    //constants for hardware pins
+    //value ranges for min/max PWM 
+    int PWM_PIN, INA_PIN, INB_PIN;
+    const int PWM_MIN = 0, PWM_MAX = 255;
+
+
+  protected:
+    //move function which passes in speed ( which is converted to phase and PWM) to move device
+    void move(const long movement); 
+  public:
+
+    //constructor here
+    //pin asignments for hardware pins, also a bool to determine the orientation of da motor
+    VNH5019 (const int PwmPin, const int InaPin, const int InbPin, bool upsideDown);
+};
+
+
 
 //DRV8388 H bridge IC
 class DRV8388 : public OutputDevice
