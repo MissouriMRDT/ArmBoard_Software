@@ -8,11 +8,7 @@
  * Tests closed loop capabilities of the joint control framework using the PI algorithm construct to move a motor while taking in position data from an encoder
  */
 
-FeedbackDevice* feedbackDevice;
 JointInterface * inHerFace;
-OutputDevice * controller;
-IOAlgorithm * algorithm;
-
 JointInterface* openL;
 
 void setup() {} //fuck you setup
@@ -28,11 +24,6 @@ void loop() {
   Serial.println("Entering init");
   initialize(); //control devices initted in here
   Serial.println("Exiting init");
-
-  inHerFace = new SingleMotorJoint(pos, algorithm, controller, feedbackDevice);
-
-  
-  //openL = new SingleMotorJoint(spd, controller);
   
   initPwmRead(PM_0);
   while(1)
@@ -50,13 +41,16 @@ void initialize()
 {
  
   //init control devices
-  Serial.println("Setting up feedback device");
-  feedbackDevice = new Ma3Encoder12b(PM_0); //used for absolutely nothing, but hey demonstration of setting it up. 
-  Serial.println("Setting up algorithm bullshit");
-  algorithm = new PIAlgorithm(10,0,.001);
+  Ma3Encoder12b* feedbackDevice = new Ma3Encoder12b(PM_0); 
+  
+  PIAlgorithm* piAlgorithm = new PIAlgorithm(10,0,.001);
+  piAlgorithm -> setHardStopPositions(10, 30);
+  
+  VNH5019* controller = new VNH5019(PG_1, PK_7, PK_6, false);
 
+  inHerFace = new SingleMotorJoint(pos, piAlgorithm, controller, feedbackDevice);
 
-  controller = new VNH5019(PG_1, PK_7, PK_6, false);
+  openL = new SingleMotorJoint(spd, controller);
 }
 
 
