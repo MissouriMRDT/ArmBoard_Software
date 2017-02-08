@@ -17,6 +17,8 @@ Complicated. Interfaces with RoveDynamixel.h so you need to look at those functi
 
 *DRV8388: H-Bridge IC that interfaces with a small DC brush motor. Controlled by a phase and enable pin, phase determines direction while enable is controlled by a pulsated PWM signal.
 
+*VNH5019: H bridge IC for a small DC brush motor. Controlled by a pwm pin and two direction pins
+
 
 Feedback Devices:
 Ma3Encoder12b: MA3 magnetic encoder, 12 bit pwm version. Communicates to us via pwm, 12 bit resolution of degrees over 360 degrees.
