@@ -934,7 +934,7 @@ float PIAlgorithm::calcShortPath(float present, float dest)
 float PIAlgorithm::calcRouteToDest(float present, float dest)
 {
   float shortPathToDest = calcShortPath(present, dest); //find out the quickest path to the destination in degrees
-  if(shortPathToDest = 0) //if we're 0 degrees from the destination, just return now as we're done with a capital D
+  if(shortPathToDest == 0) //if we're 0 degrees from the destination, just return now as we're done with a capital D
   {
     return 0;
   }
@@ -980,7 +980,9 @@ float PIAlgorithm::calcRouteToDest(float present, float dest)
       }
     }
     
-    //case b) check. Check to see if at least one is in the same direction as our destination, and if it does, use it as the comparison point
+    //case b) check. Check to see if exactly one hard stop is in the same direction as our destination, and if it does, use it as the comparison point
+    //this case will only work if it is preceeded by the check for case a) which rules out the possibility that both the hard
+    //stops are in the same direction. 
     else if(sign(shortPathToStop1) == sign(shortPathToDest))
     {
       comparedStopPath = shortPathToStop1;
@@ -1009,7 +1011,7 @@ float PIAlgorithm::calcRouteToDest(float present, float dest)
     //to our destination. If the other hard stop is in this direction -- case b) -- then it's impossible to reach the destination as it lies in between 
     //the two stops. But if case a) holds, then we might be able to still reach it depending on if the other hard stop or the destination is closer when
     //going the longer way. If the destination is closer, we can reach it, but if the hard stop is closer, then we can't go this way either, it's impossible
-    else if(sign(uncomparedStopPath) != -1 * sign(shortPathToDest))//if direction to stop 2 isn't in the longer path we now want to try
+    else if(sign(uncomparedStopPath) == sign(shortPathToDest))//if direction to stop 2 isn't in the longer path we now want to try
     {
       float longUncomparedStopPath = 360 - abs(uncomparedStopPath) * sign(uncomparedStopPath) * -1;
       float longPathToDest = 360 - abs(shortPathToDest) * sign(shortPathToDest) * -1;
