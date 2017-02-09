@@ -384,7 +384,7 @@ class PIAlgorithm : public IOAlgorithm
     //ErrorSummation keeps track of how large our previous errors were when trying to get to the desired destination, used to 
     //calculate speed output in the PI loop
     //hardStops one and two track physical stops that the joint can't move through like walls. Initialized to -1 as a value representing they're unassigned
-    float DT, errorSummation, hardStopPos1 = -1, hardStopPos2 = -1;
+    float DT, errorSummation, hardStopPos1, hardStopPos2;
 
     //Function that converts rotation units into something that can be worked with more easily—such as degrees.
     float dist360(int pos_ru);

@@ -883,6 +883,8 @@ PIAlgorithm::PIAlgorithm(int inKP, int inKI, float inDT) : IOAlgorithm()
   inType = pos;
   outType = spd;
   feedbackInType = pos;
+  hardStopPos1 = -1;
+  hardStopPos2 = -1;
 }
 
 // Same as above, but if the speed_minMag is provided. speedMinMag is an int -- representing speed values -- where 
@@ -900,6 +902,8 @@ PIAlgorithm::PIAlgorithm(int inKP, int inKI, float inDT, int inSpeed_minMag) : I
   inType = pos;
   outType = spd;
   feedbackInType = pos;
+  hardStopPos1 = -1;
+  hardStopPos2 = -1;
 }
 
 // Function that converts rotation units into something that can be worked with more easily—such as degrees.
@@ -916,15 +920,24 @@ float PIAlgorithm::calcShortPath(float present, float dest)
   //from your starting point. Calculate the degrees to the destination by simply taking the difference between dest and present. If it's more than 180,
   //then the shorter path is to go the other direction.
   //If the destination is actually 180 degrees from the present, then either way is technically the shortest path. : ( Defaults to positive 180
+  Serial.print("Present pos in degrees: ");
+  Serial.println(present);
+  Serial.print("destination pos in degrees: ");
+  Serial.println(dest);
   float degToDest = dest - present;
+  Serial.print("deg to dest before correction: ");
+  Serial.println(degToDest);
   if(abs(degToDest) > 180)
   {
-    degToDest = (360 - abs(dest - present) * -1 * sign(degToDest));
+    degToDest = ((360 - abs(dest - present)) * -1 * sign(degToDest));
   }
   else if(degToDest == -180) //use positive 180 if it's 180 degrees away
   {
     degToDest = 180;
   }
+  
+  Serial.print("deg to dest after correction: ");
+  Serial.println(degToDest);
   
   return(degToDest);
 }
@@ -933,6 +946,8 @@ float PIAlgorithm::calcShortPath(float present, float dest)
 //Returns IMPOSSIBLE_MOVEMENT if it can't reach the destination.
 float PIAlgorithm::calcRouteToDest(float present, float dest)
 {
+  Serial.print("hard stop 1: ");
+  Serial.println(hardStopPos1);
   float shortPathToDest = calcShortPath(present, dest); //find out the quickest path to the destination in degrees
   if(shortPathToDest == 0) //if we're 0 degrees from the destination, just return now as we're done with a capital D
   {
@@ -1013,8 +1028,8 @@ float PIAlgorithm::calcRouteToDest(float present, float dest)
     //going the longer way. If the destination is closer, we can reach it, but if the hard stop is closer, then we can't go this way either, it's impossible
     else if(sign(uncomparedStopPath) == sign(shortPathToDest))//if direction to stop 2 isn't in the longer path we now want to try
     {
-      float longUncomparedStopPath = 360 - abs(uncomparedStopPath) * sign(uncomparedStopPath) * -1;
-      float longPathToDest = 360 - abs(shortPathToDest) * sign(shortPathToDest) * -1;
+      float longUncomparedStopPath = (360 - abs(uncomparedStopPath)) * sign(uncomparedStopPath) * -1;
+      float longPathToDest = (360 - abs(shortPathToDest)) * sign(shortPathToDest) * -1;
       
       if(abs(longUncomparedStopPath) > abs(longPathToDest)) //if dest is closer, we're good on this path
       {
@@ -1086,14 +1101,7 @@ long PIAlgorithm::runAlgorithm(const long input, bool * ret_OutputFinished)
   }
   Serial.print("degrees to destination: ");
   Serial.println(deg_disToDest);
-  Serial.print("KI Value: ");
-  Serial.println(KI);
-  Serial.print("KP Value: ");
-  Serial.println(KP);
-  Serial.print("KP * deg_disToDest: ");
-  Serial.println(KP * deg_disToDest);
-  Serial.print("KI * errorSummation: ");
-  Serial.println(KI* errorSummation);
+  
   // Calculate the value of how fast the motor needs to turn at its current interval
   int spd_out = (KP * deg_disToDest + KI * errorSummation);
   

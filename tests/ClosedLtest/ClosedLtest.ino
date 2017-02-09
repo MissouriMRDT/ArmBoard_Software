@@ -32,8 +32,10 @@ void loop() {
     Serial.println(getOnPeriod_us(PM_0));
     //inHerFace -> runOutputControl(500);
 
-   while((inHerFace -> runOutputControl(70000) == OutputRunning)){delay(1);}
+   while((inHerFace -> runOutputControl(45000) == OutputRunning)){delay(1);}
 
+  while(1){}
+   
   }
 }
 
@@ -43,8 +45,8 @@ void initialize()
   //init control devices
   Ma3Encoder12b* feedbackDevice = new Ma3Encoder12b(PM_0); 
   
-  PIAlgorithm* piAlgorithm = new PIAlgorithm(10,0,.001);
-  piAlgorithm -> setHardStopPositions(10, 30);
+  PIAlgorithm* piAlgorithm = new PIAlgorithm(20,3,.001);
+  //piAlgorithm -> setHardStopPositions(10, 10.1);
   
   VNH5019* controller = new VNH5019(PG_1, PK_7, PK_6, false);
 
