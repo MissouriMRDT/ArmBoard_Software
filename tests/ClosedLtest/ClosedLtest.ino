@@ -25,14 +25,14 @@ void loop() {
   initialize(); //control devices initted in here
   Serial.println("Exiting init");
   
-  initPwmRead(PM_0);
+  //initPwmRead(PM_0);
   while(1)
   {
     //Serial.println("Hi");
     Serial.println(getOnPeriod_us(PM_0));
     //inHerFace -> runOutputControl(500);
-
-   while((inHerFace -> runOutputControl(45000) == OutputRunning)){delay(1);}
+   delay(200);
+   while((inHerFace -> runOutputControl(58000) == OutputRunning)){delay(1);}
 
   while(1){}
    
@@ -46,13 +46,13 @@ void initialize()
   Ma3Encoder12b* feedbackDevice = new Ma3Encoder12b(PM_0); 
   
   PIAlgorithm* piAlgorithm = new PIAlgorithm(20,3,.001);
-  //piAlgorithm -> setHardStopPositions(10, 10.1);
+  piAlgorithm -> setHardStopPositions(150, 210);
   
   VNH5019* controller = new VNH5019(PG_1, PK_7, PK_6, false);
 
   inHerFace = new SingleMotorJoint(pos, piAlgorithm, controller, feedbackDevice);
 
-  openL = new SingleMotorJoint(spd, controller);
+  //openL = new SingleMotorJoint(spd, controller);
 }
 
 

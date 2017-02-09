@@ -79,9 +79,7 @@ SingleMotorJoint::SingleMotorJoint(ValueType inputType, IOAlgorithm *alg, Output
 	controller1 = cont;
 	feedback = feed;
 	manip = alg;
-	//Serial.println("Setting feedback device");
 	manip -> setFeedDevice(feed);
-	//Serial.println("Feedback device complete");
   
   //checks to make sure the passed arguments all work with each other, that is that the algorithm's input type is the same as what the user is putting in, and
   //that the algorithm's output value type is what the output device expects to take in, etc
@@ -93,7 +91,6 @@ SingleMotorJoint::SingleMotorJoint(ValueType inputType, IOAlgorithm *alg, Output
   {
     validConstruction = false;
   }
-  //Serial.println("Single motor joint successfully set up");
 }
 
 //constructor for single motor joints without feedback.
@@ -153,8 +150,6 @@ JointControlStatus SingleMotorJoint::runOutputControl(const long movement)
   {
   	//calls algorithm
   	mov = manip->runAlgorithm(movement, &motionComplete);
-    Serial.print("Algorithm Returns: ");
-    Serial.println(mov);
     
     //if motionComplete returned false but movement is 0, that's an indication that an error state occured
     if(motionComplete == false && mov == 0)
@@ -750,8 +745,6 @@ void VNH5019::move(const long movement)
     digitalWrite(INB_PIN, LOW);
     
     //pulsate enable pin to control motor
-    Serial.print("Motor Speed: -");
-    Serial.println(movement);
     PwmWrite(PWM_PIN, pwm);
   }
   
@@ -765,8 +758,6 @@ void VNH5019::move(const long movement)
     digitalWrite(INB_PIN, HIGH);
     
     //pulsate enable pin to control motor
-    Serial.print("Motor Speed: ");
-    Serial.println(movement);
     PwmWrite(PWM_PIN, pwm);
   }
   
@@ -920,13 +911,7 @@ float PIAlgorithm::calcShortPath(float present, float dest)
   //from your starting point. Calculate the degrees to the destination by simply taking the difference between dest and present. If it's more than 180,
   //then the shorter path is to go the other direction.
   //If the destination is actually 180 degrees from the present, then either way is technically the shortest path. : ( Defaults to positive 180
-  Serial.print("Present pos in degrees: ");
-  Serial.println(present);
-  Serial.print("destination pos in degrees: ");
-  Serial.println(dest);
   float degToDest = dest - present;
-  Serial.print("deg to dest before correction: ");
-  Serial.println(degToDest);
   if(abs(degToDest) > 180)
   {
     degToDest = ((360 - abs(dest - present)) * -1 * sign(degToDest));
@@ -936,9 +921,6 @@ float PIAlgorithm::calcShortPath(float present, float dest)
     degToDest = 180;
   }
   
-  Serial.print("deg to dest after correction: ");
-  Serial.println(degToDest);
-  
   return(degToDest);
 }
 
@@ -946,8 +928,6 @@ float PIAlgorithm::calcShortPath(float present, float dest)
 //Returns IMPOSSIBLE_MOVEMENT if it can't reach the destination.
 float PIAlgorithm::calcRouteToDest(float present, float dest)
 {
-  Serial.print("hard stop 1: ");
-  Serial.println(hardStopPos1);
   float shortPathToDest = calcShortPath(present, dest); //find out the quickest path to the destination in degrees
   if(shortPathToDest == 0) //if we're 0 degrees from the destination, just return now as we're done with a capital D
   {
@@ -1072,7 +1052,6 @@ long PIAlgorithm::runAlgorithm(const long input, bool * ret_OutputFinished)
   if (feedbackInitialized == false)
   {
     *ret_OutputFinished = false;	
-    Serial.println("not initialized right");
     return 0;
   }
 	
@@ -1088,7 +1067,6 @@ long PIAlgorithm::runAlgorithm(const long input, bool * ret_OutputFinished)
   if(deg_disToDest == IMPOSSIBLE_MOVEMENT)
   {
     *ret_OutputFinished = false;
-    Serial.println("Impossible movement detected");
     return 0;
   }
 
@@ -1099,14 +1077,10 @@ long PIAlgorithm::runAlgorithm(const long input, bool * ret_OutputFinished)
     *ret_OutputFinished = true;
     return 0;
   }
-  Serial.print("degrees to destination: ");
-  Serial.println(deg_disToDest);
   
   // Calculate the value of how fast the motor needs to turn at its current interval
   int spd_out = (KP * deg_disToDest + KI * errorSummation);
   
-  Serial.print("Calculated speed is: ");
-  Serial.println(spd_out);
   // Check for fringe cases if the speed out value is outside of the acceptable range,
   // forcing the value to return back into the acceptable range.
   if (spd_out > SPEED_MAX)
@@ -1134,8 +1108,6 @@ long PIAlgorithm::runAlgorithm(const long input, bool * ret_OutputFinished)
   *ret_OutputFinished = false;
 	
   // return the value of the speed we calculated
-  Serial.print("alg returning value: ");
-  Serial.println(spd_out);
   return spd_out;
 }
 
