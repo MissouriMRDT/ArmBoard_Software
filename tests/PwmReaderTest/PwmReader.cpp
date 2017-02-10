@@ -1172,7 +1172,7 @@ static bool initTimer(uint32_t timerLoad, uint8_t timerNum)
   //enable timer hardware
   SysCtlPeripheralEnable(timerPeriph);
 
-  //set clock to main system clock
+  //set clock to internal precision system clock
   TimerClockSourceSet(timerBase, TIMER_CLOCK_PIOSC);
 
   //configure timer A for count-up capture edge time, and timer B as count up periodic
