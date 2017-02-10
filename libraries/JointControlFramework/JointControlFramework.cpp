@@ -1153,8 +1153,6 @@ long Ma3Encoder12b::getFeedback()
       readOnPeriod = PWM_READ_MAX;
     }
   }
-  Serial.print("Encoder value: ");
-  Serial.println(map(readOnPeriod, PWM_READ_MIN, PWM_READ_MAX, POS_MIN, POS_MAX));
   //scale the values from the pwm values to the common position values, IE 1-4097 to POS_MIN-POS_MAX, and return it
   return(map(readOnPeriod, PWM_READ_MIN, PWM_READ_MAX, POS_MIN, POS_MAX));
 }
