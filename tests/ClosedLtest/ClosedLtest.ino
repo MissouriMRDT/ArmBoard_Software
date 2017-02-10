@@ -35,6 +35,7 @@ void loop()
 {
   Serial.begin(9600);
   delay(2000);
+  pinMode(PA_4, OUTPUT);
   
   initialize(); //control devices initted in here
 
@@ -87,10 +88,13 @@ void initialize()
 
 void timer0Handler()
 {
+  digitalWrite(PA_4, HIGH);
   TimerIntClear(TIMER0_BASE, TIMER_TIMB_TIMEOUT); // clear the timer interrupt
-  TimerIntDisable(TIMER0_BASE, TIMER_TIMB_TIMEOUT); //disable further timeouts while we're in the middle of handling a timeout case
-  static int i = 0;
+  /*TimerIntDisable(TIMER0_BASE, TIMER_TIMB_TIMEOUT); //disable further timeouts while we're in the middle of handling a timeout case
 
+  
+  static int i = 0;
+  
   switch(i)
   {
     case 0:
@@ -120,7 +124,9 @@ void timer0Handler()
     i = 0;
   }
 
-  TimerEnable(TIMER_0, TIMER_B);
+  TimerIntEnable(TIMER0_BASE, TIMER_TIMB_TIMEOUT); //disable further timeouts while we're in the middle of handling a timeout case*/
+
+  digitalWrite(PA_4, LOW);
 }
 
 void initTimer0(float seconds)
@@ -133,7 +139,7 @@ void initTimer0(float seconds)
 
   //math here: clock speed is 120e6 ticks/ 1 second, we need load x ticks / ...variable-seconds seconds.
   //so x ticks = 120e6 * var-seconds
-  timerload = (seconds) * 120000000; 
+  timerLoad = (seconds) * 120000000; 
   
   //enable timer hardware
   SysCtlPeripheralEnable(timerPeriph);
