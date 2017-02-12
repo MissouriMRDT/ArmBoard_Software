@@ -290,7 +290,8 @@ JointControlStatus TiltJoint::runOutputControl(const long movement)
 
     //this only happens if this joint has been coupled with another joint
     //the coupled logic will modify the speed calculated by the algorithm
-    //to allow smooth tilting and rotating at the same time
+    //to allow smooth tilting and rotating at the same time.
+    //It is automatically assumed that the other joint is a rotate joint
     if(coupled)
     {
       motorOneSpeed += coupledJoint->motorOneSpeed;
@@ -440,7 +441,8 @@ JointControlStatus RotateJoint::runOutputControl(const long movement)
 
     //this only happens if this joint has been coupled with another joint
     //the coupled logic will modify the speed calculated by the algorithm
-    //to allow smooth tilting and rotating at the same time
+    //to allow smooth tilting and rotating at the same time.
+    //It is automatically assumed that the other joint is a tilt joint
     if(coupled)
     {
       motorOneSpeed += coupledJoint->motorOneSpeed;
