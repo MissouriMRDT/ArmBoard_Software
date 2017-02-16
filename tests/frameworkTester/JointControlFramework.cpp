@@ -1,4 +1,4 @@
-﻿#include "JointControlFramework.h"
+#include "JointControlFramework.h"
 
 
                                            /*****************************
@@ -56,6 +56,17 @@ bool JointInterface::verifyInput(long inputToVerify)
   }
 }
 
+void JointInterface::coupleJoint(JointInterface* otherJoint)
+{
+  //only couple the joint if it isn't already coupled to avoid infinite recursion
+  if(!coupled)
+  {
+    coupledJoint = otherJoint;
+    coupled = true;
+    otherJoint -> coupleJoint(this);
+  }
+}
+
 //constructor for single motor joints with feedback device
 //inputType: What kind of movement this joint should be controlled by, such as speed or position input.
 //alg: The IOAlgorithm to be used by this joint
@@ -63,11 +74,11 @@ bool JointInterface::verifyInput(long inputToVerify)
 //feed: The feedback device used with this joint
 SingleMotorJoint::SingleMotorJoint(ValueType inputType, IOAlgorithm *alg, OutputDevice* cont, FeedbackDevice* feed) : JointInterface()
 {
-	//assignments
-	inType = inputType;
-	controller1 = cont;
-	feedback = feed;
-	manip = alg;
+  //assignments
+  inType = inputType;
+  controller1 = cont;
+  feedback = feed;
+  manip = alg;
   manip -> setFeedDevice(*feed);
 
   //checks to make sure the passed arguments all work with each other, that is that the algorithm's input type is the same as what the user is putting in, and
@@ -89,12 +100,12 @@ SingleMotorJoint::SingleMotorJoint(ValueType inputType, IOAlgorithm *alg, Output
 //feed: The feedback device used with this joint
 SingleMotorJoint::SingleMotorJoint(ValueType inputType, OutputDevice* cont) : JointInterface()
 {
-	//assignments
-	inType = inputType;
-	controller1 = cont;
+  //assignments
+  inType = inputType;
+  controller1 = cont;
 
-	//algorithm selected internally
-	algorithmSelector();
+  //algorithm selected internally
+  algorithmSelector();
 
   //checks to make sure the passed arguments all work with each other, that is that the algorithm's input type is the same as what the user is putting in, and
   //that the algorithm's output value type is what the output device expects to take in, etc.
@@ -113,9 +124,9 @@ SingleMotorJoint::SingleMotorJoint(ValueType inputType, OutputDevice* cont) : Jo
 //deletes pointers used in single motor joint to 'prevent memory leaks'. Most likely not neccessary but good practice.
 SingleMotorJoint::~SingleMotorJoint()
 {
-	delete controller1;
-	delete manip;
-	delete feedback;
+  delete controller1;
+  delete manip;
+  delete feedback;
 }
 
 //run the output algorithm for this tilt joint correctly (I mean, hopefully).
@@ -126,7 +137,7 @@ SingleMotorJoint::~SingleMotorJoint()
 //returns: The status of attempting to control this joint. Such as if the output is now running, or if it's complete, or if there was an error
 JointControlStatus SingleMotorJoint::runOutputControl(const long movement)
 {
-	long mov; //var used as interrum value since algorithm can change the value
+  long mov; //var used as interrum value since algorithm can change the value
   bool motionComplete;
   JointControlStatus returnStatus;
 
@@ -137,11 +148,11 @@ JointControlStatus SingleMotorJoint::runOutputControl(const long movement)
 
   else if(validConstruction)
   {
-  	//calls algorithm
-  	mov = manip->runAlgorithm(movement, &motionComplete);
+    //calls algorithm
+    mov = manip->runAlgorithm(movement, &motionComplete);
 
-  	//moves device with output decided on by the algorithm
-  	controller1->move(mov);
+    //moves device with output decided on by the algorithm
+    controller1->move(mov);
 
     if(motionComplete == true)
     {
@@ -159,7 +170,7 @@ JointControlStatus SingleMotorJoint::runOutputControl(const long movement)
     returnStatus = InvalidConstruction;
   }
 
-	return(returnStatus);
+  return(returnStatus);
 }
 
 //creates the joint interface for a tilt joint with a feedback device.
@@ -171,12 +182,12 @@ JointControlStatus SingleMotorJoint::runOutputControl(const long movement)
 //feed: The feedback device used with this joint
 TiltJoint::TiltJoint(ValueType inputType, IOAlgorithm *alg, OutputDevice* cont1, OutputDevice* cont2, FeedbackDevice* feed) : JointInterface()
 {
-	//assignments
-	inType = inputType;
-	controller1 = cont1;
-	controller2 = cont2;
-	feedback = feed;
-	manip = alg;
+  //assignments
+  inType = inputType;
+  controller1 = cont1;
+  controller2 = cont2;
+  feedback = feed;
+  manip = alg;
   manip -> setFeedDevice(*feed);
 
   //checks to make sure the passed arguments all work with each other, that is that the algorithm's input type is the same as what the user is putting in, and
@@ -199,13 +210,13 @@ TiltJoint::TiltJoint(ValueType inputType, IOAlgorithm *alg, OutputDevice* cont1,
 //cont2: The second output device controlling the second motor on this joint
 TiltJoint::TiltJoint(ValueType inputType, OutputDevice* cont1, OutputDevice* cont2) : JointInterface()
 {
-	//assignments
-	inType = inputType;
-	controller1 = cont1;
-	controller2 = cont2;
+  //assignments
+  inType = inputType;
+  controller1 = cont1;
+  controller2 = cont2;
 
-	//internally selects algorithm
-	algorithmSelector();
+  //internally selects algorithm
+  algorithmSelector();
 
   //checks to make sure the passed arguments all work with each other, that is that the algorithm's input type is the same as what the user is putting in, and
   //that the algorithm's output value type is what the output device expects to take in, both output devices line up properly, etc
@@ -222,10 +233,10 @@ TiltJoint::TiltJoint(ValueType inputType, OutputDevice* cont1, OutputDevice* con
 //Destructor for the tilt joint since it has pointers
 TiltJoint::~TiltJoint()
 {
-	delete controller1;
-	delete controller2;
-	delete manip;
-	delete feedback;
+  delete controller1;
+  delete controller2;
+  delete manip;
+  delete feedback;
 }
 
 //run the output algorithm for this tilt joint correctly (I mean, hopefully).
@@ -247,17 +258,47 @@ JointControlStatus TiltJoint::runOutputControl(const long movement)
   }
   else if(validConstruction)
   {
-  	//largely a temp value to store any modifications made to the input
-  	int mov;
+    //largely a temp value to store any modifications made to the input
+    int mov;
 
-  	//runs the algorithm on the input
-  	mov = manip->runAlgorithm(movement, &motionComplete);
+    //runs the algorithm on the input
+    mov = manip->runAlgorithm(movement, &motionComplete);
 
-  	//send to the motor move command
-  	controller1->move(mov);
+    motorOneSpeed = mov;
+    motorTwoSpeed = mov;
 
-  	//both the controllers should move the arm in the same direction. send command to motor 2
-  	controller2->move(mov);
+    //this only happens if this joint has been coupled with another joint
+    //the coupled logic will modify the speed calculated by the algorithm
+    //to allow smooth tilting and rotating at the same time
+    if(coupled)
+    {
+      motorOneSpeed += coupledJoint->motorOneSpeed;
+      if (motorOneSpeed > 1000)
+      {
+        motorOneSpeed = 1000;
+      }
+      if (motorOneSpeed < -1000)
+      {
+        motorOneSpeed = -1000;
+      }
+
+      motorTwoSpeed += coupledJoint->motorTwoSpeed;
+      if (motorTwoSpeed > 1000)
+      {
+        motorTwoSpeed = 1000;
+      }
+      if (motorTwoSpeed < -1000)
+      {
+        motorTwoSpeed = -1000;
+      }
+    }
+    
+
+    //send to the motor move command
+    controller1->move(motorOneSpeed);
+
+    //both the controllers should move the arm in the same direction. send command to motor 2
+    controller2->move(motorTwoSpeed);
 
     if(motionComplete == true)
     {
@@ -286,13 +327,13 @@ JointControlStatus TiltJoint::runOutputControl(const long movement)
 //cont2: The second output device controlling the second motor on this joint
 RotateJoint::RotateJoint(ValueType inputType, OutputDevice* cont1, OutputDevice* cont2) : JointInterface()
 {
-	//assignments
-	inType = inputType;
-	controller1 = cont1;
-	controller2 = cont2;
+  //assignments
+  inType = inputType;
+  controller1 = cont1;
+  controller2 = cont2;
 
-	//internally selects algorithm
-	algorithmSelector();
+  //internally selects algorithm
+  algorithmSelector();
 
   //checks to make sure the passed arguments all work with each other, that is that the algorithm's input type is the same as what the user is putting in, and
   //that the algorithm's output value type is what the output device expects to take in, both output devices line up properly, etc
@@ -315,12 +356,12 @@ RotateJoint::RotateJoint(ValueType inputType, OutputDevice* cont1, OutputDevice*
 //feed: A pointer to the feedback device used on this joint.
 RotateJoint::RotateJoint(ValueType inputType, IOAlgorithm *alg, OutputDevice* cont1, OutputDevice* cont2, FeedbackDevice* feed) : JointInterface()
 {
-	//assignments
-	inType = inputType;
-	controller1 = cont1;
-	controller2 = cont2;
-	feedback = feed;
-	manip = alg;
+  //assignments
+  inType = inputType;
+  controller1 = cont1;
+  controller2 = cont2;
+  feedback = feed;
+  manip = alg;
   manip -> setFeedDevice(*feed);
 
   //checks to make sure the passed arguments all work with each other, that is that the algorithm's input type is the same as what the user is putting in, and
@@ -338,10 +379,10 @@ RotateJoint::RotateJoint(ValueType inputType, IOAlgorithm *alg, OutputDevice* co
 //rotate joint deconstructor. Deletes pointers
 RotateJoint::~RotateJoint()
 {
-	delete controller1;
-	delete controller2;
-	delete manip;
-	delete feedback;
+  delete controller1;
+  delete controller2;
+  delete manip;
+  delete feedback;
 }
 
 //run the output algorithm for this tilt joint correctly (I mean, hopefully).
@@ -367,11 +408,40 @@ JointControlStatus RotateJoint::runOutputControl(const long movement)
     //runs the algorithm on the input
     mov = manip->runAlgorithm(movement, &motionComplete);
 
+    motorOneSpeed = mov;
+    motorTwoSpeed = -mov;
+
+    //this only happens if this joint has been coupled with another joint
+    //the coupled logic will modify the speed calculated by the algorithm
+    //to allow smooth tilting and rotating at the same time
+    if(coupled)
+    {
+      motorOneSpeed += coupledJoint->motorOneSpeed;
+      if (motorOneSpeed > 1000)
+      {
+        motorOneSpeed = 1000;
+      }
+      if (motorOneSpeed < -1000)
+      {
+        motorOneSpeed = -1000;
+      }
+
+      motorTwoSpeed += coupledJoint->motorTwoSpeed;
+      if (motorTwoSpeed > 1000)
+      {
+        motorTwoSpeed = 1000;
+      }
+      if (motorTwoSpeed < -1000)
+      {
+        motorTwoSpeed = -1000;
+      }
+    }
+
     //send to the motor move command
-    controller1->move(mov);
+    controller1->move(motorOneSpeed);
 
     //send command to motor 2. Since this is a rotate joint, the motors need to go in opposite directions so send the second one a negafied value
-    controller2->move(-1 * mov);
+    controller2->move(motorTwoSpeed);
 
     if(motionComplete == true)
     {
@@ -446,16 +516,16 @@ void DynamixelController::move(const long movement)
   //if mounted upside down then invert the signal passed to it and move accordingly
   if (invert)
   {
-	  //inverts the input easily
-  	mov = -mov;
+    //inverts the input easily
+    mov = -mov;
   }
 
   //if supposed to move backwards(ccw)
   if(mov < 0)
   {
-	  send = map(mov, 0, SPEED_MAX, DYNA_SPEED_CCW_MAX, DYNA_SPEED_CCW_MIN);
+    send = map(mov, 0, SPEED_MAX, DYNA_SPEED_CCW_MAX, DYNA_SPEED_CCW_MIN);
 
-	  //calls spin wheel function from RoveDynamixel
+    //calls spin wheel function from RoveDynamixel
     //can take up to a uint16_t which exceeds a standard int but
     errorMessageIgnore = DynamixelSpinWheel(dynamixel, send);
   }
@@ -465,7 +535,7 @@ void DynamixelController::move(const long movement)
   {
     send = map(mov, 0, SPEED_MAX, DYNA_SPEED_CW_MAX, DYNA_SPEED_CW_MIN);
 
-	//calls spin wheel function from RoveDynamixel
+  //calls spin wheel function from RoveDynamixel
     //can take up to a uint16_t which exceeds a standard int but
     errorMessageIgnore = DynamixelSpinWheel(dynamixel, send);
   }
@@ -490,11 +560,11 @@ void DynamixelController::move(const long movement)
  */
 Sdc2130::Sdc2130(const int pwmPin, ValueType inType, bool upsideDown): OutputDevice()
 {
-	PWM_PIN = pwmPin;
-	inType = inType;
-	invert = upsideDown;
-	controlType = Pwm;
-	pwmVal = 0;
+  PWM_PIN = pwmPin;
+  inType = inType;
+  invert = upsideDown;
+  controlType = Pwm;
+  pwmVal = 0;
 }
 
 //sdc2130 general move function. Selects the specific move function
@@ -502,15 +572,15 @@ Sdc2130::Sdc2130(const int pwmPin, ValueType inType, bool upsideDown): OutputDev
 //Input: Can be either position or speed values constrained between SPEED_MIN and SPEED_MAX or POS_MIN and POS_MAX
 void Sdc2130::move(const long movement)
 {
-	if(inType == spd)
-	{
-		moveSpeed(movement);
-	}
-	//position-input movement not implemented
-	else if(inType == pos)
-	{
+  if(inType == spd)
+  {
+    moveSpeed(movement);
+  }
+  //position-input movement not implemented
+  else if(inType == pos)
+  {
 
-	}
+  }
 }
 
 //sdc2130 movement command for moving based on a speed input, IE a value constrained between the SPEED_MIN and SPEED_MAX constants.
@@ -518,42 +588,42 @@ void Sdc2130::move(const long movement)
 //as true speed based movement is not implemented due to strange delays in sdc2130 response
 void Sdc2130::moveSpeed(const int movement)
 {
-	int speed = movement;
+  int speed = movement;
 
-	if(invert)
-	{
-		speed = -speed;
-	}
+  if(invert)
+  {
+    speed = -speed;
+  }
 
-	if(controlType == Pwm)
-	{
-		if(speed > 0)
-		{
-			pwmVal+=POS_INC;
-		}
-		else
-		{
-			pwmVal-=POS_INC;
-		}
+  if(controlType == Pwm)
+  {
+    if(speed > 0)
+    {
+      pwmVal+=POS_INC;
+    }
+    else
+    {
+      pwmVal-=POS_INC;
+    }
 
-		if(pwmVal < PWM_MIN)
-		{
-			pwmVal = PWM_MIN;
-		}
-		else if(pwmVal > PWM_MAX)
-		{
-			pwmVal = PWM_MAX;
-		}
+    if(pwmVal < PWM_MIN)
+    {
+      pwmVal = PWM_MIN;
+    }
+    else if(pwmVal > PWM_MAX)
+    {
+      pwmVal = PWM_MAX;
+    }
 
-		PwmWrite(PWM_PIN, pwmVal);
+    PwmWrite(PWM_PIN, pwmVal);
 
-	}
+  }
 
-	//serial control not implemented
-	else
-	{
+  //serial control not implemented
+  else
+  {
 
-	}
+  }
 }
 
 
@@ -564,55 +634,55 @@ void Sdc2130::moveSpeed(const int movement)
  */
 DirectDiscreteHBridge::DirectDiscreteHBridge(const int FPIN, const int RPIN, bool upsideDown) : OutputDevice()
 {
-	FPWM_PIN = FPIN;
-	RPWM_PIN = RPIN;
-	inType = spd;
-	invert = upsideDown;
+  FPWM_PIN = FPIN;
+  RPWM_PIN = RPIN;
+  inType = spd;
+  invert = upsideDown;
 }
 
 //moves by passing a pwm signal to the H bridge.
 //Input: expects int values constrained between the SPEED_MIN and SPEED_MAX constants
 void DirectDiscreteHBridge::move(const long movement)
 {
-	int mov = movement;
-	int pwm = 0;
+  int mov = movement;
+  int pwm = 0;
 
-	//if mounted upside down then invert the signal passed to it and move accordingly
-	if (invert)
-	{
-		//inverts the input easily
-		mov = -mov;
-	}
+  //if mounted upside down then invert the signal passed to it and move accordingly
+  if (invert)
+  {
+    //inverts the input easily
+    mov = -mov;
+  }
 
-	//if supposed to move backwards
-	if(mov < 0)
-	{
-		mov = abs(mov);
-		pwm = map(mov, 0, SPEED_MAX, PWM_MIN, PWM_MAX);
+  //if supposed to move backwards
+  if(mov < 0)
+  {
+    mov = abs(mov);
+    pwm = map(mov, 0, SPEED_MAX, PWM_MIN, PWM_MAX);
 
-		//stop the transistor for the other direction -- if both were on, the h bridge would short out
-		PwmWrite(FPWM_PIN, 0);
-		PwmWrite(RPWM_PIN, pwm);
-	}
+    //stop the transistor for the other direction -- if both were on, the h bridge would short out
+    PwmWrite(FPWM_PIN, 0);
+    PwmWrite(RPWM_PIN, pwm);
+  }
 
-	//if forwards
-	else if(mov > 0)
-	{
-		pwm = map(mov, 0, SPEED_MAX, PWM_MIN, PWM_MAX);
+  //if forwards
+  else if(mov > 0)
+  {
+    pwm = map(mov, 0, SPEED_MAX, PWM_MIN, PWM_MAX);
 
-		//stop the transistor for the other direction -- if both were on, the h bridge would short out
-		PwmWrite(FPWM_PIN, pwm);
-		PwmWrite(RPWM_PIN, 0);
-	}
+    //stop the transistor for the other direction -- if both were on, the h bridge would short out
+    PwmWrite(FPWM_PIN, pwm);
+    PwmWrite(RPWM_PIN, 0);
+  }
 
-	//stop
-	else if(mov == 0)
-	{
-		PwmWrite(RPWM_PIN, 0);
-		PwmWrite(FPWM_PIN, 0);
-	}
+  //stop
+  else if(mov == 0)
+  {
+    PwmWrite(RPWM_PIN, 0);
+    PwmWrite(FPWM_PIN, 0);
+  }
 
-	return;
+  return;
 }
 
 
@@ -678,6 +748,56 @@ void DRV8388::move(const long movement)
 }
 
 
+//DRV8871
+DRV8871::DRV8871(const int IN_PIN_1, const int IN_PIN_2, const bool upsideDown) : OutputDevice()
+{
+  IN_1 = IN_PIN_1;
+  IN_2 = IN_PIN_2;
+  inType = spd;
+  invert = upsideDown;
+
+  pinMode(IN_1, OUTPUT);
+  pinMode(IN_2, OUTPUT);
+  
+}
+
+void DRV8871::move(const long movement)
+{
+  int mov = movement;
+  int pwm = 0;
+  
+  if(mov > 0)
+  {
+      //low high
+      pwm = map(mov, 0, SPEED_MAX, PWM_MIN, PWM_MAX);
+      digitalWrite(IN_1, LOW);
+      PwmWrite(IN_2, pwm);
+    //pwm
+    
+  }
+  
+  else if (mov < 0)
+  {
+    mov = abs(mov);
+    pwm = map(mov, 0, SPEED_MAX, PWM_MIN, PWM_MAX);
+    digitalWrite(IN_2, LOW);
+    PwmWrite(IN_1, pwm);
+    //high low
+    
+    //pwm
+    
+  }
+  else
+  {
+    //mov == 0
+    //low low = coast, sleep
+    //high high = brake, immediate stop
+    digitalWrite(IN_1, LOW);
+    digitalWrite(IN_2, LOW);
+  }
+
+return;
+}
 
 
 
@@ -753,10 +873,10 @@ long PIAlgorithm::runAlgorithm(const long input, bool * ret_OutputFinished)
   // Check if the Algorithm class has actually been initialized or not. If not, kill the function.
   if (feedbackInitialized == false)
   {
-    *ret_OutputFinished = false;	  
+    *ret_OutputFinished = false;    
     return 0;
   }
-	
+  
   // Create local variables for the function to work with, as well as convert values to degrees.
   long posDest = input;
   long posNow = feedbackDev->getFeedback();
@@ -796,11 +916,11 @@ long PIAlgorithm::runAlgorithm(const long input, bool * ret_OutputFinished)
     // of how much of an error has been accumulated.
     errorSummation+=(deg_disToDest * DT);
   }
-	
+  
   // Ensure that the output is not finished (since it has gotten this far) so that the function
   // should be run once again.
   *ret_OutputFinished = false;
-	
+  
   // return the value of the speed we calculated
   return spd_out;
 }
@@ -852,3 +972,4 @@ long Ma3Encoder12b::getFeedback()
   //scale the values from the pwm values to the common position values, IE 1-4097 to POS_MIN-POS_MAX, and return it
   return(map(readOnPeriod, PWM_READ_MIN, PWM_READ_MAX, POS_MIN, POS_MAX));
 }
+
