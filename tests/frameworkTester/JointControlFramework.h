@@ -579,7 +579,26 @@ class DRV8871 : public OutputDevice
     
     
 };
-                               
+
+//DRV8842 Motor Controller IC
+//Internal H-bridge with extra functions for controlling motor speed
+//With: sleep mode, reset, fault detection, current decay mode
+class DRV8842 : public OutputDevice
+{
+   private:
+     //pins this motor controller IC has
+     int IN1_Pin, IN2_Pin, Decay_Pin, nFault_Pin, nSleep_Pin, nReset_Pin, I0_Pin, I1_Pin, I2_Pin, I3_Pin, I4_Pin;
+
+   protected:
+    //move function, pass in speed
+    void easyMove (const long movement);
+
+   public:
+    //constructor
+    DRV8842(const int IN1, const int IN2, const int Decay, const int nFault, const int nSleep, const int nReset, const int I0, const int I1, const int I2, const int I3, const int I4);
+};
+
+
                                            
                                            
                                            /******************************************************************************
@@ -614,6 +633,28 @@ class Ma3Encoder12b: public FeedbackDevice
     //taking an average of returned values might work in your favor
     long getFeedback();
 };
+
+//feedback device for the MA3 encoder, 10 bit version, using the Energia AnalogRead function
+//note: not the PWM read function. analog works in 10 bit mode.
+class Ma3Encoder10b: public FeedbackDevice
+{
+
+  private:
+    uint8_t analogReadPin;
+    const int maxval = 1023;
+    const int minVal = 1;
+
+  public:
+    //constructor needs the encoder's output pin
+    Ma3Encoder10b(uint8_t encoderOut): FeedbackDevice()
+    {
+      analogReadPin = encoderOut;
+      fType = pos;
+    }
+
+    long getFeedback();
+};
+
 
 #endif
 

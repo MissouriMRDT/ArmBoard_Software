@@ -800,6 +800,78 @@ return;
 }
 
 
+DRV8842::DRV8842(const int IN1, const int IN2, const int Decay, const int nFault, const int nSleep, const int nReset, const int I0, const int I1, const int I2, const int I3, const int I4) : OutputDevice()
+{
+   IN1_Pin = IN1; 
+   IN2_Pin = IN2;
+   Decay_Pin = Decay;
+   nFault_Pin = nFault;
+   nSleep_Pin = nSleep;
+   nReset_Pin = nReset;
+   I0_Pin = I0;
+   I1_Pin = I1;
+   I2_Pin = I2;
+   I3_Pin = I3;
+   I4_Pin = I4;
+
+   pinMode(IN1_Pin, OUTPUT);
+   pinMode(IN2_Pin, OUTPUT);
+   pinMode(Decay_Pin, OUTPUT);
+   pinMode(nFault_Pin, INPUT); //THE ONLY INPUT
+   pinMode(nSleep_Pin, OUTPUT);
+   pinMode(nReset_Pin, OUTPUT);
+   pinMode(I0_Pin, OUTPUT);
+   pinMode(I1_Pin, OUTPUT);
+   pinMode(I2_Pin, OUTPUT);
+   pinMode(I3_Pin, OUTPUT);
+   pinMode(I4_Pin, OUTPUT);
+
+   inType = spd;
+
+   
+}
+
+
+void DRV8842::easyMove(const long movement)
+{
+  //easy move takes in any number, if >0 go one way, if <0 go the other, if 0 then stop
+  int mov = movement;
+
+  digitalWrite(nSleep_Pin, HIGH);
+  digitalWrite(Decay_Pin, LOW);
+  //0x0B = 01011 = 50% for testing purposes, I4 is MSB, I0 is LSB
+  //the I-Bus is used to control motor curent speed
+  digitalWrite(I4_Pin, LOW);
+  digitalWrite(I3_Pin, HIGH);
+  digitalWrite(I2_Pin, LOW);
+  digitalWrite(I1_Pin, HIGH);
+  digitalWrite(I0_Pin, HIGH);
+  
+ if (!digitalRead(nFault_Pin))
+ {
+    if (mov > 0)
+    {
+      //go "forwar" - may need to flip
+      digitalWrite(IN1_Pin, HIGH);
+      digitalWrite(IN2_Pin, LOW);
+    }
+    else if (mov < 0)
+    {
+      //go "backward" - may need to flip
+      digitalWrite(IN1_Pin, LOW);
+      digitalWrite(IN2_Pin, HIGH);
+    }
+    else //mov == 0
+    {
+      //brake
+      digitalWrite(IN1_Pin, HIGH);    
+      digitalWrite(IN2_Pin, HIGH);
+    }
+ }
+  
+  return;
+}
+
 
                                            /*****************************
                                             *
@@ -972,4 +1044,12 @@ long Ma3Encoder12b::getFeedback()
   //scale the values from the pwm values to the common position values, IE 1-4097 to POS_MIN-POS_MAX, and return it
   return(map(readOnPeriod, PWM_READ_MIN, PWM_READ_MAX, POS_MIN, POS_MAX));
 }
+
+//get the positional feedback from the encoder via analogRead, not PWM for the MA3
+//literally just use the Energia analogRead function
+long Ma3Encoder10b::getFeedback()
+{
+  return analogRead(analogReadPin);
+}
+
 

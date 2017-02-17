@@ -90,7 +90,9 @@ class OutputDevice;
 class DirectDiscreteHBridge;
 class DynamixelController;
 class Sdc2130;
-class DVR8388;
+class DRV8388;//spectrometer motor gryphon
+class DRV8871;//drill motor gryphon
+class DRV8842;//science main arm gryphon
   //feedback devices and derived classes
 class FeedbackDevice;
 
@@ -118,6 +120,12 @@ class JointInterface
     //tracks whether or not the parameters passed via construction were valid
     bool validConstruction;
 
+    //the other joint with which this joint may be coupled with
+    JointInterface* coupledJoint;
+
+    //tracks whether or not the joint is coupled with another joint
+    bool coupled = false;
+
     //function that checks to see if the user put in a proper input value when calling the runOutputControl function
     //returns true if the input is in a valid range, false if it's not
     bool verifyInput(long inputToVerify);
@@ -129,64 +137,72 @@ class JointInterface
 
   public:
 
+    //variables to store the speed of either motor
+    int motorOneSpeed = 0;
+    int motorTwoSpeed = 0;
+
     //Runs the output control for this joint, IE making it move or checking
     //feedback to see if it needs to move, whatever the algorithm for
     //this joint is deemed to be, it runs it.
     //Must pass an integer for this implementation. Will break otherwise.
     //returns: The status of attempting to control this joint. Such as if the output is now running, or if it's complete, or if there was an error
     virtual JointControlStatus runOutputControl(const long movement);
+
+    //couples this joint with the other joint
+    //so they can point to eachother
+    void coupleJoint(JointInterface* otherJoint);
 };
 
 //feedback devices used to help determine where the arm is and what steps need to be taken
 //Used by the IOAlgorithm class to perform looping. Part of the JointInterface framework
 class FeedbackDevice
 {
-	friend class SingleMotorJoint;
-	friend class TiltJoint;
-	friend class RotateJoint;
+  friend class SingleMotorJoint;
+  friend class TiltJoint;
+  friend class RotateJoint;
   friend class JointInterface;
 
   protected:
     //blank constructor for the base class
     FeedbackDevice() {} ;
 
-	public:
+  public:
 
-		//returns feedback. Public because all the IOAlgorithm classes need to be able to call it,
-		//and friend isn't inherited so we can't just make the abstract class our friend.
-		//returns: a value representing feedback, the range of the value depends on what input type this device returns.
-		//For example, if this device returns speed feedback, the values shall be in the range between SPEED_MIN and SPEED_MAX
-		virtual long getFeedback();
+    //returns feedback. Public because all the IOAlgorithm classes need to be able to call it,
+    //and friend isn't inherited so we can't just make the abstract class our friend.
+    //returns: a value representing feedback, the range of the value depends on what input type this device returns.
+    //For example, if this device returns speed feedback, the values shall be in the range between SPEED_MIN and SPEED_MAX
+    virtual long getFeedback();
 
-		ValueType fType;
+    ValueType fType;
 };
 
 //Class containing the devices which move the arm and how they are controlled, such as motor controllers, and the hardware specifics of the devices
 //such as what GPIO pins are used by the microcontroller to control them. Part of the joint interface framework
 class OutputDevice
 {
-	//Joint interface needs access to its functions
-	friend class SingleMotorJoint;
-	friend class TiltJoint;
-	friend class RotateJoint;
-	friend class JointInterface;
+  //Joint interface needs access to its functions
+  friend class SingleMotorJoint;
+  friend class TiltJoint;
+  friend class RotateJoint;
+  friend class JointInterface;
 
-	protected:
+  protected:
 
-		//calls the device to move the motor, based on the passed value of movement.
-		//Input: Can be values based on any of the input types as defined in the enum above, and the ranges for these values
-		//should stay within the max and min constants for each type
-		virtual void move(const long movement);
+    //calls the device to move the motor, based on the passed value of movement.
+    //Input: Can be values based on any of the input types as defined in the enum above, and the ranges for these values
+    //should stay within the max and min constants for each type
+    virtual void move(const long movement);
 
-		//blank constructor for the base class
-		OutputDevice() {};
+    //blank constructor for the base class
+    OutputDevice() {};
 
-		//expected input that the output device wants.
-		ValueType inType;
+    //expected input that the output device wants.
+    ValueType inType;
 
-		//used for if the specific controller is mounted backwards on the motor joint.
-		//True means invert the signal (backwards) False means just send the signal
-		bool invert;
+    //used for if the specific controller is mounted backwards on the motor joint.
+    //True means invert the signal (backwards) False means just send the signal
+    bool invert;
 };
 
 
@@ -195,15 +211,15 @@ class OutputDevice
 //Part of the joint interface framework
 class IOAlgorithm
 {
-	friend class SingleMotorJoint;
-	friend class TiltJoint;
-	friend class RotateJoint;
+  friend class SingleMotorJoint;
+  friend class TiltJoint;
+  friend class RotateJoint;
   friend class JointInterface;
 
-	protected:
+  protected:
 
-		//Constructor for the base class is empty.
-		IOAlgorithm() {};
+    //Constructor for the base class is empty.
+    IOAlgorithm() {};
 
     //pointer to the feedback device used on this joint, if there is any
     FeedbackDevice * feedbackDev;
@@ -218,13 +234,13 @@ class IOAlgorithm
     //if this IOAlgorithm uses a feedback device, this flag tracks whether or not the feedback device has been passed into the class yet
     bool feedbackInitialized = false;
 
-		//run whatever algorithm this implements, returns value that can be directly passed to an output device
-		//input: int in, representing the input values that need to be converted into output values.
-		//The specific value constraints depend on the input and output types the algorithm implements; for example if an algorithm
-		//is supposed to take in speed and output position, then its input is constrained by SPEED_MIN and SPEED_MAX, and its output is constrained by POS_MIN and POS_MAX
+    //run whatever algorithm this implements, returns value that can be directly passed to an output device
+    //input: int in, representing the input values that need to be converted into output values.
+    //The specific value constraints depend on the input and output types the algorithm implements; for example if an algorithm
+    //is supposed to take in speed and output position, then its input is constrained by SPEED_MIN and SPEED_MAX, and its output is constrained by POS_MIN and POS_MAX
     //bool * ret_outputFinished: parameter passed by pointer, returns true if the joint has finished its controlled movement and ready to exit the control loop,
     //false if it's still in the middle of getting to its desired finished state IE in the middle of moving to a desired end position or reaching a desired end speed
-		virtual long runAlgorithm(const long input, bool * ret_OutputFinished);
+    virtual long runAlgorithm(const long input, bool * ret_OutputFinished);
 
     //if this IOAlgorithm uses feedback device, this function is used by the joint interface to set it, and sets the feedbackInitialized flag to true
     void setFeedDevice(FeedbackDevice fdDev);
@@ -242,102 +258,102 @@ class IOAlgorithm
 //this derivation of jointInterface represents joints where a singular motor device moves the joint.
 class SingleMotorJoint : public JointInterface
 {
-	public:
+  public:
 
-		//Constructor for the single motor joint. it is passed an inputType, feedback device pointer and output device pointer
-		//With this info selects an algorithm.
-		//inputType: What kind of movement this joint should be controlled by, such as speed or position input.
-		//cont: The output device controlling the motor on this joint
-		SingleMotorJoint(ValueType inputType, OutputDevice * cont);
+    //Constructor for the single motor joint. it is passed an inputType, feedback device pointer and output device pointer
+    //With this info selects an algorithm.
+    //inputType: What kind of movement this joint should be controlled by, such as speed or position input.
+    //cont: The output device controlling the motor on this joint
+    SingleMotorJoint(ValueType inputType, OutputDevice * cont);
 
-		//constructor for with feedback. Feedback based algorithms are complex enough to usualyl require user initiliazation, so it's directly passed
-		//in by the user as well
-		//inputType: What kind of movement this joint should be controlled by, such as speed or position input.
-		//alg: the closed loop IOalgorithm used by this joint
-		//cont: The output device controlling the motor on this joint
-		//feed: The feedback device used with this joint
-		SingleMotorJoint(ValueType inputType, IOAlgorithm *alg, OutputDevice* cont, FeedbackDevice* feed);
+    //constructor for with feedback. Feedback based algorithms are complex enough to usualyl require user initiliazation, so it's directly passed
+    //in by the user as well
+    //inputType: What kind of movement this joint should be controlled by, such as speed or position input.
+    //alg: the closed loop IOalgorithm used by this joint
+    //cont: The output device controlling the motor on this joint
+    //feed: The feedback device used with this joint
+    SingleMotorJoint(ValueType inputType, IOAlgorithm *alg, OutputDevice* cont, FeedbackDevice* feed);
 
-		//destructor since there are pointers being used
-		~SingleMotorJoint();
+    //destructor since there are pointers being used
+    ~SingleMotorJoint();
 
-		//runs algorithm for movement for a singlular motor
-		//input: a long that represents the desired movement. What values this int is constrained to depends on what this joint was set up to take as an input.
-		//For example, if this joint runs off of speed input then the values are constrained between SPEED_MIN and SPEED_MAX, and otherwise for the similar
-		//ranges defined in the framework's .h file
+    //runs algorithm for movement for a singlular motor
+    //input: a long that represents the desired movement. What values this int is constrained to depends on what this joint was set up to take as an input.
+    //For example, if this joint runs off of speed input then the values are constrained between SPEED_MIN and SPEED_MAX, and otherwise for the similar
+    //ranges defined in the framework's .h file
     //returns: The status of attempting to control this joint. Such as if the output is now running, or if it's complete, or if there was an error
-		JointControlStatus runOutputControl(const long movement);
+    JointControlStatus runOutputControl(const long movement);
 };
 
 //Two motor device joint, where they move in the same direction to control the joint
 class TiltJoint : public JointInterface
 {
-	protected:
+  protected:
 
-		OutputDevice* controller2;
+    OutputDevice* controller2;
 
-	public:
+  public:
 
-		//constructor for with feedback. Feedback based algorithms are complex enough to usualyl require user initiliazation, so it's directly passed
-		//in by the user as well
-		//inputType: What kind of movement this joint should be controlled by, such as speed or position input.
-		//alg: the closed loop IOAlgorithm used by this joint
-		//cont1: The first output device controlling the first motor on this joint
-		//cont2: The second output device controlling the second motor on this joint
-		//feed: The feedback device used with this joint
-		TiltJoint(ValueType inputType, IOAlgorithm *alg, OutputDevice* cont1, OutputDevice* cont2, FeedbackDevice* feed);
+    //constructor for with feedback. Feedback based algorithms are complex enough to usualyl require user initiliazation, so it's directly passed
+    //in by the user as well
+    //inputType: What kind of movement this joint should be controlled by, such as speed or position input.
+    //alg: the closed loop IOAlgorithm used by this joint
+    //cont1: The first output device controlling the first motor on this joint
+    //cont2: The second output device controlling the second motor on this joint
+    //feed: The feedback device used with this joint
+    TiltJoint(ValueType inputType, IOAlgorithm *alg, OutputDevice* cont1, OutputDevice* cont2, FeedbackDevice* feed);
 
-		//constructor without feedback. IOAlgorithm automatically selected based on the other arguments
-		//inputType: What kind of movement this joint should be controlled by, such as speed or position input.
-		//cont1: The first output device controlling the first motor on this joint
-		//cont2: The second output device controlling the second motor on this joint
-		TiltJoint(ValueType inputType, OutputDevice* cont1, OutputDevice* cont2);
+    //constructor without feedback. IOAlgorithm automatically selected based on the other arguments
+    //inputType: What kind of movement this joint should be controlled by, such as speed or position input.
+    //cont1: The first output device controlling the first motor on this joint
+    //cont2: The second output device controlling the second motor on this joint
+    TiltJoint(ValueType inputType, OutputDevice* cont1, OutputDevice* cont2);
 
-		//need to use a destructor to remove the pointers used
-		~TiltJoint();
+    //need to use a destructor to remove the pointers used
+    ~TiltJoint();
 
-		//runs algorithm for moving two motors together so that it tilts the joint
-		//input: a long that represents the desired movement. What values this int is constrained to depends on what this joint was set up to take as an input.
-		//For example, if this joint runs off of speed input then the values are constrained between SPEED_MIN and SPEED_MAX, and otherwise for the similar
-		//ranges defined in the framework's .h file
+    //runs algorithm for moving two motors together so that it tilts the joint
+    //input: a long that represents the desired movement. What values this int is constrained to depends on what this joint was set up to take as an input.
+    //For example, if this joint runs off of speed input then the values are constrained between SPEED_MIN and SPEED_MAX, and otherwise for the similar
+    //ranges defined in the framework's .h file
     //returns: The status of attempting to control this joint. Such as if the output is now running, or if it's complete, or if there was an error
-		JointControlStatus runOutputControl(const long movement);
+    JointControlStatus runOutputControl(const long movement);
 };
 
 //represents a joint where two motor devices move in opposite directions to control the joint.
 //Typically this causes a rotation motion, IE rotate joint
 class RotateJoint : public JointInterface
 {
-	protected:
+  protected:
 
-		OutputDevice* controller2;
+    OutputDevice* controller2;
 
-	public:
+  public:
 
-		//constructor for with feedback. Feedback based algorithms are complex enough to usualyl require user initiliazation, so it's directly passed
-		//in by the user as well
-		//inputType: What kind of movement this joint should be controlled by, such as speed or position input.
-		//alg: the IOAlgorithm representing the closed loop algorithm being used on this joint
-		//cont1: The first output device controlling the first motor on this joint
-		//cont2: The second output device controlling the second motor on this joint
-		//feed: The feedback device used with this joint
-		RotateJoint(ValueType inputType, IOAlgorithm *alg, OutputDevice* cont1, OutputDevice* cont2, FeedbackDevice* feed);
+    //constructor for with feedback. Feedback based algorithms are complex enough to usualyl require user initiliazation, so it's directly passed
+    //in by the user as well
+    //inputType: What kind of movement this joint should be controlled by, such as speed or position input.
+    //alg: the IOAlgorithm representing the closed loop algorithm being used on this joint
+    //cont1: The first output device controlling the first motor on this joint
+    //cont2: The second output device controlling the second motor on this joint
+    //feed: The feedback device used with this joint
+    RotateJoint(ValueType inputType, IOAlgorithm *alg, OutputDevice* cont1, OutputDevice* cont2, FeedbackDevice* feed);
 
-		//constructor without feedback. IOAlgorithm for this joint automatically selected based on the other passed arguments
-		//inputType: What kind of movement this joint should be controlled by, such as speed or position input.
-		//cont1: The first output device controlling the first motor on this joint
-		//cont2: The second output device controlling the second motor on this joint
-		RotateJoint(ValueType inputType, OutputDevice* cont1, OutputDevice* cont2);
+    //constructor without feedback. IOAlgorithm for this joint automatically selected based on the other passed arguments
+    //inputType: What kind of movement this joint should be controlled by, such as speed or position input.
+    //cont1: The first output device controlling the first motor on this joint
+    //cont2: The second output device controlling the second motor on this joint
+    RotateJoint(ValueType inputType, OutputDevice* cont1, OutputDevice* cont2);
 
-		//deletes pointers used in the joint
-		~RotateJoint();
+    //deletes pointers used in the joint
+    ~RotateJoint();
 
-		//moves two motors together so that they rotate the joint. Motors will spin the opposite direction
-		//input: a long that represents the desired movement. What values this int is constrained to depends on what this joint was set up to take as an input.
-		//For example, if this joint runs off of speed input then the values are constrained between SPEED_MIN and SPEED_MAX, and otherwise for the similar
-		//ranges defined in the framework's .h file
+    //moves two motors together so that they rotate the joint. Motors will spin the opposite direction
+    //input: a long that represents the desired movement. What values this int is constrained to depends on what this joint was set up to take as an input.
+    //For example, if this joint runs off of speed input then the values are constrained between SPEED_MIN and SPEED_MAX, and otherwise for the similar
+    //ranges defined in the framework's .h file
     //returns: The status of attempting to control this joint. Such as if the output is now running, or if it's complete, or if there was an error
-		JointControlStatus runOutputControl(const long movement);
+    JointControlStatus runOutputControl(const long movement);
 };
 
                                           /******************************************************************************
@@ -544,6 +560,47 @@ class DRV8388 : public OutputDevice
     //pin asignments for enable pin and phase pin, also a bool to determine the orientation of da motor
     DRV8388 (const int EN_PIN, const int PH_PIN, bool upsideDown);
 };
+
+//DRV8871 H bridge IC
+class DRV8871 : public OutputDevice
+{
+  private:
+    //input pins to H bridge and min/max vals for pwm
+    int IN_1, IN_2;
+    const int PWM_MIN = 0, PWM_MAX = 255;
+
+  protected:
+    //pass speed to move function
+    void move (const long movement);
+
+  public:
+    //in constructor, declare pins for in 1 and 2
+    DRV8871 (const int IN_PIN_1, const int IN_PIN_2, bool upsideDown);
+    
+    
+};
+
+//DRV8842 Motor Controller IC
+//Internal H-bridge with extra functions for controlling motor speed
+//With: sleep mode, reset, fault detection, current decay mode
+class DRV8842 : public OutputDevice
+{
+   private:
+     //pins this motor controller IC has
+     int IN1_Pin, IN2_Pin, Decay_Pin, nFault_Pin, nSleep_Pin, nReset_Pin, I0_Pin, I1_Pin, I2_Pin, I3_Pin, I4_Pin;
+
+   protected:
+    //move function, pass in speed
+    void easyMove (const long movement);
+
+   public:
+    //constructor
+    DRV8842(const int IN1, const int IN2, const int Decay, const int nFault, const int nSleep, const int nReset, const int I0, const int I1, const int I2, const int I3, const int I4);
+};
+
+
+                                           
+                                           
                                            /******************************************************************************
                                            *
                                            * Feedback Device derived classes
@@ -577,4 +634,27 @@ class Ma3Encoder12b: public FeedbackDevice
     long getFeedback();
 };
 
+//feedback device for the MA3 encoder, 10 bit version, using the Energia AnalogRead function
+//note: not the PWM read function. analog works in 10 bit mode.
+class Ma3Encoder10b: public FeedbackDevice
+{
+
+  private:
+    uint8_t analogReadPin;
+    const int maxval = 1023;
+    const int minVal = 1;
+
+  public:
+    //constructor needs the encoder's output pin
+    Ma3Encoder10b(uint8_t encoderOut): FeedbackDevice()
+    {
+      analogReadPin = encoderOut;
+      fType = pos;
+    }
+
+    long getFeedback();
+};
+
+
 #endif
+
