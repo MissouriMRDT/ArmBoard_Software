@@ -60,7 +60,8 @@ void loop()
 		watchdogTimer_us = 0;
 	  }
 	}
-	if(digitalRead(FAULT_ALERT_PIN) == LOW)
+
+	if(digitalRead(NFAULT_ALERT_PIN) == LOW)
 	{
 	  powerDisable();
 	  sendMsg(gripperOvercurrent);
@@ -70,7 +71,7 @@ void loop()
 
 void initialize() //starts serial comm
 {
-  Serial.begin(115200);
+  Serial.begin(SERIAL_BAUD_RATE);
   pinMode(FAULT_ALERT_PIN, INPUT);
   
   pinMode(DRIVER_DIRECTION_PIN, OUTPUT);
@@ -99,7 +100,7 @@ CommandResult moveGripper(int16_t moveValue)
 
 CommandResult spinCap(int16_t moveValue)
 {
-  //when controlling a servo, positive direction is 0 value plus magnitude and negative direction is 0 value minus magnitude
+  //when controlling a continuous servo, positive direction is 0 value plus magnitude and negative direction is 0 value minus magnitude. Zero value is 90, with total values going between 0-90 for negative, 90-180 for positive
   int16_t magnitude = map(abs(moveValue), 0, 1000, 0, 90);
   int16_t adjustedSpeedVal = 0;
   if(moveValue > 0)
@@ -140,6 +141,8 @@ void receiveMsg(uint8_t commandId, int16_t commandData)
 	else if(commandId == moveGripper || commandId == spinCap)
 	{
 	  delay(10); //allows data to catch up on serial line
+
+	  //Expected values are -1000 to 1000, representing speed and direction
 	  speedByte1 = Serial.read();
 	  speedByte2 = Serial.read();
 	  commandData = (int16_t)speedByte1 | ((int16_t)speedByte2 << 8);
