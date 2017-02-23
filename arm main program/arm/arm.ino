@@ -104,9 +104,9 @@ void initialize()
   Serial6.begin(GRIPPER_COMM_BAUD_RATE);
   // TODO
   OutputDevice * dev1 = new DRV8388(MOT1_PWN_PIN, HBRIDGE1_PHASE_PIN,false);
-  OutputDevice * dev2 = new DRV8388(MOT2_PWN_PIN, HBRIDGE2_PHASE_PIN,false);
+  OutputDevice * dev2 = new DRV8388(MOT2_PWN_PIN, HBRIDGE2_PHASE_PIN,true);
   OutputDevice * dev3 = new DRV8388(MOT3_PWN_PIN, HBRIDGE3_PHASE_PIN,false);
-  OutputDevice * dev4 = new DRV8388(MOT4_PWN_PIN, HBRIDGE4_PHASE_PIN,false);
+  OutputDevice * dev4 = new DRV8388(MOT4_PWN_PIN, HBRIDGE4_PHASE_PIN,true);
   OutputDevice * dev5 = new DRV8388(MOT5_PWN_PIN, HBRIDGE5_PHASE_PIN,false);
 
   pinMode(HBRIDGE1_NFAULT_PIN,INPUT);
@@ -124,11 +124,11 @@ void initialize()
   pinMode(OC_NFAULT_PIN,INPUT);
   pinMode(POWER_LINE_CONTROL_PIN,OUTPUT);
 
-  joint1 = new TiltJoint(spd, dev1);
-  joint2 = new RotateJoint(spd, dev2);
+  joint1 = new RotateJoint(spd, dev1, dev2);
+  joint2 = new TiltJoint(spd, dev1, dev2);
   joint3 = new SingleMotorJoint(spd, dev3);
-  joint4 = new TiltJoint(spd, dev4);
-  joint5 = new RotateJoint(spd, dev5);
+  joint4 = new RotateJoint(spd, dev4, dev5);
+  joint5 = new TiltJoint(spd, dev4, dev5);
 
   joint1 -> coupleJoint(joint2);
   joint4 -> coupleJoint(joint5);
