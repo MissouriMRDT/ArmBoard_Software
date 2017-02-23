@@ -3,7 +3,7 @@
 #include <stdint.h>
 
 //enum representing the different arm commands we can receive from base station.
-//There is a spreadsheet for these under rovesodrive under software architecture 
+//There is a spreadsheet for these under rovesodrive under software architecture
 typedef enum ArmCommandIds
 {
   ArmStop = 0x320,
@@ -11,8 +11,7 @@ typedef enum ArmCommandIds
   ArmJ2 = 0x322,
   ArmJ3 = 0x323,
   ArmJ4 = 0x324,
-  ArmJ5 = 0x325,
-  ArmJ6 = 0x326
+  ArmJ5 = 0x325
 } ArmCommandIds;
 
 typedef enum ArmCommandIds_LastYear
@@ -22,17 +21,36 @@ typedef enum ArmCommandIds_LastYear
   LY_ArmJ2 = 207,
   LY_ArmJ3 = 204,
   LY_ArmJ4 = 203,
-  LY_ArmJ5 = 202,
-  LY_ArmJ6 = 201
+  LY_ArmJ5 = 202
 } ArmCommandIds_LastYear;
 
 //enum representing the different endefector commands we can receive from base station.
-//There is a spreadsheet for these under rovesodrive under software architecture 
-typedef enum EndefCommandIds
+//There is a spreadsheet for these under rovesodrive under software architecture
+typedef enum EndefCommandIdsFromRed
 {
-  Gripper,
-  Drill 
-} EndefCommandIds; 
+  MoveGripper,
+  TurnCap,
+  EnableGripperPower,
+  DisableGripperPower
+} EndefCommandIds;
+
+typedef enum EndefCommandIdsToRed
+{
+  GripperOvercurrent
+}EndefCommandIdsToRed;
+
+typedef enum EndefTransmitSerialCommandIds
+{
+  Serial_MoveGripper = 1,
+  Serial_TurnCap = 2,
+  Serial_EnableGripperPower = 3,
+  Serial_DisableGripperPower = 4
+}EndefSerialCommandIds;
+
+typedef enum EndefReceiveSerialCommandIds
+{
+  Serial_Overcurrent = 1
+}EndefReceiveSerialCommandIds;
 
 //enum representing the differnet results we can return when we try to move a component
 typedef enum CommandResult
@@ -43,3 +61,97 @@ typedef enum CommandResult
 
 const uint32_t WATCHDOG_TIMEOUT_US = 2000000; //the amount of microseconds that should pass without getting a transmission from base station before the arm ceases moving for safety
 const uint8_t IP_ADDRESS [4] = {192, 168, 1, 131};
+const uint32_t GRIPPER_COMM_BAUD_RATE = 115200;
+
+const unint32_t MOT1_PWN_PIN = PG_1;
+const unint32_t MOT2_PWN_PIN = PF_3;
+const unint32_t MOT3_PWN_PIN = PK_5;
+const unint32_t MOT4_PWN_PIN = PK_4;
+const unint32_t MOT5_PWN_PIN = PG_0;
+
+const unint32_t GRIPP_TX6_PIN = PP_0;
+const unint32_t GRIPP_RX6_PIN = PP_1;
+
+const unint32_t HBRIDGE1_NFAULT_PIN = PM_7;
+const unint32_t HBRIDGE1_NSLEEP_PIN = PA_7;
+const unint32_t HBRIDGE1_PHASE_PIN = PP_5;
+
+const unint32_t HBRIDGE2_NFAULT_PIN = PL_1;
+const unint32_t HBRIDGE2_NSLEEP_PIN = PL_2;
+const unint32_t HBRIDGE2_PHASE_PIN = PL_3;
+
+const unint32_t HBRIDGE3_NFAULT_PIN = PH_0;
+const unint32_t HBRIDGE3_NSLEEP_PIN = PH_1;
+const unint32_t HBRIDGE3_PHASE_PIN = PK_6;
+
+const unint32_t HBRIDGE4_NFAULT_PIN = PP_4;
+const unint32_t HBRIDGE4_NSLEEP_PIN = PD_5;
+const unint32_t HBRIDGE4_PHASE_PIN = PA_5;
+
+const unint32_t HBRIDGE5_NFAULT_PIN = PK_2;
+const unint32_t HBRIDGE5_NSLEEP_PIN = PK_3;
+const unint32_t HBRIDGE5_PHASE_PIN = PQ_0;
+
+const unint32_t ENCODER1_READING_PIN = PM_4;
+const unint32_t ENCODER2_READING_PIN = PA_6;
+const unint32_t ENCODER3_READING_PIN = PM_6;
+const unint32_t ENCODER4_READING_PIN = PM_2;
+const unint32_t ENCODER5_READING_PIN = PM_0;
+
+const unint32_t OC_NFAULT_PIN = PE_5;
+const unint32_t CURRENT_READ_PIN = PD_3
+
+const uint32_t POWER_LINE_CONTROL_PIN = PE_4;
+
+const float CURRENT_SENSOR_RATIO = .066; //current sensor ratio of outputted signal voltage/the current it's currently reading
+
+const float CURRENT_LIMIT = 18; //actual limit we want is 17, but because the calculations are just an estimate we overshoot it slightly for manual checks
+
+
+void initialize();
+
+bool checkOvercurrent();
+
+CommandResult sendMsgToEndef(uint16_t dataId, size_t dataSize, int16_t data);
+
+void passEndefToBase();
+
+CommandResult masterPowerEnable();
+
+CommandResult masterPowerDisable();
+
+void enableAllMotors();
+
+void disableAllMotors();
+
+void enableM1();
+
+void enableM2();
+
+void enableM3();
+
+void enableM4();
+
+void enableM5();
+
+void disableM2();
+
+void disableM3();
+
+void disableM4();
+
+void disableM5();
+
+float readMasterCurrent();
+
+CommandResult stopArm();
+
+CommandResult moveJ1(int16_t moveValue);
+
+CommandResult moveJ2(int16_t moveValue);
+
+CommandResult moveJ3(int16_t moveValue);
+
+CommandResult moveJ4(int16_t moveValue);
+
+CommandResult moveJ5(int16_t moveValue);
