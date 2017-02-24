@@ -1,4 +1,4 @@
-#include Gripper.h
+#include "Gripper.h"
 
 Servo myservo;
 
@@ -15,64 +15,64 @@ void loop()
   
   while(1)
   {
-	commandId = 0;
-	commandData = 0;
-	
-	
-	receiveMsg(&commandId, &commandData);
-	
-	if(commandId != 0)
-	{
-	  watchdogTimer_us = 0;
-	  
-	  if(commandId == moveGripper)
-	  {
-	    result = moveGripper(commandData);
-	  }
-	  
-	  else if(commandId == spinCap)
-	  {
-	    result = spinCap(commandData);
-	  }
-	  
-	  else if(commandId == powerEnable)
-	  {
-	    result = powerEnable();
-	  }
-	  
-	  else if(commandId == powerDisable)
-	  {
-	    result = powerDisable();
-	  }
-	}
-	
-	else
-	{
-	  uint8_t microsecondDelay = 10;
-	  delayMicroseconds(microsecondDelay);
-	  
-	  watchdogTimer_us += microsecondDelay;
-	  
-	  if(watchdogTimer_us >= WATCHDOG_TIMER_US) //if more than our timeout period has passed, then kill arm movement
-	  {
-	    moveGripper(0);
-		spinCap(0);
-		watchdogTimer_us = 0;
-	  }
-	}
-
-	if(digitalRead(NFAULT_ALERT_PIN) == LOW)
-	{
-	  powerDisable();
-	  sendMsg(gripperOvercurrent);
-	}
+  	commandId = 0;
+  	commandData = 0;
+  	
+  	
+  	receiveMsg(&commandId, &commandData);
+  	
+  	if(commandId != 0)
+  	{
+  	  watchdogTimer_us = 0;
+  	  
+  	  if(commandId == MoveGripper)
+  	  {
+  	    result = moveGripper(commandData);
+  	  }
+  	  
+  	  else if(commandId == SpinCap)
+  	  {
+  	    result = spinCap(commandData);
+  	  }
+  	  
+  	  else if(commandId == PowerEnable)
+  	  {
+  	    powerEnable();
+  	  }
+  	  
+  	  else if(commandId == PowerDisable)
+  	  {
+  	    powerDisable();
+  	  }
+  	}
+  	
+  	else
+  	{
+  	  uint8_t microsecondDelay = 10;
+  	  delayMicroseconds(microsecondDelay);
+  	  
+  	  watchdogTimer_us += microsecondDelay;
+  	  
+  	  if(watchdogTimer_us >= WATCHDOG_TIMEOUT_US) //if more than our timeout period has passed, then kill arm movement
+  	  {
+  	    moveGripper(0);
+  		  spinCap(0);
+  		  watchdogTimer_us = 0;
+  	  }
+  	}
+  
+  	if(digitalRead(NFAULT_ALERT_PIN) == LOW)
+  	{
+  	  powerDisable();
+  	  sendMsg(GripperOvercurrent);
+  	}
   }
 }
 
 void initialize() //starts serial comm
 {
   Serial.begin(SERIAL_BAUD_RATE);
-  pinMode(FAULT_ALERT_PIN, INPUT);
+  pinMode(NFAULT_ALERT_PIN, INPUT);
   
   pinMode(DRIVER_DIRECTION_PIN, OUTPUT);
   
@@ -126,38 +126,34 @@ void powerDisable()
   digitalWrite(POWER_LINE_CONTROL_PIN, LOW);
 }
 
-void receiveMsg(uint8_t commandId, int16_t commandData)
+void receiveMsg(uint8_t *commandId, int16_t *commandData)
 {
   uint8_t receivedBytes = Serial.available();
   int8_t speedByte1 = 0;
   int8_t speedByte2 = 0;
   if(receivedBytes > 0)
   {
-    commandId = Serial.read();
-	if(commandId == powerEnable || commandId == powerDisable)
+    *commandId = Serial.read();
+  }
+  
+	if(*commandId == PowerEnable || *commandId == PowerDisable)
 	{  
 	  return;
 	}
-	else if(commandId == moveGripper || commandId == spinCap)
+	else if(*commandId == MoveGripper || *commandId == SpinCap)
 	{
 	  delay(10); //allows data to catch up on serial line
 
 	  //Expected values are -1000 to 1000, representing speed and direction
 	  speedByte1 = Serial.read();
 	  speedByte2 = Serial.read();
-	  commandData = (int16_t)speedByte1 | ((int16_t)speedByte2 << 8);
+	  *commandData = (int16_t)speedByte1 | ((int16_t)speedByte2 << 8);
 	}
 	else//garbage data
 	{
-	  commandId = 0;
-	  commandData = 0;
+	  *commandId = 0;
+	  *commandData = 0;
 	}
-  }
-  else
-  {
-    commandId = 0;
-	commandData = 0;
-  }
   
   return;
 }

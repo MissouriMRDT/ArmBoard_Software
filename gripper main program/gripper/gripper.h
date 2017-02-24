@@ -3,16 +3,16 @@
 
 typedef enum GripperCommandIds
 {
-  moveGripper = 1;
-  spinCap = 2;
-  powerEnable = 3;
-  powerDisable = 4;
+  MoveGripper = 1,
+  SpinCap = 2,
+  PowerEnable = 3,
+  PowerDisable = 4
 } GripperCommandIds;
 
 typedef enum GripperFlagMessages
 {
-  gripperOvercurrent = 5; //flag to send base station if the gripper experiences an overcurrent
-}
+  GripperOvercurrent = 5 //flag to send base station if the gripper experiences an overcurrent
+} GripperFlagMessages;
 
 typedef enum EndefectorCommandIds
 {
