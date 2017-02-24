@@ -1,4 +1,3 @@
-#include "JointControlFramework.h"
 #include "arm.h";
 
 JointInterface* joint1;
@@ -102,7 +101,7 @@ void initialize()
   roveComm_Begin(IP_ADDRESS[0], IP_ADDRESS[1], IP_ADDRESS[2], IP_ADDRESS[3]);
   Serial.begin(9600);
   Serial6.begin(GRIPPER_COMM_BAUD_RATE);
-  // TODO
+
   OutputDevice * dev1 = new DRV8388(MOT1_PWN_PIN, HBRIDGE1_PHASE_PIN,false);
   OutputDevice * dev2 = new DRV8388(MOT2_PWN_PIN, HBRIDGE2_PHASE_PIN,true);
   OutputDevice * dev3 = new DRV8388(MOT3_PWN_PIN, HBRIDGE3_PHASE_PIN,false);
@@ -136,7 +135,6 @@ void initialize()
   masterPowerDisable();
 
   enableAllMotors();
-
 }
 
 bool checkOvercurrent()
@@ -194,8 +192,6 @@ CommandResult masterPowerDisable()
 {
   digitalWrite(POWER_LINE_CONTROL_PIN, LOW);
 }
-
-
 
 void enableAllMotors()
 {
@@ -270,7 +266,7 @@ float readMasterCurrent()
 {
   //Note this is only an estimation, as it assumes the VCC is currently 3.3V when in reality it tends to be between 3V and 3.3V
   int adc = analogRead(CURRENT_READ_PIN);
-  float voltRead = <static_cast>(float)(adc)/1023.0*(3.3); //converts read value (from 0 to 1023) to volts (0 to VCC).
+  float voltRead =((float)(adc))/1023.0*(3.3); //converts read value (from 0 to 1023) to volts (0 to VCC).
   float ampsRead = voltRead/CURRENT_SENSOR_RATIO;
   return ampsRead;
 }

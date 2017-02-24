@@ -1,6 +1,7 @@
 #include <RoveBoard.h>
 #include <RoveComm.h>
 #include <stdint.h>
+#include "JointControlFramework.h"
 
 //enum representing the different arm commands we can receive from base station.
 //There is a spreadsheet for these under rovesodrive under software architecture
@@ -63,43 +64,43 @@ const uint32_t WATCHDOG_TIMEOUT_US = 2000000; //the amount of microseconds that 
 const uint8_t IP_ADDRESS [4] = {192, 168, 1, 131};
 const uint32_t GRIPPER_COMM_BAUD_RATE = 115200;
 
-const unint32_t MOT1_PWN_PIN = PG_1;
-const unint32_t MOT2_PWN_PIN = PF_3;
-const unint32_t MOT3_PWN_PIN = PK_5;
-const unint32_t MOT4_PWN_PIN = PK_4;
-const unint32_t MOT5_PWN_PIN = PG_0;
+const uint32_t MOT1_PWN_PIN = PG_1;
+const uint32_t MOT2_PWN_PIN = PF_3;
+const uint32_t MOT3_PWN_PIN = PK_5;
+const uint32_t MOT4_PWN_PIN = PK_4;
+const uint32_t MOT5_PWN_PIN = PG_0;
 
-const unint32_t GRIPP_TX6_PIN = PP_0;
-const unint32_t GRIPP_RX6_PIN = PP_1;
+const uint32_t GRIPP_TX6_PIN = PP_0;
+const uint32_t GRIPP_RX6_PIN = PP_1;
 
-const unint32_t HBRIDGE1_NFAULT_PIN = PM_7;
-const unint32_t HBRIDGE1_NSLEEP_PIN = PA_7;
-const unint32_t HBRIDGE1_PHASE_PIN = PP_5;
+const uint32_t HBRIDGE1_NFAULT_PIN = PM_7;
+const uint32_t HBRIDGE1_NSLEEP_PIN = PA_7;
+const uint32_t HBRIDGE1_PHASE_PIN = PP_5;
 
-const unint32_t HBRIDGE2_NFAULT_PIN = PL_1;
-const unint32_t HBRIDGE2_NSLEEP_PIN = PL_2;
-const unint32_t HBRIDGE2_PHASE_PIN = PL_3;
+const uint32_t HBRIDGE2_NFAULT_PIN = PL_1;
+const uint32_t HBRIDGE2_NSLEEP_PIN = PL_2;
+const uint32_t HBRIDGE2_PHASE_PIN = PL_3;
 
-const unint32_t HBRIDGE3_NFAULT_PIN = PH_0;
-const unint32_t HBRIDGE3_NSLEEP_PIN = PH_1;
-const unint32_t HBRIDGE3_PHASE_PIN = PK_6;
+const uint32_t HBRIDGE3_NFAULT_PIN = PH_0;
+const uint32_t HBRIDGE3_NSLEEP_PIN = PH_1;
+const uint32_t HBRIDGE3_PHASE_PIN = PK_6;
 
-const unint32_t HBRIDGE4_NFAULT_PIN = PP_4;
-const unint32_t HBRIDGE4_NSLEEP_PIN = PD_5;
-const unint32_t HBRIDGE4_PHASE_PIN = PA_5;
+const uint32_t HBRIDGE4_NFAULT_PIN = PP_4;
+const uint32_t HBRIDGE4_NSLEEP_PIN = PD_5;
+const uint32_t HBRIDGE4_PHASE_PIN = PA_5;
 
-const unint32_t HBRIDGE5_NFAULT_PIN = PK_2;
-const unint32_t HBRIDGE5_NSLEEP_PIN = PK_3;
-const unint32_t HBRIDGE5_PHASE_PIN = PQ_0;
+const uint32_t HBRIDGE5_NFAULT_PIN = PK_2;
+const uint32_t HBRIDGE5_NSLEEP_PIN = PK_3;
+const uint32_t HBRIDGE5_PHASE_PIN = PQ_0;
 
-const unint32_t ENCODER1_READING_PIN = PM_4;
-const unint32_t ENCODER2_READING_PIN = PA_6;
-const unint32_t ENCODER3_READING_PIN = PM_6;
-const unint32_t ENCODER4_READING_PIN = PM_2;
-const unint32_t ENCODER5_READING_PIN = PM_0;
+const uint32_t ENCODER1_READING_PIN = PM_4;
+const uint32_t ENCODER2_READING_PIN = PA_6;
+const uint32_t ENCODER3_READING_PIN = PM_6;
+const uint32_t ENCODER4_READING_PIN = PM_2;
+const uint32_t ENCODER5_READING_PIN = PM_0;
 
-const unint32_t OC_NFAULT_PIN = PE_5;
-const unint32_t CURRENT_READ_PIN = PD_3
+const uint32_t OC_NFAULT_PIN = PE_5;
+const uint32_t CURRENT_READ_PIN = PD_3;
 
 const uint32_t POWER_LINE_CONTROL_PIN = PE_4;
 
