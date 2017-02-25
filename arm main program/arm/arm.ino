@@ -20,7 +20,7 @@ void loop() {
 
   delay(10);
   
-  masterPowerEnable(); //for debugging 
+  //masterPowerEnable(); //for debugging. Enable if base station currently isn't sending 'enable power' messages and you just want to move some motors
   
   while(1) //main program loop. Listen for communications from the endefector or from base station, and proceed based on that transmission
   {
