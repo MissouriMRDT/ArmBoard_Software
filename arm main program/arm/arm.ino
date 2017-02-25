@@ -18,6 +18,10 @@ void loop() {
 
   initialize(); //control devices initted in here
 
+  delay(10);
+  
+  masterPowerEnable(); //for debugging 
+  
   while(1) //main program loop. Listen for communications from the endefector or from base station, and proceed based on that transmission
   {
     commandSize = 0;
@@ -86,9 +90,10 @@ void loop() {
       }
     }//end else
 
-    if(checkOvercurrent())
-    {
-      masterPowerDisable();
+    if(checkOvercurrent()) //CURRENTLY TOO BUGGY TO USE
+    { 
+      //masterPowerDisable();
+      //Serial.println("Disabling power, OC");
       //TODO: send telemetry back to base station
     }
 
@@ -266,9 +271,16 @@ float readMasterCurrent()
 {
   //Note this is only an estimation, as it assumes the VCC is currently 3.3V when in reality it tends to be between 3V and 3.3V
   int adc = analogRead(CURRENT_READ_PIN);
-  float voltRead =((float)(adc))/1023.0*(3.3); //converts read value (from 0 to 1023) to volts (0 to VCC).
-  float ampsRead = voltRead/CURRENT_SENSOR_RATIO;
-  return ampsRead;
+  float voltRead =((float)(adc))/1023.0*(VCC) - VCC*.1; //converts read value (from 0 to 1023) to volts (0 to VCC). Current sensor has an offset of .33V as well
+  if(voltRead < 0)
+  {
+    return(0);
+  }
+  else
+  {
+    float ampsRead = voltRead/CURRENT_SENSOR_RATIO;
+    return ampsRead;
+  }
 }
 
 
@@ -284,24 +296,49 @@ CommandResult stopArm()
 CommandResult moveJ1(int16_t moveValue)
 {
   joint1->runOutputControl(moveValue);
+  if(moveValue != 0)
+  {
+    Serial.print("Moving j1: ");
+    Serial.println(moveValue);
+  }
 }
 
 CommandResult moveJ2(int16_t moveValue)
 {
   joint2->runOutputControl(moveValue);
+  if(moveValue != 0)
+  {
+    Serial.print("Moving j2 : ");
+    Serial.println(moveValue);
+  }
 }
 
 CommandResult moveJ3(int16_t moveValue)
 {
   joint3->runOutputControl(moveValue);
+  if(moveValue != 0)
+  {
+    Serial.print("Moving j3: ");
+    Serial.println(moveValue);
+  }
 }
 
 CommandResult moveJ4(int16_t moveValue)
 {
   joint4->runOutputControl(moveValue);
+  if(moveValue != 0)
+  {
+    Serial.print("Moving j4: ");
+    Serial.println(moveValue);
+  }
 }
 
 CommandResult moveJ5(int16_t moveValue)
 {
   joint5->runOutputControl(moveValue);
+  if(moveValue != 0)
+  {
+    Serial.print("Moving j5: ");
+    Serial.println(moveValue);
+  }
 }

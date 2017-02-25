@@ -100,7 +100,7 @@ const uint32_t ENCODER4_READING_PIN = PM_2;
 const uint32_t ENCODER5_READING_PIN = PM_0;
 
 const uint32_t OC_NFAULT_PIN = PE_5;
-const uint32_t CURRENT_READ_PIN = PD_3;
+const uint32_t CURRENT_READ_PIN = A12;
 
 const uint32_t POWER_LINE_CONTROL_PIN = PE_4;
 
@@ -108,6 +108,7 @@ const float CURRENT_SENSOR_RATIO = .066; //current sensor ratio of outputted sig
 
 const float CURRENT_LIMIT = 18; //actual limit we want is 17, but because the calculations are just an estimate we overshoot it slightly for manual checks
 
+const float VCC = 3.0; //usually the V input is 3V
 
 void initialize();
 
