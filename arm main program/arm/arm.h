@@ -100,7 +100,7 @@ const uint32_t ENCODER4_READING_PIN = PM_2;
 const uint32_t ENCODER5_READING_PIN = PM_0;
 
 const uint32_t OC_NFAULT_PIN = PE_5;
-const uint32_t CURRENT_READ_PIN = A12;
+const uint32_t CURRENT_READ_PIN = PD_3;
 
 const uint32_t POWER_LINE_CONTROL_PIN = PE_4;
 
