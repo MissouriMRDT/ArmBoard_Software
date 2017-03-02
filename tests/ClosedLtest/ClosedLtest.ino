@@ -1,6 +1,6 @@
 #include "JointControlFramework.h"
 
-/* Programmers: David strickland, Jake Hasenfratz, Drue Satterfield
+/* Programmers: Drue Satterfield
  * Date of creation: 2/5/17
  * Sub system: arm board
  * 
