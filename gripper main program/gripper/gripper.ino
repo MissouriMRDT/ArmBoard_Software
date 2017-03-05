@@ -23,6 +23,7 @@ void loop()
   	
   	if(commandId != 0)
   	{
+      Serial.println(commandId);
   	  watchdogTimer_us = 0;
   	  
   	  if(commandId == MoveGripper)
@@ -61,11 +62,11 @@ void loop()
   	  }
   	}
   
-  	if(digitalRead(NFAULT_ALERT_PIN) == LOW)
+  	/*if(digitalRead(NFAULT_ALERT_PIN) == LOW)
   	{
   	  powerDisable();
   	  sendMsg(GripperOvercurrent);
-  	}
+  	}*/
   }
 }
 
@@ -129,8 +130,8 @@ void powerDisable()
 void receiveMsg(uint8_t *commandId, int16_t *commandData)
 {
   uint8_t receivedBytes = Serial.available();
-  int8_t speedByte1 = 0;
-  int8_t speedByte2 = 0;
+  uint8_t speedByte1 = 0;
+  uint8_t speedByte2 = 0;
   if(receivedBytes > 0)
   {
     *commandId = Serial.read();
@@ -145,8 +146,8 @@ void receiveMsg(uint8_t *commandId, int16_t *commandData)
 	  delay(10); //allows data to catch up on serial line
 
 	  //Expected values are -1000 to 1000, representing speed and direction
-	  speedByte1 = Serial.read();
-	  speedByte2 = Serial.read();
+	  speedByte1 = Serial.read() & 0xFF;
+	  speedByte2 = Serial.read() & 0xFF;
 	  *commandData = (int16_t)speedByte1 | ((int16_t)speedByte2 << 8);
 	}
 	else//garbage data
