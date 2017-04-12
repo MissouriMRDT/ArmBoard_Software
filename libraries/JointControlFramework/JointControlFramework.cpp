@@ -74,6 +74,7 @@ void JointInterface::coupleJoint(JointInterface* otherJoint)
 //feed: The feedback device used with this joint
 SingleMotorJoint::SingleMotorJoint(ValueType inputType, IOAlgorithm *alg, OutputDevice* cont, FeedbackDevice* feed) : JointInterface()
 {
+<<<<<<< HEAD
   //assignments
   inType = inputType;
   controller1 = cont;
@@ -81,6 +82,15 @@ SingleMotorJoint::SingleMotorJoint(ValueType inputType, IOAlgorithm *alg, Output
   manip = alg;
   manip -> setFeedDevice(*feed);
 
+=======
+	//assignments
+	inType = inputType;
+	controller1 = cont;
+	feedback = feed;
+	manip = alg;
+	manip -> setFeedDevice(feed);
+  
+>>>>>>> refs/remotes/origin/Library_Module_dev
   //checks to make sure the passed arguments all work with each other, that is that the algorithm's input type is the same as what the user is putting in, and
   //that the algorithm's output value type is what the output device expects to take in, etc
   if((inputType == alg->inType) && (cont->inType == alg->outType) && (alg->feedbackInType == feed->fType))
@@ -148,6 +158,7 @@ JointControlStatus SingleMotorJoint::runOutputControl(const long movement)
 
   else if(validConstruction)
   {
+<<<<<<< HEAD
     //calls algorithm
     mov = manip->runAlgorithm(movement, &motionComplete);
 
@@ -155,6 +166,18 @@ JointControlStatus SingleMotorJoint::runOutputControl(const long movement)
     controller1->move(mov);
 
     if(motionComplete == true)
+=======
+  	//calls algorithm
+  	mov = manip->runAlgorithm(movement, &motionComplete);
+    
+    //if motionComplete returned false but movement is 0, that's an indication that an error state occured
+    if(motionComplete == false && mov == 0)
+    {
+      returnStatus = InvalidInput;
+    }
+    
+    else if(motionComplete == true)
+>>>>>>> refs/remotes/origin/Library_Module_dev
     {
       returnStatus = OutputComplete;
     }
@@ -162,6 +185,9 @@ JointControlStatus SingleMotorJoint::runOutputControl(const long movement)
     {
       returnStatus = OutputRunning;
     }
+    
+  	//moves device with output decided on by the algorithm
+  	controller1->move(mov);
   }
 
   //if this joint wasn't properly constructed, nothing is run
@@ -182,6 +208,7 @@ JointControlStatus SingleMotorJoint::runOutputControl(const long movement)
 //feed: The feedback device used with this joint
 TiltJoint::TiltJoint(ValueType inputType, IOAlgorithm *alg, OutputDevice* cont1, OutputDevice* cont2, FeedbackDevice* feed) : JointInterface()
 {
+<<<<<<< HEAD
   //assignments
   inType = inputType;
   controller1 = cont1;
@@ -189,6 +216,15 @@ TiltJoint::TiltJoint(ValueType inputType, IOAlgorithm *alg, OutputDevice* cont1,
   feedback = feed;
   manip = alg;
   manip -> setFeedDevice(*feed);
+=======
+	//assignments
+	inType = inputType;
+	controller1 = cont1;
+	controller2 = cont2;
+	feedback = feed;
+	manip = alg;
+  manip -> setFeedDevice(feed);
+>>>>>>> refs/remotes/origin/Library_Module_dev
 
   //checks to make sure the passed arguments all work with each other, that is that the algorithm's input type is the same as what the user is putting in, and
   //that the algorithm's output value type is what the output device expects to take in, etc
@@ -261,6 +297,7 @@ JointControlStatus TiltJoint::runOutputControl(const long movement)
     //largely a temp value to store any modifications made to the input
     int mov;
 
+<<<<<<< HEAD
     //runs the algorithm on the input
     mov = manip->runAlgorithm(movement, &motionComplete);
 
@@ -301,6 +338,18 @@ JointControlStatus TiltJoint::runOutputControl(const long movement)
     controller2->move(motorTwoSpeed);
 
     if(motionComplete == true)
+=======
+  	//runs the algorithm on the input
+  	mov = manip->runAlgorithm(movement, &motionComplete);
+    
+    //if motionComplete returned false but movement is 0, that's an indication that an error state occured
+    if(motionComplete == false && mov == 0)
+    {
+      returnStatus = InvalidInput;
+    }
+    
+    else if(motionComplete == true)
+>>>>>>> refs/remotes/origin/Library_Module_dev
     {
       returnStatus = OutputComplete;
     }
@@ -308,6 +357,43 @@ JointControlStatus TiltJoint::runOutputControl(const long movement)
     {
       returnStatus = OutputRunning;
     }
+    
+    motorOneSpeed = mov;
+    motorTwoSpeed = mov;
+
+    //this only happens if this joint has been coupled with another joint
+    //the coupled logic will modify the speed calculated by the algorithm
+    //to allow smooth tilting and rotating at the same time.
+    //It is automatically assumed that the other joint is a rotate joint
+    if(coupled)
+    {
+      motorOneSpeed += coupledJoint->motorOneSpeed;
+      if (motorOneSpeed > 1000)
+      {
+        motorOneSpeed = 1000;
+      }
+      if (motorOneSpeed < -1000)
+      {
+        motorOneSpeed = -1000;
+      }
+
+      motorTwoSpeed += coupledJoint->motorTwoSpeed;
+      if (motorTwoSpeed > 1000)
+      {
+        motorTwoSpeed = 1000;
+      }
+      if (motorTwoSpeed < -1000)
+      {
+        motorTwoSpeed = -1000;
+      }
+    }
+    
+
+  	//send to the motor move command
+  	controller1->move(motorOneSpeed);
+
+  	//both the controllers should move the arm in the same direction. send command to motor 2
+  	controller2->move(motorTwoSpeed);
   }
 
   //if this joint wasn't properly constructed, nothing is run
@@ -356,6 +442,7 @@ RotateJoint::RotateJoint(ValueType inputType, OutputDevice* cont1, OutputDevice*
 //feed: A pointer to the feedback device used on this joint.
 RotateJoint::RotateJoint(ValueType inputType, IOAlgorithm *alg, OutputDevice* cont1, OutputDevice* cont2, FeedbackDevice* feed) : JointInterface()
 {
+<<<<<<< HEAD
   //assignments
   inType = inputType;
   controller1 = cont1;
@@ -363,6 +450,15 @@ RotateJoint::RotateJoint(ValueType inputType, IOAlgorithm *alg, OutputDevice* co
   feedback = feed;
   manip = alg;
   manip -> setFeedDevice(*feed);
+=======
+	//assignments
+	inType = inputType;
+	controller1 = cont1;
+	controller2 = cont2;
+	feedback = feed;
+	manip = alg;
+  manip -> setFeedDevice(feed);
+>>>>>>> refs/remotes/origin/Library_Module_dev
 
   //checks to make sure the passed arguments all work with each other, that is that the algorithm's input type is the same as what the user is putting in, and
   //that the algorithm's output value type is what the output device expects to take in, etc
@@ -407,6 +503,7 @@ JointControlStatus RotateJoint::runOutputControl(const long movement)
 
     //runs the algorithm on the input
     mov = manip->runAlgorithm(movement, &motionComplete);
+<<<<<<< HEAD
 
     motorOneSpeed = mov;
     motorTwoSpeed = -mov;
@@ -444,6 +541,16 @@ JointControlStatus RotateJoint::runOutputControl(const long movement)
     controller2->move(motorTwoSpeed);
 
     if(motionComplete == true)
+=======
+    
+    //if motionComplete returned false but movement is 0, that's an indication that an error state occured
+    if(motionComplete == false && mov == 0)
+    {
+      returnStatus = InvalidInput;
+    }
+    
+    else if(motionComplete == true)
+>>>>>>> refs/remotes/origin/Library_Module_dev
     {
       returnStatus = OutputComplete;
     }
@@ -451,6 +558,42 @@ JointControlStatus RotateJoint::runOutputControl(const long movement)
     {
       returnStatus = OutputRunning;
     }
+
+    motorOneSpeed = mov;
+    motorTwoSpeed = -mov;
+
+    //this only happens if this joint has been coupled with another joint
+    //the coupled logic will modify the speed calculated by the algorithm
+    //to allow smooth tilting and rotating at the same time.
+    //It is automatically assumed that the other joint is a tilt joint
+    if(coupled)
+    {
+      motorOneSpeed += coupledJoint->motorOneSpeed;
+      if (motorOneSpeed > 1000)
+      {
+        motorOneSpeed = 1000;
+      }
+      if (motorOneSpeed < -1000)
+      {
+        motorOneSpeed = -1000;
+      }
+
+      motorTwoSpeed += coupledJoint->motorTwoSpeed;
+      if (motorTwoSpeed > 1000)
+      {
+        motorTwoSpeed = 1000;
+      }
+      if (motorTwoSpeed < -1000)
+      {
+        motorTwoSpeed = -1000;
+      }
+    }
+
+    //send to the motor move command
+    controller1->move(motorOneSpeed);
+
+    //send command to motor 2. Since this is a rotate joint, the motors need to go in opposite directions so send the second one a negafied value
+    controller2->move(motorTwoSpeed);
   }
 
   //if this joint wasn't properly constructed, nothing is run
@@ -685,6 +828,74 @@ void DirectDiscreteHBridge::move(const long movement)
   return;
 }
 
+//constructor for VNH5019 motor driver. Inputs are pin asignments for hardware pins, also a bool to determine the orientation of da motor
+VNH5019::VNH5019(const int PwmPin, const int InaPin, const int InbPin, bool upsideDown)
+{
+  PWM_PIN = PwmPin;
+  INA_PIN = InaPin;
+  INB_PIN = InbPin;
+  
+  inType = spd;
+  invert = upsideDown;
+
+  pinMode(INA_PIN, OUTPUT);
+  pinMode(INB_PIN, OUTPUT);
+  
+  //brake motor by default
+  digitalWrite(INA_PIN, LOW);
+  digitalWrite(INB_PIN, LOW);
+}
+
+//move function which passes in speed ( which is converted to phase and PWM) to move device
+void VNH5019::move(const long movement)
+{
+  int mov = movement;
+  int pwm = 0;
+  
+  //if mounted upside down then invert the signal passed to it and move accordingly
+  if (invert)
+  {
+    //inverts the input easily
+    mov = -mov;
+  }
+  
+  //if supposed to move backwards
+  if(mov < 0)
+  {
+    mov = abs(mov);
+    pwm = map(mov, 0, SPEED_MAX, PWM_MIN, PWM_MAX);
+
+    //set InB to 0 and InA to 1 for "reverse" rotation
+    digitalWrite(INA_PIN, HIGH);
+    digitalWrite(INB_PIN, LOW);
+    
+    //pulsate enable pin to control motor
+    PwmWrite(PWM_PIN, pwm);
+  }
+  
+  //if forwards
+  else if(mov > 0)
+  {
+    pwm = map(mov, 0, SPEED_MAX, PWM_MIN, PWM_MAX);
+      
+    //set InB to 1 and InA to 0 for forward rotation
+    digitalWrite(INA_PIN, LOW);
+    digitalWrite(INB_PIN, HIGH);
+    
+    //pulsate enable pin to control motor
+    PwmWrite(PWM_PIN, pwm);
+  }
+  
+  //stop
+  else if(mov == 0)
+  {
+    PwmWrite(PWM_PIN, 0);//set all pins to 0 to brake motor
+    digitalWrite(INA_PIN, LOW);
+    digitalWrite(INB_PIN, LOW);
+  }
+  
+  return;
+}
 
 //DRV8388 constructor here
 // pin asignments for enable pin and phase pin, also a bool to determine the orientation of da motor
@@ -743,6 +954,130 @@ void DRV8388::move(const long movement)
     PwmWrite(ENABLE_PIN, 0);//set enable to 0 to brake motor
     //phase don't matter
   }
+  
+  return;
+}
+
+//DRV8871
+DRV8871::DRV8871(const int IN_PIN_1, const int IN_PIN_2, const bool upsideDown) : OutputDevice()
+{
+  IN_1 = IN_PIN_1;
+  IN_2 = IN_PIN_2;
+  inType = spd;
+  invert = upsideDown;
+
+  pinMode(IN_1, OUTPUT);
+  pinMode(IN_2, OUTPUT);
+  
+}
+
+void DRV8871::move(const long movement)
+{
+  int mov = movement;
+  int pwm = 0;
+  
+  if(mov > 0)
+  {
+      //low high
+      pwm = map(mov, 0, SPEED_MAX, PWM_MIN, PWM_MAX);
+      digitalWrite(IN_1, LOW);
+      PwmWrite(IN_2, pwm);
+    //pwm
+    
+  }
+  
+  else if (mov < 0)
+  {
+    mov = abs(mov);
+    pwm = map(mov, 0, SPEED_MAX, PWM_MIN, PWM_MAX);
+    digitalWrite(IN_2, LOW);
+    PwmWrite(IN_1, pwm);
+    //high low
+    
+    //pwm
+    
+  }
+  else
+  {
+    //mov == 0
+    //low low = coast, sleep
+    //high high = brake, immediate stop
+    digitalWrite(IN_1, LOW);
+    digitalWrite(IN_2, LOW);
+  }
+
+return;
+}
+
+
+DRV8842::DRV8842(const int IN1, const int IN2, const int Decay, const int nFault, const int nSleep, const int nReset, const int I0, const int I1, const int I2, const int I3, const int I4) : OutputDevice()
+{
+   IN1_Pin = IN1; 
+   IN2_Pin = IN2;
+   Decay_Pin = Decay;
+   nFault_Pin = nFault;
+   nSleep_Pin = nSleep;
+   nReset_Pin = nReset;
+   I0_Pin = I0;
+   I1_Pin = I1;
+   I2_Pin = I2;
+   I3_Pin = I3;
+   I4_Pin = I4;
+
+   pinMode(IN1_Pin, OUTPUT);
+   pinMode(IN2_Pin, OUTPUT);
+   pinMode(Decay_Pin, OUTPUT);
+   pinMode(nFault_Pin, INPUT); //THE ONLY INPUT
+   pinMode(nSleep_Pin, OUTPUT);
+   pinMode(nReset_Pin, OUTPUT);
+   pinMode(I0_Pin, OUTPUT);
+   pinMode(I1_Pin, OUTPUT);
+   pinMode(I2_Pin, OUTPUT);
+   pinMode(I3_Pin, OUTPUT);
+   pinMode(I4_Pin, OUTPUT);
+
+   inType = spd;
+
+   
+}
+
+
+void DRV8842::easyMove(const long movement)
+{
+  //easy move takes in any number, if >0 go one way, if <0 go the other, if 0 then stop
+  int mov = movement;
+
+  digitalWrite(nSleep_Pin, HIGH);
+  digitalWrite(Decay_Pin, LOW);
+  //0x0B = 01011 = 50% for testing purposes, I4 is MSB, I0 is LSB
+  //the I-Bus is used to control motor curent speed
+  digitalWrite(I4_Pin, LOW);
+  digitalWrite(I3_Pin, HIGH);
+  digitalWrite(I2_Pin, LOW);
+  digitalWrite(I1_Pin, HIGH);
+  digitalWrite(I0_Pin, HIGH);
+  
+ if (!digitalRead(nFault_Pin))
+ {
+    if (mov > 0)
+    {
+      //go "forwar" - may need to flip
+      digitalWrite(IN1_Pin, HIGH);
+      digitalWrite(IN2_Pin, LOW);
+    }
+    else if (mov < 0)
+    {
+      //go "backward" - may need to flip
+      digitalWrite(IN1_Pin, LOW);
+      digitalWrite(IN2_Pin, HIGH);
+    }
+    else //mov == 0
+    {
+      //brake
+      digitalWrite(IN1_Pin, HIGH);    
+      digitalWrite(IN2_Pin, HIGH);
+    }
+ }
   
   return;
 }
@@ -883,9 +1218,9 @@ void DRV8842::easyMove(const long movement)
 
                                             
 //if this IOAlgorithm uses feedback device, this function is used by the joint interface to set it, and sets the feedbackInitialized flag to true
-void IOAlgorithm::setFeedDevice(FeedbackDevice fdDev)
+void IOAlgorithm::setFeedDevice(FeedbackDevice* fdDev)
 {
-  *feedbackDev = fdDev;
+  feedbackDev = fdDev;
   feedbackInitialized = true;
 }
 
@@ -896,7 +1231,7 @@ void IOAlgorithm::setFeedDevice(FeedbackDevice fdDev)
 //        inDt, the float value representing the time differential between calls of the runAlgorithm method. 
 //        The PI Algorithm is meant to be put into a loop by the main program until it is finished, and dt represents 
 //        the amount of time that passes in between the calls to the algorithm in that loop, in seconds.
-PIAlgorithm::PIAlgorithm(int inKI, int inKP, float inDT) : IOAlgorithm()
+PIAlgorithm::PIAlgorithm(int inKP, int inKI, float inDT) : IOAlgorithm()
 {
   // Assign the values of the PIAlgorithm class to the ones provided to the constructor.
   // Sets errorSummation to be zero so that the error can be accurately accouted for for each phase of the
@@ -910,11 +1245,13 @@ PIAlgorithm::PIAlgorithm(int inKI, int inKP, float inDT) : IOAlgorithm()
   inType = pos;
   outType = spd;
   feedbackInType = pos;
+  hardStopPos1 = -1;
+  hardStopPos2 = -1;
 }
 
 // Same as above, but if the speed_minMag is provided. speedMinMag is an int -- representing speed values -- where 
 // the value passed is the slowest speed the motor is allowed to move when not simply stopping.
-PIAlgorithm::PIAlgorithm(int inKI, int inKP, float inDT, int inSpeed_minMag) : IOAlgorithm()
+PIAlgorithm::PIAlgorithm(int inKP, int inKI, float inDT, int inSpeed_minMag) : IOAlgorithm()
 {
   // Assign the values of the PIAlgorithm class to the ones provided to the constructor.
   // Sets errorSummation to be zero so that the error can be accurately accouted for for each phase of the
@@ -927,12 +1264,152 @@ PIAlgorithm::PIAlgorithm(int inKI, int inKP, float inDT, int inSpeed_minMag) : I
   inType = pos;
   outType = spd;
   feedbackInType = pos;
+  hardStopPos1 = -1;
+  hardStopPos2 = -1;
 }
 
 // Function that converts rotation units into something that can be worked with more easily—such as degrees.
 float PIAlgorithm::dist360(int pos_rotationUnits)
 {
   return (static_cast<float>(pos_rotationUnits)*360.0/(POS_MAX-POS_MIN));
+}
+
+//finds the shortest path between two positions in degrees. Note that this function doesn't consider things like hard stops, so
+//it shouldn't be used to find the BEST path. 
+float PIAlgorithm::calcShortPath(float present, float dest)
+{
+  //basically, your destination is always to the left or right of you, one way will be shorter. The direct center of the two paths is at 180 degrees
+  //from your starting point. Calculate the degrees to the destination by simply taking the difference between dest and present. If it's more than 180,
+  //then the shorter path is to go the other direction.
+  //If the destination is actually 180 degrees from the present, then either way is technically the shortest path. : ( Defaults to positive 180
+  float degToDest = dest - present;
+  if(abs(degToDest) > 180)
+  {
+    degToDest = ((360 - abs(dest - present)) * -1 * sign(degToDest));
+  }
+  else if(degToDest == -180) //use positive 180 if it's 180 degrees away
+  {
+    degToDest = 180;
+  }
+  
+  return(degToDest);
+}
+
+//calculates the best route to the destination in distance in degrees from the current position in degrees.
+//Returns IMPOSSIBLE_MOVEMENT if it can't reach the destination.
+float PIAlgorithm::calcRouteToDest(float present, float dest)
+{
+  float shortPathToDest = calcShortPath(present, dest); //find out the quickest path to the destination in degrees
+  if(shortPathToDest == 0) //if we're 0 degrees from the destination, just return now as we're done with a capital D
+  {
+    return 0;
+  }
+  //if there aren't hard stops set for this joint, the short path is fine
+  else if(hardStopPos1 == -1)
+  {
+    return shortPathToDest;
+  }
+  //if there are hard stops, we gotta run some logic to make sure we choose a path without a collision
+  else
+  {
+    //if the destination is the same space as the hard stop, that's impossible to pull off
+    if(hardStopPos1 == dest || hardStopPos2 == dest)
+    {
+      return IMPOSSIBLE_MOVEMENT;
+    }
+    
+    float shortPathToStop1 = calcShortPath(present, hardStopPos1);
+    float shortPathToStop2 = calcShortPath(present, hardStopPos2);
+    float comparedStopPath;
+    float uncomparedStopPath;
+    
+    //we do this logic based on distances to our destination and to the hard stops. All calculations are based on placing destination, present, 
+    //and hard stop positions on a 360 degree circle path.
+    //There are three cases to consider. a) when the hard stops are both in the direction we want to go in
+    // b) the hard stops are both in the direction we don't want to go in (easiest case)
+    // c) the hard stops are split so one is to the direction we want to head and one is the other way on this 360 degree circle.
+    // For reference when saying direction I refer to heading to the 'left' or 'right' of the current position on the circle.
+    // Direction is referenced based on the sign of the calculated distances; if it's negative it's one way from present position, positive it's the other.
+    
+    //case a) check. If they are both in the direction we're heading, just use the closest one as the comparison point
+    if((sign(shortPathToStop1) == sign(shortPathToStop2)) && sign(shortPathToStop1) == sign(shortPathToDest))
+    {
+      if(abs(shortPathToStop1) < abs(shortPathToStop2))
+      {
+        comparedStopPath = shortPathToStop1;
+        uncomparedStopPath = shortPathToStop2;
+      }
+      else
+      {
+        comparedStopPath = shortPathToStop2;
+        uncomparedStopPath = shortPathToStop1;
+      }
+    }
+    
+    //case b) check. Check to see if exactly one hard stop is in the same direction as our destination, and if it does, use it as the comparison point
+    //this case will only work if it is preceeded by the check for case a) which rules out the possibility that both the hard
+    //stops are in the same direction. 
+    else if(sign(shortPathToStop1) == sign(shortPathToDest))
+    {
+      comparedStopPath = shortPathToStop1;
+      uncomparedStopPath = shortPathToStop2;
+    }
+    else if(sign(shortPathToStop2) == sign(shortPathToDest))
+    {
+      comparedStopPath = shortPathToStop2;
+      uncomparedStopPath = shortPathToStop1;
+    }
+    
+    //if it was neither a) or b) then it's c). In this case, since they're all not in the direction we're travelling to the destination, it's a safe route
+    else
+    {
+      return shortPathToDest;
+    }
+    
+    //if it was a) or b), then we calculate distance to the hard stop in our way and the destination. If the destination is closer, we can move to it
+    //without colliding
+    if(abs(comparedStopPath) > abs(shortPathToDest))
+    {
+      return shortPathToDest;
+    }
+    
+    //if it was a) or b) and one hard stop was in the way, then there are two scenarios left. We have to try and go the other, longer way around the circle
+    //to our destination. If the other hard stop is in this direction -- case b) -- then it's impossible to reach the destination as it lies in between 
+    //the two stops. But if case a) holds, then we might be able to still reach it depending on if the other hard stop or the destination is closer when
+    //going the longer way. If the destination is closer, we can reach it, but if the hard stop is closer, then we can't go this way either, it's impossible
+    else if(sign(uncomparedStopPath) == sign(shortPathToDest))//if direction to stop 2 isn't in the longer path we now want to try
+    {
+      float longUncomparedStopPath = (360 - abs(uncomparedStopPath)) * sign(uncomparedStopPath) * -1;
+      float longPathToDest = (360 - abs(shortPathToDest)) * sign(shortPathToDest) * -1;
+      
+      if(abs(longUncomparedStopPath) > abs(longPathToDest)) //if dest is closer, we're good on this path
+      {
+        return longPathToDest;
+      }
+    }
+    
+    //if no good case held and returned, movement is impossible
+    return IMPOSSIBLE_MOVEMENT;
+  }
+}
+
+//function for specifying positions of hard stops attached to this joint, that is positions in degrees that the joint can't travel through
+//To disable hard stops, set one or both to -1.
+void PIAlgorithm::setHardStopPositions(float hardStopPos1_deg, float hardStopPos2_deg)
+{
+  if(!(hardStopPos1_deg == -1 || hardStopPos2_deg == -1))
+  {
+    hardStopPos1_deg = abs(hardStopPos1_deg);
+    hardStopPos2_deg = abs(hardStopPos2_deg);
+  }
+  else
+  {
+    hardStopPos1_deg = -1;
+    hardStopPos2_deg = -1;
+  }
+  
+  hardStopPos1 = hardStopPos1_deg;
+  hardStopPos2 = hardStopPos2_deg;
 }
 
 // Full function that takes a postion input (an value for the gear to move to) as well as a boolean to check if the movement
@@ -945,7 +1422,11 @@ long PIAlgorithm::runAlgorithm(const long input, bool * ret_OutputFinished)
   // Check if the Algorithm class has actually been initialized or not. If not, kill the function.
   if (feedbackInitialized == false)
   {
+<<<<<<< HEAD
     *ret_OutputFinished = false;    
+=======
+    *ret_OutputFinished = false;	
+>>>>>>> refs/remotes/origin/Library_Module_dev
     return 0;
   }
   
@@ -954,7 +1435,15 @@ long PIAlgorithm::runAlgorithm(const long input, bool * ret_OutputFinished)
   long posNow = feedbackDev->getFeedback();
   float deg_posDest = dist360(posDest);
   float deg_posNow = dist360(posNow);
-  float deg_disToDest = deg_posDest - deg_posNow;
+  
+  float deg_disToDest = calcRouteToDest(deg_posNow, deg_posDest);
+  
+  //if the calculation returned that we can't reach the destination, return error state
+  if(deg_disToDest == IMPOSSIBLE_MOVEMENT)
+  {
+    *ret_OutputFinished = false;
+    return 0;
+  }
 
   // Check if the current value of the rotation is within the margin-of-error acceptable for the location.
   // If so, set the value to be OutputFinished to be true, so that the function should not run again.
@@ -963,10 +1452,10 @@ long PIAlgorithm::runAlgorithm(const long input, bool * ret_OutputFinished)
     *ret_OutputFinished = true;
     return 0;
   }
-
+  
   // Calculate the value of how fast the motor needs to turn at its current interval
   int spd_out = (KP * deg_disToDest + KI * errorSummation);
-
+  
   // Check for fringe cases if the speed out value is outside of the acceptable range,
   // forcing the value to return back into the acceptable range.
   if (spd_out > SPEED_MAX)
@@ -1020,7 +1509,6 @@ long SpdToSpdNoFeedAlgorithm::runAlgorithm(const long input, bool * ret_OutputFi
 long Ma3Encoder12b::getFeedback()
 {
   uint32_t readOnPeriod = getOnPeriod_us(pwmMappedPin); //function part of the pwm reader library
-
   //values will be between PWM_READ_MIN and PWM_READ_MAX, that is 1 and 4097. Or at least they should be; if it's above there was slight comm error and it can be scaled down to the max val.
   if(readOnPeriod > PWM_READ_MAX)
   {
@@ -1040,7 +1528,6 @@ long Ma3Encoder12b::getFeedback()
       readOnPeriod = PWM_READ_MAX;
     }
   }
-
   //scale the values from the pwm values to the common position values, IE 1-4097 to POS_MIN-POS_MAX, and return it
   return(map(readOnPeriod, PWM_READ_MIN, PWM_READ_MAX, POS_MIN, POS_MAX));
 }
