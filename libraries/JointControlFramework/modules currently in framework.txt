@@ -14,12 +14,7 @@ based on speed, position, or torque with feedback capabilities. Unfortunatley, i
 *DynamixelController: Interfaces with either MX or AX dynamixel. They can operate a in Wheel, Joint, and Multi-rotation modes which take speed, position, and position respectively. 
 Complicated. Interfaces with RoveDynamixel.h so you need to look at those functions to get a better understanding of how the functions work.
 
-
 *DRV8388: H-Bridge IC that interfaces with a small DC brush motor. Controlled by a phase and enable pin, phase determines direction while enable is controlled by a pulsated PWM signal.
-
-*DRV8842
-
-*DRV8871
 
 Feedback Devices:
 Ma3Encoder12b: MA3 magnetic encoder, 12 bit pwm version. Communicates to us via pwm, 12 bit resolution of degrees over 360 degrees.
