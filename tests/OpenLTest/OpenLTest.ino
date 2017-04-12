@@ -8,8 +8,9 @@
  * Tests closed loop capabilities of the joint control framework using the PI algorithm construct to move a motor while taking in position data from an encoder
  */
 
-JointInterface* openL1;
-JointInterface* openL2;
+JointInterface* J1_tilt;
+JointInterface* J2_rot;
+JointInterface* Gripper;
 
 void setup() {} //fuck you setup
 
@@ -21,9 +22,14 @@ void loop() {
 
   while(1)
   {
-    openL1->runOutputControl(-1000);
-    openL2->runOutputControl(-1000);
-    delay(10);
+    //J1_tilt->runOutputControl(-1000);
+    //J2_rot->runOutputControl(-1000);
+    //delay(4000);
+    //J1_tilt->runOutputControl(1000);
+    //J2_rot->runOutputControl(1000);
+    //delay(4000);
+
+    Gripper->runOutputControl(-1000);
   }
    
   
@@ -32,12 +38,26 @@ void loop() {
 void initialize()
 {
  
-  
-  VNH5019* controller1 = new VNH5019(PG_1, PK_7, PK_6, false);
-  VNH5019* controller2 = new VNH5019(PK_4, PH_0, PH_1, false);
+  pinMode(PA_7, OUTPUT);
+  pinMode(PL_2, OUTPUT);
+  pinMode(PE_4, OUTPUT);
+  pinMode(PP_3, OUTPUT);
 
-  openL1 = new SingleMotorJoint(spd, controller1);
-  openL2 = new SingleMotorJoint(spd, controller2);
+  digitalWrite(PA_7, HIGH);
+  digitalWrite(PL_2, HIGH);
+  digitalWrite(PE_4, HIGH);
+  digitalWrite(PP_3, LOW);
+  
+  OutputDevice* controller1 = new DRV8388(PG_1, PP_5, false);
+  OutputDevice* controller2 = new DRV8388(PF_3, PL_3, true);
+  OutputDevice* GripMot = new DRV8388(PF_2, PQ_2, true);
+
+  J1_tilt = new TiltJoint(spd, controller2, controller1);
+  J2_rot = new RotateJoint(spd, controller2, controller1);
+
+  J1_tilt->coupleJoint(J2_rot);
+
+  Gripper = new SingleMotorJoint(spd, GripMot);
 }
 
 
