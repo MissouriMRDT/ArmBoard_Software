@@ -74,23 +74,13 @@ void JointInterface::coupleJoint(JointInterface* otherJoint)
 //feed: The feedback device used with this joint
 SingleMotorJoint::SingleMotorJoint(ValueType inputType, IOAlgorithm *alg, OutputDevice* cont, FeedbackDevice* feed) : JointInterface()
 {
-<<<<<<< HEAD
-  //assignments
-  inType = inputType;
-  controller1 = cont;
-  feedback = feed;
-  manip = alg;
-  manip -> setFeedDevice(*feed);
-
-=======
 	//assignments
 	inType = inputType;
 	controller1 = cont;
 	feedback = feed;
 	manip = alg;
 	manip -> setFeedDevice(feed);
-  
->>>>>>> refs/remotes/origin/Library_Module_dev
+
   //checks to make sure the passed arguments all work with each other, that is that the algorithm's input type is the same as what the user is putting in, and
   //that the algorithm's output value type is what the output device expects to take in, etc
   if((inputType == alg->inType) && (cont->inType == alg->outType) && (alg->feedbackInType == feed->fType))
@@ -158,15 +148,6 @@ JointControlStatus SingleMotorJoint::runOutputControl(const long movement)
 
   else if(validConstruction)
   {
-<<<<<<< HEAD
-    //calls algorithm
-    mov = manip->runAlgorithm(movement, &motionComplete);
-
-    //moves device with output decided on by the algorithm
-    controller1->move(mov);
-
-    if(motionComplete == true)
-=======
   	//calls algorithm
   	mov = manip->runAlgorithm(movement, &motionComplete);
     
@@ -177,7 +158,6 @@ JointControlStatus SingleMotorJoint::runOutputControl(const long movement)
     }
     
     else if(motionComplete == true)
->>>>>>> refs/remotes/origin/Library_Module_dev
     {
       returnStatus = OutputComplete;
     }
@@ -208,15 +188,6 @@ JointControlStatus SingleMotorJoint::runOutputControl(const long movement)
 //feed: The feedback device used with this joint
 TiltJoint::TiltJoint(ValueType inputType, IOAlgorithm *alg, OutputDevice* cont1, OutputDevice* cont2, FeedbackDevice* feed) : JointInterface()
 {
-<<<<<<< HEAD
-  //assignments
-  inType = inputType;
-  controller1 = cont1;
-  controller2 = cont2;
-  feedback = feed;
-  manip = alg;
-  manip -> setFeedDevice(*feed);
-=======
 	//assignments
 	inType = inputType;
 	controller1 = cont1;
@@ -224,7 +195,6 @@ TiltJoint::TiltJoint(ValueType inputType, IOAlgorithm *alg, OutputDevice* cont1,
 	feedback = feed;
 	manip = alg;
   manip -> setFeedDevice(feed);
->>>>>>> refs/remotes/origin/Library_Module_dev
 
   //checks to make sure the passed arguments all work with each other, that is that the algorithm's input type is the same as what the user is putting in, and
   //that the algorithm's output value type is what the output device expects to take in, etc
@@ -296,49 +266,7 @@ JointControlStatus TiltJoint::runOutputControl(const long movement)
   {
     //largely a temp value to store any modifications made to the input
     int mov;
-
-<<<<<<< HEAD
-    //runs the algorithm on the input
-    mov = manip->runAlgorithm(movement, &motionComplete);
-
-    motorOneSpeed = mov;
-    motorTwoSpeed = mov;
-
-    //this only happens if this joint has been coupled with another joint
-    //the coupled logic will modify the speed calculated by the algorithm
-    //to allow smooth tilting and rotating at the same time
-    if(coupled)
-    {
-      motorOneSpeed += coupledJoint->motorOneSpeed;
-      if (motorOneSpeed > 1000)
-      {
-        motorOneSpeed = 1000;
-      }
-      if (motorOneSpeed < -1000)
-      {
-        motorOneSpeed = -1000;
-      }
-
-      motorTwoSpeed += coupledJoint->motorTwoSpeed;
-      if (motorTwoSpeed > 1000)
-      {
-        motorTwoSpeed = 1000;
-      }
-      if (motorTwoSpeed < -1000)
-      {
-        motorTwoSpeed = -1000;
-      }
-    }
     
-
-    //send to the motor move command
-    controller1->move(motorOneSpeed);
-
-    //both the controllers should move the arm in the same direction. send command to motor 2
-    controller2->move(motorTwoSpeed);
-
-    if(motionComplete == true)
-=======
   	//runs the algorithm on the input
   	mov = manip->runAlgorithm(movement, &motionComplete);
     
@@ -349,7 +277,6 @@ JointControlStatus TiltJoint::runOutputControl(const long movement)
     }
     
     else if(motionComplete == true)
->>>>>>> refs/remotes/origin/Library_Module_dev
     {
       returnStatus = OutputComplete;
     }
@@ -442,15 +369,6 @@ RotateJoint::RotateJoint(ValueType inputType, OutputDevice* cont1, OutputDevice*
 //feed: A pointer to the feedback device used on this joint.
 RotateJoint::RotateJoint(ValueType inputType, IOAlgorithm *alg, OutputDevice* cont1, OutputDevice* cont2, FeedbackDevice* feed) : JointInterface()
 {
-<<<<<<< HEAD
-  //assignments
-  inType = inputType;
-  controller1 = cont1;
-  controller2 = cont2;
-  feedback = feed;
-  manip = alg;
-  manip -> setFeedDevice(*feed);
-=======
 	//assignments
 	inType = inputType;
 	controller1 = cont1;
@@ -458,7 +376,6 @@ RotateJoint::RotateJoint(ValueType inputType, IOAlgorithm *alg, OutputDevice* co
 	feedback = feed;
 	manip = alg;
   manip -> setFeedDevice(feed);
->>>>>>> refs/remotes/origin/Library_Module_dev
 
   //checks to make sure the passed arguments all work with each other, that is that the algorithm's input type is the same as what the user is putting in, and
   //that the algorithm's output value type is what the output device expects to take in, etc
@@ -503,46 +420,7 @@ JointControlStatus RotateJoint::runOutputControl(const long movement)
 
     //runs the algorithm on the input
     mov = manip->runAlgorithm(movement, &motionComplete);
-<<<<<<< HEAD
-
-    motorOneSpeed = mov;
-    motorTwoSpeed = -mov;
-
-    //this only happens if this joint has been coupled with another joint
-    //the coupled logic will modify the speed calculated by the algorithm
-    //to allow smooth tilting and rotating at the same time
-    if(coupled)
-    {
-      motorOneSpeed += coupledJoint->motorOneSpeed;
-      if (motorOneSpeed > 1000)
-      {
-        motorOneSpeed = 1000;
-      }
-      if (motorOneSpeed < -1000)
-      {
-        motorOneSpeed = -1000;
-      }
-
-      motorTwoSpeed += coupledJoint->motorTwoSpeed;
-      if (motorTwoSpeed > 1000)
-      {
-        motorTwoSpeed = 1000;
-      }
-      if (motorTwoSpeed < -1000)
-      {
-        motorTwoSpeed = -1000;
-      }
-    }
-
-    //send to the motor move command
-    controller1->move(motorOneSpeed);
-
-    //send command to motor 2. Since this is a rotate joint, the motors need to go in opposite directions so send the second one a negafied value
-    controller2->move(motorTwoSpeed);
-
-    if(motionComplete == true)
-=======
-    
+   
     //if motionComplete returned false but movement is 0, that's an indication that an error state occured
     if(motionComplete == false && mov == 0)
     {
@@ -550,7 +428,6 @@ JointControlStatus RotateJoint::runOutputControl(const long movement)
     }
     
     else if(motionComplete == true)
->>>>>>> refs/remotes/origin/Library_Module_dev
     {
       returnStatus = OutputComplete;
     }
@@ -1083,130 +960,6 @@ void DRV8842::easyMove(const long movement)
 }
 
 
-//DRV8871
-DRV8871::DRV8871(const int IN_PIN_1, const int IN_PIN_2, const bool upsideDown) : OutputDevice()
-{
-  IN_1 = IN_PIN_1;
-  IN_2 = IN_PIN_2;
-  inType = spd;
-  invert = upsideDown;
-
-  pinMode(IN_1, OUTPUT);
-  pinMode(IN_2, OUTPUT);
-  
-}
-
-void DRV8871::move(const long movement)
-{
-  int mov = movement;
-  int pwm = 0;
-  
-  if(mov > 0)
-  {
-      //low high
-      pwm = map(mov, 0, SPEED_MAX, PWM_MIN, PWM_MAX);
-      digitalWrite(IN_1, LOW);
-      PwmWrite(IN_2, pwm);
-    //pwm
-    
-  }
-  
-  else if (mov < 0)
-  {
-    mov = abs(mov);
-    pwm = map(mov, 0, SPEED_MAX, PWM_MIN, PWM_MAX);
-    digitalWrite(IN_2, LOW);
-    PwmWrite(IN_1, pwm);
-    //high low
-    
-    //pwm
-    
-  }
-  else
-  {
-    //mov == 0
-    //low low = coast, sleep
-    //high high = brake, immediate stop
-    digitalWrite(IN_1, LOW);
-    digitalWrite(IN_2, LOW);
-  }
-
-return;
-}
-
-
-DRV8842::DRV8842(const int IN1, const int IN2, const int Decay, const int nFault, const int nSleep, const int nReset, const int I0, const int I1, const int I2, const int I3, const int I4) : OutputDevice()
-{
-   IN1_Pin = IN1; 
-   IN2_Pin = IN2;
-   Decay_Pin = Decay;
-   nFault_Pin = nFault;
-   nSleep_Pin = nSleep;
-   nReset_Pin = nReset;
-   I0_Pin = I0;
-   I1_Pin = I1;
-   I2_Pin = I2;
-   I3_Pin = I3;
-   I4_Pin = I4;
-
-   pinMode(IN1_Pin, OUTPUT);
-   pinMode(IN2_Pin, OUTPUT);
-   pinMode(Decay_Pin, OUTPUT);
-   pinMode(nFault_Pin, INPUT); //THE ONLY INPUT
-   pinMode(nSleep_Pin, OUTPUT);
-   pinMode(nReset_Pin, OUTPUT);
-   pinMode(I0_Pin, OUTPUT);
-   pinMode(I1_Pin, OUTPUT);
-   pinMode(I2_Pin, OUTPUT);
-   pinMode(I3_Pin, OUTPUT);
-   pinMode(I4_Pin, OUTPUT);
-
-   inType = spd;
-
-   
-}
-
-
-void DRV8842::easyMove(const long movement)
-{
-  //easy move takes in any number, if >0 go one way, if <0 go the other, if 0 then stop
-  int mov = movement;
-
-  digitalWrite(nSleep_Pin, HIGH);
-  digitalWrite(Decay_Pin, LOW);
-  //0x0B = 01011 = 50% for testing purposes, I4 is MSB, I0 is LSB
-  //the I-Bus is used to control motor curent speed
-  digitalWrite(I4_Pin, LOW);
-  digitalWrite(I3_Pin, HIGH);
-  digitalWrite(I2_Pin, LOW);
-  digitalWrite(I1_Pin, HIGH);
-  digitalWrite(I0_Pin, HIGH);
-  
- if (!digitalRead(nFault_Pin))
- {
-    if (mov > 0)
-    {
-      //go "forwar" - may need to flip
-      digitalWrite(IN1_Pin, HIGH);
-      digitalWrite(IN2_Pin, LOW);
-    }
-    else if (mov < 0)
-    {
-      //go "backward" - may need to flip
-      digitalWrite(IN1_Pin, LOW);
-      digitalWrite(IN2_Pin, HIGH);
-    }
-    else //mov == 0
-    {
-      //brake
-      digitalWrite(IN1_Pin, HIGH);    
-      digitalWrite(IN2_Pin, HIGH);
-    }
- }
-  
-  return;
-}
-
 
                                            /*****************************
                                             *
@@ -1422,11 +1175,7 @@ long PIAlgorithm::runAlgorithm(const long input, bool * ret_OutputFinished)
   // Check if the Algorithm class has actually been initialized or not. If not, kill the function.
   if (feedbackInitialized == false)
   {
-<<<<<<< HEAD
     *ret_OutputFinished = false;    
-=======
-    *ret_OutputFinished = false;	
->>>>>>> refs/remotes/origin/Library_Module_dev
     return 0;
   }
   

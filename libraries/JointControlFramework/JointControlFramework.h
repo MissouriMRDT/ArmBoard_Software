@@ -92,16 +92,10 @@ class OutputDevice;
 class DirectDiscreteHBridge;
 class DynamixelController;
 class Sdc2130;
-<<<<<<< HEAD
-class DRV8388;//spectrometer motor gryphon
-class DRV8871;//drill motor gryphon
-class DRV8842;//science main arm gryphon
-=======
 class DVR8388;
 class DRV8871;
 class DRV8842;
 
->>>>>>> refs/remotes/origin/Library_Module_dev
   //feedback devices and derived classes
 class FeedbackDevice;
 
@@ -626,10 +620,6 @@ class DRV8871 : public OutputDevice
     
 };
 
-<<<<<<< HEAD
-=======
-
->>>>>>> refs/remotes/origin/Library_Module_dev
 //DRV8842 Motor Controller IC
 //Internal H-bridge with extra functions for controlling motor speed
 //With: sleep mode, reset, fault detection, current decay mode
@@ -648,12 +638,7 @@ class DRV8842 : public OutputDevice
     DRV8842(const int IN1, const int IN2, const int Decay, const int nFault, const int nSleep, const int nReset, const int I0, const int I1, const int I2, const int I3, const int I4);
 };
 
-<<<<<<< HEAD
 
-                                           
-                                           
-=======
->>>>>>> refs/remotes/origin/Library_Module_dev
                                            /******************************************************************************
                                            *
                                            * Feedback Device derived classes
