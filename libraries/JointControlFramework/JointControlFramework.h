@@ -599,46 +599,6 @@ class DRV8388 : public OutputDevice
     DRV8388 (const int EN_PIN, const int PH_PIN, bool upsideDown);
 };
 
-<<<<<<< HEAD
-//DRV8871 H bridge IC
-class DRV8871 : public OutputDevice
-{
-  private:
-    //input pins to H bridge and min/max vals for pwm
-    int IN_1, IN_2;
-    const int PWM_MIN = 0, PWM_MAX = 255;
-
-  protected:
-    //pass speed to move function
-    void move (const long movement);
-
-  public:
-    //in constructor, declare pins for in 1 and 2
-    DRV8871 (const int IN_PIN_1, const int IN_PIN_2, bool upsideDown);
-    
-    
-};
-
-//DRV8842 Motor Controller IC
-//Internal H-bridge with extra functions for controlling motor speed
-//With: sleep mode, reset, fault detection, current decay mode
-class DRV8842 : public OutputDevice
-{
-   private:
-     //pins this motor controller IC has
-     int IN1_Pin, IN2_Pin, Decay_Pin, nFault_Pin, nSleep_Pin, nReset_Pin, I0_Pin, I1_Pin, I2_Pin, I3_Pin, I4_Pin;
-
-   protected:
-    //move function, pass in speed
-    void easyMove (const long movement);
-
-   public:
-    //constructor
-    DRV8842(const int IN1, const int IN2, const int Decay, const int nFault, const int nSleep, const int nReset, const int I0, const int I1, const int I2, const int I3, const int I4);
-};
-=======
->>>>>>> Library_Module_dev
-
 
                                            /******************************************************************************
                                            *
