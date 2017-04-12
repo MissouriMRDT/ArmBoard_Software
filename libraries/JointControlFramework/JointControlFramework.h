@@ -93,8 +93,6 @@ class DirectDiscreteHBridge;
 class DynamixelController;
 class Sdc2130;
 class DVR8388;
-class DRV8871;
-class DRV8842;
 
   //feedback devices and derived classes
 class FeedbackDevice;
@@ -601,6 +599,7 @@ class DRV8388 : public OutputDevice
     DRV8388 (const int EN_PIN, const int PH_PIN, bool upsideDown);
 };
 
+<<<<<<< HEAD
 //DRV8871 H bridge IC
 class DRV8871 : public OutputDevice
 {
@@ -637,6 +636,8 @@ class DRV8842 : public OutputDevice
     //constructor
     DRV8842(const int IN1, const int IN2, const int Decay, const int nFault, const int nSleep, const int nReset, const int I0, const int I1, const int I2, const int I3, const int I4);
 };
+=======
+>>>>>>> Library_Module_dev
 
 
                                            /******************************************************************************
