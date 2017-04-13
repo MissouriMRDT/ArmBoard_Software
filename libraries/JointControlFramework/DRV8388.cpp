@@ -1,7 +1,8 @@
 #include "DRV8388.h"
 
 //DRV8388 constructor here
-// pin asignments for enable pin and phase pin, also a bool to determine the orientation of da motor
+//pin asignments for enable pin and phase pin, also a bool to determine the orientation of da motor
+//Pin assignment masks are based on energia pin standard
 DRV8388::DRV8388 (const int EN_PIN, const int PH_PIN, bool upsideDown) : OutputDevice()
 {
   ENABLE_PIN = EN_PIN;
@@ -22,7 +23,6 @@ void DRV8388::move(const long movement)
   //if mounted upside down then invert the signal passed to it and move accordingly
   if (invert)
   {
-    //inverts the input easily
     mov = -mov;
   }
   

@@ -21,6 +21,7 @@ class DRV8388 : public OutputDevice
 
     //constructor here
     //pin asignments for enable pin and phase pin, also a bool to determine the orientation of da motor
+    //Pin assignment masks are based on energia pin standard
     DRV8388 (const int EN_PIN, const int PH_PIN, bool upsideDown);
 };
 
