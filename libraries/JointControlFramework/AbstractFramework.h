@@ -69,7 +69,7 @@ class JointInterface
     //this joint is deemed to be, it runs it.
     //Must pass an integer for this implementation. Will break otherwise.
     //returns: The status of attempting to control this joint. Such as if the output is now running, or if it's complete, or if there was an error
-    virtual JointControlStatus runOutputControl(const long movement);
+    virtual JointControlStatus runOutputControl(const long movement) = 0;
 
     //couples this joint with the other joint
     //so they can point to eachother
@@ -85,17 +85,13 @@ class FeedbackDevice
 	friend class RotateJoint;
   friend class JointInterface;
 
-  protected:
-    //blank constructor for the base class
-    FeedbackDevice() {} ;
-
 	public:
 
 		//returns feedback. Public because all the IOAlgorithm classes need to be able to call it,
 		//and friend isn't inherited so we can't just make the abstract class our friend.
 		//returns: a value representing feedback, the range of the value depends on what input type this device returns.
 		//For example, if this device returns speed feedback, the values shall be in the range between SPEED_MIN and SPEED_MAX
-		virtual long getFeedback();
+		virtual long getFeedback() = 0;
 
 		ValueType fType;
 };
@@ -115,10 +111,7 @@ class OutputDevice
 		//calls the device to move the motor, based on the passed value of movement.
 		//Input: Can be values based on any of the input types as defined in the enum above, and the ranges for these values
 		//should stay within the max and min constants for each type
-		virtual void move(const long movement);
-
-		//blank constructor for the base class
-		OutputDevice() {};
+		virtual void move(const long movement) = 0;
 
 		//expected input that the output device wants.
 		ValueType inType;
@@ -141,9 +134,6 @@ class IOAlgorithm
 
 	protected:
 
-		//Constructor for the base class is empty.
-		IOAlgorithm() {};
-
     //pointer to the feedback device used on this joint, if there is any
     FeedbackDevice * feedbackDev;
 
@@ -163,7 +153,7 @@ class IOAlgorithm
 		//is supposed to take in speed and output position, then its input is constrained by SPEED_MIN and SPEED_MAX, and its output is constrained by POS_MIN and POS_MAX
     //bool * ret_outputFinished: parameter passed by pointer, returns true if the joint has finished its controlled movement and ready to exit the control loop,
     //false if it's still in the middle of getting to its desired finished state IE in the middle of moving to a desired end position or reaching a desired end speed
-		virtual long runAlgorithm(const long input, bool * ret_OutputFinished);
+		virtual long runAlgorithm(const long input, bool * ret_OutputFinished) = 0;
 
     //if this IOAlgorithm uses feedback device, this function is used by the joint interface to set it, and sets the feedbackInitialized flag to true
     void setFeedDevice(FeedbackDevice *fdDev);
