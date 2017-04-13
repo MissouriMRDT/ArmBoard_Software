@@ -45,7 +45,7 @@ SingleMotorJoint::SingleMotorJoint(ValueType inputType, OutputDevice* cont) : Jo
   //that the algorithm's output value type is what the output device expects to take in, etc.
   //Technically this should never go wrong as long as the algorithmSelector is working properly, but it never hurts to double check. If indeed the construction
   //winds up being invalid, for debugging try checking the algorithm selector method for bugs
-  if((inputType == manip->inType) && (manip->outType == cont->inType))
+  if(inputType == cont->inType)
   {
     validConstruction = true;
   }

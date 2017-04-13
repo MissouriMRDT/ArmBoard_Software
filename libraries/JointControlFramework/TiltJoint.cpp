@@ -48,7 +48,7 @@ TiltJoint::TiltJoint(ValueType inputType, OutputDevice* cont1, OutputDevice* con
 
   //checks to make sure the passed arguments all work with each other, that is that the algorithm's input type is the same as what the user is putting in, and
   //that the algorithm's output value type is what the output device expects to take in, both output devices line up properly, etc
-  if((inputType == manip->inType) && (manip->outType == cont1->inType) && (cont1->inType == cont2->inType))
+  if((inputType == cont1->inType) && (cont1->inType == cont2->inType))
   {
     validConstruction = true;
   }
