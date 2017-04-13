@@ -1,5 +1,3 @@
-#include "JointControlFramework.h"
-
 /* Programmers: Drue Satterfield, David Strickland
  * Date of creation: 10/11/2016
  * Sub system: arm board
@@ -8,7 +6,13 @@
  * Basically this is just a model of the main-ish program with the framework incorporated
  */
 
-#include "arm.h";
+
+#include "JointControlFramework.h"
+#include "arm.h"
+#include "Ma3Encoder12b.h"
+#include "DirectDiscreteHBridge.h"
+#include "DRV8388.h"
+#include "PIAlgorithm.h"
 
 FeedbackDevice* feedbackDevice;
 JointInterface * inHerFace;
