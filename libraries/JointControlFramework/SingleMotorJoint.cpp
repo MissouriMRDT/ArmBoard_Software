@@ -9,9 +9,9 @@ SingleMotorJoint::SingleMotorJoint(ValueType inputType, IOAlgorithm *alg, Output
 {
 	//assignments
 	inType = inputType;
-	controller1 = cont;
-	feedback = feed;
-	manip = alg;
+	*controller1 = *cont;
+	*feedback = *feed;
+	*manip = *alg;
 	manip -> setFeedDevice(feed);
   
   algorithmUsed = true;
@@ -37,7 +37,7 @@ SingleMotorJoint::SingleMotorJoint(ValueType inputType, OutputDevice* cont) : Jo
 {
 	//assignments
 	inType = inputType;
-	controller1 = cont;
+	*controller1 = *cont;
 
 	algorithmUsed = false;
 

@@ -10,8 +10,8 @@ RotateJoint::RotateJoint(ValueType inputType, OutputDevice* cont1, OutputDevice*
 {
 	//assignments
 	inType = inputType;
-	controller1 = cont1;
-	controller2 = cont2;
+	*controller1 = *cont1;
+	*controller2 = *cont2;
 
 	algorithmUsed = false;
 
@@ -38,10 +38,10 @@ RotateJoint::RotateJoint(ValueType inputType, IOAlgorithm *alg, OutputDevice* co
 {
 	//assignments
 	inType = inputType;
-	controller1 = cont1;
-	controller2 = cont2;
-	feedback = feed;
-	manip = alg;
+	*controller1 = *cont1;
+	*controller2 = *cont2;
+	*feedback = *feed;
+	*manip = *alg;
   manip -> setFeedDevice(feed);
   
   algorithmUsed = true;
