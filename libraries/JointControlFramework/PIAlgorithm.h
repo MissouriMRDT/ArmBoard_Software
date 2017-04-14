@@ -48,6 +48,11 @@ class PIAlgorithm : public IOAlgorithm
     // the motor controlling this joint should move
     // If ret_OutputFinished returns false but input returns 0, it's an indication that an error has occured
     long runAlgorithm(const long input, bool * ret_OutputFinished);
+    
+  protected:
+  
+    //cloning function, used to return a pointer to an exactly copy of this algorithm
+    IOAlgorithm* clone();
 
   public:
     // Constructor. 

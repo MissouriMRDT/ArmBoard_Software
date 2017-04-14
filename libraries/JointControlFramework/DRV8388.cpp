@@ -60,3 +60,16 @@ void DRV8388::move(const long movement)
   
   return;
 }
+
+//cloning function, used to return a pointer to an exactly copy of this device
+OutputDevice* DRV8388::clone()
+{
+  DRV8388* newDev = new DRV8388();
+  
+  newDev->ENABLE_PIN = this->ENABLE_PIN;
+  newDev->PHASE_PIN = this->PHASE_PIN;
+  newDev->inType = this->inType;
+  newDev->invert = this->invert;
+  
+  return(newDev);
+}

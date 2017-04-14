@@ -84,6 +84,11 @@ class FeedbackDevice
 	friend class TiltJoint;
 	friend class RotateJoint;
   friend class JointInterface;
+  
+  protected:
+    //cloning function, used to return a pointer to an exactly copy of this device
+    virtual FeedbackDevice* clone() = 0;
+    
 
 	public:
 
@@ -112,6 +117,9 @@ class OutputDevice
 		//Input: Can be values based on any of the input types as defined in the enum above, and the ranges for these values
 		//should stay within the max and min constants for each type
 		virtual void move(const long movement) = 0;
+    
+    //cloning function, used to return a pointer to an exactly copy of this device
+    virtual OutputDevice* clone() = 0;
 
 		//expected input that the output device wants.
 		ValueType inType;
@@ -154,6 +162,9 @@ class IOAlgorithm
     //bool * ret_outputFinished: parameter passed by pointer, returns true if the joint has finished its controlled movement and ready to exit the control loop,
     //false if it's still in the middle of getting to its desired finished state IE in the middle of moving to a desired end position or reaching a desired end speed
 		virtual long runAlgorithm(const long input, bool * ret_OutputFinished) = 0;
+    
+    //cloning function, used to return a pointer to an exactly copy of this algorithm
+    virtual IOAlgorithm* clone() = 0;
 
     //if this IOAlgorithm uses feedback device, this function is used by the joint interface to set it, and sets the feedbackInitialized flag to true
     void setFeedDevice(FeedbackDevice *fdDev);

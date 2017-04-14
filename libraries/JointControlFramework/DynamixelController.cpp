@@ -28,10 +28,10 @@ DynamixelController::DynamixelController(const int Tx, const int Rx, bool upside
   //view RoveDynamixel.h for details on all functions called here
   //note: no comments in RoveDynamixel
   DynamixelInit(&dynamixel, type, id, uartIndex, baud);
-
+  delay(20);
   //actually sets the values correctly for the dynamixel
-  DynamixelSetId(&dynamixel, id);
   DynamixelSetBaudRate(dynamixel, baud);
+  delay(20);
   DynamixelSetMode(dynamixel, mode);
 }
 
@@ -78,6 +78,21 @@ void DynamixelController::move(const long movement)
     //can take up to a uint16_t which exceeds a standard int but
     errorMessageIgnore = DynamixelSpinWheel(dynamixel, 0);
   }
+  
+  delay(30);
 
   return;
+}
+
+//cloning function, used to return a pointer to an exactly copy of this device
+OutputDevice* DynamixelController::clone()
+{
+  DynamixelController* newDev = new DynamixelController();
+  newDev->Tx_PIN = this->Tx_PIN;
+  newDev->baudRate = this->baudRate;
+  newDev->invert = this->invert;
+  newDev->inType = this->inType;
+  newDev->dynamixel = this->dynamixel;
+  
+  return(newDev);
 }

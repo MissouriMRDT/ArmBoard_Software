@@ -74,3 +74,17 @@ void Sdc2130::moveSpeed(const int movement)
 
 	}
 }
+
+//cloning function, used to return a pointer to an exactly copy of this device
+OutputDevice* Sdc2130::clone()
+{
+  Sdc2130 * newDev = new Sdc2130();
+  
+  newDev->PWM_PIN = this->PWM_PIN;
+	newDev->inType = this->inType;
+	newDev->invert = this->invert;
+	newDev->controlType = this->controlType;
+	newDev->pwmVal = this->pwmVal;
+  
+  return(newDev);
+}

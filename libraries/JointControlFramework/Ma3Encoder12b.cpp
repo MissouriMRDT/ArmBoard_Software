@@ -26,3 +26,14 @@ long Ma3Encoder12b::getFeedback()
   //scale the values from the pwm values to the common position values, IE 1-4097 to POS_MIN-POS_MAX, and return it
   return(map(readOnPeriod, PWM_READ_MIN, PWM_READ_MAX, POS_MIN, POS_MAX));
 }
+
+//cloning function, used to return a pointer to an exactly copy of this device
+FeedbackDevice* Ma3Encoder12b::clone()
+{
+  Ma3Encoder12b* newDev = new Ma3Encoder12b();
+  
+  newDev->pwmMappedPin = this->pwmMappedPin;
+  newDev->fType = this->fType;
+  
+  return(newDev);
+}

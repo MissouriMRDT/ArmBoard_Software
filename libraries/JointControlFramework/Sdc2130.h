@@ -32,6 +32,12 @@ class Sdc2130: public OutputDevice
 
     //move command if inputting position, input movement is in the range of POS_MIN to POS_MAX
     //void movePos(const long movement); not implemented
+    
+    //cloning function, used to return a pointer to an exactly copy of this device
+    OutputDevice* clone();
+    
+    //blank constructor, useful for cloning
+    Sdc2130(){};
 
   public:
     //constructor for controlling it via pwm
