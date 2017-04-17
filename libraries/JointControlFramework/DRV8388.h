@@ -9,22 +9,14 @@
 class DRV8388 : public OutputDevice
 {
   private:
+    //constants for hardware pins
     //value ranges for min/max PWM 
+    int ENABLE_PIN, PHASE_PIN;//enable does PWM
     const int PWM_MIN = 0, PWM_MAX = 255;
 
   protected:
-    //constants for hardware pins
-    int ENABLE_PIN, PHASE_PIN;//enable does PWM
-    
     //move function which passes in speed ( which is converted to phase and PWM) to move device
     void move(const long movement); 
-    
-    //cloning function, used to return a pointer to an exactly copy of this device
-    OutputDevice* clone();
-    
-    //blank constructor, useful for cloning
-    DRV8388(){};
-    
   public:
 
     //constructor here

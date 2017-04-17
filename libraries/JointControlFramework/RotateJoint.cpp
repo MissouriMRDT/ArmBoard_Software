@@ -1,5 +1,32 @@
 #include "RotateJoint.h"
 
+//constructor for the rotate joint class without feedback.
+//Constructor automatically chooses an open loop algorithm that inputs the specified inputType and outputs the values the output device accepts
+//Assumes both passed devices have the same input type
+//inputType: What kind of movement this joint should be controlled by, such as speed or position input.
+//cont1: The first output device controlling the first motor on this joint
+//cont2: The second output device controlling the second motor on this joint
+RotateJoint::RotateJoint(ValueType inputType, OutputDevice* cont1, OutputDevice* cont2) : JointInterface()
+{
+	//assignments
+	inType = inputType;
+	*controller1 = *cont1;
+	*controller2 = *cont2;
+
+	algorithmUsed = false;
+
+  //checks to make sure the passed arguments all work with each other, that is that the algorithm's input type is the same as what the user is putting in, and
+  //that the algorithm's output value type is what the output device expects to take in, both output devices line up properly, etc
+  if((inputType == cont1->inType) && (cont1->inType == cont2->inType))
+  {
+    validConstruction = true;
+  }
+  else
+  {
+    validConstruction = false;
+  }
+}
+
 //constructor for the rotate joint class with feedback.
 //Assumes both passed devices have the same input type.
 //inputType: What kind of movement this joint should be controlled by, such as speed or position input.
@@ -11,10 +38,10 @@ RotateJoint::RotateJoint(ValueType inputType, IOAlgorithm *alg, OutputDevice* co
 {
 	//assignments
 	inType = inputType;
-	controller1 = cont1->clone();
-	controller2 = cont2->clone();
-	feedback = feed->clone();
-	manip = alg->clone();
+	*controller1 = *cont1;
+	*controller2 = *cont2;
+	*feedback = *feed;
+	*manip = *alg;
   manip -> setFeedDevice(feed);
   
   algorithmUsed = true;
@@ -22,33 +49,6 @@ RotateJoint::RotateJoint(ValueType inputType, IOAlgorithm *alg, OutputDevice* co
   //checks to make sure the passed arguments all work with each other, that is that the algorithm's input type is the same as what the user is putting in, and
   //that the algorithm's output value type is what the output device expects to take in, etc
   if((inputType == alg->inType) && (cont1->inType == alg->outType) && (alg->feedbackInType == feed->fType) && (cont1->inType == cont2->inType))
-  {
-    validConstruction = true;
-  }
-  else
-  {
-    validConstruction = false;
-  }
-}
-
-//constructor for the rotate joint class without feedback.
-//Constructor automatically chooses an open loop algorithm that inputs the specified inputType and outputs the values the output device accepts
-//Assumes both passed devices have the same input type
-//inputType: What kind of movement this joint should be controlled by, such as speed or position input.
-//cont1: The first output device controlling the first motor on this joint
-//cont2: The second output device controlling the second motor on this joint
-RotateJoint::RotateJoint(ValueType inputType, OutputDevice* cont1, OutputDevice* cont2) : JointInterface()
-{
-	//assignments
-	inType = inputType;
-	controller1 = cont1->clone();
-	controller2 = cont2->clone();
-
-	algorithmUsed = false;
-
-  //checks to make sure the passed arguments all work with each other, that is that the algorithm's input type is the same as what the user is putting in, and
-  //that the algorithm's output value type is what the output device expects to take in, both output devices line up properly, etc
-  if((inputType == cont1->inType) && (cont1->inType == cont2->inType))
   {
     validConstruction = true;
   }

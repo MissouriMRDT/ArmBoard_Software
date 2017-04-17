@@ -9,9 +9,9 @@ SingleMotorJoint::SingleMotorJoint(ValueType inputType, IOAlgorithm *alg, Output
 {
 	//assignments
 	inType = inputType;
-	controller1 = cont->clone();
-	feedback = feed->clone();
-	manip = alg->clone();
+	*controller1 = *cont;
+	*feedback = *feed;
+	*manip = *alg;
 	manip -> setFeedDevice(feed);
   
   algorithmUsed = true;
@@ -37,7 +37,8 @@ SingleMotorJoint::SingleMotorJoint(ValueType inputType, OutputDevice* cont) : Jo
 {
 	//assignments
 	inType = inputType;
-	controller1 = cont->clone();
+	*controller1 = *cont;
+
 	algorithmUsed = false;
 
   //checks to make sure the passed arguments all work with each other, that is that the algorithm's input type is the same as what the user is putting in, and

@@ -14,16 +14,10 @@ class VNH5019 : public OutputDevice
     int PWM_PIN, INA_PIN, INB_PIN;
     const int PWM_MIN = 0, PWM_MAX = 255;
 
+
   protected:
     //move function which passes in speed ( which is converted to phase and PWM) to move device
     void move(const long movement); 
-    
-    //cloning function, used to return a pointer to an exactly copy of this device
-    virtual OutputDevice* clone();
-    
-    //blank constructor, useful for cloning
-    VNH5019(){};
-    
   public:
 
     //constructor here

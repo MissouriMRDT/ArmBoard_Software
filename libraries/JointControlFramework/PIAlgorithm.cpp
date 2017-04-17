@@ -256,15 +256,3 @@ long PIAlgorithm::runAlgorithm(const long input, bool * ret_OutputFinished)
   // return the value of the speed we calculated
   return spd_out;
 }
-
-//cloning function, used to return a pointer to an exactly copy of this algorithm
-IOAlgorithm* PIAlgorithm::clone()
-{
-  PIAlgorithm* newAlg = new PIAlgorithm(this->KP, this->KI, this->DT, this->speed_minMag);
-  
-  newAlg->errorSummation = this->errorSummation;
-  newAlg->hardStopPos1 = this->hardStopPos1;
-  newAlg->hardStopPos2 = this->hardStopPos2;
-  
-  return(newAlg);
-}

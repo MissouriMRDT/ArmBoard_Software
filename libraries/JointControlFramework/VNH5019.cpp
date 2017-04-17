@@ -68,18 +68,3 @@ void VNH5019::move(const long movement)
   
   return;
 }
-
-//cloning function, used to return a pointer to an exactly copy of this device
-OutputDevice* VNH5019::clone()
-{
-  VNH5019* newDev = new VNH5019();
-  
-  newDev->PWM_PIN = this->PWM_PIN;
-  newDev->INA_PIN = this->INA_PIN;
-  newDev->INB_PIN = this->INB_PIN;
-  
-  newDev->inType = this->inType;
-  newDev->invert = this->invert;
-  
-  return(newDev);
-}

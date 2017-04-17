@@ -57,16 +57,3 @@ void DirectDiscreteHBridge::move(const long movement)
 
 	return;
 }
-
-//cloning function, used to return a pointer to an exactly copy of this device
-OutputDevice* DirectDiscreteHBridge::clone()
-{
-  DirectDiscreteHBridge* newDev = new DirectDiscreteHBridge();
-  
-  newDev->FPWM_PIN = this->FPWM_PIN;
-  newDev->RPWM_PIN = this->RPWM_PIN;
-  newDev->inType = this->inType;
-  newDev->invert = this->invert;
-  
-  return(newDev);
-}

@@ -11,10 +11,10 @@ TiltJoint::TiltJoint(ValueType inputType, IOAlgorithm *alg, OutputDevice* cont1,
 {
 	//assignments
 	inType = inputType;
-	controller1 = cont1->clone();
-	controller2 = cont2->clone();
-	feedback = feed->clone();
-	manip = alg->clone();
+	*controller1 = *cont1;
+	*controller2 = *cont2;
+	*feedback = *feed;
+	*manip = *alg;
   manip -> setFeedDevice(feed);
   
   algorithmUsed = true;
@@ -41,8 +41,8 @@ TiltJoint::TiltJoint(ValueType inputType, OutputDevice* cont1, OutputDevice* con
 {
 	//assignments
 	inType = inputType;
-	controller1 = cont1->clone();
-	controller2 = cont2->clone();
+	*controller1 = *cont1;
+	*controller2 = *cont2;
 
 	algorithmUsed = false;
 

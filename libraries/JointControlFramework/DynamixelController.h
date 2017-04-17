@@ -11,32 +11,26 @@
 class DynamixelController : public OutputDevice
 {
   private:
+    //Only Important pin for dynamixel is the Tx/Rx pin other two are just power and not important logically
+    int Tx_PIN;
+    int Rx_PIN;
+    uint32_t baudRate;
+
     //values which the dynamixel expects the speed to be between. CW = clockwise/positive/forward  CCW = counter-clockwise/negative/backwards
     const int DYNA_SPEED_CW_MAX = 1023;
     const int DYNA_SPEED_CW_MIN = 0;
     const int DYNA_SPEED_CCW_MAX = 2047;
     const int DYNA_SPEED_CCW_MIN = 1024;
 
+    //need to have in order to interface with RoveDynamixel since it uses structs and pointers as opposed to classes
+    Dynamixel dynamixel;
+
   protected:
     //movement command based on a speed input and wheel mode. Input should be in the range between SPEED_MIN and SPEED_MAX
     //this will be the defaut assumption, other modes with other methods of movement will be
     //made into other functions not simply move.
     void move(const long movement);
-    
-    //Only Important pin for dynamixel is the Tx/Rx pin other two are just power and not important logically
-    int Tx_PIN;
-    int Rx_PIN;
-    uint32_t baudRate;
 
-    //need to have in order to interface with RoveDynamixel since it uses structs and pointers as opposed to classes
-    Dynamixel dynamixel;
-
-    //cloning function, used to return a pointer to an exactly copy of this device
-    OutputDevice* clone();
-    
-    //empty constructor, for cloning
-    DynamixelController(){};
-    
   public:
 
     //constructor for a dynamixel which takes in a move type and other things needed for dynamixels

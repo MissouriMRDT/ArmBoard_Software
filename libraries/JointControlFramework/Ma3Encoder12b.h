@@ -14,13 +14,6 @@ class Ma3Encoder12b: public FeedbackDevice
     const int PWM_READ_MAX = 4097;
     const int PWM_READ_MIN = 1;
 
-    
-  protected:   
-    //cloning function, used to return a pointer to an exactly copy of this device
-    FeedbackDevice* clone();
-    
-    //blank constructor, useful for cloning
-    Ma3Encoder12b(){};
   public:
 
     //constructor. Public, to be called by main before passing into joint interface
