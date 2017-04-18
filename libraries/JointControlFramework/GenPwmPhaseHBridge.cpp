@@ -24,7 +24,7 @@ GenPwmPhaseHBridge::GenPwmPhaseHBridge(const int PwmPin, const int PhPin, const 
   pinMode(PHASE_PIN, OUTPUT);
   pinMode(ENABLE_PIN, OUTPUT);
   
-  togglePower(false); //set power to off for initial setup
+  setPower(false); //set power to off for initial setup
 }
 
 
@@ -82,7 +82,7 @@ void GenPwmPhaseHBridge::move(const long movement)
 //tells the device to power on or off. Note that on setup, device assumes power is off
 //If the device class was constructed with an enable pin, the function will physically turn the device on or off
 //If it wasn't, it will virtually turn the device on or off, IE if it's off it will refuse to send an output
-void GenPwmPhaseHBridge::togglePower(bool powerOn)
+void GenPwmPhaseHBridge::setPower(bool powerOn)
 {
   //when enable pin does not have its default value, assume device was constructed with an enable pin
   if(ENABLE_PIN != -1)

@@ -107,7 +107,7 @@ class OutputDevice
   public:
   
     //tells the device to power on or off. Note that on setup, devices should assume power is off
-    virtual void togglePower(bool powerOn) = 0;
+    virtual void setPower(bool powerOn) = 0;
 
 	protected:
 

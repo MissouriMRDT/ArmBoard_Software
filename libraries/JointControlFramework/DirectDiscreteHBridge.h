@@ -25,7 +25,7 @@ class DirectDiscreteHBridge : public OutputDevice
     DirectDiscreteHBridge(const int FPIN, const int RPIN, bool upsideDown);
     
     //turns device on or off. Note on startup device is considered off, user must call this function and enable device before joints will move
-    void togglePower(bool powerOn);
+    void setPower(bool powerOn);
 
 };
 

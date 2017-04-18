@@ -36,7 +36,7 @@ class GenPwmPhaseHBridge: public OutputDevice
     GenPwmPhaseHBridge(const int PwmPin, const int PhPin, const int EnPin, bool enableLogicHigh, bool upsideDown);
     
     //tells the device to power on or off. Note that on setup, device assumes power is off
-    void togglePower(bool powerOn);
+    void setPower(bool powerOn);
 };
 
 #endif
