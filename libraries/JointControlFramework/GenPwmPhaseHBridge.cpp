@@ -1,4 +1,6 @@
 #include "GenPwmPhaseHBridge.h"
+#include "Energia.h"
+#include "PwmWriter.h"
 
 //pin asignments for enable pin and phase pin, also a bool to determine the orientation of da motor
 //Pin assignment masks are based on energia pin standard
@@ -58,17 +60,4 @@ void GenPwmPhaseHBridge::move(const long movement)
   }
   
   return;
-}
-
-//cloning function, used to return a pointer to an exactly copy of this device
-OutputDevice* GenPwmPhaseHBridge::clone()
-{
-  GenPwmPhaseHBridge* newDev = new GenPwmPhaseHBridge();
-  
-  newDev->ENABLE_PIN = this->ENABLE_PIN;
-  newDev->PHASE_PIN = this->PHASE_PIN;
-  newDev->inType = this->inType;
-  newDev->invert = this->invert;
-  
-  return(newDev);
 }

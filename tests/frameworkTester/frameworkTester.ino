@@ -11,8 +11,9 @@
 #include "arm.h"
 #include "Ma3Encoder12b.h"
 #include "DirectDiscreteHBridge.h"
-#include "DRV8388.h"
 #include "PIAlgorithm.h"
+#include "VNH5019.h"
+#include "Sdc2130.h"
 #include "GenPwmPhaseHBridge.h"
 
 FeedbackDevice* feedbackDevice;

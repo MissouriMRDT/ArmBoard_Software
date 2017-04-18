@@ -1,8 +1,6 @@
 #ifndef GENPWMPHASEHBRIDGE_H_
 #define GENPWMPHASEHBRIDGE_H_
 
-#include "JointFrameworkUtilities.h"
-#include "FirmwareIncludes.h"
 #include "AbstractFramework.h"
 
 //Generic class for any H bridge device that's controlled with two pins; a magnitude control pin used with pwm, and a direction/phase pin
@@ -20,12 +18,6 @@ class GenPwmPhaseHBridge: public OutputDevice
     
     //move function which passes in speed ( which is converted to phase and PWM) to move device
     void move(const long movement); 
-    
-    //cloning function, used to return a pointer to an exactly copy of this device
-    OutputDevice* clone();
-    
-    //blank constructor, useful for cloning
-    GenPwmPhaseHBridge(){};
     
   public:
 
