@@ -23,7 +23,7 @@ class VNH5019 : public OutputDevice
     VNH5019 (const int PwmPin, const int InaPin, const int InbPin, bool upsideDown);
     
     //tells the device to power on or off. Note that on setup, device assumes power is off
-    void togglePower(bool powerOn);
+    void setPower(bool powerOn);
 };
 
 #endif

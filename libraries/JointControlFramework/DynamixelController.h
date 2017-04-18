@@ -48,7 +48,7 @@ class DynamixelController : public OutputDevice
     DynamixelController(const int Tx, const int Rx, bool upsideDown, DynamixelType type, uint8_t id, uint8_t uartIndex, uint32_t baud, DynamixelMode mode);
     
     //tells the device to power on or off. Note that on setup, devices should assume power is off
-    void togglePower(bool powerOn);
+    void setPower(bool powerOn);
 };
 
 #endif

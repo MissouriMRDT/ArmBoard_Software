@@ -64,7 +64,7 @@ void DirectDiscreteHBridge::move(const long movement)
 }
 
 //Instructs DirectDiscreteHBridge to behave as if it is on or off; that is, when commanded to be off, it will refuse to send any output
-void DirectDiscreteHBridge::togglePower(bool powerOn)
+void DirectDiscreteHBridge::setPower(bool powerOn)
 {
   if(powerOn == false)
   {

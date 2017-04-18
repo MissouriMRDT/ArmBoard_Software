@@ -80,7 +80,7 @@ void Sdc2130::moveSpeed(const int movement)
 }
 
 //Tells device to behave as if it's on or off; that is, if it's off, stop and refuse to perform output until user re-enables
-void Sdc2130::togglePower(bool powerOn)
+void Sdc2130::setPower(bool powerOn)
 {
   if(powerOn == false)
   {

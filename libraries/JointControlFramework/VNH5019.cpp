@@ -74,7 +74,7 @@ void VNH5019::move(const long movement)
   return;
 }
 
-void VNH5019::togglePower(bool powerOn)
+void VNH5019::setPower(bool powerOn)
 {
   if(powerOn == false)
   {

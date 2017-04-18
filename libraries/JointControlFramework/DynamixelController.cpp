@@ -84,7 +84,7 @@ void DynamixelController::move(const long movement)
 }
 
 //Instructs the dynamixel class to behave as if it is off or on; IE if it's off it'll refuse to send any output
-void DynamixelController::togglePower(bool powerOn)
+void DynamixelController::setPower(bool powerOn)
 {
   if(powerOn == false)
   {

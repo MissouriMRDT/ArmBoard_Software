@@ -133,7 +133,7 @@ void initialize()
   algorithm = new PIAlgorithm(3,3,3);
   inHerFace = new SingleMotorJoint(pos, algorithm, controller, feedbackDevice);
 
-  controller->togglePower(true);
+  controller->setPower(true);
 }
 
 CommandResult sendMsgToEndef(uint16_t dataId, size_t dataSize, void * data)

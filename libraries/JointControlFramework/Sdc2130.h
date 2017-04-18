@@ -43,7 +43,7 @@ class Sdc2130: public OutputDevice
     //Sdc2130(const int txPin, const int rxPin, ValueType inType, bool upsideDown); not implemented
     
     //tells the device to power on or off. Note that on setup, devices should assume power is off
-    void togglePower(bool powerOn);
+    void setPower(bool powerOn);
 };
 
 #endif
