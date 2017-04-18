@@ -13,6 +13,7 @@
 #include "DirectDiscreteHBridge.h"
 #include "DRV8388.h"
 #include "PIAlgorithm.h"
+#include "GenPwmPhaseHBridge.h"
 
 FeedbackDevice* feedbackDevice;
 JointInterface * inHerFace;
@@ -123,7 +124,7 @@ void initialize()
   delete inHerFace;
   delete controller;
 
-  controller = new DRV8388(PA_4, PK_2, false);
+  controller = new GenPwmPhaseHBridge(PA_4, PK_2, false);
   inHerFace = new SingleMotorJoint(spd, controller);
 
   delete inHerFace;
