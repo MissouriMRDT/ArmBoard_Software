@@ -40,38 +40,52 @@ void Sdc2130::moveSpeed(const int movement)
 {
 	int speed = movement;
 
-	if(invert)
-	{
-		speed = -speed;
-	}
+  if(enabled) //only move if device has been enabled by the user
+  {
+    if(invert)
+    {
+      speed = -speed;
+    }
 
-	if(controlType == Pwm)
-	{
-		if(speed > 0)
-		{
-			pwmVal+=POS_INC;
-		}
-		else
-		{
-			pwmVal-=POS_INC;
-		}
+    if(controlType == Pwm)
+    {
+      if(speed > 0)
+      {
+        pwmVal+=POS_INC;
+      }
+      else if(speed < 0)
+      {
+        pwmVal-=POS_INC;
+      }
 
-		if(pwmVal < PWM_MIN)
-		{
-			pwmVal = PWM_MIN;
-		}
-		else if(pwmVal > PWM_MAX)
-		{
-			pwmVal = PWM_MAX;
-		}
+      if(pwmVal < PWM_MIN)
+      {
+        pwmVal = PWM_MIN;
+      }
+      else if(pwmVal > PWM_MAX)
+      {
+        pwmVal = PWM_MAX;
+      }
 
-		PwmWrite(PWM_PIN, pwmVal);
+      PwmWrite(PWM_PIN, pwmVal);
 
-	}
+    }
 
-	//serial control not implemented
-	else
-	{
+    //serial control not implemented
+    else
+    {
 
-	}
+    }
+  }
+}
+
+//Tells device to behave as if it's on or off; that is, if it's off, stop and refuse to perform output until user re-enables
+void Sdc2130::togglePower(bool powerOn)
+{
+  if(powerOn == false)
+  {
+    moveSpeed(0);
+  }
+  
+  enabled = powerOn;
 }

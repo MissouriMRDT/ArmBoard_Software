@@ -21,41 +21,54 @@ void DirectDiscreteHBridge::move(const long movement)
 {
 	int mov = movement;
 	int pwm = 0;
+  if(enabled) //if the user has not turned this device on, perform no output
+  {
 
-	//if mounted upside down then invert the signal passed to it and move accordingly
-	if (invert)
-	{
-		//inverts the input easily
-		mov = -mov;
-	}
+    //if mounted upside down then invert the signal passed to it and move accordingly
+    if (invert)
+    {
+      //inverts the input easily
+      mov = -mov;
+    }
 
-	//if supposed to move backwards
-	if(mov < 0)
-	{
-		mov = abs(mov);
-		pwm = map(mov, 0, SPEED_MAX, PWM_MIN, PWM_MAX);
+    //if supposed to move backwards
+    if(mov < 0)
+    {
+      mov = abs(mov);
+      pwm = map(mov, 0, SPEED_MAX, PWM_MIN, PWM_MAX);
 
-		//stop the transistor for the other direction -- if both were on, the h bridge would short out
-		PwmWrite(FPWM_PIN, 0);
-		PwmWrite(RPWM_PIN, pwm);
-	}
+      //stop the transistor for the other direction -- if both were on, the h bridge would short out
+      PwmWrite(FPWM_PIN, 0);
+      PwmWrite(RPWM_PIN, pwm);
+    }
 
-	//if forwards
-	else if(mov > 0)
-	{
-		pwm = map(mov, 0, SPEED_MAX, PWM_MIN, PWM_MAX);
+    //if forwards
+    else if(mov > 0)
+    {
+      pwm = map(mov, 0, SPEED_MAX, PWM_MIN, PWM_MAX);
 
-		//stop the transistor for the other direction -- if both were on, the h bridge would short out
-		PwmWrite(FPWM_PIN, pwm);
-		PwmWrite(RPWM_PIN, 0);
-	}
+      //stop the transistor for the other direction -- if both were on, the h bridge would short out
+      PwmWrite(FPWM_PIN, pwm);
+      PwmWrite(RPWM_PIN, 0);
+    }
 
-	//stop
-	else if(mov == 0)
-	{
-		PwmWrite(RPWM_PIN, 0);
-		PwmWrite(FPWM_PIN, 0);
-	}
+    //stop
+    else if(mov == 0)
+    {
+      PwmWrite(RPWM_PIN, 0);
+      PwmWrite(FPWM_PIN, 0);
+    }
+  }
 
 	return;
+}
+
+//Instructs DirectDiscreteHBridge to behave as if it is on or off; that is, when commanded to be off, it will refuse to send any output
+void DirectDiscreteHBridge::togglePower(bool powerOn)
+{
+  if(powerOn == false)
+  {
+    move(0);
+  }
+  enabled = powerOn;
 }

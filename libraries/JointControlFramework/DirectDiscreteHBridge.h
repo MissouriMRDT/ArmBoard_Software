@@ -23,6 +23,9 @@ class DirectDiscreteHBridge : public OutputDevice
     //constructor, user must give pin assignments with the first pin being the forward pin and the second being the reverse pin.
     //Must specify the physical orientation of the device as well, if it is mounted in reverse or not
     DirectDiscreteHBridge(const int FPIN, const int RPIN, bool upsideDown);
+    
+    //turns device on or off. Note on startup device is considered off, user must call this function and enable device before joints will move
+    void togglePower(bool powerOn);
 
 };
 

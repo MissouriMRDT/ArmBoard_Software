@@ -104,6 +104,11 @@ class OutputDevice
 	friend class RotateJoint;
 	friend class JointInterface;
 
+  public:
+  
+    //tells the device to power on or off. Note that on setup, devices should assume power is off
+    virtual void togglePower(bool powerOn) = 0;
+
 	protected:
 
 		//calls the device to move the motor, based on the passed value of movement.
@@ -113,10 +118,13 @@ class OutputDevice
 
 		//expected input that the output device wants.
 		ValueType inType;
-
+    
 		//used for if the specific controller is mounted backwards on the motor joint.
 		//True means invert the signal (backwards) False means just send the signal
 		bool invert;
+    
+    //tracks whether or not the device is enabled/powered on by the user
+    bool enabled = false; //initialize devices off until the user manually turns them on
 };
 
 

@@ -1,12 +1,12 @@
 #include "JointControlFramework.h"
-#include "DRV8388.h"
+#include "GenPwmPhaseHBridge.h"
 
 /* Programmers: David strickland, Jake Hasenfratz, Drue Satterfield
  * Date of creation: 2/5/17
  * Sub system: arm board
  * 
  * program overhead:
- * Tests closed loop capabilities of the joint control framework using the PI algorithm construct to move a motor while taking in position data from an encoder
+ * Tests open loop capabilities of the joint control framework
  */
 
 JointInterface* J1_tilt;
@@ -18,6 +18,7 @@ JointInterface* genJoint3;
 JointInterface* genJoint4;
 JointInterface* genJoint5;
 IOAlgorithm* alg;
+
 void setup() {} //fuck you setup
 
 void loop() {
@@ -47,35 +48,28 @@ void loop() {
 
 void initialize()
 {
-  pinMode(PA_7, OUTPUT);
-  pinMode(PL_2, OUTPUT);
-  pinMode(PE_4, OUTPUT);
-  pinMode(PP_3, OUTPUT);
-  pinMode(PH_1, OUTPUT);
-  pinMode(PD_5, OUTPUT);
-  pinMode(PK_3, OUTPUT);
-
-  digitalWrite(PD_5, HIGH);
-  digitalWrite(PH_1, HIGH);
-  digitalWrite(PA_7, HIGH);
-  digitalWrite(PL_2, HIGH);
+  pinMode(PE_4, OUTPUT); //enable main power output
   digitalWrite(PE_4, HIGH);
-  digitalWrite(PK_3, HIGH);
-  digitalWrite(PP_3, LOW);
   
-  OutputDevice* controller1 = new DRV8388(PG_1, PP_5, false);
-  OutputDevice* controller2 = new DRV8388(PF_3, PL_3, true);
-  OutputDevice* controller3 = new DRV8388(PK_5, PK_6, true);
-  OutputDevice* controller4 = new DRV8388(PK_4, PA_5, true);
-  OutputDevice* controller5 = new DRV8388(PG_0, PQ_0, true);
-  OutputDevice* GripMot = new DRV8388(PF_2, PQ_2, true);
+  OutputDevice* controller1 = new GenPwmPhaseHBridge(PG_1, PP_5, PA_7, true, false);
+  OutputDevice* controller2 = new GenPwmPhaseHBridge(PF_3, PL_3, PL_2, true, true);
+  OutputDevice* controller3 = new GenPwmPhaseHBridge(PK_5, PK_6, PH_1, true, true);
+  OutputDevice* controller4 = new GenPwmPhaseHBridge(PK_4, PA_5, PD_5, true, true);
+  OutputDevice* controller5 = new GenPwmPhaseHBridge(PG_0, PQ_0, PK_3, true, true);
+  OutputDevice* gripMot = new GenPwmPhaseHBridge(PF_2, PQ_2, PP_3, false, true);
+  controller1->togglePower(true);
+  controller2->togglePower(true);
+  controller3->togglePower(true);
+  controller4->togglePower(true);
+  controller5->togglePower(true);
+  gripMot->togglePower(true);
 
   J1_tilt = new TiltJoint(spd, controller2, controller1);
   J2_rot = new RotateJoint(spd, controller2, controller1);
 
   J1_tilt->coupleJoint(J2_rot);
 
-  Gripper = new SingleMotorJoint(spd, GripMot);
+  Gripper = new SingleMotorJoint(spd, gripMot);
 
   genJoint = new SingleMotorJoint(spd, controller1);
   genJoint2 = new SingleMotorJoint(spd, controller2);

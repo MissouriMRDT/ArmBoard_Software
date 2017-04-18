@@ -1,7 +1,6 @@
 #ifndef VNH5019_H_
 #define VNH5019_H_
 
-//#include "JointFrameworkUtilities.h"
 #include "AbstractFramework.h"
 
 //VNH5019 H bridge IC
@@ -15,13 +14,16 @@ class VNH5019 : public OutputDevice
 
 
   protected:
-    //move function which passes in speed ( which is converted to phase and PWM) to move device
+    //move function which passes in speed to move device
     void move(const long movement); 
+    
   public:
-
     //constructor here
     //pin asignments for hardware pins, also a bool to determine the orientation of da motor
     VNH5019 (const int PwmPin, const int InaPin, const int InbPin, bool upsideDown);
+    
+    //tells the device to power on or off. Note that on setup, device assumes power is off
+    void togglePower(bool powerOn);
 };
 
 #endif

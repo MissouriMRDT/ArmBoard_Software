@@ -76,7 +76,11 @@ JointControlStatus RotateJoint::runOutputControl(const long movement)
   bool motionComplete;
   JointControlStatus returnStatus;
 
-  if(verifyInput(movement) == false)
+  if(controller1->enabled == false || controller2->enabled == false)
+  {
+    returnStatus = DeviceDisabled;
+  }
+  else if(verifyInput(movement) == false)
   {
     returnStatus = InvalidInput;
   }

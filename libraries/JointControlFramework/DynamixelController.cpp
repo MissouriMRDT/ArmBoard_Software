@@ -30,8 +30,7 @@ DynamixelController::DynamixelController(const int Tx, const int Rx, bool upside
   //note: no comments in RoveDynamixel
   DynamixelInit(&dynamixel, type, id, uartIndex, baud);
 
-  //actually sets the values correctly for the dynamixel
-  DynamixelSetBaudRate(dynamixel, baud);
+  //sets dynamixel to whatever mode it's supposed to be in
   DynamixelSetMode(dynamixel, mode);
 }
 
@@ -44,40 +43,53 @@ void DynamixelController::move(const long movement)
   long mov = movement;
   uint16_t send;
 
-  //if mounted upside down then invert the signal passed to it and move accordingly
-  if (invert)
+  if(enabled) //if the user hasn't enabled this device, disable output
   {
-	  //inverts the input easily
-  	mov = -mov;
-  }
+    //if mounted upside down then invert the signal passed to it and move accordingly
+    if (invert)
+    {
+      //inverts the input easily
+      mov = -mov;
+    }
 
-  //if supposed to move backwards(ccw)
-  if(mov < 0)
-  {
-	  send = map(mov, 0, SPEED_MAX, DYNA_SPEED_CCW_MAX, DYNA_SPEED_CCW_MIN);
+    //if supposed to move backwards(ccw)
+    if(mov < 0)
+    {
+      send = map(mov, 0, SPEED_MAX, DYNA_SPEED_CCW_MAX, DYNA_SPEED_CCW_MIN);
 
-	  //calls spin wheel function from RoveDynamixel
-    //can take up to a uint16_t which exceeds a standard int but
-    errorMessageIgnore = DynamixelSpinWheel(dynamixel, send);
-  }
+      //calls spin wheel function from RoveDynamixel
+      //can take up to a uint16_t which exceeds a standard int but
+      errorMessageIgnore = DynamixelSpinWheel(dynamixel, send);
+    }
 
-  //if forwards (cw)
-  else if(mov > 0)
-  {
-    send = map(mov, 0, SPEED_MAX, DYNA_SPEED_CW_MAX, DYNA_SPEED_CW_MIN);
+    //if forwards (cw)
+    else if(mov > 0)
+    {
+      send = map(mov, 0, SPEED_MAX, DYNA_SPEED_CW_MAX, DYNA_SPEED_CW_MIN);
 
-	//calls spin wheel function from RoveDynamixel
-    //can take up to a uint16_t which exceeds a standard int but
-    errorMessageIgnore = DynamixelSpinWheel(dynamixel, send);
-  }
-
-  //stop
-  else if(mov == 0)
-  {
     //calls spin wheel function from RoveDynamixel
-    //can take up to a uint16_t which exceeds a standard int but
-    errorMessageIgnore = DynamixelSpinWheel(dynamixel, 0);
-  }
+      //can take up to a uint16_t which exceeds a standard int but
+      errorMessageIgnore = DynamixelSpinWheel(dynamixel, send);
+    }
 
+    //stop
+    else if(mov == 0)
+    {
+      //calls spin wheel function from RoveDynamixel
+      //can take up to a uint16_t which exceeds a standard int but
+      errorMessageIgnore = DynamixelSpinWheel(dynamixel, 0);
+    }
+  }
   return;
+}
+
+//Instructs the dynamixel class to behave as if it is off or on; IE if it's off it'll refuse to send any output
+void DynamixelController::togglePower(bool powerOn)
+{
+  if(powerOn == false)
+  {
+    move(0); 
+  }
+  
+  enabled = powerOn;
 }

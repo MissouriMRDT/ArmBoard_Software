@@ -27,7 +27,10 @@ enum JointControlStatus
 
   //no errors encountered. The joint has reached the desired end state, IE it has reached the user specified speed or position, etc.
   //If the joint is open loop controlled, this is the default non-error return
-  OutputComplete
+  OutputComplete,
+  
+  //Unable to perform desired joint control update as one or more of the output devices used by the joint have been disabled
+  DeviceDisabled
 };
 
 //Constants representing the ranges for the different input types.

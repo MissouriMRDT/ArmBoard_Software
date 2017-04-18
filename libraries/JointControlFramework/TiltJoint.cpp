@@ -76,8 +76,12 @@ JointControlStatus TiltJoint::runOutputControl(const long movement)
   int mov; //var used as interrum value since algorithm can change the value
   bool motionComplete;
   JointControlStatus returnStatus;
-
-  if(verifyInput(movement) == false)
+  
+  if(controller1->enabled == false || controller2->enabled == false)
+  {
+    returnStatus = DeviceDisabled;
+  }
+  else if(verifyInput(movement) == false)
   {
     returnStatus = InvalidInput;
   }

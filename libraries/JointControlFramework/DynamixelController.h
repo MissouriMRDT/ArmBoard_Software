@@ -46,6 +46,9 @@ class DynamixelController : public OutputDevice
       mode -> instance of the DynamixelMode enum that defines the dynamixel's mode such as Wheel, Joint, etc
     */
     DynamixelController(const int Tx, const int Rx, bool upsideDown, DynamixelType type, uint8_t id, uint8_t uartIndex, uint32_t baud, DynamixelMode mode);
+    
+    //tells the device to power on or off. Note that on setup, devices should assume power is off
+    void togglePower(bool powerOn);
 };
 
 #endif
