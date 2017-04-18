@@ -41,6 +41,7 @@ void loop() {
     genJoint3->runOutputControl(1000);
     genJoint4->runOutputControl(1000);
     genJoint5->runOutputControl(1000);
+    Gripper->runOutputControl(1000);
   }
    
   

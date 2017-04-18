@@ -53,7 +53,7 @@ void GenPwmPhaseHBridge::move(const long movement)
       digitalWrite(PHASE_PIN, HIGH);
       
       //pulsate enable pin to control motor
-      PwmWrite(ENABLE_PIN, pwm);
+      PwmWrite(PWM_PIN, pwm);
     }
     
     //if forwards
@@ -65,13 +65,13 @@ void GenPwmPhaseHBridge::move(const long movement)
       digitalWrite(PHASE_PIN, LOW);
       
       //pulsate enable pin to control motor
-      PwmWrite(ENABLE_PIN, pwm);
+      PwmWrite(PWM_PIN, pwm);
     }
     
     //stop
     else if(mov == 0)
     {
-      PwmWrite(ENABLE_PIN, 0);//set enable to 0 to brake motor
+      PwmWrite(PWM_PIN, 0);//set enable to 0 to brake motor
       //phase don't matter
     }
   }
