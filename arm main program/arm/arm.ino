@@ -6,6 +6,12 @@ JointInterface* joint3;
 JointInterface* joint4;
 JointInterface* joint5;
 
+GenPwmPhaseHBridge dev1(MOT1_PWN_PIN, HBRIDGE1_PHASE_PIN, HBRIDGE1_NSLEEP_PIN, true, false);
+GenPwmPhaseHBridge dev2(MOT2_PWN_PIN, HBRIDGE2_PHASE_PIN, HBRIDGE2_NSLEEP_PIN, true, true);
+GenPwmPhaseHBridge dev3(MOT3_PWN_PIN, HBRIDGE3_PHASE_PIN, HBRIDGE3_NSLEEP_PIN, true, true);
+GenPwmPhaseHBridge dev4(MOT4_PWN_PIN, HBRIDGE4_PHASE_PIN, HBRIDGE4_NSLEEP_PIN, true, true);
+GenPwmPhaseHBridge dev5(MOT5_PWN_PIN, HBRIDGE5_PHASE_PIN, HBRIDGE5_NSLEEP_PIN, true, false);
+
 
 void setup() {} //useless
 
@@ -107,32 +113,20 @@ void initialize()
   Serial.begin(9600);
   Serial6.begin(GRIPPER_COMM_BAUD_RATE);
 
-  OutputDevice * dev1 = new DRV8388(MOT1_PWN_PIN, HBRIDGE1_PHASE_PIN,false);
-  OutputDevice * dev2 = new DRV8388(MOT2_PWN_PIN, HBRIDGE2_PHASE_PIN,true);
-  OutputDevice * dev3 = new DRV8388(MOT3_PWN_PIN, HBRIDGE3_PHASE_PIN,false);
-  OutputDevice * dev4 = new DRV8388(MOT4_PWN_PIN, HBRIDGE4_PHASE_PIN,true);
-  OutputDevice * dev5 = new DRV8388(MOT5_PWN_PIN, HBRIDGE5_PHASE_PIN,false);
-
   pinMode(HBRIDGE1_NFAULT_PIN,INPUT);
   pinMode(HBRIDGE2_NFAULT_PIN,INPUT);
   pinMode(HBRIDGE3_NFAULT_PIN,INPUT);
   pinMode(HBRIDGE4_NFAULT_PIN,INPUT);
   pinMode(HBRIDGE5_NFAULT_PIN,INPUT);
 
-  pinMode(HBRIDGE1_NSLEEP_PIN,OUTPUT);
-  pinMode(HBRIDGE2_NSLEEP_PIN,OUTPUT);
-  pinMode(HBRIDGE3_NSLEEP_PIN,OUTPUT);
-  pinMode(HBRIDGE4_NSLEEP_PIN,OUTPUT);
-  pinMode(HBRIDGE5_NSLEEP_PIN,OUTPUT);
-
   pinMode(OC_NFAULT_PIN,INPUT);
   pinMode(POWER_LINE_CONTROL_PIN,OUTPUT);
 
-  joint1 = new RotateJoint(spd, dev1, dev2);
-  joint2 = new TiltJoint(spd, dev1, dev2);
-  joint3 = new SingleMotorJoint(spd, dev3);
-  joint4 = new RotateJoint(spd, dev4, dev5);
-  joint5 = new TiltJoint(spd, dev4, dev5);
+  joint1 = new RotateJoint(spd, &dev1, &dev2);
+  joint2 = new TiltJoint(spd, &dev1, &dev2);
+  joint3 = new SingleMotorJoint(spd, &dev3);
+  joint4 = new RotateJoint(spd, &dev4, &dev5);
+  joint5 = new TiltJoint(spd, &dev4, &dev5);
 
   joint1 -> coupleJoint(joint2);
   joint4 -> coupleJoint(joint5);
@@ -200,71 +194,16 @@ CommandResult masterPowerDisable()
 
 void enableAllMotors()
 {
-  enableM1();
-  enableM2();
-  enableM3();
-  enableM4();
-  enableM5();
-
+  dev1.togglePower(true);
+  dev2.togglePower(true);
+  dev3.togglePower(true);
+  dev4.togglePower(true);
+  dev5.togglePower(true);
 }
 
 void disableAllMotors()
 {
-  disableM1();
-  disableM2();
-  disableM3();
-  disableM4();
-  disableM5();
-}
-
-void enableM1()
-{
-  digitalWrite(HBRIDGE1_NSLEEP_PIN,HIGH);
-}
-
-void enableM2()
-{
-  digitalWrite(HBRIDGE2_NSLEEP_PIN,HIGH);
-}
-
-void enableM3()
-{
-  digitalWrite(HBRIDGE3_NSLEEP_PIN,HIGH);
-}
-
-void enableM4()
-{
-  digitalWrite(HBRIDGE4_NSLEEP_PIN,HIGH);
-}
-
-void enableM5()
-{
-  digitalWrite(HBRIDGE5_NSLEEP_PIN,HIGH);
-}
-
-void disableM1()
-{
-  digitalWrite(HBRIDGE1_NSLEEP_PIN,LOW);
-}
-
-void disableM2()
-{
-  digitalWrite(HBRIDGE2_NSLEEP_PIN,LOW);
-}
-
-void disableM3()
-{
-  digitalWrite(HBRIDGE3_NSLEEP_PIN,LOW);
-}
-
-void disableM4()
-{
-  digitalWrite(HBRIDGE4_NSLEEP_PIN,LOW);
-}
-
-void disableM5()
-{
-  digitalWrite(HBRIDGE5_NSLEEP_PIN,LOW);
+  
 }
 
 float readMasterCurrent()

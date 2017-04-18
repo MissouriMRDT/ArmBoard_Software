@@ -2,6 +2,9 @@
 #include <RoveComm.h>
 #include <stdint.h>
 #include "JointControlFramework.h"
+#include "GenPwmPhaseHBridge.h"
+#include "PIAlgorithm.h"
+#include "Ma3Encoder12b.h"
 
 //enum representing the different arm commands we can receive from base station.
 //There is a spreadsheet for these under rovesodrive under software architecture
