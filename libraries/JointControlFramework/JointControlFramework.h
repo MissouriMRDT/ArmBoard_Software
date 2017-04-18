@@ -1,48 +1,13 @@
-/*  Programmer: Drue Satterfield, David Strickland
- *
- *   This is the library for the Joint Interface Framework.
- *   Framework description here: https://github.com/MST-MRDT/ArmBoardSoftware/blob/development/libraries/ControlFramework/Framework%20Overview.docx
- *   Used for controlling output devices and easily manipulating joints. The user will only ever interact with the
- *   Joint Interface, which keeps track of an output device which moves that joint, and an algorithm for controlling that joint.
- *
- *   necessary libraries:
- *   This program is meant to use energia libraries as well as the RoveDynamixel library and the PwmReader library and the PwmWriter library
- *
- *   implemenation notes:
- *   The user is supposed to use the library in this fashion:
- *   1) construct the output device class/classes representing the output device/devices (a motor controller, an h bridge, etc) used to move the joint
- *   2) if the joint is closed loop controlled, then the user must also construct a feedback device class representing the feedback device equipped on the joint as well as
- *      construct the IOAlgorithm class representing the closed loop algorithm they wish to use to control the joint
- *   3) Finally, construct the JointInterface class that represents this joint by passing it in the output device/devices and the constructed feedback device and closed loop algorithm, if used
- *      On top of those, the constructor also will have the user specify what kind of values they will pass the joint interface class, such as positional values or speed values. This is so
- *      that the interface knows how to properly interpret commands
- *   4) From here on out, the user should be able to simply call on the joint interface class for that joint to control the joint.
- *   note) When I say joint interface class/IOAlgorithm/output device/feedback device, I mean their specific derived classes representing the specific thing used on the joint, the formers are
- *         all abstract superclasses.
- *
- *   If the joint is open loop controlled -- IE there is no feedback device -- then  user has no control on the selected algorithm, the joint interface constructor selects an open loop
- *   algorithm internally since open loop algorithms aren't particularly complex or in need of user input.
- *
- *   In order to implement modules into the program:
- *   Inherit from the proper abstract class.
- *   If you are implementing an algorithm, and that algorithm doens't use feedback, then
- *   go down to Joint Interface's selector method and put in the logic to select your new algorithm accordingly.
- *   Don't forget to make a constructor; if it's a device class then it should take in whatever parameters it needs to output properly such as hardware pins being used.
- *   If it's an open loop algorithm class, then the constructor likely doesn't take anything and all it needs to do internally is set the algorithm's input and output types.
- *   Also for open loop algorithm classes, their class setup must specify that JointInterface is a friend class (as the constructor should be protected since the user never needs it)
- *   If it's a closed loop algorithm class, then the constructor should take in any parameters used to configure the algorithm as well as internally set the input and output types.
- *   For closed loop algorithm classes, the constructor should be public since the user will need to construct them personally
- *
- *   Once you do implement a new module, make sure to record it in the modules in the framework text file that should be in the framework libarary's directory
+/*
+  Primary external include for the framework. Include this for all essential libraries, individual classes outside of the joint abstraction classes
+  must be included separately.
 */
 
 #ifndef JOINTCONTROLFRAMEWORK_H_
 #define JOINTCONTROLFRAMEWORK_H_
 
-#include "Energia.h"
-#include <RoveDynamixel.h>
-#include <PwmReader.h>
-#include <pwmWriter.h>
+#include "JointFrameworkUtilities.h"
+#include "AbstractFramework.h"
 
 //sign macro. Returns 1 if passed number is positive, -1 if it's negative, 0 if it's 0
 #define sign(x) ((x > 0) ? 1 : ((x < 0) ? -1 : 0))
