@@ -1,4 +1,5 @@
 #include "Sdc2130.h"
+#include "PwmWriter.h"
 
 /*constructor for the Sdc2130 when controlled via pwm.
   Note that inType of speed is the only one currently implemented.

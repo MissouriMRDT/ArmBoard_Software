@@ -1,8 +1,8 @@
 #ifndef PIALGORITHM_H_
 #define PIALGORITHM_H_
 
-#include "JointFrameworkUtilities.h"
-#include "FirmwareIncludes.h"
+#include <RoveDynamixel.h>
+#include <stdint.h>
 #include "AbstractFramework.h"
 
 //Standard dynamixel capable of wheel, joint, and multi-turn modes of operation.

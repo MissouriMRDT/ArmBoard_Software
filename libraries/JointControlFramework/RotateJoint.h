@@ -2,7 +2,6 @@
 #define ROTATEJOINT_H_
 
 #include "JointFrameworkUtilities.h"
-#include "FirmwareIncludes.h"
 #include "AbstractFramework.h"
 
 //represents a joint where two motor devices move in opposite directions to control the joint.
@@ -30,7 +29,6 @@ class RotateJoint : public JointInterface
 		//cont2: The second output device controlling the second motor on this joint
 		RotateJoint(ValueType inputType, OutputDevice* cont1, OutputDevice* cont2);
 
-		//deletes pointers used in the joint
 		~RotateJoint();
 
 		//moves two motors together so that they rotate the joint. Motors will spin the opposite direction

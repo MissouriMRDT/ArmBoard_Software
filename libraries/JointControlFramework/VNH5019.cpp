@@ -1,4 +1,6 @@
 #include "VNH5019.h"
+#include "Energia.h"
+#include "PwmWriter.h"
 
 //constructor for VNH5019 motor driver. Inputs are pin asignments for hardware pins, also a bool to determine the orientation of da motor
 VNH5019::VNH5019(const int PwmPin, const int InaPin, const int InbPin, bool upsideDown)

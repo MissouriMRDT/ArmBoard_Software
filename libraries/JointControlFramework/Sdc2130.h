@@ -1,8 +1,6 @@
 #ifndef SDC2130_H_
 #define SDC2130_H_
 
-#include "JointFrameworkUtilities.h"
-#include "FirmwareIncludes.h"
 #include "AbstractFramework.h"
 
 //SDC2130 motor controller. Capable of moving based on torque, speed,

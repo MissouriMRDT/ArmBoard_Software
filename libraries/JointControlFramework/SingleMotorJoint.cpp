@@ -55,12 +55,9 @@ SingleMotorJoint::SingleMotorJoint(ValueType inputType, OutputDevice* cont) : Jo
   }
 }
 
-//deletes pointers used in single motor joint to 'prevent memory leaks'. Most likely not neccessary but good practice.
 SingleMotorJoint::~SingleMotorJoint()
 {
-	delete controller1;
-	delete manip;
-	delete feedback;
+  //deliberately left blank; we don't want to destroy the pointers to other classes as the main program could still be handling them
 }
 
 //run the output algorithm for this tilt joint correctly (I mean, hopefully).

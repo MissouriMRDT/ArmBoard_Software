@@ -1,8 +1,7 @@
 #ifndef VNH5019_H_
 #define VNH5019_H_
 
-#include "JointFrameworkUtilities.h"
-#include "FirmwareIncludes.h"
+//#include "JointFrameworkUtilities.h"
 #include "AbstractFramework.h"
 
 //VNH5019 H bridge IC

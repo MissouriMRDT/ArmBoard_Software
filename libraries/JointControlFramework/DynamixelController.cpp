@@ -1,4 +1,5 @@
 #include "DynamixelController.h"
+#include "Energia.h"
 
 //constructor for a dynamixel for any mode
 //Calls the init function from RoveDynamixel.h to initialize the dynamixel
@@ -30,7 +31,6 @@ DynamixelController::DynamixelController(const int Tx, const int Rx, bool upside
   DynamixelInit(&dynamixel, type, id, uartIndex, baud);
 
   //actually sets the values correctly for the dynamixel
-  DynamixelSetId(&dynamixel, id);
   DynamixelSetBaudRate(dynamixel, baud);
   DynamixelSetMode(dynamixel, mode);
 }

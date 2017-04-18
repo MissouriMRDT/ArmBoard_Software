@@ -58,13 +58,10 @@ TiltJoint::TiltJoint(ValueType inputType, OutputDevice* cont1, OutputDevice* con
   }
 }
 
-//Destructor for the tilt joint since it has pointers
+//Destructor for the tilt joint
 TiltJoint::~TiltJoint()
 {
-	delete controller1;
-	delete controller2;
-	delete manip;
-	delete feedback;
+  //deliberately left blank; we don't want to destroy the pointers to other classes as the main program could still be handling them
 }
 
 //run the output algorithm for this tilt joint correctly (I mean, hopefully).

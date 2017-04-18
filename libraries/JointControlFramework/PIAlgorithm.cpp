@@ -1,4 +1,5 @@
 #include "PIAlgorithm.h"
+#include "Energia.h"
 
 // Constructor. 
 // Input: inKI, the integer representing the PI constant Ki

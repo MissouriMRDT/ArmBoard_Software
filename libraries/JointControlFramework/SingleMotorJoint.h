@@ -2,7 +2,6 @@
 #define SINGLEMOTORJOINT_H_
 
 #include "JointFrameworkUtilities.h"
-#include "FirmwareIncludes.h"
 #include "AbstractFramework.h"
 
 //this derivation of jointInterface represents joints where a singular motor device moves the joint.
@@ -24,7 +23,6 @@ class SingleMotorJoint : public JointInterface
 		//feed: The feedback device used with this joint
 		SingleMotorJoint(ValueType inputType, IOAlgorithm *alg, OutputDevice* cont, FeedbackDevice* feed);
 
-		//destructor since there are pointers being used
 		~SingleMotorJoint();
 
 		//runs algorithm for movement for a singlular motor

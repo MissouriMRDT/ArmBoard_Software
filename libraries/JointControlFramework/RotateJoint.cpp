@@ -58,13 +58,9 @@ RotateJoint::RotateJoint(ValueType inputType, IOAlgorithm *alg, OutputDevice* co
   }
 }
 
-//rotate joint deconstructor. Deletes pointers
 RotateJoint::~RotateJoint()
 {
-	delete controller1;
-	delete controller2;
-	delete manip;
-	delete feedback;
+  //deliberately left blank; we don't want to destroy the pointers to other classes as the main program could still be handling them
 }
 
 //run the output algorithm for this tilt joint correctly (I mean, hopefully).

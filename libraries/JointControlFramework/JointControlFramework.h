@@ -43,7 +43,6 @@
 #define JOINTCONTROLFRAMEWORK_H_
 
 #include "JointFrameworkUtilities.h"
-#include "FirmwareIncludes.h"
 #include "AbstractFramework.h"
 
 #include "TiltJoint.h"

@@ -1,4 +1,6 @@
 #include "DirectDiscreteHBridge.h"
+#include <pwmWriter.h>
+#include "Energia.h"
 
 /* Creates the device. Assigns the pins correctly.
  * int FPIN: the GPIO pin connected to the H bridge's forward transistor, pin number is defined by energia's pinmapping

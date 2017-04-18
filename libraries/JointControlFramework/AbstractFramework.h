@@ -2,8 +2,6 @@
 #define ABSTRACTFRAMEWORK_H_
 
 #include "JointFrameworkUtilities.h"
-#include "FirmwareIncludes.h"
-
 
 //class prototypes:
 //joint interface abstract and absolutely necessary derived classes

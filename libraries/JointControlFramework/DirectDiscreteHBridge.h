@@ -1,8 +1,6 @@
 #ifndef DIRECTDISCRETEHBRIDGE_H_
 #define DIRECTDISCRETEHBRIDGE_H_
 
-#include "JointFrameworkUtilities.h"
-#include "FirmwareIncludes.h"
 #include "AbstractFramework.h"
 
 //Discrete H Bridge controlled directly by the microcontroller, which has only two inputs to control forward and backwards.

@@ -2,7 +2,6 @@
 #define TILTJOINT_H_
 
 #include "JointFrameworkUtilities.h"
-#include "FirmwareIncludes.h"
 #include "AbstractFramework.h"
 
 //Two motor device joint, where they move in the same direction to control the joint
@@ -29,7 +28,6 @@ class TiltJoint : public JointInterface
 		//cont2: The second output device controlling the second motor on this joint
 		TiltJoint(ValueType inputType, OutputDevice* cont1, OutputDevice* cont2);
 
-		//need to use a destructor to remove the pointers used
 		~TiltJoint();
 
 		//runs algorithm for moving two motors together so that it tilts the joint
