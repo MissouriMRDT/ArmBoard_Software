@@ -14,8 +14,6 @@ based on speed, position, or torque with feedback capabilities. Unfortunatley, i
 *DynamixelController: Interfaces with either MX or AX dynamixel. They can operate a in Wheel, Joint, and Multi-rotation modes which take speed, position, and position respectively. 
 Complicated. Interfaces with RoveDynamixel.h so you need to look at those functions to get a better understanding of how the functions work.
 
-*DRV8388: H-Bridge IC that interfaces with a small DC brush motor. Controlled by a phase and enable pin, phase determines direction while enable is controlled by a pulsated PWM signal.
-
 *GenPwmPHaseHBridge: A class that represents any case where the h bridge is controlled via two pins specifically, a speed pin controlled by pwm and a direction/phase pin
 
 Feedback Devices:
