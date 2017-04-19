@@ -6,7 +6,7 @@
 #include "AbstractFramework.h"
 
 
-class RCContinuousServo : OutputDevice
+class RCContinuousServo : public OutputDevice
 {
   private:
     int PWM_PIN;
