@@ -195,6 +195,7 @@ void enableAllMotors()
   dev4.setPower(true);
   dev5.setPower(true);
   dev6.setPower(true);
+  gripServoDev.setPower(true);
 }
 
 void disableAllMotors()
@@ -205,6 +206,7 @@ void disableAllMotors()
   dev4.setPower(false);
   dev5.setPower(false);
   dev6.setPower(false);
+  gripServoDev.setPower(false);
 }
 
 float readMasterCurrent()
@@ -225,12 +227,7 @@ float readMasterCurrent()
 
 CommandResult stopArm()
 {
-  joint1->runOutputControl(0);
-  joint2->runOutputControl(0);
-  joint3->runOutputControl(0);
-  joint4->runOutputControl(0);
-  joint5->runOutputControl(0);
-  gripperMotor->runOutputControl(0);
+  disableAllMotors();
 }
 
 CommandResult moveJ1(int16_t moveValue)
