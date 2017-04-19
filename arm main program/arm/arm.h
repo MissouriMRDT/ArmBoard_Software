@@ -5,6 +5,7 @@
 #include "GenPwmPhaseHBridge.h"
 #include "PIAlgorithm.h"
 #include "Ma3Encoder12b.h"
+#include "timer.h"
 
 //enum representing the different arm commands we can receive from base station.
 //There is a spreadsheet for these under rovesodrive under software architecture
@@ -17,7 +18,9 @@ typedef enum ArmCommandIds
   ArmJ4 = 0x324,
   ArmJ5 = 0x325,
   MoveGripper = 0x325, //Incorrect Command ID
-  TurnCap = 0x325  //Incorrect Command ID
+  TurnCap = 0x325,  //Incorrect Command ID
+  OpenLoop = 0x325, //Incorrect Command ID
+  ClosedLoop = 0x326 //Incorrect Command ID
   
 } ArmCommandIds;
 
@@ -89,6 +92,7 @@ const uint32_t ENCODER2_READING_PIN = PA_6;
 const uint32_t ENCODER3_READING_PIN = PM_6;
 const uint32_t ENCODER4_READING_PIN = PM_2;
 const uint32_t ENCODER5_READING_PIN = PM_0;
+const uint32_t ENCODERG_READING_PIN = PM_6;
 
 const uint32_t OC_NFAULT_PIN = PE_5;
 const uint32_t CURRENT_READ_PIN = PD_3;
@@ -130,3 +134,8 @@ CommandResult moveJ5(int16_t moveValue);
 CommandResult moveGripper(int16_t moveValue);
 
 CommandResult turnCap(int16_t moveValue);
+
+CommandResult switchToOpenLoop();
+
+CommandResult switchToClosedLoop();
+
