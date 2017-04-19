@@ -15,7 +15,10 @@ typedef enum ArmCommandIds
   ArmJ2 = 0x322,
   ArmJ3 = 0x323,
   ArmJ4 = 0x324,
-  ArmJ5 = 0x325
+  ArmJ5 = 0x325,
+  MoveGripper = 0x325, //Incorrect Command ID
+  TurnCap = 0x325  //Incorrect Command ID
+  
 } ArmCommandIds;
 
 typedef enum ArmCommandIds_LastYear
@@ -25,36 +28,16 @@ typedef enum ArmCommandIds_LastYear
   LY_ArmJ2 = 207,
   LY_ArmJ3 = 204,
   LY_ArmJ4 = 203,
-  LY_ArmJ5 = 202
+  LY_ArmJ5 = 202,
+  LY_MoveGripper = 202
+  
 } ArmCommandIds_LastYear;
 
-//enum representing the different endefector commands we can receive from base station.
-//There is a spreadsheet for these under rovesodrive under software architecture
-typedef enum EndefCommandIdsFromRed
-{
-  MoveGripper,
-  TurnCap,
-  EnableGripperPower,
-  DisableGripperPower
-} EndefCommandIds;
 
 typedef enum EndefCommandIdsToRed
 {
   GripperOvercurrent
 }EndefCommandIdsToRed;
-
-typedef enum EndefTransmitSerialCommandIds
-{
-  Serial_MoveGripper = 1,
-  Serial_TurnCap = 2,
-  Serial_EnableGripperPower = 3,
-  Serial_DisableGripperPower = 4
-}EndefSerialCommandIds;
-
-typedef enum EndefReceiveSerialCommandIds
-{
-  Serial_Overcurrent = 1
-}EndefReceiveSerialCommandIds;
 
 //enum representing the differnet results we can return when we try to move a component
 typedef enum CommandResult
@@ -72,6 +55,7 @@ const uint32_t MOT2_PWN_PIN = PF_3;
 const uint32_t MOT3_PWN_PIN = PK_5;
 const uint32_t MOT4_PWN_PIN = PK_4;
 const uint32_t MOT5_PWN_PIN = PG_0;
+const uint32_t MOT6_PWM_PIN = PF_2;
 
 const uint32_t GRIPP_TX6_PIN = PP_0;
 const uint32_t GRIPP_RX6_PIN = PP_1;
@@ -96,6 +80,10 @@ const uint32_t HBRIDGE5_NFAULT_PIN = PK_2;
 const uint32_t HBRIDGE5_NSLEEP_PIN = PK_3;
 const uint32_t HBRIDGE5_PHASE_PIN = PQ_0;
 
+const uint32_t HBRIDGE6_NFAULT_PIN = PQ_3;
+const uint32_t HBRIDGE6_NSLEEP_PIN = PP_3;
+const uint32_t HBRIDGE6_PHASE_PIN = PQ_2;
+
 const uint32_t ENCODER1_READING_PIN = PM_4;
 const uint32_t ENCODER2_READING_PIN = PA_6;
 const uint32_t ENCODER3_READING_PIN = PM_6;
@@ -117,10 +105,6 @@ void initialize();
 
 bool checkOvercurrent();
 
-CommandResult sendMsgToEndef(uint16_t dataId, size_t dataSize, int16_t data);
-
-void passEndefToBase();
-
 CommandResult masterPowerEnable();
 
 CommandResult masterPowerDisable();
@@ -128,24 +112,6 @@ CommandResult masterPowerDisable();
 void enableAllMotors();
 
 void disableAllMotors();
-
-void enableM1();
-
-void enableM2();
-
-void enableM3();
-
-void enableM4();
-
-void enableM5();
-
-void disableM2();
-
-void disableM3();
-
-void disableM4();
-
-void disableM5();
 
 float readMasterCurrent();
 
@@ -160,3 +126,7 @@ CommandResult moveJ3(int16_t moveValue);
 CommandResult moveJ4(int16_t moveValue);
 
 CommandResult moveJ5(int16_t moveValue);
+
+CommandResult moveGripper(int16_t moveValue);
+
+CommandResult turnCap(int16_t moveValue);

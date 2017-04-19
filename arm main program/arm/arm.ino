@@ -1,16 +1,19 @@
-#include "arm.h";
+#include "arm.h"
 
+uint16_t x = 4;
 JointInterface* joint1;
 JointInterface* joint2;
 JointInterface* joint3;
 JointInterface* joint4;
 JointInterface* joint5;
+JointInterface* gripperMotor;
 
 GenPwmPhaseHBridge dev1(MOT1_PWN_PIN, HBRIDGE1_PHASE_PIN, HBRIDGE1_NSLEEP_PIN, true, false);
 GenPwmPhaseHBridge dev2(MOT2_PWN_PIN, HBRIDGE2_PHASE_PIN, HBRIDGE2_NSLEEP_PIN, true, true);
 GenPwmPhaseHBridge dev3(MOT3_PWN_PIN, HBRIDGE3_PHASE_PIN, HBRIDGE3_NSLEEP_PIN, true, true);
 GenPwmPhaseHBridge dev4(MOT4_PWN_PIN, HBRIDGE4_PHASE_PIN, HBRIDGE4_NSLEEP_PIN, true, true);
 GenPwmPhaseHBridge dev5(MOT5_PWN_PIN, HBRIDGE5_PHASE_PIN, HBRIDGE5_NSLEEP_PIN, true, false);
+GenPwmPhaseHBridge dev6(MOT6_PWM_PIN, HBRIDGE6_PHASE_PIN, HBRIDGE6_NSLEEP_PIN, true, false);
 
 
 void setup() {} //useless
@@ -35,7 +38,6 @@ void loop() {
     commandData = 0;//reset variables
 
     roveComm_GetMsg(&commandId, &commandSize, &commandData);
-    passEndefToBase();
     if(commandId != 0) //command packets come in 1 or 2 bytes. If it's any other size, there was probably a comm error
     {
       watchdogTimer_us = 0; //reset watchdog timer since we received a command
@@ -64,13 +66,14 @@ void loop() {
       {
         result = moveJ5(commandData);
       }
-
-      //if the message is meant for the endefector, pass it along
-      else if(commandId == MoveGripper || commandId == TurnCap || commandId == EnableGripperPower || commandId == DisableGripperPower)
+      else if(commandId == MoveGripper || commandId == LY_MoveGripper)
       {
-        sendMsgToEndef(commandId, commandSize, commandData);
+        result = moveGripper(commandData);
       }
-
+      else if(commandId == TurnCap)
+      {
+        result = turnCap(commandData);
+      }
 
 
       if(result != Success)
@@ -118,6 +121,7 @@ void initialize()
   pinMode(HBRIDGE3_NFAULT_PIN,INPUT);
   pinMode(HBRIDGE4_NFAULT_PIN,INPUT);
   pinMode(HBRIDGE5_NFAULT_PIN,INPUT);
+  pinMode(HBRIDGE6_NFAULT_PIN,INPUT);
 
   pinMode(OC_NFAULT_PIN,INPUT);
   pinMode(POWER_LINE_CONTROL_PIN,OUTPUT);
@@ -127,6 +131,7 @@ void initialize()
   joint3 = new SingleMotorJoint(spd, &dev3);
   joint4 = new RotateJoint(spd, &dev4, &dev5);
   joint5 = new TiltJoint(spd, &dev4, &dev5);
+  gripperMotor = new SingleMotorJoint(spd, &dev6);
 
   joint1 -> coupleJoint(joint2);
   joint4 -> coupleJoint(joint5);
@@ -148,40 +153,6 @@ bool checkOvercurrent()
   }
 }
 
-CommandResult sendMsgToEndef(uint16_t dataId, size_t dataSize, int16_t data)
-{
-  if(dataId == MoveGripper)
-  {
-    Serial6.write(Serial_MoveGripper);
-    Serial6.write((int8_t)data);
-    Serial6.write((int8_t)(data>>8));
-  }
-  else if(dataId == TurnCap)
-  {
-    Serial6.write(Serial_TurnCap);
-    Serial6.write((int8_t)data);
-    Serial6.write((int8_t)(data>>8));
-  }
-  else if(dataId == EnableGripperPower)
-  {
-    Serial6.write(Serial_EnableGripperPower);
-  }
-  else if(dataId == DisableGripperPower)
-  {
-    Serial6.write(Serial_DisableGripperPower);
-  }
-}
-
-void passEndefToBase()
-{
-  uint16_t messageId = Serial6.read(); //read returns -1 if there's nothing to send
-
-  if(messageId == Serial_Overcurrent)
-  {
-    roveComm_SendMsg(GripperOvercurrent, 0, 0);
-  }
-}
-
 CommandResult masterPowerEnable()
 {
   digitalWrite(POWER_LINE_CONTROL_PIN, HIGH);
@@ -194,16 +165,22 @@ CommandResult masterPowerDisable()
 
 void enableAllMotors()
 {
-  dev1.togglePower(true);
-  dev2.togglePower(true);
-  dev3.togglePower(true);
-  dev4.togglePower(true);
-  dev5.togglePower(true);
+  dev1.setPower(true);
+  dev2.setPower(true);
+  dev3.setPower(true);
+  dev4.setPower(true);
+  dev5.setPower(true);
+  dev6.setPower(true);
 }
 
 void disableAllMotors()
 {
-  
+  dev1.setPower(false);
+  dev2.setPower(false);
+  dev3.setPower(false);
+  dev4.setPower(false);
+  dev5.setPower(false);
+  dev6.setPower(false);
 }
 
 float readMasterCurrent()
@@ -222,7 +199,6 @@ float readMasterCurrent()
   }
 }
 
-
 CommandResult stopArm()
 {
   joint1->runOutputControl(0);
@@ -230,6 +206,7 @@ CommandResult stopArm()
   joint3->runOutputControl(0);
   joint4->runOutputControl(0);
   joint5->runOutputControl(0);
+  gripperMotor->runOutputControl(0);
 }
 
 CommandResult moveJ1(int16_t moveValue)
@@ -281,3 +258,19 @@ CommandResult moveJ5(int16_t moveValue)
     Serial.println(moveValue);
   }
 }
+
+CommandResult moveGripper(int16_t moveValue)
+{
+  gripperMotor->runOutputControl(moveValue);
+  if(moveValue != 0)
+  {
+    Serial.print("Moving j6: ");
+    Serial.println(moveValue);
+  }
+}
+
+CommandResult turnCap(int16_t moveValue)
+{
+  //
+}
+
