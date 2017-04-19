@@ -123,6 +123,7 @@ void loop() {
 
       if(watchdogTimer_us >= WATCHDOG_TIMEOUT_US) //if more than our timeout period has passed, then kill arm movement
       {
+        Serial.println("Timed out");
         stopArm();
         watchdogTimer_us = 0;
       }
@@ -241,7 +242,7 @@ float readMasterCurrent()
 
 CommandResult stopArm()
 {
-  disableAllMotors();
+  masterPowerDisable();
 }
 
 CommandResult moveJ1(int16_t moveValue)
@@ -354,9 +355,9 @@ CommandResult turnCap(int16_t moveValue)
 CommandResult switchToOpenLoop()
 {
   //disable closed loop interrupts before doing any operation to preserve thread safety
+  TimerDisable(TIMER0_BASE, TIMER_A); 
   TimerIntClear(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
   TimerIntDisable(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
-  TimerDisable(TIMER0_BASE, TIMER_A); 
 
   //reconstruct joint interfaces with open loop format
   delete joint1;
@@ -391,11 +392,11 @@ CommandResult switchToClosedLoop()
   joint3Alg = new PIAlgorithm(21,4,PI_TIMESLICE_SECONDS);
   joint4Alg = new PIAlgorithm(21,4,PI_TIMESLICE_SECONDS);
   joint5Alg = new PIAlgorithm(21,4,PI_TIMESLICE_SECONDS);
-  joint1 = new RotateJoint(spd, joint1Alg, &dev1, &dev2, &joint1Encoder);
-  joint2 = new TiltJoint(spd, joint2Alg, &dev1, &dev2, &joint2Encoder);
-  joint3 = new SingleMotorJoint(spd, joint3Alg, &dev3, &joint3Encoder);
-  joint4 = new RotateJoint(spd, joint4Alg, &dev4, &dev5, &joint4Encoder);
-  joint5 = new TiltJoint(spd, joint5Alg, &dev4, &dev5, &joint5Encoder);
+  joint1 = new RotateJoint(pos, joint1Alg, &dev1, &dev2, &joint1Encoder);
+  joint2 = new TiltJoint(pos, joint2Alg, &dev1, &dev2, &joint2Encoder);
+  joint3 = new SingleMotorJoint(pos, joint3Alg, &dev3, &joint3Encoder);
+  joint4 = new RotateJoint(pos, joint4Alg, &dev4, &dev5, &joint4Encoder);
+  joint5 = new TiltJoint(pos, joint5Alg, &dev4, &dev5, &joint5Encoder);
 
   //have default position destination values be the joints' current positions, so they hold still when switchover occurs until base station sends a new position to go towards
   joint1Destination = joint1Encoder.getFeedback();
@@ -456,21 +457,31 @@ void closedLoopUpdateHandler()
   if(jointUpdated == 1)
   {
     joint1->runOutputControl(joint1Destination);
+    Serial.print("Moving joint 1 to position ");
+    Serial.println(joint1Destination);
   }
   else if(jointUpdated == 2)
   {
     joint2->runOutputControl(joint2Destination);
+    Serial.print("Moving joint 2 to position ");
+    Serial.println(joint2Destination);
   }
   else if(jointUpdated == 3)
   {
     joint3->runOutputControl(joint3Destination);
+    Serial.print("Moving joint 3 to position ");
+    Serial.println(joint3Destination);
   }
   else if(jointUpdated == 4)
   {
     joint4->runOutputControl(joint4Destination);
+    Serial.print("Moving joint 4 to position ");
+    Serial.println(joint4Destination);
   }
   else if(jointUpdated == 5)
   {
     joint5->runOutputControl(joint5Destination);
+    Serial.print("Moving joint 5 to position ");
+    Serial.println(joint5Destination);
   }
 }
