@@ -6,7 +6,10 @@
 #include "PIAlgorithm.h"
 #include "Ma3Encoder12b.h"
 #include "RCContinuousServo.h"
-#include "timer.h"
+#include "inc/hw_ints.h"
+#include "driverlib/interrupt.h"
+#include "driverlib/timer.h"
+#include "driverlib/sysctl.h"
 
 //enum representing the different arm commands we can receive from base station.
 //There is a spreadsheet for these under rovesodrive under software architecture
@@ -18,10 +21,10 @@ typedef enum ArmCommandIds
   ArmJ3 = 0x323,
   ArmJ4 = 0x324,
   ArmJ5 = 0x325,
-  MoveGripper = 0x325, //Incorrect Command ID
+  MoveGripper = 0x360, 
   TurnCap = 0x325,  //Incorrect Command ID
-  OpenLoop = 0x325, //Incorrect Command ID
-  ClosedLoop = 0x326 //Incorrect Command ID
+  UseOpenLoop = 0x325, //Incorrect Command ID
+  UseClosedLoop = 0x326 //Incorrect Command ID
   
 } ArmCommandIds;
 
@@ -49,6 +52,13 @@ typedef enum CommandResult
   Success,
   Fail
 } CommandResult;
+
+//enum representing the control systems the arm is currently using
+typedef enum ControlSystems
+{
+  OpenLoop,
+  ClosedLoop
+} ControlSystems;
 
 const uint32_t WATCHDOG_TIMEOUT_US = 2000000; //the amount of microseconds that should pass without getting a transmission from base station before the arm ceases moving for safety
 const uint8_t IP_ADDRESS [4] = {192, 168, 1, 131};
@@ -104,6 +114,8 @@ const float CURRENT_LIMIT = 18; //actual limit we want is 17, but because the ca
 
 const float VCC = 3.3; //usually the V input is 3.3V
 
+const float PI_TIMESLICE_SECONDS = .04;
+
 void initialize();
 
 bool checkOvercurrent();
@@ -137,4 +149,8 @@ CommandResult turnCap(int16_t moveValue);
 CommandResult switchToOpenLoop();
 
 CommandResult switchToClosedLoop();
+
+void setupTimer0(float timeout_micros);
+
+void closedLoopUpdateHandler();
 

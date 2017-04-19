@@ -28,6 +28,15 @@ GenPwmPhaseHBridge dev5(MOT5_PWN_PIN, HBRIDGE5_PHASE_PIN, HBRIDGE5_NSLEEP_PIN, t
 GenPwmPhaseHBridge dev6(MOT6_PWM_PIN, HBRIDGE6_PHASE_PIN, HBRIDGE6_NENABLE_PIN, false, true);
 RCContinuousServo gripServoDev(GRIPPER_SERVO_PWM_PIN, false);
 
+//variables used to control joints during closed loop control
+long joint1Destination;
+long joint2Destination;
+long joint3Destination;
+long joint4Destination;
+long joint5Destination;
+
+ControlSystems currentControlSystem; //tracks what control system arm is currently using
+
 void setup() {} //useless
 
 void loop() {
@@ -86,11 +95,11 @@ void loop() {
       {
         result = turnCap(commandData);
       }
-      else if(commandId == OpenLoop)
+      else if(commandId == UseOpenLoop)
       {
         result = switchToOpenLoop();
       }
-      else if(commandId == ClosedLoop)
+      else if(commandId == UseClosedLoop)
       {
         result = switchToClosedLoop();          
       }
@@ -161,8 +170,13 @@ void initialize()
 
   enableAllMotors();
 
-  TimerClockSourceSet(TIMER0_BASE, TIMER_CLOCK_PIOSC);
-  TimerConfigure(TIMER0_BASE, TIMER_CFG_PERIODIC);
+  currentControlSystem = OpenLoop;
+  
+  //set timer 0 to fire at a rate where the different PI algorithms will all be updated at their expected timeslice in seconds. 
+  //There are 5 controls to update independently. They update one at a time, one being serviced every time the timer fires. So it takes 5 timer
+  //firings for any individual control to get updated again. Meaning the timeslice of the timer itself must be one fifth of the PI algorithms overall timeslice so that 
+  //when it cycles back around the overall timeslice will have passed
+  setupTimer0(PI_TIMESLICE_SECONDS/5.0); 
 }
 
 bool checkOvercurrent()
@@ -232,56 +246,92 @@ CommandResult stopArm()
 
 CommandResult moveJ1(int16_t moveValue)
 {
-  joint1->runOutputControl(moveValue);
-  if(moveValue != 0)
+  if(currentControlSystem == OpenLoop)
   {
-    Serial.print("Moving j1: ");
-    Serial.println(moveValue);
+    joint1->runOutputControl(moveValue);
+    if(moveValue != 0)
+    {
+      Serial.print("Moving j1: ");
+      Serial.println(moveValue);
+    }
+  }
+  else if(currentControlSystem == ClosedLoop)
+  {
+    joint1Destination = moveValue;
   }
 }
 
 CommandResult moveJ2(int16_t moveValue)
 {
-  joint2->runOutputControl(moveValue);
-  if(moveValue != 0)
+  if(currentControlSystem == OpenLoop)
   {
-    Serial.print("Moving j2 : ");
-    Serial.println(moveValue);
+    joint2->runOutputControl(moveValue);
+    if(moveValue != 0)
+    {
+      Serial.print("Moving j2: ");
+      Serial.println(moveValue);
+    }
+  }
+  else if(currentControlSystem == ClosedLoop)
+  {
+    joint2Destination = moveValue;
   }
 }
 
 CommandResult moveJ3(int16_t moveValue)
 {
-  joint3->runOutputControl(moveValue);
-  if(moveValue != 0)
+  if(currentControlSystem == OpenLoop)
   {
-    Serial.print("Moving j3: ");
-    Serial.println(moveValue);
+    joint3->runOutputControl(moveValue);
+    if(moveValue != 0)
+    {
+      Serial.print("Moving j3: ");
+      Serial.println(moveValue);
+    }
+  }
+  else if(currentControlSystem == ClosedLoop)
+  {
+    joint3Destination = moveValue;
   }
 }
 
 CommandResult moveJ4(int16_t moveValue)
 {
-  joint4->runOutputControl(moveValue);
-  if(moveValue != 0)
+  if(currentControlSystem == OpenLoop)
   {
-    Serial.print("Moving j4: ");
-    Serial.println(moveValue);
+    joint4->runOutputControl(moveValue);
+    if(moveValue != 0)
+    {
+      Serial.print("Moving j4: ");
+      Serial.println(moveValue);
+    }
+  }
+  else if(currentControlSystem == ClosedLoop)
+  {
+    joint4Destination = moveValue;
   }
 }
 
 CommandResult moveJ5(int16_t moveValue)
 {
-  joint5->runOutputControl(moveValue);
-  if(moveValue != 0)
+  if(currentControlSystem == OpenLoop)
   {
-    Serial.print("Moving j5: ");
-    Serial.println(moveValue);
+    joint5->runOutputControl(moveValue);
+    if(moveValue != 0)
+    {
+      Serial.print("Moving j5: ");
+      Serial.println(moveValue);
+    }
+  }
+  else if(currentControlSystem == ClosedLoop)
+  {
+    joint5Destination = moveValue;
   }
 }
 
 CommandResult moveGripper(int16_t moveValue)
 {
+  //gripper only uses open loop control
   gripperMotor->runOutputControl(moveValue);
   if(moveValue != 0)
   {
@@ -292,6 +342,7 @@ CommandResult moveGripper(int16_t moveValue)
 
 CommandResult turnCap(int16_t moveValue)
 {
+  //turncap uses only open loop control
   gripperServo->runOutputControl(moveValue);
   if(moveValue != 0)
   {
@@ -302,7 +353,29 @@ CommandResult turnCap(int16_t moveValue)
 
 CommandResult switchToOpenLoop()
 {
-  
+  //disable closed loop interrupts before doing any operation to preserve thread safety
+  TimerIntClear(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
+  TimerIntDisable(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
+  TimerDisable(TIMER0_BASE, TIMER_A); 
+
+  //reconstruct joint interfaces with open loop format
+  delete joint1;
+  delete joint2;
+  delete joint3;
+  delete joint4;
+  delete joint5;
+  joint1 = new RotateJoint(spd, &dev1, &dev2);
+  joint2 = new TiltJoint(spd, &dev1, &dev2);
+  joint3 = new SingleMotorJoint(spd, &dev3);
+  joint4 = new RotateJoint(spd, &dev4, &dev5);
+  joint5 = new TiltJoint(spd, &dev4, &dev5);
+
+  currentControlSystem = OpenLoop;
+}
+
+CommandResult switchToClosedLoop()
+{
+  //reconstruct joints with closed loop algorithms
   delete joint1;
   delete joint2;
   delete joint3;
@@ -313,37 +386,91 @@ CommandResult switchToOpenLoop()
   delete joint3Alg;
   delete joint4Alg;
   delete joint5Alg;
-  TimerIntClear(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
-  TimerIntDisable(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
-  TimerDisable(TIMER0_BASE, TIMER_A);
-  joint1 = new RotateJoint(spd, &dev1, &dev2);
-  joint2 = new TiltJoint(spd, &dev1, &dev2);
-  joint3 = new SingleMotorJoint(spd, &dev3);
-  joint4 = new RotateJoint(spd, &dev4, &dev5);
-  joint5 = new TiltJoint(spd, &dev4, &dev5);
-}
-
-CommandResult switchToClosedLoop()
-{
-  delete joint1;
-  delete joint2;
-  delete joint3;
-  delete joint4;
-  delete joint5;
-  TimerIntClear(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
-  TimerConfigure(TIMER0_BASE, TIMER_CFG_PERIODIC);
-  TimerIntEnable(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
-  TimerEnable(TIMER0_BASE, TIMER_A);
-  joint1Alg = new PIAlgorithm(21,4,.04);
-  joint2Alg = new PIAlgorithm(21,4,.04);
-  joint3Alg = new PIAlgorithm(21,4,.04);
-  joint4Alg = new PIAlgorithm(21,4,.04);
-  joint5Alg = new PIAlgorithm(21,4,.04);
+  joint1Alg = new PIAlgorithm(21,4,PI_TIMESLICE_SECONDS);
+  joint2Alg = new PIAlgorithm(21,4,PI_TIMESLICE_SECONDS);
+  joint3Alg = new PIAlgorithm(21,4,PI_TIMESLICE_SECONDS);
+  joint4Alg = new PIAlgorithm(21,4,PI_TIMESLICE_SECONDS);
+  joint5Alg = new PIAlgorithm(21,4,PI_TIMESLICE_SECONDS);
   joint1 = new RotateJoint(spd, joint1Alg, &dev1, &dev2, &joint1Encoder);
   joint2 = new TiltJoint(spd, joint2Alg, &dev1, &dev2, &joint2Encoder);
   joint3 = new SingleMotorJoint(spd, joint3Alg, &dev3, &joint3Encoder);
   joint4 = new RotateJoint(spd, joint4Alg, &dev4, &dev5, &joint4Encoder);
   joint5 = new TiltJoint(spd, joint5Alg, &dev4, &dev5, &joint5Encoder);
+
+  //have default position destination values be the joints' current positions, so they hold still when switchover occurs until base station sends a new position to go towards
+  joint1Destination = joint1Encoder.getFeedback();
+  joint2Destination = joint2Encoder.getFeedback();
+  joint3Destination = joint3Encoder.getFeedback();
+  joint4Destination = joint4Encoder.getFeedback();
+  joint5Destination = joint5Encoder.getFeedback();
+
+  //enable closed loop interrupts, and only after devices have been properly reconstructed with the new algorithms as we 
+  //don't want the timer interrupt firing while we're still modifying the classes
+  TimerIntClear(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
+  TimerIntEnable(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
+  TimerEnable(TIMER0_BASE, TIMER_A);
+
+  currentControlSystem = ClosedLoop;
 }
 
+void setupTimer0(float timeout_micros)
+{
+  uint32_t timerLoad = 16000000.0 * (timeout_micros/1000000.0); // clock cycle (cycle/second) * (microsecond timeout/10000000 to convert it to seconds) = cycles till the timeout passes
 
+  //enable timer hardware
+  SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER0);
+
+  delay(1); //let the periph finish processing
+
+  //set clock to internal precision clock of 16 Mhz
+  TimerClockSourceSet(TIMER0_BASE, TIMER_CLOCK_PIOSC);
+
+  //configure timer for count up periodic
+  TimerConfigure(TIMER0_BASE, TIMER_CFG_PERIODIC);
+  
+  //set timer load based on earlier calculated value
+  TimerLoadSet(TIMER0_BASE, TIMER_A, (timerLoad)); 
+
+  //set up interrupts. The order here is actually important, TI's forums reccomend 
+  //setting up new interrupts in this exact fashion
+  TimerIntClear(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
+  TimerIntEnable(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
+  IntEnable(INT_TIMER0A);
+
+  //register interrupt functions 
+  TimerIntRegister(TIMER0_BASE, TIMER_A, &closedLoopUpdateHandler);
+  
+  //enable master system interrupt
+  IntMasterEnable();
+}
+
+void closedLoopUpdateHandler()
+{
+  TimerIntClear(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
+  static int jointUpdated = 1;
+  jointUpdated += 1;
+  if(jointUpdated > 5)
+  {
+    jointUpdated = 1;
+  }
+  if(jointUpdated == 1)
+  {
+    joint1->runOutputControl(joint1Destination);
+  }
+  else if(jointUpdated == 2)
+  {
+    joint2->runOutputControl(joint2Destination);
+  }
+  else if(jointUpdated == 3)
+  {
+    joint3->runOutputControl(joint3Destination);
+  }
+  else if(jointUpdated == 4)
+  {
+    joint4->runOutputControl(joint4Destination);
+  }
+  else if(jointUpdated == 5)
+  {
+    joint5->runOutputControl(joint5Destination);
+  }
+}
