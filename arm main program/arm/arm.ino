@@ -1,34 +1,32 @@
 #include "arm.h"
 
-
 JointInterface* joint1;
 JointInterface* joint2;
 JointInterface* joint3;
 JointInterface* joint4;
 JointInterface* joint5;
 JointInterface* gripperMotor;
+JointInterface* gripperServo;
 
-PIAlgorithm* alg1;
-PIAlgorithm* alg2;
-PIAlgorithm* alg3;
-PIAlgorithm* alg4;
-PIAlgorithm* alg5;
-PIAlgorithm* algGripper;
+PIAlgorithm* joint1Alg;
+PIAlgorithm* joint2Alg;
+PIAlgorithm* joint3Alg;
+PIAlgorithm* joint4Alg;
+PIAlgorithm* joint5Alg;
 
-Ma3Encoder12b* fb1;
-Ma3Encoder12b* fb2;
-Ma3Encoder12b* fb3;
-Ma3Encoder12b* fb4;
-Ma3Encoder12b* fb5;
-Ma3Encoder12b* fbGripper;
+Ma3Encoder12b joint1Encoder(ENCODER1_READING_PIN);
+Ma3Encoder12b joint2Encoder(ENCODER2_READING_PIN);
+Ma3Encoder12b joint3Encoder(ENCODER3_READING_PIN);
+Ma3Encoder12b joint4Encoder(ENCODER4_READING_PIN);
+Ma3Encoder12b joint5Encoder(ENCODER5_READING_PIN);
 
 GenPwmPhaseHBridge dev1(MOT1_PWN_PIN, HBRIDGE1_PHASE_PIN, HBRIDGE1_NSLEEP_PIN, true, false);
 GenPwmPhaseHBridge dev2(MOT2_PWN_PIN, HBRIDGE2_PHASE_PIN, HBRIDGE2_NSLEEP_PIN, true, true);
 GenPwmPhaseHBridge dev3(MOT3_PWN_PIN, HBRIDGE3_PHASE_PIN, HBRIDGE3_NSLEEP_PIN, true, true);
 GenPwmPhaseHBridge dev4(MOT4_PWN_PIN, HBRIDGE4_PHASE_PIN, HBRIDGE4_NSLEEP_PIN, true, true);
 GenPwmPhaseHBridge dev5(MOT5_PWN_PIN, HBRIDGE5_PHASE_PIN, HBRIDGE5_NSLEEP_PIN, true, false);
-GenPwmPhaseHBridge dev6(MOT6_PWM_PIN, HBRIDGE6_PHASE_PIN, HBRIDGE6_NSLEEP_PIN, true, false);
-
+GenPwmPhaseHBridge dev6(MOT6_PWM_PIN, HBRIDGE6_PHASE_PIN, HBRIDGE6_NENABLE_PIN, false, true);
+RCContinuousServo gripServoDev(GRIPPER_SERVO_PWM_PIN, false);
 
 void setup() {} //useless
 
@@ -136,7 +134,6 @@ void initialize()
 {
   roveComm_Begin(IP_ADDRESS[0], IP_ADDRESS[1], IP_ADDRESS[2], IP_ADDRESS[3]);
   Serial.begin(9600);
-  Serial6.begin(GRIPPER_COMM_BAUD_RATE);
 
   pinMode(HBRIDGE1_NFAULT_PIN,INPUT);
   pinMode(HBRIDGE2_NFAULT_PIN,INPUT);
@@ -148,13 +145,15 @@ void initialize()
   pinMode(OC_NFAULT_PIN,INPUT);
   pinMode(POWER_LINE_CONTROL_PIN,OUTPUT);
 
+  //all joints are initialized to open loop control format
   joint1 = new RotateJoint(spd, &dev1, &dev2);
   joint2 = new TiltJoint(spd, &dev1, &dev2);
   joint3 = new SingleMotorJoint(spd, &dev3);
   joint4 = new RotateJoint(spd, &dev4, &dev5);
   joint5 = new TiltJoint(spd, &dev4, &dev5);
   gripperMotor = new SingleMotorJoint(spd, &dev6);
-
+  gripperServo = new SingleMotorJoint(spd, &gripServoDev);
+  
   joint1 -> coupleJoint(joint2);
   joint4 -> coupleJoint(joint5);
 
@@ -164,13 +163,6 @@ void initialize()
 
   TimerClockSourceSet(TIMER0_BASE, TIMER_CLOCK_PIOSC);
   TimerConfigure(TIMER0_BASE, TIMER_CFG_PERIODIC);
-
-  fb1 = new Ma3Encoder12b(ENCODER1_READING_PIN);
-  fb2 = new Ma3Encoder12b(ENCODER2_READING_PIN);
-  fb3 = new Ma3Encoder12b(ENCODER3_READING_PIN);
-  fb4 = new Ma3Encoder12b(ENCODER4_READING_PIN);
-  fb5 = new Ma3Encoder12b(ENCODER5_READING_PIN);
-  fbGripper = new Ma3Encoder12b(ENCODERG_READING_PIN);
 }
 
 bool checkOvercurrent()
@@ -303,7 +295,12 @@ CommandResult moveGripper(int16_t moveValue)
 
 CommandResult turnCap(int16_t moveValue)
 {
-  //
+  gripperServo->runOutputControl(moveValue);
+  if(moveValue != 0)
+  {
+    Serial.print("Moving gripper servo: ");
+    Serial.println(moveValue);
+  }
 }
 
 CommandResult switchToOpenLoop()
@@ -314,13 +311,11 @@ CommandResult switchToOpenLoop()
   delete joint3;
   delete joint4;
   delete joint5;
-  delete gripperMotor;
-  delete alg1;
-  delete alg2;
-  delete alg3;
-  delete alg4;
-  delete alg5;
-  delete algGripper;
+  delete joint1Alg;
+  delete joint2Alg;
+  delete joint3Alg;
+  delete joint4Alg;
+  delete joint5Alg;
   TimerIntClear(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
   TimerIntDisable(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
   TimerDisable(TIMER0_BASE, TIMER_A);
@@ -329,7 +324,6 @@ CommandResult switchToOpenLoop()
   joint3 = new SingleMotorJoint(spd, &dev3);
   joint4 = new RotateJoint(spd, &dev4, &dev5);
   joint5 = new TiltJoint(spd, &dev4, &dev5);
-  gripperMotor = new SingleMotorJoint(spd, &dev6);
 }
 
 CommandResult switchToClosedLoop()
@@ -339,23 +333,20 @@ CommandResult switchToClosedLoop()
   delete joint3;
   delete joint4;
   delete joint5;
-  delete gripperMotor;
   TimerIntClear(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
   TimerConfigure(TIMER0_BASE, TIMER_CFG_PERIODIC);
   TimerIntEnable(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
   TimerEnable(TIMER0_BASE, TIMER_A);
-  alg1 = new PIAlgorithm(21,4,.04);
-  alg2 = new PIAlgorithm(21,4,.04);
-  alg3 = new PIAlgorithm(21,4,.04);
-  alg4 = new PIAlgorithm(21,4,.04);
-  alg5 = new PIAlgorithm(21,4,.04);
-  algGripper = new PIAlgorithm(21,4,.04);
-  joint1 = new RotateJoint(spd, alg1, &dev1, &dev2, fb1);
-  joint2 = new TiltJoint(spd, alg2, &dev1, &dev2, fb2);
-  joint3 = new SingleMotorJoint(spd, alg3, &dev3, fb3);
-  joint4 = new RotateJoint(spd, alg4, &dev4, &dev5, fb4);
-  joint5 = new TiltJoint(spd, alg5, &dev4, &dev5, fb5);
-  gripperMotor = new SingleMotorJoint(spd, algGripper, &dev6, fbGripper);
+  joint1Alg = new PIAlgorithm(21,4,.04);
+  joint2Alg = new PIAlgorithm(21,4,.04);
+  joint3Alg = new PIAlgorithm(21,4,.04);
+  joint4Alg = new PIAlgorithm(21,4,.04);
+  joint5Alg = new PIAlgorithm(21,4,.04);
+  joint1 = new RotateJoint(spd, joint1Alg, &dev1, &dev2, &joint1Encoder);
+  joint2 = new TiltJoint(spd, joint2Alg, &dev1, &dev2, &joint2Encoder);
+  joint3 = new SingleMotorJoint(spd, joint3Alg, &dev3, &joint3Encoder);
+  joint4 = new RotateJoint(spd, joint4Alg, &dev4, &dev5, &joint4Encoder);
+  joint5 = new TiltJoint(spd, joint5Alg, &dev4, &dev5, &joint5Encoder);
 }
 
 

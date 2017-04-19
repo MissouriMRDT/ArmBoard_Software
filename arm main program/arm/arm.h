@@ -5,6 +5,7 @@
 #include "GenPwmPhaseHBridge.h"
 #include "PIAlgorithm.h"
 #include "Ma3Encoder12b.h"
+#include "RCContinuousServo.h"
 #include "timer.h"
 
 //enum representing the different arm commands we can receive from base station.
@@ -60,9 +61,6 @@ const uint32_t MOT4_PWN_PIN = PK_4;
 const uint32_t MOT5_PWN_PIN = PG_0;
 const uint32_t MOT6_PWM_PIN = PF_2;
 
-const uint32_t GRIPP_TX6_PIN = PP_0;
-const uint32_t GRIPP_RX6_PIN = PP_1;
-
 const uint32_t HBRIDGE1_NFAULT_PIN = PM_7;
 const uint32_t HBRIDGE1_NSLEEP_PIN = PA_7;
 const uint32_t HBRIDGE1_PHASE_PIN = PP_5;
@@ -84,7 +82,7 @@ const uint32_t HBRIDGE5_NSLEEP_PIN = PK_3;
 const uint32_t HBRIDGE5_PHASE_PIN = PQ_0;
 
 const uint32_t HBRIDGE6_NFAULT_PIN = PQ_3;
-const uint32_t HBRIDGE6_NSLEEP_PIN = PP_3;
+const uint32_t HBRIDGE6_NENABLE_PIN = PP_3;
 const uint32_t HBRIDGE6_PHASE_PIN = PQ_2;
 
 const uint32_t ENCODER1_READING_PIN = PM_4;
@@ -92,7 +90,8 @@ const uint32_t ENCODER2_READING_PIN = PA_6;
 const uint32_t ENCODER3_READING_PIN = PM_6;
 const uint32_t ENCODER4_READING_PIN = PM_2;
 const uint32_t ENCODER5_READING_PIN = PM_0;
-const uint32_t ENCODERG_READING_PIN = PM_6;
+
+const uint32_t GRIPPER_SERVO_PWM_PIN = PF_2;
 
 const uint32_t OC_NFAULT_PIN = PE_5;
 const uint32_t CURRENT_READ_PIN = PD_3;
@@ -103,7 +102,7 @@ const float CURRENT_SENSOR_RATIO = .066; //current sensor ratio of outputted sig
 
 const float CURRENT_LIMIT = 18; //actual limit we want is 17, but because the calculations are just an estimate we overshoot it slightly for manual checks
 
-const float VCC = 3.0; //usually the V input is 3V
+const float VCC = 3.3; //usually the V input is 3.3V
 
 void initialize();
 
