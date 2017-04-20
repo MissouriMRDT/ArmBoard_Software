@@ -48,7 +48,7 @@ void loop() {
 
   initialize(); //control devices initted in here
 
-  delay(10);
+  delay(1000);
   
   //masterPowerEnable(); //for debugging. Enable if base station currently isn't sending 'enable power' messages and you just want to move some motors
   
@@ -177,7 +177,7 @@ void initialize()
   //There are 5 controls to update independently. They update one at a time, one being serviced every time the timer fires. So it takes 5 timer
   //firings for any individual control to get updated again. Meaning the timeslice of the timer itself must be one fifth of the PI algorithms overall timeslice so that 
   //when it cycles back around the overall timeslice will have passed
-  setupTimer0(PI_TIMESLICE_SECONDS/5.0); 
+  setupTimer0((PI_TIMESLICE_SECONDS/5.0) * 1000000.0); //function expects microseconds
 }
 
 bool checkOvercurrent()
@@ -358,7 +358,8 @@ CommandResult switchToOpenLoop()
   TimerDisable(TIMER0_BASE, TIMER_A); 
   TimerIntClear(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
   TimerIntDisable(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
-
+  delay(10);
+  
   //reconstruct joint interfaces with open loop format
   delete joint1;
   delete joint2;
@@ -376,6 +377,8 @@ CommandResult switchToOpenLoop()
 
 CommandResult switchToClosedLoop()
 {
+  currentControlSystem = ClosedLoop;
+    
   //reconstruct joints with closed loop algorithms
   delete joint1;
   delete joint2;
@@ -410,8 +413,6 @@ CommandResult switchToClosedLoop()
   TimerIntClear(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
   TimerIntEnable(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
   TimerEnable(TIMER0_BASE, TIMER_A);
-
-  currentControlSystem = ClosedLoop;
 }
 
 void setupTimer0(float timeout_micros)
@@ -443,10 +444,13 @@ void setupTimer0(float timeout_micros)
   
   //enable master system interrupt
   IntMasterEnable();
+
+  delay(1);
 }
 
 void closedLoopUpdateHandler()
 {
+  Serial.println("hi");
   TimerIntClear(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
   static int jointUpdated = 1;
   jointUpdated += 1;
@@ -457,31 +461,21 @@ void closedLoopUpdateHandler()
   if(jointUpdated == 1)
   {
     joint1->runOutputControl(joint1Destination);
-    Serial.print("Moving joint 1 to position ");
-    Serial.println(joint1Destination);
   }
   else if(jointUpdated == 2)
   {
     joint2->runOutputControl(joint2Destination);
-    Serial.print("Moving joint 2 to position ");
-    Serial.println(joint2Destination);
   }
   else if(jointUpdated == 3)
   {
     joint3->runOutputControl(joint3Destination);
-    Serial.print("Moving joint 3 to position ");
-    Serial.println(joint3Destination);
   }
   else if(jointUpdated == 4)
   {
     joint4->runOutputControl(joint4Destination);
-    Serial.print("Moving joint 4 to position ");
-    Serial.println(joint4Destination);
   }
   else if(jointUpdated == 5)
   {
     joint5->runOutputControl(joint5Destination);
-    Serial.print("Moving joint 5 to position ");
-    Serial.println(joint5Destination);
   }
 }
