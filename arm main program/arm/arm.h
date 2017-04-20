@@ -62,7 +62,6 @@ typedef enum ControlSystems
 
 const uint32_t WATCHDOG_TIMEOUT_US = 2000000; //the amount of microseconds that should pass without getting a transmission from base station before the arm ceases moving for safety
 const uint8_t IP_ADDRESS [4] = {192, 168, 1, 131};
-const uint32_t GRIPPER_COMM_BAUD_RATE = 115200;
 
 const uint32_t MOT1_PWN_PIN = PG_1;
 const uint32_t MOT2_PWN_PIN = PF_3;
@@ -96,7 +95,7 @@ const uint32_t HBRIDGE6_NENABLE_PIN = PP_3;
 const uint32_t HBRIDGE6_PHASE_PIN = PQ_2;
 
 const uint32_t ENCODER1_READING_PIN = PM_4;
-const uint32_t ENCODER2_READING_PIN = PA_6;
+const uint32_t ENCODER2_READING_PIN = PD_2;
 const uint32_t ENCODER3_READING_PIN = PM_6;
 const uint32_t ENCODER4_READING_PIN = PM_2;
 const uint32_t ENCODER5_READING_PIN = PM_0;
