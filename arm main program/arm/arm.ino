@@ -50,7 +50,7 @@ void loop() {
 
   delay(1000);
   
-  switchToClosedLoop();
+  //switchToClosedLoop(); for debugging. RED currnetly lacks command to switch between schemes, has to be done manually
   
   while(1) //main program loop. Listen for communications from the endefector or from base station, and proceed based on that transmission
   {
