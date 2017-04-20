@@ -43,21 +43,24 @@ void loop() {
   CommandResult result;
   uint16_t commandId;
   size_t commandSize;
-  int16_t commandData;
+  int16_t commandData[MAX_PACKET_SIZE]; //maximum amount of data arm commands can represent is up to integers
   uint32_t watchdogTimer_us = 0; //increment this value everytime we don't get a command. When we've waited for a command for longer than our timeout value, stop all arm movement
 
   initialize(); //control devices initted in here
 
   delay(1000);
   
-  //masterPowerEnable(); //for debugging. Enable if base station currently isn't sending 'enable power' messages and you just want to move some motors
+  switchToClosedLoop();
   
   while(1) //main program loop. Listen for communications from the endefector or from base station, and proceed based on that transmission
   {
-    commandSize = 0;
+    commandSize = 0;//reset variables
     commandId = 0;
-    commandData = 0;//reset variables
-
+    for(int i = 0; i < MAX_PACKET_SIZE; i++)
+    {
+      commandData[i] = 0;
+    }
+    
     roveComm_GetMsg(&commandId, &commandSize, &commandData);
     if(commandId != 0) //command packets come in 1 or 2 bytes. If it's any other size, there was probably a comm error
     {
@@ -69,31 +72,31 @@ void loop() {
       }
       else if(commandId == ArmJ1 || commandId == LY_ArmJ1)
       {
-        result = moveJ1(commandData);
+        result = moveJ1(commandData[0]);
       }
       else if(commandId == ArmJ2 || commandId == LY_ArmJ2)
       {
-        result = moveJ2(commandData);
+        result = moveJ2(commandData[0]);
       }
       else if(commandId == ArmJ3 || commandId == LY_ArmJ3)
       {
-        result = moveJ3(commandData);
+        result = moveJ3(commandData[0]);
       }
       else if(commandId == ArmJ4 || commandId == LY_ArmJ4)
       {
-        result = moveJ4(commandData);
+        result = moveJ4(commandData[0]);
       }
       else if(commandId == ArmJ5 || commandId == LY_ArmJ5)
       {
-        result = moveJ5(commandData);
+        result = moveJ5(commandData[0]);
       }
       else if(commandId == MoveGripper || commandId == LY_MoveGripper)
       {
-        result = moveGripper(commandData);
+        result = moveGripper(commandData[0]);
       }
       else if(commandId == TurnCap)
       {
-        result = turnCap(commandData);
+        result = turnCap(commandData[0]);
       }
       else if(commandId == UseOpenLoop)
       {
@@ -103,7 +106,19 @@ void loop() {
       {
         result = switchToClosedLoop();          
       }
-
+      else if(commandId == ArmEnableAll)
+      {
+        masterPowerSet(commandData[0]);
+        allMotorsPowerSet(commandData[0]);
+      }
+      else if(commandId == ArmEnableMain)
+      {
+        masterPowerSet(commandData[0]);         
+      }
+      else if(commandId == ArmAbsoluteAngle)
+      {
+        setArmAngles(commandData);
+      }
 
       if(result != Success)
       {
@@ -136,6 +151,8 @@ void loop() {
       //TODO: send telemetry back to base station
     }
 
+    //todo: Check motors for fault conditions, do stuff
+
   }//end while
 
 }
@@ -167,9 +184,9 @@ void initialize()
   joint1 -> coupleJoint(joint2);
   joint4 -> coupleJoint(joint5);
 
-  masterPowerDisable();
+  masterPowerSet(0);
 
-  enableAllMotors();
+  allMotorsPowerSet(1);
 
   currentControlSystem = OpenLoop;
   
@@ -192,36 +209,40 @@ bool checkOvercurrent()
   }
 }
 
-CommandResult masterPowerEnable()
+CommandResult masterPowerSet(bool enable)
 {
-  digitalWrite(POWER_LINE_CONTROL_PIN, HIGH);
+  if(enable)
+  {
+    digitalWrite(POWER_LINE_CONTROL_PIN, HIGH);
+  }
+  else
+  {
+    digitalWrite(POWER_LINE_CONTROL_PIN, LOW);
+  }
 }
 
-CommandResult masterPowerDisable()
+void allMotorsPowerSet(bool enable)
 {
-  digitalWrite(POWER_LINE_CONTROL_PIN, LOW);
-}
-
-void enableAllMotors()
-{
-  dev1.setPower(true);
-  dev2.setPower(true);
-  dev3.setPower(true);
-  dev4.setPower(true);
-  dev5.setPower(true);
-  dev6.setPower(true);
-  gripServoDev.setPower(true);
-}
-
-void disableAllMotors()
-{
-  dev1.setPower(false);
-  dev2.setPower(false);
-  dev3.setPower(false);
-  dev4.setPower(false);
-  dev5.setPower(false);
-  dev6.setPower(false);
-  gripServoDev.setPower(false);
+  if(enable)
+  {
+    dev1.setPower(true);
+    dev2.setPower(true);
+    dev3.setPower(true);
+    dev4.setPower(true);
+    dev5.setPower(true);
+    dev6.setPower(true);
+    gripServoDev.setPower(true);
+  }
+  else
+  {
+    dev1.setPower(false);
+    dev2.setPower(false);
+    dev3.setPower(false);
+    dev4.setPower(false);
+    dev5.setPower(false);
+    dev6.setPower(false);
+    gripServoDev.setPower(false);
+  }
 }
 
 float readMasterCurrent()
@@ -242,7 +263,43 @@ float readMasterCurrent()
 
 CommandResult stopArm()
 {
-  masterPowerDisable();
+  masterPowerSet(false);
+}
+
+void j12PowerSet(bool powerOn)
+{
+  dev1.setPower(powerOn);
+  dev2.setPower(powerOn);
+}
+
+void j3PowerSet(bool powerOn)
+{
+  dev3.setPower(powerOn);
+}
+
+void j45PowerSet(bool powerOn)
+{
+  dev4.setPower(powerOn);
+  dev5.setPower(powerOn);
+}
+
+void gripperPowerSet(bool powerOn)
+{
+  dev6.setPower(powerOn);
+}
+
+CommandResult setArmAngles(int16_t angles[6])
+{
+  if(currentControlSystem == ClosedLoop)
+  {
+    joint1Destination = angles[0];
+    joint2Destination = angles[1];
+    joint3Destination = angles[2];
+    joint4Destination = angles[3];
+    joint5Destination = angles[4];
+    //Serial.print("Setting joint 5 to angle: ");
+    //Serial.println(joint5Destination);
+  }
 }
 
 CommandResult moveJ1(int16_t moveValue)
@@ -255,10 +312,6 @@ CommandResult moveJ1(int16_t moveValue)
       Serial.print("Moving j1: ");
       Serial.println(moveValue);
     }
-  }
-  else if(currentControlSystem == ClosedLoop)
-  {
-    joint1Destination = moveValue;
   }
 }
 
@@ -273,10 +326,6 @@ CommandResult moveJ2(int16_t moveValue)
       Serial.println(moveValue);
     }
   }
-  else if(currentControlSystem == ClosedLoop)
-  {
-    joint2Destination = moveValue;
-  }
 }
 
 CommandResult moveJ3(int16_t moveValue)
@@ -289,10 +338,6 @@ CommandResult moveJ3(int16_t moveValue)
       Serial.print("Moving j3: ");
       Serial.println(moveValue);
     }
-  }
-  else if(currentControlSystem == ClosedLoop)
-  {
-    joint3Destination = moveValue;
   }
 }
 
@@ -307,10 +352,6 @@ CommandResult moveJ4(int16_t moveValue)
       Serial.println(moveValue);
     }
   }
-  else if(currentControlSystem == ClosedLoop)
-  {
-    joint4Destination = moveValue;
-  }
 }
 
 CommandResult moveJ5(int16_t moveValue)
@@ -324,15 +365,10 @@ CommandResult moveJ5(int16_t moveValue)
       Serial.println(moveValue);
     }
   }
-  else if(currentControlSystem == ClosedLoop)
-  {
-    joint5Destination = moveValue;
-  }
 }
 
 CommandResult moveGripper(int16_t moveValue)
 {
-  //gripper only uses open loop control
   gripperMotor->runOutputControl(moveValue);
   if(moveValue != 0)
   {
@@ -450,7 +486,6 @@ void setupTimer0(float timeout_micros)
 
 void closedLoopUpdateHandler()
 {
-  Serial.println("hi");
   TimerIntClear(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
   static int jointUpdated = 1;
   jointUpdated += 1;

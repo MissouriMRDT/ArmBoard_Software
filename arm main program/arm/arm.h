@@ -21,6 +21,14 @@ typedef enum ArmCommandIds
   ArmJ3 = 0x323,
   ArmJ4 = 0x324,
   ArmJ5 = 0x325,
+  ArmEnableAll = 0x330,
+  ArmEnableMain = 0x331,
+  ArmEnableJ1 = 0x332,
+  ArmEnableJ2 = 0x333,
+  ArmEnableJ34 = 0x334,
+  ArmEnableJ5 = 0x335,
+  ArmEnableEndeff = 0x336,
+  ArmAbsoluteAngle = 0x310,
   MoveGripper = 0x360, 
   TurnCap = 0x325,  //Incorrect Command ID
   UseOpenLoop = 0x325, //Incorrect Command ID
@@ -62,6 +70,7 @@ typedef enum ControlSystems
 
 const uint32_t WATCHDOG_TIMEOUT_US = 2000000; //the amount of microseconds that should pass without getting a transmission from base station before the arm ceases moving for safety
 const uint8_t IP_ADDRESS [4] = {192, 168, 1, 131};
+const uint8_t MAX_PACKET_SIZE = 6;
 
 const uint32_t MOT1_PWN_PIN = PG_1;
 const uint32_t MOT2_PWN_PIN = PF_3;
@@ -119,13 +128,17 @@ void initialize();
 
 bool checkOvercurrent();
 
-CommandResult masterPowerEnable();
+CommandResult masterPowerSet(bool enable);
 
-CommandResult masterPowerDisable();
+void allMotorsPowerSet(bool enable);
 
-void enableAllMotors();
+void j12PowerSet(bool powerOn);
 
-void disableAllMotors();
+void j3PowerSet(bool powerOn);
+
+void j45PowerSet(bool powerOn);
+
+void gripperPowerSet(bool powerOn);
 
 float readMasterCurrent();
 
@@ -144,6 +157,8 @@ CommandResult moveJ5(int16_t moveValue);
 CommandResult moveGripper(int16_t moveValue);
 
 CommandResult turnCap(int16_t moveValue);
+
+CommandResult setArmAngles(int16_t angles[6]);
 
 CommandResult switchToOpenLoop();
 
