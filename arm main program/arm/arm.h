@@ -158,7 +158,7 @@ CommandResult moveGripper(int16_t moveValue);
 
 CommandResult turnCap(int16_t moveValue);
 
-CommandResult setArmAngles(int16_t angles[6]);
+CommandResult setArmAngles(float* angles);
 
 CommandResult switchToOpenLoop();
 

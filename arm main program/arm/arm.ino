@@ -43,25 +43,21 @@ void loop() {
   CommandResult result;
   uint16_t commandId;
   size_t commandSize;
-  int16_t commandData[MAX_PACKET_SIZE]; //maximum amount of data arm commands can represent is up to integers
+  char commandData[255]; 
   uint32_t watchdogTimer_us = 0; //increment this value everytime we don't get a command. When we've waited for a command for longer than our timeout value, stop all arm movement
 
   initialize(); //control devices initted in here
 
   delay(1000);
   
-  //switchToClosedLoop(); for debugging. RED currnetly lacks command to switch between schemes, has to be done manually
+  //switchToClosedLoop(); //for debugging. RED currnetly lacks command to switch between schemes, has to be done manually
   
   while(1) //main program loop. Listen for communications from the endefector or from base station, and proceed based on that transmission
   {
     commandSize = 0;//reset variables
     commandId = 0;
-    for(int i = 0; i < MAX_PACKET_SIZE; i++)
-    {
-      commandData[i] = 0;
-    }
-    
-    roveComm_GetMsg(&commandId, &commandSize, &commandData);
+
+    roveComm_GetMsg(&commandId, &commandSize, commandData);
     if(commandId != 0) //command packets come in 1 or 2 bytes. If it's any other size, there was probably a comm error
     {
       watchdogTimer_us = 0; //reset watchdog timer since we received a command
@@ -72,31 +68,31 @@ void loop() {
       }
       else if(commandId == ArmJ1 || commandId == LY_ArmJ1)
       {
-        result = moveJ1(commandData[0]);
+        result = moveJ1(*(int16_t*)(commandData));
       }
       else if(commandId == ArmJ2 || commandId == LY_ArmJ2)
       {
-        result = moveJ2(commandData[0]);
+        result = moveJ2(*(int16_t*)(commandData));
       }
       else if(commandId == ArmJ3 || commandId == LY_ArmJ3)
       {
-        result = moveJ3(commandData[0]);
+        result = moveJ3(*(int16_t*)(commandData));
       }
       else if(commandId == ArmJ4 || commandId == LY_ArmJ4)
       {
-        result = moveJ4(commandData[0]);
+        result = moveJ4(*(int16_t*)(commandData));
       }
       else if(commandId == ArmJ5 || commandId == LY_ArmJ5)
       {
-        result = moveJ5(commandData[0]);
+        result = moveJ5(*(int16_t*)(commandData));
       }
       else if(commandId == MoveGripper || commandId == LY_MoveGripper)
       {
-        result = moveGripper(commandData[0]);
+        result = moveGripper(*(int16_t*)(commandData));
       }
       else if(commandId == TurnCap)
       {
-        result = turnCap(commandData[0]);
+        result = turnCap(*(int16_t*)(commandData));
       }
       else if(commandId == UseOpenLoop)
       {
@@ -108,16 +104,16 @@ void loop() {
       }
       else if(commandId == ArmEnableAll)
       {
-        masterPowerSet(commandData[0]);
-        allMotorsPowerSet(commandData[0]);
+        masterPowerSet((*(bool*)(commandData)));
+        allMotorsPowerSet(*(bool*)(commandData));
       }
       else if(commandId == ArmEnableMain)
       {
-        masterPowerSet(commandData[0]);         
+        masterPowerSet(*(bool*)(commandData));   
       }
       else if(commandId == ArmAbsoluteAngle)
       {
-        setArmAngles(commandData);
+        setArmAngles(((float*)(commandData)));
       }
 
       if(result != Success)
@@ -288,8 +284,9 @@ void gripperPowerSet(bool powerOn)
   dev6.setPower(powerOn);
 }
 
-CommandResult setArmAngles(int16_t angles[6])
-{
+CommandResult setArmAngles(float* angles)
+{ 
+  //angles comes in as an array
   if(currentControlSystem == ClosedLoop)
   {
     joint1Destination = angles[0];
@@ -297,8 +294,6 @@ CommandResult setArmAngles(int16_t angles[6])
     joint3Destination = angles[2];
     joint4Destination = angles[3];
     joint5Destination = angles[4];
-    //Serial.print("Setting joint 5 to angle: ");
-    //Serial.println(joint5Destination);
   }
 }
 
@@ -426,8 +421,8 @@ CommandResult switchToClosedLoop()
   delete joint3Alg;
   delete joint4Alg;
   delete joint5Alg;
-  joint1Alg = new PIAlgorithm(21,4,PI_TIMESLICE_SECONDS);
-  joint2Alg = new PIAlgorithm(21,4,PI_TIMESLICE_SECONDS);
+  joint1Alg = new PIAlgorithm(5,4,PI_TIMESLICE_SECONDS);
+  joint2Alg = new PIAlgorithm(5,4,PI_TIMESLICE_SECONDS);
   joint3Alg = new PIAlgorithm(21,4,PI_TIMESLICE_SECONDS);
   joint4Alg = new PIAlgorithm(21,4,PI_TIMESLICE_SECONDS);
   joint5Alg = new PIAlgorithm(21,4,PI_TIMESLICE_SECONDS);
