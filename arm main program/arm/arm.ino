@@ -1,5 +1,19 @@
 #include "arm.h"
 
+/* programmers: Drue Satterfield, David Strickland, Christopher Dutcher, Jake Hasenfratz
+ * Spring 17
+ * 
+ * The main arm program, for revision two of the arm hardware. 
+ * Handles all arm processes and telemetry, based on commands from base station using the rovecomm standard.
+ * 
+ * For more information on the hardware, visit the MRDT ArmBoardHardware github
+ * For more information on the software, visit the MRDT ArmBoardSoftware github, plus the assorted libraries used have documentation under their folders at energia\libraries
+ * 
+ * Hardware used: literally all of the timers and all of the pwm modules on the tiva tm4c1294ncpdt
+ */
+
+
+//Joint and hardware wrappers
 JointInterface* joint1;
 JointInterface* joint2;
 JointInterface* joint3;
@@ -25,7 +39,7 @@ GenPwmPhaseHBridge dev2(MOT2_PWN_PIN, HBRIDGE2_PHASE_PIN, HBRIDGE2_NSLEEP_PIN, t
 GenPwmPhaseHBridge dev3(MOT3_PWN_PIN, HBRIDGE3_PHASE_PIN, HBRIDGE3_NSLEEP_PIN, true, true);
 GenPwmPhaseHBridge dev4(MOT4_PWN_PIN, HBRIDGE4_PHASE_PIN, HBRIDGE4_NSLEEP_PIN, true, true);
 GenPwmPhaseHBridge dev5(MOT5_PWN_PIN, HBRIDGE5_PHASE_PIN, HBRIDGE5_NSLEEP_PIN, true, false);
-GenPwmPhaseHBridge dev6(MOT6_PWM_PIN, HBRIDGE6_PHASE_PIN, HBRIDGE6_NENABLE_PIN, false, true);
+GenPwmPhaseHBridge gripMotorDev(GRIPMOT_PWM_PIN, GRIPMOT_PHASE_PIN, GRIPMOT_NENABLE_PIN, false, true);
 RCContinuousServo gripServoDev(GRIPPER_SERVO_PWM_PIN, false);
 
 //variables used to control joints during closed loop control
@@ -90,9 +104,9 @@ void loop() {
       {
         result = moveGripper(*(int16_t*)(commandData));
       }
-      else if(commandId == TurnCap)
+      else if(commandId == MoveGripServo)
       {
-        result = turnCap(*(int16_t*)(commandData));
+        result = moveGripServo(*(int16_t*)(commandData));
       }
       else if(commandId == UseOpenLoop)
       {
@@ -113,7 +127,13 @@ void loop() {
       }
       else if(commandId == ArmAbsoluteAngle)
       {
-        setArmAngles(((float*)(commandData)));
+        setArmDestinationAngles(((float*)(commandData)));
+      }
+      else if(commandId == ArmGetPosition)
+      {
+        float currentPositions[ArmJointCount];
+        getArmPositions(currentPositions);
+        roveComm_SendMsg(ArmCurrentPosition, sizeof(float) * ArmJointCount, currentPositions);
       }
 
       if(result != Success)
@@ -153,6 +173,8 @@ void loop() {
 
 }
 
+//setup all crucial software processes such as rovecomm, serial, and the closed loop timer, and set up static GPIO pins.
+//Also initialize the joint constructs to their initial state, IE open loop controlled
 void initialize()
 {
   roveComm_Begin(IP_ADDRESS[0], IP_ADDRESS[1], IP_ADDRESS[2], IP_ADDRESS[3]);
@@ -163,7 +185,7 @@ void initialize()
   pinMode(HBRIDGE3_NFAULT_PIN,INPUT);
   pinMode(HBRIDGE4_NFAULT_PIN,INPUT);
   pinMode(HBRIDGE5_NFAULT_PIN,INPUT);
-  pinMode(HBRIDGE6_NFAULT_PIN,INPUT);
+  pinMode(GRIPMOT_NFAULT_PIN,INPUT);
 
   pinMode(OC_NFAULT_PIN,INPUT);
   pinMode(POWER_LINE_CONTROL_PIN,OUTPUT);
@@ -174,15 +196,15 @@ void initialize()
   joint3 = new SingleMotorJoint(spd, &dev3);
   joint4 = new RotateJoint(spd, &dev4, &dev5);
   joint5 = new TiltJoint(spd, &dev4, &dev5);
-  gripperMotor = new SingleMotorJoint(spd, &dev6);
+  gripperMotor = new SingleMotorJoint(spd, &gripMotorDev);
   gripperServo = new SingleMotorJoint(spd, &gripServoDev);
   
   joint1 -> coupleJoint(joint2);
   joint4 -> coupleJoint(joint5);
 
-  masterPowerSet(0);
+  masterPowerSet(false);
 
-  allMotorsPowerSet(1);
+  allMotorsPowerSet(true);
 
   currentControlSystem = OpenLoop;
   
@@ -193,6 +215,8 @@ void initialize()
   setupTimer0((PI_TIMESLICE_SECONDS/5.0) * 1000000.0); //function expects microseconds
 }
 
+//checks to see if the master powerline has overcurrented.
+//Returns true if so, false if not
 bool checkOvercurrent()
 {
   if(readMasterCurrent() > CURRENT_LIMIT)
@@ -205,6 +229,7 @@ bool checkOvercurrent()
   }
 }
 
+//Turns on or off the main power line
 CommandResult masterPowerSet(bool enable)
 {
   if(enable)
@@ -217,6 +242,7 @@ CommandResult masterPowerSet(bool enable)
   }
 }
 
+//turns on or off all the motors
 void allMotorsPowerSet(bool enable)
 {
   if(enable)
@@ -226,7 +252,7 @@ void allMotorsPowerSet(bool enable)
     dev3.setPower(true);
     dev4.setPower(true);
     dev5.setPower(true);
-    dev6.setPower(true);
+    gripMotorDev.setPower(true);
     gripServoDev.setPower(true);
   }
   else
@@ -236,11 +262,13 @@ void allMotorsPowerSet(bool enable)
     dev3.setPower(false);
     dev4.setPower(false);
     dev5.setPower(false);
-    dev6.setPower(false);
+    gripMotorDev.setPower(false);
     gripServoDev.setPower(false);
   }
 }
 
+//reads the current detected in the main power line. 
+//returns: Amps moving through the main power line
 float readMasterCurrent()
 {
   //Note this is only an estimation, as it assumes the VCC is currently 3.3V when in reality it tends to be between 3V and 3.3V
@@ -257,34 +285,45 @@ float readMasterCurrent()
   }
 }
 
+//stops all arm movement by disabling the main power line and disabling all motors
 CommandResult stopArm()
 {
   masterPowerSet(false);
+  allMotorsPowerSet(false);
 }
 
+//turns on or off the motors attached to joint 1 and 2
 void j12PowerSet(bool powerOn)
 {
   dev1.setPower(powerOn);
   dev2.setPower(powerOn);
 }
 
+//turns on or off the motor attached to joint 3
 void j3PowerSet(bool powerOn)
 {
   dev3.setPower(powerOn);
 }
 
+//turns on or off the motors attached to joint 4 and 5
 void j45PowerSet(bool powerOn)
 {
   dev4.setPower(powerOn);
   dev5.setPower(powerOn);
 }
 
+//turns on or off the motors attached to the gripper
 void gripperPowerSet(bool powerOn)
 {
-  dev6.setPower(powerOn);
+  gripMotorDev.setPower(powerOn);
+  gripServoDev.setPower(powerOn);
 }
 
-CommandResult setArmAngles(float* angles)
+//Sets the angles for the joints of the arm to travel to
+//Input: an angle array. angles[0] = joint1 destination, etc
+//Note that this will only be performed when the current control system being used is closed loop
+//Note that the angles are numerically described using the joint control framework standard
+CommandResult setArmDestinationAngles(float* angles)
 { 
   //angles comes in as an array
   if(currentControlSystem == ClosedLoop)
@@ -297,6 +336,9 @@ CommandResult setArmAngles(float* angles)
   }
 }
 
+//moves the first joint
+//note that this function only operates if open loop is currently being used; else, use the setArmDestinationAngles function for closed loop movvement
+//note that the moveValue is numerically described using the joint control framework standard
 CommandResult moveJ1(int16_t moveValue)
 {
   if(currentControlSystem == OpenLoop)
@@ -310,6 +352,9 @@ CommandResult moveJ1(int16_t moveValue)
   }
 }
 
+//moves the second joint
+//note that this function only operates if open loop is currently being used; else, use the setArmDestinationAngles function for closed loop movvement
+//note that the moveValue is numerically described using the joint control framework standard
 CommandResult moveJ2(int16_t moveValue)
 {
   if(currentControlSystem == OpenLoop)
@@ -323,6 +368,9 @@ CommandResult moveJ2(int16_t moveValue)
   }
 }
 
+//moves the third joint
+//note that this function only operates if open loop is currently being used; else, use the setArmDestinationAngles function for closed loop movvement
+//note that the moveValue is numerically described using the joint control framework standard
 CommandResult moveJ3(int16_t moveValue)
 {
   if(currentControlSystem == OpenLoop)
@@ -336,6 +384,9 @@ CommandResult moveJ3(int16_t moveValue)
   }
 }
 
+//moves the fourth joint
+//note that this function only operates if open loop is currently being used; else, use the setArmDestinationAngles function for closed loop movvement
+//note that the moveValue is numerically described using the joint control framework standard
 CommandResult moveJ4(int16_t moveValue)
 {
   if(currentControlSystem == OpenLoop)
@@ -349,6 +400,9 @@ CommandResult moveJ4(int16_t moveValue)
   }
 }
 
+//moves the fifth joint
+//note that this function only operates if open loop is currently being used; else, use the setArmDestinationAngles function for closed loop movvement
+//note that the moveValue is numerically described using the joint control framework standard
 CommandResult moveJ5(int16_t moveValue)
 {
   if(currentControlSystem == OpenLoop)
@@ -362,6 +416,9 @@ CommandResult moveJ5(int16_t moveValue)
   }
 }
 
+//moves the gripper open/closed
+//note that this function only operates if open loop is currently being used; else, use the setArmDestinationAngles function for closed loop movvement
+//note that the moveValue is numerically described using the joint control framework standard
 CommandResult moveGripper(int16_t moveValue)
 {
   gripperMotor->runOutputControl(moveValue);
@@ -372,9 +429,11 @@ CommandResult moveGripper(int16_t moveValue)
   }
 }
 
-CommandResult turnCap(int16_t moveValue)
+//spins the gripper servo
+//note that this function only operates if open loop is currently being used; else, use the setArmDestinationAngles function for closed loop movvement
+//note that the moveValue is numerically described using the joint control framework standard
+CommandResult moveGripServo(int16_t moveValue)
 {
-  //turncap uses only open loop control
   gripperServo->runOutputControl(moveValue);
   if(moveValue != 0)
   {
@@ -383,6 +442,8 @@ CommandResult turnCap(int16_t moveValue)
   }
 }
 
+//switches the arm over to open loop control method; this will disable closed loop functions and functionality
+//while enabling open loop functions and functionality
 CommandResult switchToOpenLoop()
 {
   //disable closed loop interrupts before doing any operation to preserve thread safety
@@ -406,6 +467,8 @@ CommandResult switchToOpenLoop()
   currentControlSystem = OpenLoop;
 }
 
+//switches the arm over to closed loop control method; this will enable closed loop functions and functionality
+//while disabling open loop functions and functionality
 CommandResult switchToClosedLoop()
 {
   currentControlSystem = ClosedLoop;
@@ -446,6 +509,10 @@ CommandResult switchToClosedLoop()
   TimerEnable(TIMER0_BASE, TIMER_A);
 }
 
+//sets up timer 0 so that it can service closed loop functionality; 
+//closed loop works by periodically updating all of the joints' positional destinations on a consistent timeslice.
+//Safest option for this service is to use a timer, and timer 0 is the only timer that's not in use by the rest of the program (timers 1-5 are used to read pwm).
+//After setup, timer remains ready but not running. The switchToClosedLoop function turns on the timer and its interrupt, while switchToOpenLoop turns it back off.
 void setupTimer0(float timeout_micros)
 {
   uint32_t timerLoad = 16000000.0 * (timeout_micros/1000000.0); // clock cycle (cycle/second) * (microsecond timeout/10000000 to convert it to seconds) = cycles till the timeout passes
@@ -479,6 +546,22 @@ void setupTimer0(float timeout_micros)
   delay(1);
 }
 
+//fills a float array with the current positions of the joints. 
+//Angles are numerically described using the joint control framework standard
+CommandResult getArmPositions(float positions[ArmJointCount])
+{
+  positions[0] = joint1Encoder.getFeedback();
+  positions[1] = joint2Encoder.getFeedback();
+  positions[2] = joint3Encoder.getFeedback();
+  positions[3] = joint4Encoder.getFeedback();
+  positions[4] = joint5Encoder.getFeedback();
+}
+
+//Timer 0 periodic timeout interrupt. 
+//In this interrupt, closed loop protocol is serviced by updating the arm joint's destination positions.
+//The interrupt doesn't decide the destination positions; that's done by other functions. Instead, it just tells the joints 
+//to go towards their predetermined positions. This is done because closed loop uses PI logic controls, and PI logic needs to be updated 
+//on a consistent timeslice for its algorithm to calculate properly.
 void closedLoopUpdateHandler()
 {
   TimerIntClear(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
