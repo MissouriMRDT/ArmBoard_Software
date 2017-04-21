@@ -58,12 +58,12 @@ void initialize()
   OutputDevice* controller4 = new GenPwmPhaseHBridge(PK_4, PA_5, PD_5, true, true);
   OutputDevice* controller5 = new GenPwmPhaseHBridge(PG_0, PQ_0, PK_3, true, true);
   OutputDevice* gripMot = new GenPwmPhaseHBridge(PF_2, PQ_2, PP_3, false, true);
-  controller1->togglePower(true);
-  controller2->togglePower(true);
-  controller3->togglePower(true);
-  controller4->togglePower(true);
-  controller5->togglePower(true);
-  gripMot->togglePower(true);
+  controller1->setPower(true);
+  controller2->setPower(true);
+  controller3->setPower(true);
+  controller4->setPower(true);
+  controller5->setPower(true);
+  gripMot->setPower(true);
 
   J1_tilt = new TiltJoint(spd, controller2, controller1);
   J2_rot = new RotateJoint(spd, controller2, controller1);
