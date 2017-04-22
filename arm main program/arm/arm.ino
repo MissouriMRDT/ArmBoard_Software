@@ -433,7 +433,15 @@ CommandResult moveJ5(int16_t moveValue)
 //note that the moveValue is numerically described using the joint control framework standard
 CommandResult moveGripper(int16_t moveValue)
 {
-  gripperMotor->runOutputControl(moveValue);
+  int moveV;
+  if(moveValue > 0)
+    moveV = 1000;
+  else if(moveValue < 0)
+    moveV = -1000;
+  else
+    moveV = 0;
+    
+  gripperMotor->runOutputControl(moveV);
   if(moveValue != 0)
   {
     Serial.print("Moving j6: ");
