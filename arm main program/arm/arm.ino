@@ -76,72 +76,84 @@ void loop() {
     {
       watchdogTimer_us = 0; //reset watchdog timer since we received a command
 
-      if(commandId == ArmStop || commandId == LY_ArmStop)
+      switch(commandId)
       {
-        result = stopArm();
-      }
-      else if(commandId == ArmJ1 || commandId == LY_ArmJ1)
-      {
-        result = moveJ1(*(int16_t*)(commandData));
-      }
-      else if(commandId == ArmJ2 || commandId == LY_ArmJ2)
-      {
-        result = moveJ2(*(int16_t*)(commandData));
-      }
-      else if(commandId == ArmJ3 || commandId == LY_ArmJ3)
-      {
-        result = moveJ3(*(int16_t*)(commandData));
-      }
-      else if(commandId == ArmJ4 || commandId == LY_ArmJ4)
-      {
-        result = moveJ4(*(int16_t*)(commandData));
-      }
-      else if(commandId == ArmJ5 || commandId == LY_ArmJ5)
-      {
-        result = moveJ5(*(int16_t*)(commandData));
-      }
-      else if(commandId == MoveGripper || commandId == LY_MoveGripper)
-      {
-        result = moveGripper(*(int16_t*)(commandData));
-      }
-      else if(commandId == MoveGripServo)
-      {
-        result = moveGripServo(*(int16_t*)(commandData));
-      }
-      else if(commandId == UseOpenLoop)
-      {
-        result = switchToOpenLoop();
-      }
-      else if(commandId == UseClosedLoop)
-      {
-        result = switchToClosedLoop();          
-      }
-      else if(commandId == ArmEnableAll)
-      {
-        masterPowerSet((*(bool*)(commandData)));
-        allMotorsPowerSet(*(bool*)(commandData));
-      }
-      else if(commandId == ArmEnableMain)
-      {
-        masterPowerSet(*(bool*)(commandData));   
-      }
-      else if(commandId == ArmAbsoluteAngle)
-      {
-        setArmDestinationAngles(((float*)(commandData)));
-      }
-      else if(commandId == ArmGetPosition)
-      {
-        float currentPositions[ArmJointCount];
-        getArmPositions(currentPositions);
-        roveComm_SendMsg(ArmCurrentPosition, sizeof(float) * ArmJointCount, currentPositions);
-      }
+        case ArmStop:
+          result = stopArm();
+          break;
+          
+        case ArmJ1:
+        case LY_ArmJ1:
+          result = moveJ1(*(int16_t*)(commandData));
+          break;
+
+        case ArmJ2:
+        case LY_ArmJ2:
+          result = moveJ2(*(int16_t*)(commandData));
+          break;
+
+       case ArmJ3:
+       case LY_ArmJ3:
+          result = moveJ3(*(int16_t*)(commandData));
+          break;
+
+        case ArmJ4: 
+        case LY_ArmJ4: 
+          result = moveJ4(*(int16_t*)(commandData));
+          break;
+
+        case ArmJ5: 
+        case LY_ArmJ5: 
+          result = moveJ5(*(int16_t*)(commandData));
+          break;
+
+        case MoveGripper: 
+        case LY_MoveGripper: 
+          result = moveGripper(*(int16_t*)(commandData));
+          break;
+
+        case MoveGripServo: 
+          result = moveGripper(*(int16_t*)(commandData));
+          break;
+
+        case UseOpenLoop: 
+          result = switchToOpenLoop();
+          break;
+          
+        case UseClosedLoop: 
+          result = switchToClosedLoop();
+          break;
+
+        case ArmEnableAll: 
+          masterPowerSet((*(bool*)(commandData)));
+          allMotorsPowerSet(*(bool*)(commandData));
+          break;
+
+        case ArmEnableMain: 
+          masterPowerSet(*(bool*)(commandData));
+          break;
+
+        case ArmAbsoluteAngle: 
+          setArmDestinationAngles(((float*)(commandData)));
+          break;
+
+        case ArmGetPosition: 
+          float currentPositions[ArmJointCount];
+          getArmPositions(currentPositions);
+          roveComm_SendMsg(ArmCurrentPosition, sizeof(float) * ArmJointCount, currentPositions);
+          break;
+
+        default:
+          break; //do nothing if it's not a known ID
+          
+      } //end switch
 
       if(result != Success)
       {
         //todo: if there's ever any telemetry about what to do when the command isn't successful, this is where we'll send telemetry back about it
         // I'm not quite sure how to do this. Somebody else's addition would be very helpful.
       }
-    }//end if
+    }//end if(commandId != 0)
 
     //if no messages were recieved, increment our watchdog counter. If the counter has gone over a certain period of time since we last got a transmission, cease all movement.
     //This is to keep the arm from committing suicide on the environment/the rover if communications ever get interrupted while it's in the middle of moving

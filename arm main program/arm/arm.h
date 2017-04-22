@@ -31,9 +31,9 @@ typedef enum ArmCommandIds
   ArmAbsoluteAngle = 0x310,
   MoveGripper = 0x360, 
   ArmGetPosition = 0x319,
-  MoveGripServo = 0x325,  //Incorrect Command ID
-  UseOpenLoop = 0x325, //Incorrect Command ID
-  UseClosedLoop = 0x326 //Incorrect Command ID
+  MoveGripServo = 0x35A,
+  UseOpenLoop = 0x500, //Incorrect Command ID
+  UseClosedLoop = 0x501 //Incorrect Command ID
 } ArmCommandIds;
 
 //enum representing the different arm commands we can send to base station
@@ -52,8 +52,7 @@ typedef enum ArmCommandIds_LastYear
   LY_ArmJ3 = 204,
   LY_ArmJ4 = 203,
   LY_ArmJ5 = 202,
-  LY_MoveGripper = 202
-  
+  LY_MoveGripper = 208
 } ArmCommandIds_LastYear;
 
 //enum representing the differnet results we can return when we try to move a component
