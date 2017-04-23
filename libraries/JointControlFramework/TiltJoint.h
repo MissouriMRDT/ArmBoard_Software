@@ -4,7 +4,6 @@
 #include "JointFrameworkUtilities.h"
 #include "AbstractFramework.h"
 
-//Two motor device joint, where they move in the same direction to control the joint
 class TiltJoint : public JointInterface
 {
 	protected:

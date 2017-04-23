@@ -5,9 +5,6 @@
 #include <stdint.h>
 #include "AbstractFramework.h"
 
-//Standard dynamixel capable of wheel, joint, and multi-turn modes of operation.
-//RoveDynamixel causes some issues to interface with but not worth rewriting it to work with classes better
-//Note: Requires use of RoveDynamixel which is hard to read and understand. Edit at own risk.
 class DynamixelController : public OutputDevice
 {
   private:

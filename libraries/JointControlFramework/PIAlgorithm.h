@@ -4,11 +4,6 @@
 #include "JointFrameworkUtilities.h"
 #include "AbstractFramework.h"
 
-//Algorithm used to create a closed-loop feedback method.  Used when position is recieved from the base station and the speed is
-// to be sent to the device, which in turn returns feedback of the device's current location.
-// Note that this algorithm needs to be looped externally until joint interface returns a status saying that the movement is complete,
-// as each call only iterates through the PI loop once instead of waiting until completion.
-//Closed loop positional control.
 class PIAlgorithm : public IOAlgorithm
 {
 

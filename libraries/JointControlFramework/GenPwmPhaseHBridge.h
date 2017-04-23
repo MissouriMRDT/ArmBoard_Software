@@ -3,8 +3,6 @@
 
 #include "AbstractFramework.h"
 
-//Generic class for any H bridge device that's controlled with two pins; a magnitude control pin used with pwm, and a direction/phase pin
-
 class GenPwmPhaseHBridge: public OutputDevice
 {
   private:

@@ -3,8 +3,6 @@
 
 #include "AbstractFramework.h"
 
-//Discrete H Bridge controlled directly by the microcontroller, which has only two inputs to control forward and backwards.
-//Has two pins (one forward, one backwards). Outputs a pwm signal on one pin or another.
 class DirectDiscreteHBridge : public OutputDevice
 {
   private:

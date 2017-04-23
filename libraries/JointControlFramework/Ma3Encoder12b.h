@@ -4,8 +4,6 @@
 #include "AbstractFramework.h"
 #include <stdint.h>
 
-//feedback device for the MA3 encoder, 12 bit version
-//note: this class uses the pwm reader library. It will not compile without it.
 class Ma3Encoder12b: public FeedbackDevice
 {
   private:
