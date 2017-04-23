@@ -5,27 +5,17 @@
 //alg: The IOAlgorithm to be used by this joint
 //cont: The output device controlling the motor on this joint
 //feed: The feedback device used with this joint
-SingleMotorJoint::SingleMotorJoint(ValueType inputType, IOAlgorithm *alg, OutputDevice* cont, FeedbackDevice* feed) : JointInterface()
+SingleMotorJoint::SingleMotorJoint(ValueType inputType, IOAlgorithm *alg, OutputDevice* cont, FeedbackDevice* feed) : JointInterface(),
+  inType(inputType),
+  controller1(cont),
+  feedback(feed),
+  manip(alg),
+  algorithmUsed(true)
 {
-	//assignments
-	inType = inputType;
-	controller1 = cont;
-	feedback = feed;
-	manip = alg;
-	manip -> setFeedDevice(feed);
-  
-  algorithmUsed = true;
-  
+  manip -> setFeedDevice(feed);
   //checks to make sure the passed arguments all work with each other, that is that the algorithm's input type is the same as what the user is putting in, and
   //that the algorithm's output value type is what the output device expects to take in, etc
-  if((inputType == alg->inType) && (cont->inType == alg->outType) && (alg->feedbackInType == feed->fType))
-  {
-    validConstruction = true;
-  }
-  else
-  {
-    validConstruction = false;
-  }
+  validConstruction =(inputType == alg->inType) && (cont->inType == alg->outType) && (alg->feedbackInType == feed->fType);
 }
 
 //constructor for single motor joints without feedback.
@@ -33,26 +23,16 @@ SingleMotorJoint::SingleMotorJoint(ValueType inputType, IOAlgorithm *alg, Output
 //inputType: What kind of movement this joint should be controlled by, such as speed or position input.
 //cont: The output device controlling the motor on this joint
 //feed: The feedback device used with this joint
-SingleMotorJoint::SingleMotorJoint(ValueType inputType, OutputDevice* cont) : JointInterface()
+SingleMotorJoint::SingleMotorJoint(ValueType inputType, OutputDevice* cont) : JointInterface(),
+  inType(inputType),
+  controller1(cont),
+  algorithmUsed(false)
 {
-	//assignments
-	inType = inputType;
-	controller1 = cont;
-
-	algorithmUsed = false;
-
   //checks to make sure the passed arguments all work with each other, that is that the algorithm's input type is the same as what the user is putting in, and
   //that the algorithm's output value type is what the output device expects to take in, etc.
   //Technically this should never go wrong as long as the algorithmSelector is working properly, but it never hurts to double check. If indeed the construction
   //winds up being invalid, for debugging try checking the algorithm selector method for bugs
-  if(inputType == cont->inType)
-  {
-    validConstruction = true;
-  }
-  else
-  {
-    validConstruction = false;
-  }
+  validConstruction = inputType == cont->inType;
 }
 
 SingleMotorJoint::~SingleMotorJoint()
@@ -68,56 +48,32 @@ SingleMotorJoint::~SingleMotorJoint()
 //returns: The status of attempting to control this joint. Such as if the output is now running, or if it's complete, or if there was an error
 JointControlStatus SingleMotorJoint::runOutputControl(const long movement)
 {
-	long mov; //var used as interrum value since algorithm can change the value
+  if(!controller1->enabled) return DeviceDisabled;
+  if(!verifyInput(movement)) return InvalidInput;
+  if(!validConstruction) return InvalidConstruction;
+
+  long mov; //var used as interrum value since algorithm can change the value
   bool motionComplete;
-  JointControlStatus returnStatus;
-
-  if(controller1->enabled == false)
+  
+  //calls algorithm if there's one used. If not, output passed directly to output device
+  if(algorithmUsed)
   {
-    returnStatus = DeviceDisabled;
+    mov = manip->runAlgorithm(movement, &motionComplete);
   }
-  else if(verifyInput(movement) == false)
-  {
-    returnStatus = InvalidInput;
-  }
-
-  else if(validConstruction)
-  {
-  	//calls algorithm if there's one used. If not, output passed directly to output device
-    if(algorithmUsed)
-    {
-      mov = manip->runAlgorithm(movement, &motionComplete);
-    }
-    else
-    {
-      mov = movement;
-      motionComplete = true;
-    }
-    
-    //if motionComplete returned false but movement is 0, that's an indication that an error state occured
-    if(motionComplete == false && mov == 0)
-    {
-      returnStatus = InvalidInput;
-    }
-    
-    else if(motionComplete == true)
-    {
-      returnStatus = OutputComplete;
-    }
-    else
-    {
-      returnStatus = OutputRunning;
-    }
-    
-  	//moves device with output decided on by the algorithm
-  	controller1->move(mov);
-  }
-
-  //if this joint wasn't properly constructed, nothing is run
   else
   {
-    returnStatus = InvalidConstruction;
+    mov = movement;
+    motionComplete = true;
   }
-
-	return(returnStatus);
+  
+  //moves device with output decided on by the algorithm
+  controller1->move(mov);
+  
+  //if motionComplete returned false but movement is 0, that's an indication that an error state occured
+  if (motionComplete)
+	return OutputComplete;
+  else if(mov != 0)
+	return OutputRunning;
+  else
+    return InvalidInput;
 }

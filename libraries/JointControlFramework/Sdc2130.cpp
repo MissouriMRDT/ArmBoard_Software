@@ -22,14 +22,10 @@ Sdc2130::Sdc2130(const int pwmPin, ValueType inType, bool upsideDown): OutputDev
 //Input: Can be either position or speed values constrained between SPEED_MIN and SPEED_MAX or POS_MIN and POS_MAX
 void Sdc2130::move(const long movement)
 {
-	if(inType == spd)
+	switch(inType)
 	{
-		moveSpeed(movement);
-	}
-	//position-input movement not implemented
-	else if(inType == pos)
-	{
-
+		case spd:
+			moveSpeed(movement);
 	}
 }
 
@@ -38,54 +34,28 @@ void Sdc2130::move(const long movement)
 //as true speed based movement is not implemented due to strange delays in sdc2130 response
 void Sdc2130::moveSpeed(const int movement)
 {
-	int speed = movement;
+  if(!enabled) return; //only move if device has been enabled by the user
 
-  if(enabled) //only move if device has been enabled by the user
+  int speed = invert ? -movement : movement;
+  
+  if(controlType == Pwm)
   {
-    if(invert)
-    {
-      speed = -speed;
-    }
+    if(speed > 0)
+      pwmVal+=POS_INC;
+    else if(speed < 0)
+      pwmVal-=POS_INC;
 
-    if(controlType == Pwm)
-    {
-      if(speed > 0)
-      {
-        pwmVal+=POS_INC;
-      }
-      else if(speed < 0)
-      {
-        pwmVal-=POS_INC;
-      }
+    pwmVal = constrain(pwmVal, PWM_MIN, PWM_MAX)
 
-      if(pwmVal < PWM_MIN)
-      {
-        pwmVal = PWM_MIN;
-      }
-      else if(pwmVal > PWM_MAX)
-      {
-        pwmVal = PWM_MAX;
-      }
-
-      PwmWrite(PWM_PIN, pwmVal);
-
-    }
-
-    //serial control not implemented
-    else
-    {
-
-    }
+    PwmWrite(PWM_PIN, pwmVal);
   }
 }
 
 //Tells device to behave as if it's on or off; that is, if it's off, stop and refuse to perform output until user re-enables
 void Sdc2130::setPower(bool powerOn)
 {
-  if(powerOn == false)
-  {
-    moveSpeed(0);
-  }
-  
   enabled = powerOn;
+  
+  if(!enabled)
+    move(0);
 }

@@ -4,45 +4,23 @@
 //returns true if the input is in a valid range, false if it's not
 bool JointInterface::verifyInput(long inputToVerify)
 {
-  long valueMin;
-  long valueMax;
-
-  if(inType == spd)
+  switch(inType)
   {
-    valueMin = SPEED_MIN;
-    valueMax = SPEED_MAX;
-  }
-  else if(inType == pos)
-  {
-    valueMin = POS_MIN;
-    valueMax = POS_MAX;
-  }
-  //if any other intypes are made, put them here
-  else
-  {
-    valueMin = 0;
-    valueMax = 0;
-  }
-
-  if(valueMin <= inputToVerify && inputToVerify <= valueMax)
-  {
-    return(true);
-  }
-  else
-  {
-    return(false);
+	  case spd:
+		return SPEED_MIN <= inputToVerify && inputToVerify <= SPEED_MAX;
+	  case pos:
+		return POS_MIN <= inputToVerify && inputToVerify <= POS_MIN;
+	  default:
+	    return inputToVerify == 0;
   }
 }
 
 void JointInterface::coupleJoint(JointInterface* otherJoint)
 {
-  //only couple the joint if it isn't already coupled to avoid infinite recursion
-  if(!coupled)
-  {
-    coupledJoint = otherJoint;
-    coupled = true;
-    otherJoint -> coupleJoint(this);
-  }
+  this->coupledJoint = otherJoint;
+  this->coupled = true;
+  otherJoint->coupledJoint = this;
+  otherJoint->coupled = true;
 }
 
                                             

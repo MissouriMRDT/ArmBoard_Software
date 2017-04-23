@@ -7,47 +7,47 @@
 //        inDt, the float value representing the time differential between calls of the runAlgorithm method. 
 //        The PI Algorithm is meant to be put into a loop by the main program until it is finished, and dt represents 
 //        the amount of time that passes in between the calls to the algorithm in that loop, in seconds.
-PIAlgorithm::PIAlgorithm(int inKP, int inKI, float inDT) : IOAlgorithm()
+PIAlgorithm::PIAlgorithm(int inKP, int inKI, float inDT) : IOAlgorithm(),
+  KI(inKI),
+  KP(inKP),
+  DT(inDT),
+  speed_minMag(DEFAULT_MINMAG),
+  errorSummation(0),
+  inType(pos),
+  outType(spd),
+  feedbackInType(pos),
+  hardStopPos1(-1),
+  hardStopPos2(-1)
 {
   // Assign the values of the PIAlgorithm class to the ones provided to the constructor.
   // Sets errorSummation to be zero so that the error can be accurately accouted for for each phase of the
   // closed loop algorithm.
   // speed_minMag is not provided to the constructor, so a default value is assumed.
-  KI = inKI;
-  KP = inKP;
-  DT = inDT;
-  speed_minMag = DEFAULT_MINMAG;
-  errorSummation = 0;
-  inType = pos;
-  outType = spd;
-  feedbackInType = pos;
-  hardStopPos1 = -1;
-  hardStopPos2 = -1;
 }
 
 // Same as above, but if the speed_minMag is provided. speedMinMag is an int -- representing speed values -- where 
 // the value passed is the slowest speed the motor is allowed to move when not simply stopping.
-PIAlgorithm::PIAlgorithm(int inKP, int inKI, float inDT, int inSpeed_minMag) : IOAlgorithm()
+PIAlgorithm::PIAlgorithm(int inKP, int inKI, float inDT, int inSpeed_minMag) : IOAlgorithm(),
+  KI(inKI),
+  KP(inKP),
+  DT(inDT),
+  speed_minMag(inSpeed_minMag),
+  errorSummation(0),
+  inType(pos),
+  outType(spd),
+  feedbackInType(pos),
+  hardStopPos1(-1),
+  hardStopPos2(-1)
 {
   // Assign the values of the PIAlgorithm class to the ones provided to the constructor.
   // Sets errorSummation to be zero so that the error can be accurately accouted for for each phase of the
   // closed loop algorithm.
-  KI = inKI;
-  KP = inKP;
-  DT = inDT;
-  speed_minMag = inSpeed_minMag;
-  errorSummation = 0;
-  inType = pos;
-  outType = spd;
-  feedbackInType = pos;
-  hardStopPos1 = -1;
-  hardStopPos2 = -1;
 }
 
 // Function that converts rotation units into something that can be worked with more easily—such as degrees.
 float PIAlgorithm::dist360(int pos_rotationUnits)
 {
-  return (static_cast<float>(pos_rotationUnits)*360.0/(POS_MAX-POS_MIN));
+  return static_cast<float>(pos_rotationUnits)*360.0/(POS_MAX-POS_MIN);
 }
 
 //finds the shortest path between two positions in degrees. Note that this function doesn't consider things like hard stops, so
@@ -68,7 +68,7 @@ float PIAlgorithm::calcShortPath(float present, float dest)
     degToDest = 180;
   }
   
-  return(degToDest);
+  return degToDest;
 }
 
 //calculates the best route to the destination in distance in degrees from the current position in degrees.
@@ -175,17 +175,14 @@ void PIAlgorithm::setHardStopPositions(float hardStopPos1_deg, float hardStopPos
 {
   if(!(hardStopPos1_deg == -1 || hardStopPos2_deg == -1))
   {
-    hardStopPos1_deg = abs(hardStopPos1_deg);
-    hardStopPos2_deg = abs(hardStopPos2_deg);
+    hardStopPos1 = abs(hardStopPos1_deg);
+    hardStopPos2 = abs(hardStopPos2_deg);
   }
   else
   {
-    hardStopPos1_deg = -1;
-    hardStopPos2_deg = -1;
+    hardStopPos1 = -1;
+    hardStopPos2 = -1;
   }
-  
-  hardStopPos1 = hardStopPos1_deg;
-  hardStopPos2 = hardStopPos2_deg;
 }
 
 // Full function that takes a postion input (an value for the gear to move to) as well as a boolean to check if the movement
@@ -231,18 +228,13 @@ long PIAlgorithm::runAlgorithm(const long input, bool * ret_OutputFinished)
   // Check for fringe cases if the speed out value is outside of the acceptable range,
   // forcing the value to return back into the acceptable range.
   if (spd_out > SPEED_MAX)
-  {
     spd_out = SPEED_MAX;
-  } else if (spd_out < SPEED_MIN)
-  {
+  else if (spd_out < SPEED_MIN)
     spd_out = SPEED_MIN;
-  } else if (spd_out < speed_minMag && spd_out > 0)
-  {
+  else if (spd_out < speed_minMag && spd_out > 0)
     spd_out = speed_minMag;
-  } else if (spd_out > -speed_minMag && spd_out < 0)
-  {
+  else if (spd_out > -speed_minMag && spd_out < 0)
     spd_out = -speed_minMag;
-  }
   else
   {
     // Calculate and add the value to the errorSummation so that we can keep track
