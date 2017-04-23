@@ -33,7 +33,6 @@ enum JointControlStatus
   DeviceDisabled
 };
 
-//Constants representing the ranges for the different input types.
 //The common inputs and outputs between classes will fall between these limits, class should not expect to take or return values outside of these
 const int SPEED_MIN = -1000, SPEED_MAX = 1000;
 const long POS_MIN = 0, POS_MAX = 72000; //started with base of 360.00 for deg, made to 36000 to work without float math, mult by two for better resolution. Each value means 360/72000 = .005 deg per value

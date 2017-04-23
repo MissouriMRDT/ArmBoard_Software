@@ -1,7 +1,6 @@
 #include "Ma3Encoder12b.h"
 #include <PwmReader.h>
 
-//gets the positional feedback from the encoder. Returns positional values from POS_MIN and POS_MAX
 long Ma3Encoder12b::getFeedback()
 {
   uint32_t readOnPeriod = getOnPeriod_us(pwmMappedPin); 
@@ -20,7 +19,7 @@ long Ma3Encoder12b::getFeedback()
     else
       readOnPeriod = PWM_READ_MAX;
   }
-  //scale the values from the pwm values to the common position values, IE 1-4097 to POS_MIN-POS_MAX, and return it
+  //scale the values from the pwm values to the common position values, IE 1-4097 to POS_MIN-POS_MAX
   return map(readOnPeriod, PWM_READ_MIN, PWM_READ_MAX, POS_MIN, POS_MAX);
 }
 

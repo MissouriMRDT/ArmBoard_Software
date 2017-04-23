@@ -1,8 +1,6 @@
 #ifndef RCCONTINUOUSSERVO_H
 #define RCCONTINUOUSSERVO_H
 
-// Generic class for any RC Continuous Servo device.
-
 #include "AbstractFramework.h"
 
 

@@ -2,11 +2,6 @@
 #include <pwmWriter.h>
 #include "Energia.h"
 
-/* Creates the device. Assigns the pins correctly.
- * int FPIN: the GPIO pin connected to the H bridge's forward transistor, pin number is defined by energia's pinmapping
- * int RPIN: the GPIO pin connected to the H bridge's forward transistor, pin number is defined by energia's pinmapping
- * bool upside down: Whether or not the motor is mounted in reverse and as such the inputs also need to be reversed
- */
 DirectDiscreteHBridge::DirectDiscreteHBridge(const int FPIN, const int RPIN, bool upsideDown) : OutputDevice(),
   FPWM_PIN(FPIN),
   RPWM_PIN(RPIN),
@@ -14,11 +9,9 @@ DirectDiscreteHBridge::DirectDiscreteHBridge(const int FPIN, const int RPIN, boo
   invert(upsideDown)
 { }
 
-//moves by passing a pwm signal to the H bridge.
-//Input: expects int values constrained between the SPEED_MIN and SPEED_MAX constants
 void DirectDiscreteHBridge::move(const long movement)
 {
-  if(!enabled) return; //only move if device has been enabled by the user
+  if(!enabled) return;
 
   int mov = invert ? -movement : movement;
 
@@ -50,7 +43,6 @@ void DirectDiscreteHBridge::move(const long movement)
   }
 }
 
-//Instructs DirectDiscreteHBridge to behave as if it is on or off; that is, when commanded to be off, it will refuse to send any output
 void DirectDiscreteHBridge::setPower(bool powerOn)
 {
   enabled = powerOn;

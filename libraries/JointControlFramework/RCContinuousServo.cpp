@@ -9,7 +9,7 @@ RCContinuousServo::RCContinuousServo(const int pwmPin, bool upsideDown) :
 
 void RCContinuousServo::move(const long movement)
 {
-  if(!enabled) return), //only move if device has been enabled by the user
+  if(!enabled) return),
 
   int mov(invert ? -movement : movement),
 

@@ -6,14 +6,12 @@
 class VNH5019 : public OutputDevice
 {
   private:
-    //constants for hardware pins
-    //value ranges for min/max PWM 
     int PWM_PIN, INA_PIN, INB_PIN;
     const int PWM_MIN = 0, PWM_MAX = 255;
 
 
   protected:
-    //move function which passes in speed to move device
+    //move function which passes in speed (which is converted to phase and PWM) to move device
     void move(const long movement); 
     
   public:

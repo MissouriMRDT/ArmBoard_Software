@@ -3,25 +3,15 @@
 
 #include "JointFrameworkUtilities.h"
 
-//class prototypes:
-//joint interface abstract and absolutely necessary derived classes
 class JointInterface;
+class IOAlgorithm;
+class OutputDevice;
+class FeedbackDevice;
+
 class TiltJoint;
 class SingleMotorJoint;
 class RotateJoint;
 
-//abstract for input-output algorithm classes
-class IOAlgorithm;
-
-//abstract for devices that physically make motors move
-class OutputDevice;
-
-  //feedback devices and derived classes
-class FeedbackDevice;
-
-//Interface for controlling the joint overall from the main program's perspective.
-//It handles all duties of controlling the joint; the main program just has to pass it a value to respond to.
-//This class is supposed to be thought of as abstract; base classes determine what type of joint is used.
 class JointInterface
 {
   protected:
@@ -74,8 +64,6 @@ class JointInterface
     void coupleJoint(JointInterface* otherJoint);
 };
 
-//feedback devices used to help determine where the arm is and what steps need to be taken
-//Used by the IOAlgorithm class to perform looping. Part of the JointInterface framework
 class FeedbackDevice
 {
 	friend class SingleMotorJoint;
@@ -94,8 +82,6 @@ class FeedbackDevice
 		ValueType fType;
 };
 
-//Class containing the devices which move the arm and how they are controlled, such as motor controllers, and the hardware specifics of the devices
-//such as what GPIO pins are used by the microcontroller to control them. Part of the joint interface framework
 class OutputDevice
 {
 	//Joint interface needs access to its functions
@@ -127,10 +113,6 @@ class OutputDevice
     bool enabled = false; //initialize devices off until the user manually turns them on
 };
 
-
-//Base class for all algorithms. Algorithms take the input from base station and do whatever computation is
-//needed to interpret the command such as controls.
-//Part of the joint interface framework
 class IOAlgorithm
 {
 	friend class SingleMotorJoint;

@@ -7,7 +7,6 @@ class GenPwmPhaseHBridge: public OutputDevice
 {
   private:
 
-    //value ranges for PWM signals
     const int PWM_MIN = 0, PWM_MAX = 255;
     
     bool enableLogicHigh; //if there's an enable pin, this tracks if it's logic high or low
@@ -34,6 +33,8 @@ class GenPwmPhaseHBridge: public OutputDevice
     GenPwmPhaseHBridge(const int PwmPin, const int PhPin, const int EnPin, bool enableLogicHigh, bool upsideDown);
     
     //tells the device to power on or off. Note that on setup, device assumes power is off
+    //If the device class was constructed with an enable pin, the function will physically turn the device on or off
+    //If it wasn't, it will virtually turn the device on or off, IE if it's off it will refuse to send an output
     void setPower(bool powerOn);
 };
 

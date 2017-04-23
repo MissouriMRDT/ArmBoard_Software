@@ -28,10 +28,10 @@ class PIAlgorithm : public IOAlgorithm
     float dist360(int pos_ru);
     
     //finds the shortest path between two positions in degrees. Note that this function doesn't consider things like hard stops, so
-    //it shouldn't be used to find the BEST path. 
+    //it shouldn't be used to find the BEST path.
     float calcShortPath(float present, float dest);
     
-    //calculates the best route to the destination in degrees from the current position in degrees.
+    //calculates the best route to the destination in distance in degrees from the current position in degrees.
     //Returns IMPOSSIBLE_MOVEMENT if it can't reach the destination.
     float calcRouteToDest(float present, float dest);
     
@@ -44,7 +44,6 @@ class PIAlgorithm : public IOAlgorithm
     long runAlgorithm(const long input, bool * ret_OutputFinished);
 
   public:
-    // Constructor. 
     // Input: inKI, the integer representing the PI constant Ki
     //        inKP, the integer representing the PI constant Kp
     //        inDt, the float value representing the time differential between calls of the runAlgorithm method. 

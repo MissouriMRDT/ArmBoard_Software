@@ -2,7 +2,6 @@
 #include "Energia.h"
 #include "PwmWriter.h"
 
-//constructor for VNH5019 motor driver. Inputs are pin asignments for hardware pins, also a bool to determine the orientation of da motor
 VNH5019::VNH5019(const int PwmPin, const int InaPin, const int InbPin, bool upsideDown) :
   PWM_PIN(PwmPin),
   INA_PIN(InaPin),
@@ -18,10 +17,9 @@ VNH5019::VNH5019(const int PwmPin, const int InaPin, const int InbPin, bool upsi
   digitalWrite(INB_PIN, LOW);
 }
 
-//move function which passes in speed (which is converted to phase and PWM) to move device
 void VNH5019::move(const long movement)
 {
-  if(!enabled) return; //only move if device has been enabled by the user
+  if(!enabled) return;
 
   int mov = invert ? -movement : movement;
   

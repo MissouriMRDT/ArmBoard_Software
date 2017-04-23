@@ -26,10 +26,9 @@ GenPwmPhaseHBridge::GenPwmPhaseHBridge(const int PwmPin, const int PhPin, const 
 }
 
 
-//move function which passes in speed ( which is converted to phase and PWM) to move device
 void GenPwmPhaseHBridge::move(const long movement)
 {
-  if(!enabled) return; //only move if device has been enabled by the user
+  if(!enabled) return;
 
   int mov = invert ? -movement : movement;
   
@@ -65,9 +64,6 @@ void GenPwmPhaseHBridge::move(const long movement)
   }
 }
 
-//tells the device to power on or off. Note that on setup, device assumes power is off
-//If the device class was constructed with an enable pin, the function will physically turn the device on or off
-//If it wasn't, it will virtually turn the device on or off, IE if it's off it will refuse to send an output
 void GenPwmPhaseHBridge::setPower(bool powerOn)
 {
   //when enable pin does not have its default value, assume device was constructed with an enable pin

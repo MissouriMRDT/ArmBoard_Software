@@ -14,12 +14,15 @@ class DirectDiscreteHBridge : public OutputDevice
     const int PWM_MIN = 0, PWM_MAX = 255;
 
   protected:
-    //function which directly moves the device.
+    //moves by passing a pwm signal to the H bridge.
+    //Input: expects int values constrained between the SPEED_MIN and SPEED_MAX constants
     void move(const long movement);
 
   public:
-    //constructor, user must give pin assignments with the first pin being the forward pin and the second being the reverse pin.
-    //Must specify the physical orientation of the device as well, if it is mounted in reverse or not
+    //Creates the device. Assigns the pins correctly.
+    //  int FPIN: the GPIO pin connected to the H bridge's forward transistor, pin number is defined by energia's pinmapping
+    //  int RPIN: the GPIO pin connected to the H bridge's forward transistor, pin number is defined by energia's pinmapping
+    //  bool upside down: Whether or not the motor is mounted in reverse and as such the inputs also need to be reversed
     DirectDiscreteHBridge(const int FPIN, const int RPIN, bool upsideDown);
     
     //turns device on or off. Note on startup device is considered off, user must call this function and enable device before joints will move

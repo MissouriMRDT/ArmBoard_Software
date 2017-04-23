@@ -1,57 +1,37 @@
 #include "PIAlgorithm.h"
 #include "Energia.h"
 
-// Constructor. 
-// Input: inKI, the integer representing the PI constant Ki
-//        inKP, the integer representing the PI constant Kp
-//        inDt, the float value representing the time differential between calls of the runAlgorithm method. 
-//        The PI Algorithm is meant to be put into a loop by the main program until it is finished, and dt represents 
-//        the amount of time that passes in between the calls to the algorithm in that loop, in seconds.
 PIAlgorithm::PIAlgorithm(int inKP, int inKI, float inDT) : IOAlgorithm(),
   KI(inKI),
   KP(inKP),
   DT(inDT),
   speed_minMag(DEFAULT_MINMAG),
-  errorSummation(0),
+  errorSummation(0), //error can be accurately accounted for for each phase of the closed loop algorithm
   inType(pos),
   outType(spd),
   feedbackInType(pos),
   hardStopPos1(-1),
   hardStopPos2(-1)
-{
-  // Assign the values of the PIAlgorithm class to the ones provided to the constructor.
-  // Sets errorSummation to be zero so that the error can be accurately accouted for for each phase of the
-  // closed loop algorithm.
-  // speed_minMag is not provided to the constructor, so a default value is assumed.
-}
+{ }
 
-// Same as above, but if the speed_minMag is provided. speedMinMag is an int -- representing speed values -- where 
-// the value passed is the slowest speed the motor is allowed to move when not simply stopping.
 PIAlgorithm::PIAlgorithm(int inKP, int inKI, float inDT, int inSpeed_minMag) : IOAlgorithm(),
   KI(inKI),
   KP(inKP),
   DT(inDT),
   speed_minMag(inSpeed_minMag),
-  errorSummation(0),
+  errorSummation(0), //error can be accurately accounted for for each phase of the closed loop algorithm
   inType(pos),
   outType(spd),
   feedbackInType(pos),
   hardStopPos1(-1),
   hardStopPos2(-1)
-{
-  // Assign the values of the PIAlgorithm class to the ones provided to the constructor.
-  // Sets errorSummation to be zero so that the error can be accurately accouted for for each phase of the
-  // closed loop algorithm.
-}
+{ }
 
-// Function that converts rotation units into something that can be worked with more easily—such as degrees.
 float PIAlgorithm::dist360(int pos_rotationUnits)
 {
   return static_cast<float>(pos_rotationUnits)*360.0/(POS_MAX-POS_MIN);
 }
 
-//finds the shortest path between two positions in degrees. Note that this function doesn't consider things like hard stops, so
-//it shouldn't be used to find the BEST path. 
 float PIAlgorithm::calcShortPath(float present, float dest)
 {
   //basically, your destination is always to the left or right of you, one way will be shorter. The direct center of the two paths is at 180 degrees
@@ -71,8 +51,6 @@ float PIAlgorithm::calcShortPath(float present, float dest)
   return degToDest;
 }
 
-//calculates the best route to the destination in distance in degrees from the current position in degrees.
-//Returns IMPOSSIBLE_MOVEMENT if it can't reach the destination.
 float PIAlgorithm::calcRouteToDest(float present, float dest)
 {
   float shortPathToDest = calcShortPath(present, dest); //find out the quickest path to the destination in degrees
@@ -169,8 +147,6 @@ float PIAlgorithm::calcRouteToDest(float present, float dest)
   }
 }
 
-//function for specifying positions of hard stops attached to this joint, that is positions in degrees that the joint can't travel through
-//To disable hard stops, set one or both to -1.
 void PIAlgorithm::setHardStopPositions(float hardStopPos1_deg, float hardStopPos2_deg)
 {
   if(!(hardStopPos1_deg == -1 || hardStopPos2_deg == -1))
@@ -185,11 +161,6 @@ void PIAlgorithm::setHardStopPositions(float hardStopPos1_deg, float hardStopPos
   }
 }
 
-// Full function that takes a postion input (an value for the gear to move to) as well as a boolean to check if the movement
-// of the gear has been succeeded. If the bool "ret_OutputFinished" is true, then
-// the joint has reached its desired position and the method will return 0 speed.
-// Upon being called, the method will run PI logic on the passed input and return a value of speed for how fast
-// the motor controlling this joint should move
 long PIAlgorithm::runAlgorithm(const long input, bool * ret_OutputFinished)
 {
   // Check if the Algorithm class has actually been initialized or not. If not, kill the function.
@@ -246,6 +217,5 @@ long PIAlgorithm::runAlgorithm(const long input, bool * ret_OutputFinished)
   // should be run once again.
   *ret_OutputFinished = false;
 	
-  // return the value of the speed we calculated
   return spd_out;
 }

@@ -24,23 +24,23 @@ class DynamixelController : public OutputDevice
 
   protected:
     //movement command based on a speed input and wheel mode. Input should be in the range between SPEED_MIN and SPEED_MAX
-    //this will be the defaut assumption, other modes with other methods of movement will be
-    //made into other functions not simply move.
+    //this will be the defaut assumption, other modes with other methods of movement will be made into other functions not simply move.
+    //clockwise will be considered forward and ccw is reverse
     void move(const long movement);
 
   public:
 
     //constructor for a dynamixel which takes in a move type and other things needed for dynamixels
+	//Calls the init function from RoveDynamixel.h to initialize the dynamixel
     //Sets up uart on the board and baud rate at the same time
-    /*Inputs:
-      TX -> tx pin numerical id, as defined by energia's pinmapping
-      RX -> tx pin numerical id, as defined by energia's pinmapping
-      upsideDown -> Whether or not the dyna is mounted in reverse and thus the inputs need to be reversed as well
-      type -> Instance of the DynamixelType enum that defines the dynamixel brand such as AX, MX, etc
-      id -> id of the dynamixel. Note that if you aren't sure, you'll need to use a different program to set the id yourself
-      uartIndex -> which hardware uart to use when talking to it, 0-7
-      baud -> baud rate of the serial communication
-      mode -> instance of the DynamixelMode enum that defines the dynamixel's mode such as Wheel, Joint, etc
+    /*Inputs: TX -> tx pin numerical id, as defined by energia's pinmapping
+              RX -> tx pin numerical id, as defined by energia's pinmapping
+              upsideDown -> Whether or not the dyna is mounted in reverse and thus the inputs need to be reversed as well
+              type -> Instance of the DynamixelType enum that defines the dynamixel brand such as AX, MX, etc
+              id -> id of the dynamixel. Note that if you aren't sure, you'll need to use a different program to set the id yourself
+              uartIndex -> which hardware uart to use when talking to it, 0-7
+              baud -> baud rate of the serial communication
+              mode -> instance of the DynamixelMode enum that defines the dynamixel's mode such as Wheel, Joint, etc
     */
     DynamixelController(const int Tx, const int Rx, bool upsideDown, DynamixelType type, uint8_t id, uint8_t uartIndex, uint32_t baud, DynamixelMode mode);
     
