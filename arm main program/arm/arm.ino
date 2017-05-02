@@ -234,32 +234,32 @@ void motorFaultHandling()
   if(digitalRead(HBRIDGE1_NFAULT_PIN) == LOW)
   {
     j12PowerSet(false); //motors 1 and 2 are a part of joints 1 and 2, which are interlinked together
-    roveComm_SendMsg(ArmM1Fault, 0, 0);
+    roveComm_SendMsg(ArmFault, 1, (void*)ArmFault_m1);
   }
   if(digitalRead(HBRIDGE2_NFAULT_PIN) == LOW)
   {
     j12PowerSet(false); //motors 1 and 2 are a part of joints 1 and 2, which are interlinked together
-    roveComm_SendMsg(ArmM2Fault, 0, 0);
+    roveComm_SendMsg(ArmFault, 1, (void*)ArmFault_m2);
   }
   if(digitalRead(HBRIDGE3_NFAULT_PIN) == LOW)
   {
     j3PowerSet(false);
-    roveComm_SendMsg(ArmM3Fault, 0, 0);
+    roveComm_SendMsg(ArmFault, 1, (void*)ArmFault_m3);
   }
   if(digitalRead(HBRIDGE4_NFAULT_PIN) == LOW)
   {
     j45PowerSet(false); //motors 4 and 5 are a part of joints 4 and 5, which are interlinked together
-    roveComm_SendMsg(ArmM4Fault, 0, 0);
+    roveComm_SendMsg(ArmFault, 1, (void*)ArmFault_m4);
   }
   if(digitalRead(HBRIDGE5_NFAULT_PIN) == LOW)
   {
     j45PowerSet(false); //motors 4 and 5 are a part of joints 4 and 5, which are interlinked together
-    roveComm_SendMsg(ArmM5Fault, 0, 0);
+    roveComm_SendMsg(ArmFault, 1, (void*)ArmFault_m5);
   }
   if(digitalRead(GRIPMOT_NFAULT_PIN) == LOW)
   {
     gripperMotorPowerSet(false);
-    roveComm_SendMsg(ArmGripperFault, 0, 0);
+    roveComm_SendMsg(ArmFault, 1, (void*)ArmFault_gripper);
   }
 }
 
@@ -271,7 +271,7 @@ void armOvercurrentHandling()
     { 
       masterPowerSet(false);
       Serial.println("Disabling power, OC");
-      //TODO: send telemetry back to base station
+      roveComm_SendMsg(ArmFault, 1, (void*)ArmFault_overcurrent);
     }
 }
 

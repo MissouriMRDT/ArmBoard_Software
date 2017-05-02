@@ -43,14 +43,20 @@ typedef enum ArmCommandIds
 typedef enum ArmTelemetryIds
 {
   ArmCurrentPosition = 0x318,
-  ArmOvercurrent = 0xFFF, //placeholder
-  ArmM1Fault = 0xFFF, //placeholder
-  ArmM2Fault = 0xFFF, //placeholder
-  ArmM3Fault = 0xFFF, //placeholder
-  ArmM4Fault = 0xFFF, //placeholder
-  ArmM5Fault = 0xFFF, //placeholder
-  ArmGripperFault = 0xFFF //placeholder
+  ArmFault = 0x340 //armFault is paired with a specific fault message payload to indicate the specific nature of the fault
 } ArmTelemetryIds;
+
+//enum representing the different payloads that couple with arm telemetry ID's that are sent back to base station
+typedef enum ArmTelemetryPayloadIds: int
+{
+  ArmFault_m1 = 1,
+  ArmFault_m2 = 2,
+  ArmFault_m3 = 3,
+  ArmFault_m4 = 4,
+  ArmFault_m5 = 5,
+  ArmFault_gripper = 6,
+  ArmFault_overcurrent = 7
+}ArmTelemetryPayloadIds;
 
 //enum representing arm commands that are outdated, but kept around in case the user is using
 //an outdated version of base station
