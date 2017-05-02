@@ -53,136 +53,226 @@ ControlSystems currentControlSystem; //tracks what control system arm is current
 
 void setup() {} //useless
 
+/*main loop
+after initialization, function has three responsibilities it juggles. 
+ 1) handle messages from base station and carry orders out. 
+      a) if messages don't come in for a certain amount of time, assume line is disconnected or that the driver is no longer using the arm 
+      and stop the arm from moving until more commands come in
+ 2) protect the arm from overcurrenting, by checking for an overcurrent condition and handling it by killing power and reporting the error to base station
+ 3) protect the individual motors from overcurrenting, by checking for motor fault conditions and handling it by killing power to those motors and reporting the error
+*/
 void loop() {
-  CommandResult result;
-  uint16_t commandId;
-  size_t commandSize;
-  char commandData[255]; 
-  uint32_t watchdogTimer_us = 0; //increment this value everytime we don't get a command. When we've waited for a command for longer than our timeout value, stop all arm movement
 
-  initialize(); //control devices initted in here
-
+  initialize();
   delay(1000);
   
   //switchToClosedLoop(); //for debugging. RED currnetly lacks command to switch between schemes, has to be done manually
   
-  while(1) //main program loop. Listen for communications from the endefector or from base station, and proceed based on that transmission
+  while(1) //main loop begin
   {
-    commandSize = 0;//reset variables
-    commandId = 0;
+    processBaseStationCommands();
 
-    roveComm_GetMsg(&commandId, &commandSize, commandData);
-    if(commandId != 0) //command packets come in 1 or 2 bytes. If it's any other size, there was probably a comm error
+    //armOvercurrentHandling(); arm current sensing is currently buggy
+
+    motorFaultHandling();
+  }
+
+}
+
+//Listens for base station commands, and if any are detected carry out arm duties based off of them. 
+//If none are received for a set period if time, the arm will stop movement and disable the main power line, as the assumption
+//is that the line was disconnected or the user is no longer moving the arm, and we don't want the arm to keep going and kill itself against a rock or the rover; 
+//the CFO does not want to pay for another arm.
+//The time it takes for the arm to 'timeout' is tracked by the global constant WATCHDOG_TIMEOUT_US, in microseconds
+void processBaseStationCommands()
+{
+  CommandResult result;
+  uint16_t commandId = 0;
+  size_t commandSize = 0;
+  char commandData[255]; 
+  static uint32_t watchdogTimer_us = 0; //increment this value everytime we don't get a command. When we've waited for a command for longer than our timeout value, stop all arm movement
+
+  roveComm_GetMsg(&commandId, &commandSize, commandData);
+  if(commandId != 0) //command packets come in 1 or 2 bytes. If it's any other size, there was probably a comm error
+  {
+    watchdogTimer_us = 0; //reset watchdog timer since we received a command
+
+    switch(commandId)
     {
-      watchdogTimer_us = 0; //reset watchdog timer since we received a command
+      case ArmStop:
+        result = stopArm();
+        break;
+        
+      case ArmJ1:
+      case LY_ArmJ1:
+        result = moveJ1(*(int16_t*)(commandData));
+        break;
 
-      switch(commandId)
-      {
-        case ArmStop:
-          result = stopArm();
-          break;
-          
-        case ArmJ1:
-        case LY_ArmJ1:
-          result = moveJ1(*(int16_t*)(commandData));
-          break;
+      case ArmJ2:
+      case LY_ArmJ2:
+        result = moveJ2(*(int16_t*)(commandData));
+        break;
 
-        case ArmJ2:
-        case LY_ArmJ2:
-          result = moveJ2(*(int16_t*)(commandData));
-          break;
+     case ArmJ3:
+     case LY_ArmJ3:
+        result = moveJ3(*(int16_t*)(commandData));
+        break;
 
-       case ArmJ3:
-       case LY_ArmJ3:
-          result = moveJ3(*(int16_t*)(commandData));
-          break;
+      case ArmJ4: 
+      case LY_ArmJ4: 
+        result = moveJ4(*(int16_t*)(commandData));
+        break;
 
-        case ArmJ4: 
-        case LY_ArmJ4: 
-          result = moveJ4(*(int16_t*)(commandData));
-          break;
+      case ArmJ5: 
+      case LY_ArmJ5: 
+        result = moveJ5(*(int16_t*)(commandData));
+        break;
 
-        case ArmJ5: 
-        case LY_ArmJ5: 
-          result = moveJ5(*(int16_t*)(commandData));
-          break;
+      case MoveGripper: 
+      case LY_MoveGripper: 
+        result = moveGripper(*(int16_t*)(commandData));
+        break;
 
-        case MoveGripper: 
-        case LY_MoveGripper: 
-          result = moveGripper(*(int16_t*)(commandData));
-          break;
+      case MoveGripServo: 
+        result = moveGripper(*(int16_t*)(commandData));
+        break;
 
-        case MoveGripServo: 
-          result = moveGripper(*(int16_t*)(commandData));
-          break;
+      case UseOpenLoop: 
+        result = switchToOpenLoop();
+        break;
+        
+      case UseClosedLoop: 
+        result = switchToClosedLoop();
+        break;
 
-        case UseOpenLoop: 
-          result = switchToOpenLoop();
-          break;
-          
-        case UseClosedLoop: 
-          result = switchToClosedLoop();
-          break;
+      case ArmEnableAll: 
+        masterPowerSet((*(bool*)(commandData)));
+        allMotorsPowerSet(*(bool*)(commandData));
+        break;
 
-        case ArmEnableAll: 
-          masterPowerSet((*(bool*)(commandData)));
-          allMotorsPowerSet(*(bool*)(commandData));
-          break;
+      case ArmEnableMain: 
+        masterPowerSet(*(bool*)(commandData));
+        break;
 
-        case ArmEnableMain: 
-          masterPowerSet(*(bool*)(commandData));
-          break;
+      case ArmAbsoluteAngle: 
+        setArmDestinationAngles(((float*)(commandData)));
+        break;
 
-        case ArmAbsoluteAngle: 
-          setArmDestinationAngles(((float*)(commandData)));
-          break;
+      case ArmGetPosition: 
+        float currentPositions[ArmJointCount]; //empty array to fill, as this command expects an entire array of positions
+        getArmPositions(currentPositions);
+        roveComm_SendMsg(ArmCurrentPosition, sizeof(float) * ArmJointCount, currentPositions);
+        break;
 
-        case ArmGetPosition: 
-          float currentPositions[ArmJointCount];
-          getArmPositions(currentPositions);
-          roveComm_SendMsg(ArmCurrentPosition, sizeof(float) * ArmJointCount, currentPositions);
-          break;
+      case ArmEnableJ1:
+        j12PowerSet(*(bool*)commandData); //joint 1 and joint 2 are linked together
+        break;
 
-        default:
-          break; //do nothing if it's not a known ID
-          
-      } //end switch
+      case ArmEnableJ2:
+        j12PowerSet(*(bool*)commandData); //joint 1 and joint 2 are linked together
+        break;
 
-      if(result != Success)
-      {
-        //todo: if there's ever any telemetry about what to do when the command isn't successful, this is where we'll send telemetry back about it
-        // I'm not quite sure how to do this. Somebody else's addition would be very helpful.
-      }
-    }//end if(commandId != 0)
+      case ArmEnableJ3:
+        j3PowerSet(*(bool*)commandData); //joint 3 is on its own
+        break;
 
-    //if no messages were recieved, increment our watchdog counter. If the counter has gone over a certain period of time since we last got a transmission, cease all movement.
-    //This is to keep the arm from committing suicide on the environment/the rover if communications ever get interrupted while it's in the middle of moving
-    else
+      case ArmEnableJ4:
+        j45PowerSet(*(bool*)commandData); //joint 4 and joint 5 are linked together
+        break;
+
+      case ArmEnableJ5:
+        j45PowerSet(*(bool*)commandData); //joint 4 and joint 5 are linked together
+        break;
+
+      case ArmEnableEndeff:
+        gripperMotorPowerSet(*(bool*)commandData);
+        break;
+
+      case ArmEnableServo:
+        gripperServoPowerSet(*(bool*)commandData);
+        break;
+
+      case ArmCurrentMain:
+        float *armCurrent;
+        *armCurrent = readMasterCurrent();
+        roveComm_SendMsg(ArmCurrentPosition, sizeof(float), armCurrent);
+        break;
+        
+      default:
+        break; //do nothing if it's not a known ID
+        
+    } //end switch
+
+    if(result != Success)
     {
-      uint8_t microsecondDelay = 10;
-      delayMicroseconds(microsecondDelay);
+      //todo: if there's ever any telemetry about what to do when the command isn't successful, this is where we'll send telemetry back about it
+    }
+  }//end if(commandId != 0)
 
-      watchdogTimer_us += microsecondDelay;
+  //if no messages were recieved, increment our watchdog counter. If the counter has gone over a certain period of time since we last got a transmission, cease all movement.
+  else
+  {
+    uint8_t microsecondDelay = 10;
+    delayMicroseconds(microsecondDelay);
 
-      if(watchdogTimer_us >= WATCHDOG_TIMEOUT_US) //if more than our timeout period has passed, then kill arm movement
-      {
-        Serial.println("Timed out");
-        stopArm();
-        watchdogTimer_us = 0;
-      }
-    }//end else
+    watchdogTimer_us += microsecondDelay;
 
-    if(checkOvercurrent()) //CURRENTLY TOO BUGGY TO USE
+    if(watchdogTimer_us >= WATCHDOG_TIMEOUT_US) //if more than our timeout period has passed, then kill arm movement
+    {
+      Serial.println("Timed out");
+      stopArm();
+      watchdogTimer_us = 0;
+    }
+  }//end else
+}
+
+//Checks each motor for fault conditions.
+//If fault conditions are found, the joint attached to the motor is disabled and an error message
+//is sent to base station
+void motorFaultHandling()
+{
+  if(digitalRead(HBRIDGE1_NFAULT_PIN) == LOW)
+  {
+    j12PowerSet(false); //motors 1 and 2 are a part of joints 1 and 2, which are interlinked together
+    roveComm_SendMsg(ArmM1Fault, 0, 0);
+  }
+  if(digitalRead(HBRIDGE2_NFAULT_PIN) == LOW)
+  {
+    j12PowerSet(false); //motors 1 and 2 are a part of joints 1 and 2, which are interlinked together
+    roveComm_SendMsg(ArmM2Fault, 0, 0);
+  }
+  if(digitalRead(HBRIDGE3_NFAULT_PIN) == LOW)
+  {
+    j3PowerSet(false);
+    roveComm_SendMsg(ArmM3Fault, 0, 0);
+  }
+  if(digitalRead(HBRIDGE4_NFAULT_PIN) == LOW)
+  {
+    j45PowerSet(false); //motors 4 and 5 are a part of joints 4 and 5, which are interlinked together
+    roveComm_SendMsg(ArmM4Fault, 0, 0);
+  }
+  if(digitalRead(HBRIDGE5_NFAULT_PIN) == LOW)
+  {
+    j45PowerSet(false); //motors 4 and 5 are a part of joints 4 and 5, which are interlinked together
+    roveComm_SendMsg(ArmM5Fault, 0, 0);
+  }
+  if(digitalRead(GRIPMOT_NFAULT_PIN) == LOW)
+  {
+    gripperMotorPowerSet(false);
+    roveComm_SendMsg(ArmGripperFault, 0, 0);
+  }
+}
+
+//Checks to see if there's an overcurrent condition. If there is, disable main power and report error to base station. 
+//User must manually re-enable power
+void armOvercurrentHandling()
+{
+    if(readMasterCurrent() > CURRENT_LIMIT)
     { 
-      //masterPowerDisable();
-      //Serial.println("Disabling power, OC");
+      masterPowerSet(false);
+      Serial.println("Disabling power, OC");
       //TODO: send telemetry back to base station
     }
-
-    //todo: Check motors for fault conditions, do stuff
-
-  }//end while
-
 }
 
 //setup all crucial software processes such as rovecomm, serial, and the closed loop timer, and set up static GPIO pins.
@@ -225,20 +315,6 @@ void initialize()
   //firings for any individual control to get updated again. Meaning the timeslice of the timer itself must be one fifth of the PI algorithms overall timeslice so that 
   //when it cycles back around the overall timeslice will have passed
   setupTimer0((PI_TIMESLICE_SECONDS/5.0) * 1000000.0); //function expects microseconds
-}
-
-//checks to see if the master powerline has overcurrented.
-//Returns true if so, false if not
-bool checkOvercurrent()
-{
-  if(readMasterCurrent() > CURRENT_LIMIT)
-  {
-    return(true);
-  }
-  else
-  {
-    return(false);
-  }
 }
 
 //Turns on or off the main power line
@@ -324,10 +400,15 @@ void j45PowerSet(bool powerOn)
   dev5.setPower(powerOn);
 }
 
-//turns on or off the motors attached to the gripper
-void gripperPowerSet(bool powerOn)
+//turns on or off the motor attached to the gripper
+void gripperMotorPowerSet(bool powerOn)
 {
   gripMotorDev.setPower(powerOn);
+}
+
+//turns on or off the servo attached to the gripper
+void gripperServoPowerSet(bool powerOn)
+{
   gripServoDev.setPower(powerOn);
 }
 
@@ -612,3 +693,4 @@ void closedLoopUpdateHandler()
     joint5->runOutputControl(joint5Destination);
   }
 }
+

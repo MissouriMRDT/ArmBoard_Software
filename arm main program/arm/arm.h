@@ -25,21 +25,31 @@ typedef enum ArmCommandIds
   ArmEnableMain = 0x331,
   ArmEnableJ1 = 0x332,
   ArmEnableJ2 = 0x333,
-  ArmEnableJ34 = 0x334,
-  ArmEnableJ5 = 0x335,
-  ArmEnableEndeff = 0x336,
+  ArmEnableJ3 = 0x334,
+  ArmEnableJ4 = 0x335,
+  ArmEnableJ5 = 0x336,
+  ArmEnableEndeff = 0x338,
+  ArmEnableServo = 0x339,
   ArmAbsoluteAngle = 0x310,
   MoveGripper = 0x360, 
   ArmGetPosition = 0x319,
-  MoveGripServo = 0x35A,
-  UseOpenLoop = 0x500, //Incorrect Command ID
-  UseClosedLoop = 0x501 //Incorrect Command ID
+  MoveGripServo = 0x364,
+  UseOpenLoop = 0x500, //Placeholder Command ID
+  UseClosedLoop = 0x501, //Placeholder Command ID
+  ArmCurrentMain = 0x370
 } ArmCommandIds;
 
 //enum representing the different arm commands we can send to base station
 typedef enum ArmTelemetryIds
 {
-  ArmCurrentPosition = 0x318
+  ArmCurrentPosition = 0x318,
+  ArmOvercurrent = 0xFFF, //placeholder
+  ArmM1Fault = 0xFFF, //placeholder
+  ArmM2Fault = 0xFFF, //placeholder
+  ArmM3Fault = 0xFFF, //placeholder
+  ArmM4Fault = 0xFFF, //placeholder
+  ArmM5Fault = 0xFFF, //placeholder
+  ArmGripperFault = 0xFFF //placeholder
 } ArmTelemetryIds;
 
 //enum representing arm commands that are outdated, but kept around in case the user is using
@@ -123,8 +133,9 @@ const float VCC = 3.3; //usually the V input is 3.3V
 const float PI_TIMESLICE_SECONDS = .04;
 
 void initialize();
-
-bool checkOvercurrent();
+void motorFaultHandling();
+void processBaseStationCommands();
+void armOvercurrentHandling();
 float readMasterCurrent();
 
 CommandResult masterPowerSet(bool enable);
@@ -132,7 +143,8 @@ void allMotorsPowerSet(bool enable);
 void j12PowerSet(bool powerOn);
 void j3PowerSet(bool powerOn);
 void j45PowerSet(bool powerOn);
-void gripperPowerSet(bool powerOn);
+void gripperMotorPowerSet(bool powerOn);
+void gripperServoPowerSet(bool powerOn);
 
 CommandResult stopArm();
 CommandResult moveJ1(int16_t moveValue);
@@ -151,4 +163,3 @@ CommandResult switchToClosedLoop();
 
 void setupTimer0(float timeout_micros);
 void closedLoopUpdateHandler();
-
