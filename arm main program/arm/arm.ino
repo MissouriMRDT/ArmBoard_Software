@@ -43,11 +43,11 @@ GenPwmPhaseHBridge gripMotorDev(GRIPMOT_PWM_PIN, GRIPMOT_PHASE_PIN, GRIPMOT_NENA
 RCContinuousServo gripServoDev(GRIPPER_SERVO_PWM_PIN, false);
 
 //variables used to control joints during closed loop control
-long joint1Destination;
-long joint2Destination;
-long joint3Destination;
-long joint4Destination;
-long joint5Destination;
+unsigned long joint1Destination;
+unsigned long joint2Destination;
+unsigned long joint3Destination;
+unsigned long joint4Destination;
+unsigned long joint5Destination;
 
 ControlSystems currentControlSystem; //tracks what control system arm is currently using
 
@@ -413,24 +413,23 @@ void gripperServoPowerSet(bool powerOn)
 }
 
 //Sets the angles for the joints of the arm to travel to
-//Input: an angle array. angles[0] = joint1 destination, etc
+//Input: an angle array. angles[0] = joint1 destination, etc. Joints are described in floats from 0 to 360 degrees
 //Note that this will only be performed when the current control system being used is closed loop
-//Note that the angles are numerically described using the joint control framework standard
 CommandResult setArmDestinationAngles(float* angles)
 { 
   //angles comes in as an array
   if(currentControlSystem == ClosedLoop)
   {
-    joint1Destination = angles[0];
-    joint2Destination = angles[1];
-    joint3Destination = angles[2];
-    joint4Destination = angles[3];
-    joint5Destination = angles[4];
+    joint1Destination = angles[0] * (((float)(POS_MAX - POS_MIN))/(360.0-0.0)); //convert from 0-360 float to framework's POSITION_MIN - POSITION_MAX long
+    joint2Destination = angles[1] * (((float)(POS_MAX - POS_MIN))/(360.0-0.0));
+    joint3Destination = angles[2] * (((float)(POS_MAX - POS_MIN))/(360.0-0.0));
+    joint4Destination = angles[3] * (((float)(POS_MAX - POS_MIN))/(360.0-0.0));
+    joint5Destination = angles[4] * (((float)(POS_MAX - POS_MIN))/(360.0-0.0));
   }
 }
 
 //moves the first joint
-//note that this function only operates if open loop is currently being used; else, use the setArmDestinationAngles function for closed loop movvement
+//note that this function only operates if open loop is currently being used; else, use the setArmDestinationAngles function for closed loop movement
 //note that the moveValue is numerically described using the joint control framework standard
 CommandResult moveJ1(int16_t moveValue)
 {
@@ -648,14 +647,14 @@ void setupTimer0(float timeout_micros)
 }
 
 //fills a float array with the current positions of the joints. 
-//Angles are numerically described using the joint control framework standard
+//Angles are numerically described as 0-360 degrees
 CommandResult getArmPositions(float positions[ArmJointCount])
 {
-  positions[0] = joint1Encoder.getFeedback();
-  positions[1] = joint2Encoder.getFeedback();
-  positions[2] = joint3Encoder.getFeedback();
-  positions[3] = joint4Encoder.getFeedback();
-  positions[4] = joint5Encoder.getFeedback();
+  positions[0] = joint1Encoder.getFeedback() * ((360.0-0.0)/((float)(POS_MAX - POS_MIN))); //getFeedback returns from POS_MAX to POS_MIN long, convert it to 0-360 degrees float
+  positions[1] = joint2Encoder.getFeedback() * ((360.0-0.0)/((float)(POS_MAX - POS_MIN)));
+  positions[2] = joint3Encoder.getFeedback() * ((360.0-0.0)/((float)(POS_MAX - POS_MIN)));
+  positions[3] = joint4Encoder.getFeedback() * ((360.0-0.0)/((float)(POS_MAX - POS_MIN)));
+  positions[4] = joint5Encoder.getFeedback() * ((360.0-0.0)/((float)(POS_MAX - POS_MIN)));
 }
 
 //Timer 0 periodic timeout interrupt. 
