@@ -34,8 +34,6 @@ typedef enum ArmCommandIds
   MoveGripper = 0x360, 
   ArmGetPosition = 0x319,
   MoveGripServo = 0x364,
-  UseOpenLoop = 0x500, //Placeholder Command ID
-  UseClosedLoop = 0x501, //Placeholder Command ID
   ArmCurrentMain = 0x370
 } ArmCommandIds;
 

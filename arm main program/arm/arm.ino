@@ -105,44 +105,56 @@ void processBaseStationCommands()
         
       case ArmJ1:
       case LY_ArmJ1:
+        if(currentControlSystem != OpenLoop)
+        {
+          switchToOpenLoop();
+        }
         result = moveJ1(*(int16_t*)(commandData));
         break;
 
       case ArmJ2:
       case LY_ArmJ2:
+        if(currentControlSystem != OpenLoop)
+        {
+          switchToOpenLoop();
+        }
         result = moveJ2(*(int16_t*)(commandData));
         break;
 
      case ArmJ3:
      case LY_ArmJ3:
+        if(currentControlSystem != OpenLoop)
+        {
+          switchToOpenLoop();
+        }
         result = moveJ3(*(int16_t*)(commandData));
         break;
 
       case ArmJ4: 
       case LY_ArmJ4: 
+        if(currentControlSystem != OpenLoop)
+        {
+          switchToOpenLoop();
+        }
         result = moveJ4(*(int16_t*)(commandData));
         break;
 
       case ArmJ5: 
       case LY_ArmJ5: 
+        if(currentControlSystem != OpenLoop)
+        {
+          switchToOpenLoop();
+        }
         result = moveJ5(*(int16_t*)(commandData));
         break;
 
       case MoveGripper: 
-      case LY_MoveGripper: 
+      case LY_MoveGripper: //gripper only ever operates in open loop but the rest of the system can be using other controls at the same time
         result = moveGripper(*(int16_t*)(commandData));
         break;
 
-      case MoveGripServo: 
+      case MoveGripServo: //gripper only ever operates in open loop but the rest of the system can be using other controls at the same time
         result = moveGripper(*(int16_t*)(commandData));
-        break;
-
-      case UseOpenLoop: 
-        result = switchToOpenLoop();
-        break;
-        
-      case UseClosedLoop: 
-        result = switchToClosedLoop();
         break;
 
       case ArmEnableAll: 
@@ -154,7 +166,11 @@ void processBaseStationCommands()
         masterPowerSet(*(bool*)(commandData));
         break;
 
-      case ArmAbsoluteAngle: 
+      case ArmAbsoluteAngle:
+        if(currentControlSystem != ClosedLoop)
+        {
+          switchToClosedLoop();
+        }
         setArmDestinationAngles(((float*)(commandData)));
         break;
 
@@ -209,8 +225,9 @@ void processBaseStationCommands()
     }
   }//end if(commandId != 0)
 
-  //if no messages were recieved, increment our watchdog counter. If the counter has gone over a certain period of time since we last got a transmission, cease all movement.
-  else
+  //if no messages were received, increment our watchdog counter. If the counter has gone over a certain period of time since we last got a transmission, cease all movement.
+  //Exception is if we're in closed loop, in which case it might be normal for the arm to not get commands for long periods of time
+  else if(currentControlSystem != ClosedLoop)
   {
     uint8_t microsecondDelay = 10;
     delayMicroseconds(microsecondDelay);
@@ -418,18 +435,15 @@ void gripperServoPowerSet(bool powerOn)
 CommandResult setArmDestinationAngles(float* angles)
 { 
   //angles comes in as an array
-  if(currentControlSystem == ClosedLoop)
-  {
-    joint1Destination = angles[0] * (((float)(POS_MAX - POS_MIN))/(360.0-0.0)); //convert from 0-360 float to framework's POSITION_MIN - POSITION_MAX long
-    joint2Destination = angles[1] * (((float)(POS_MAX - POS_MIN))/(360.0-0.0));
-    joint3Destination = angles[2] * (((float)(POS_MAX - POS_MIN))/(360.0-0.0));
-    joint4Destination = angles[3] * (((float)(POS_MAX - POS_MIN))/(360.0-0.0));
-    joint5Destination = angles[4] * (((float)(POS_MAX - POS_MIN))/(360.0-0.0));
-  }
+  joint1Destination = angles[0] * (((float)(POS_MAX - POS_MIN))/(360.0-0.0)); //convert from 0-360 float to framework's POSITION_MIN - POSITION_MAX long
+  joint2Destination = angles[1] * (((float)(POS_MAX - POS_MIN))/(360.0-0.0));
+  joint3Destination = angles[2] * (((float)(POS_MAX - POS_MIN))/(360.0-0.0));
+  joint4Destination = angles[3] * (((float)(POS_MAX - POS_MIN))/(360.0-0.0));
+  joint5Destination = angles[4] * (((float)(POS_MAX - POS_MIN))/(360.0-0.0));
 }
 
 //moves the first joint
-//note that this function only operates if open loop is currently being used; else, use the setArmDestinationAngles function for closed loop movement
+//note that this function is used for open loop; use the setArmDestinationAngles function for closed loop movement
 //note that the moveValue is numerically described using the joint control framework standard
 CommandResult moveJ1(int16_t moveValue)
 {
@@ -445,7 +459,7 @@ CommandResult moveJ1(int16_t moveValue)
 }
 
 //moves the second joint
-//note that this function only operates if open loop is currently being used; else, use the setArmDestinationAngles function for closed loop movvement
+//note that this function is used for open loop; use the setArmDestinationAngles function for closed loop movement
 //note that the moveValue is numerically described using the joint control framework standard
 CommandResult moveJ2(int16_t moveValue)
 {
@@ -461,7 +475,7 @@ CommandResult moveJ2(int16_t moveValue)
 }
 
 //moves the third joint
-//note that this function only operates if open loop is currently being used; else, use the setArmDestinationAngles function for closed loop movvement
+//note that this function is used for open loop; use the setArmDestinationAngles function for closed loop movement
 //note that the moveValue is numerically described using the joint control framework standard
 CommandResult moveJ3(int16_t moveValue)
 {
@@ -477,7 +491,7 @@ CommandResult moveJ3(int16_t moveValue)
 }
 
 //moves the fourth joint
-//note that this function only operates if open loop is currently being used; else, use the setArmDestinationAngles function for closed loop movvement
+//note that this function is used for open loop; use the setArmDestinationAngles function for closed loop movement
 //note that the moveValue is numerically described using the joint control framework standard
 CommandResult moveJ4(int16_t moveValue)
 {
@@ -493,7 +507,7 @@ CommandResult moveJ4(int16_t moveValue)
 }
 
 //moves the fifth joint
-//note that this function only operates if open loop is currently being used; else, use the setArmDestinationAngles function for closed loop movvement
+//note that this function is used for open loop; use the setArmDestinationAngles function for closed loop movement
 //note that the moveValue is numerically described using the joint control framework standard
 CommandResult moveJ5(int16_t moveValue)
 {
@@ -509,7 +523,7 @@ CommandResult moveJ5(int16_t moveValue)
 }
 
 //moves the gripper open/closed
-//note that this function only operates if open loop is currently being used; else, use the setArmDestinationAngles function for closed loop movvement
+//note that this function is used for open loop; use the setArmDestinationAngles function for closed loop movement
 //note that the moveValue is numerically described using the joint control framework standard
 CommandResult moveGripper(int16_t moveValue)
 {
@@ -530,7 +544,7 @@ CommandResult moveGripper(int16_t moveValue)
 }
 
 //spins the gripper servo
-//note that this function only operates if open loop is currently being used; else, use the setArmDestinationAngles function for closed loop movvement
+//note that this function is used for open loop; use the setArmDestinationAngles function for closed loop movement
 //note that the moveValue is numerically described using the joint control framework standard
 CommandResult moveGripServo(int16_t moveValue)
 {
