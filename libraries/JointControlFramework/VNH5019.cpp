@@ -60,10 +60,10 @@ void VNH5019::move(const long movement)
 
 void VNH5019::setPower(bool powerOn)
 {
-  enabled = powerOn;
-  
-  if(!enabled)
+  if(!powerOn) //stop movement before storing into enabled variable, as motor will refuse to accept move commands after being disabled
   {
     move(0);
   }
+  
+  enabled = powerOn;
 }

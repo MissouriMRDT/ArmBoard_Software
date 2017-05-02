@@ -74,10 +74,10 @@ void GenPwmPhaseHBridge::setPower(bool powerOn)
     digitalWrite(ENABLE_PIN, pinNewState);
   }
   
-  enabled = powerOn;
-  
-  if(!enabled)
+  if(!powerOn)
   {
     move(0);
   }
+  
+  enabled = powerOn;
 }
