@@ -4,6 +4,9 @@
 //sign macro. Returns 1 if passed number is positive, -1 if it's negative, 0 if it's 0
 #define sign(x) ((x > 0) ? 1 : ((x < 0) ? -1 : 0))
 
+//constrain macro
+#define constrain(amt,low,high) ((amt)<(low)?(low):((amt)>(high)?(high):(amt)))
+
 //All the types of values that can be passed to and be returned from the clases in the control framework
 enum ValueType{spd, pos};
 

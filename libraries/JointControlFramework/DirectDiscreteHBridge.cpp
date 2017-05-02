@@ -2,12 +2,13 @@
 #include <pwmWriter.h>
 #include "Energia.h"
 
-DirectDiscreteHBridge::DirectDiscreteHBridge(const int FPIN, const int RPIN, bool upsideDown) : OutputDevice(),
-  FPWM_PIN(FPIN),
-  RPWM_PIN(RPIN),
-  inType(spd),
-  invert(upsideDown)
-{ }
+DirectDiscreteHBridge::DirectDiscreteHBridge(const int FPIN, const int RPIN, bool upsideDown) : OutputDevice()
+{
+  FPWM_PIN = FPIN;
+  RPWM_PIN = RPIN;
+  inType = spd;
+  invert = upsideDown;
+}
 
 void DirectDiscreteHBridge::move(const long movement)
 {
@@ -48,5 +49,7 @@ void DirectDiscreteHBridge::setPower(bool powerOn)
   enabled = powerOn;
   
   if(!enabled)
+  {
     move(0);
+  }
 }

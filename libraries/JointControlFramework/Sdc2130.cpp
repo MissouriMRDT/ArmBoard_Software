@@ -28,11 +28,15 @@ void Sdc2130::moveSpeed(const int movement)
   if(controlType == Pwm)
   {
     if(speed > 0)
+    {
       pwmVal+=POS_INC;
+    }
     else if(speed < 0)
+    {
       pwmVal-=POS_INC;
+    }
 
-    pwmVal = constrain(pwmVal, PWM_MIN, PWM_MAX)
+    pwmVal = constrain(pwmVal, PWM_MIN, PWM_MAX);
 
     PwmWrite(PWM_PIN, pwmVal);
   }
@@ -43,5 +47,7 @@ void Sdc2130::setPower(bool powerOn)
   enabled = powerOn;
   
   if(!enabled)
+  {
     move(0);
+  }
 }

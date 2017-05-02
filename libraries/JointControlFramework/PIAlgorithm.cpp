@@ -1,31 +1,33 @@
 #include "PIAlgorithm.h"
 #include "Energia.h"
 
-PIAlgorithm::PIAlgorithm(int inKP, int inKI, float inDT) : IOAlgorithm(),
-  KI(inKI),
-  KP(inKP),
-  DT(inDT),
-  speed_minMag(DEFAULT_MINMAG),
-  errorSummation(0), //error can be accurately accounted for for each phase of the closed loop algorithm
-  inType(pos),
-  outType(spd),
-  feedbackInType(pos),
-  hardStopPos1(-1),
-  hardStopPos2(-1)
-{ }
+PIAlgorithm::PIAlgorithm(int inKP, int inKI, float inDT) : IOAlgorithm()
+{
+  KI = inKI;
+  KP = inKP;
+  DT = inDT;
+  speed_minMag = DEFAULT_MINMAG;
+  errorSummation = 0; //error can be accurately accounted for for each phase of the closed loop algorithm
+  inType = pos;
+  outType = spd;
+  feedbackInType = pos;
+  hardStopPos1 = -1;
+  hardStopPos2 = -1;
+}
 
-PIAlgorithm::PIAlgorithm(int inKP, int inKI, float inDT, int inSpeed_minMag) : IOAlgorithm(),
-  KI(inKI),
-  KP(inKP),
-  DT(inDT),
-  speed_minMag(inSpeed_minMag),
-  errorSummation(0), //error can be accurately accounted for for each phase of the closed loop algorithm
-  inType(pos),
-  outType(spd),
-  feedbackInType(pos),
-  hardStopPos1(-1),
-  hardStopPos2(-1)
-{ }
+PIAlgorithm::PIAlgorithm(int inKP, int inKI, float inDT, int inSpeed_minMag) : IOAlgorithm()
+{
+  KI = inKI;
+  KP = inKP;
+  DT = inDT;
+  speed_minMag = inSpeed_minMag;
+  errorSummation = 0; //error can be accurately accounted for for each phase of the closed loop algorithm
+  inType = pos;
+  outType = spd;
+  feedbackInType = pos;
+  hardStopPos1 = -1;
+  hardStopPos2 = -1;
+}
 
 float PIAlgorithm::dist360(int pos_rotationUnits)
 {

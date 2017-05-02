@@ -11,15 +11,17 @@
 #include "arm.h"
 #include "Ma3Encoder12b.h"
 #include "DirectDiscreteHBridge.h"
-#include "PIAlgorithm.h"
+#include "DynamixelController.h"
+#include "GenPwmPhaseHBridge.h"
+#include "RCContinuousServo.h"
 #include "VNH5019.h"
 #include "Sdc2130.h"
 #include "GenPwmPhaseHBridge.h"
+#include "PIAlgorithm.h"
 
 FeedbackDevice* feedbackDevice;
 JointInterface * inHerFace;
 OutputDevice * controller;
-IOAlgorithm * algorithm;
 
 void setup() {} //fuck you setup
 
@@ -130,7 +132,7 @@ void initialize()
 
   delete inHerFace;
   
-  algorithm = new PIAlgorithm(3,3,3);
+  PIAlgorithm* algorithm = new PIAlgorithm(3,3,3);
   inHerFace = new SingleMotorJoint(pos, algorithm, controller, feedbackDevice);
 
   controller->setPower(true);

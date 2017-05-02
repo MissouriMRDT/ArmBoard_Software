@@ -24,9 +24,10 @@ long Ma3Encoder12b::getFeedback()
 }
 
 
-Ma3Encoder12b::Ma3Encoder12b(uint8_t mappedPinNumber): FeedbackDevice(),
-  pwmMappedPin(mappedPinNumber),
-  fType(pos)
+Ma3Encoder12b::Ma3Encoder12b(uint8_t mappedPinNumber): FeedbackDevice()
 {
+  pwmMappedPin = mappedPinNumber;
+  fType = pos;
+  
   initPwmRead(pwmMappedPin); 
 }

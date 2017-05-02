@@ -1,12 +1,13 @@
 #include "DynamixelController.h"
 #include "Energia.h"
 
-DynamixelController::DynamixelController(const int Tx, const int Rx, bool upsideDown, DynamixelType type, uint8_t id, uint8_t uartIndex, uint32_t baud, DynamixelMode mode) : OutputDevice(),
-  Tx_PIN(Tx),
-  Rx_PIN(Rx),
-  baudRate(baud),
-  invert(upsideDown)
+DynamixelController::DynamixelController(const int Tx, const int Rx, bool upsideDown, DynamixelType type, uint8_t id, uint8_t uartIndex, uint32_t baud, DynamixelMode mode) : OutputDevice()
 {
+  Tx_PIN = Tx;
+  Rx_PIN = Rx;
+  baudRate = baud;
+  invert = upsideDown;
+  
   if(mode == Wheel)
     inType = spd;
   else if(mode == Joint)
@@ -51,5 +52,7 @@ void DynamixelController::setPower(bool powerOn)
   enabled = powerOn;
   
   if(!enabled)
+  {
     move(0);
+  }
 }

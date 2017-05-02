@@ -1,5 +1,5 @@
-#ifndef PIALGORITHM_H_
-#define PIALGORITHM_H_
+#ifndef DYNAMIXELCONTROLLER_H_
+#define DYNAMIXELCONTROLLER_H_
 
 #include <RoveDynamixel.h>
 #include <stdint.h>

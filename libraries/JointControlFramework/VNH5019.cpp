@@ -2,13 +2,13 @@
 #include "Energia.h"
 #include "PwmWriter.h"
 
-VNH5019::VNH5019(const int PwmPin, const int InaPin, const int InbPin, bool upsideDown) :
-  PWM_PIN(PwmPin),
-  INA_PIN(InaPin),
-  INB_PIN(InbPin),
-  inType(spd),
-  invert(upsideDown)
+VNH5019::VNH5019(const int PwmPin, const int InaPin, const int InbPin, bool upsideDown) : OutputDevice()
 {
+  PWM_PIN = PwmPin;
+  INA_PIN = InaPin;
+  INB_PIN = InbPin;
+  inType = spd;
+  invert = upsideDown;
   pinMode(INA_PIN, OUTPUT);
   pinMode(INB_PIN, OUTPUT);
   
@@ -63,5 +63,7 @@ void VNH5019::setPower(bool powerOn)
   enabled = powerOn;
   
   if(!enabled)
+  {
     move(0);
+  }
 }

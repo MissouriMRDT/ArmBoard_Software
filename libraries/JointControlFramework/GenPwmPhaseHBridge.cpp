@@ -2,23 +2,23 @@
 #include "Energia.h"
 #include "PwmWriter.h"
 
-GenPwmPhaseHBridge::GenPwmPhaseHBridge(const int PwmPin, const int PhPin, bool upsideDown) : OutputDevice(),
-  PWM_PIN(PwmPin),
-  PHASE_PIN(PhPin),
-  inType(spd),
-  invert(upsideDown)
+GenPwmPhaseHBridge::GenPwmPhaseHBridge(const int PwmPin, const int PhPin, bool upsideDown) : OutputDevice()
 {
+  PWM_PIN = PwmPin;
+  PHASE_PIN = PhPin;
+  invert = upsideDown;
+  inType = spd;
   pinMode(PHASE_PIN, OUTPUT);
 }
 
-GenPwmPhaseHBridge::GenPwmPhaseHBridge(const int PwmPin, const int PhPin, const int EnPin, bool enLogicHigh, bool upsideDown) : OutputDevice(),
-  PWM_PIN(PwmPin),
-  PHASE_PIN(PhPin),
-  ENABLE_PIN(EnPin),
-  inType(spd),
-  invert(upsideDown),
-  enableLogicHigh(enLogicHigh)
+GenPwmPhaseHBridge::GenPwmPhaseHBridge(const int PwmPin, const int PhPin, const int EnPin, bool enLogicHigh, bool upsideDown) : OutputDevice()
 {
+  PWM_PIN = PwmPin;
+  PHASE_PIN = PhPin;
+  ENABLE_PIN = EnPin;
+  enableLogicHigh = enLogicHigh;
+  inType = spd;
+  invert = upsideDown;
   pinMode(PHASE_PIN, OUTPUT);
   pinMode(ENABLE_PIN, OUTPUT);
   
@@ -77,5 +77,7 @@ void GenPwmPhaseHBridge::setPower(bool powerOn)
   enabled = powerOn;
   
   if(!enabled)
+  {
     move(0);
+  }
 }

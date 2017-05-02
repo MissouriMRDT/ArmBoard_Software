@@ -1,13 +1,13 @@
 #include "TiltJoint.h"
 
-TiltJoint::TiltJoint(ValueType inputType, IOAlgorithm *alg, OutputDevice* cont1, OutputDevice* cont2, FeedbackDevice* feed) : JointInterface(),
-  inType(inputType),
-  controller1(cont1),
-  controller2(cont2),
-  feedback(feed),
-  manip(alg),
-  algorithmUsed(true)
+TiltJoint::TiltJoint(ValueType inputType, IOAlgorithm *alg, OutputDevice* cont1, OutputDevice* cont2, FeedbackDevice* feed) : JointInterface()
 {
+  inType = inputType;
+  controller1 = cont1;
+  controller2 = cont2;
+  feedback = feed;
+  manip = alg;
+  algorithmUsed = true;
   manip -> setFeedDevice(feed);
 
   //checks to make sure the passed arguments all work with each other, that is that the algorithm's input type is the same as what the user is putting in, and
@@ -15,12 +15,13 @@ TiltJoint::TiltJoint(ValueType inputType, IOAlgorithm *alg, OutputDevice* cont1,
   validConstruction =(inputType == alg->inType) && (cont1->inType == alg->outType) && (alg->feedbackInType == feed->fType) && (cont1->inType == cont2->inType);
 }
 
-TiltJoint::TiltJoint(ValueType inputType, OutputDevice* cont1, OutputDevice* cont2) : JointInterface(),
-  inType(inputType),
-  controller1(cont1),
-  controller2(cont2),
-  algorithmUsed(false)
+TiltJoint::TiltJoint(ValueType inputType, OutputDevice* cont1, OutputDevice* cont2) : JointInterface()
 {
+  inType = inputType;
+  controller1 = cont1;
+  controller2 = cont2;
+  algorithmUsed = false;
+  
   //checks to make sure the passed arguments all work with each other, that is that the algorithm's input type is the same as what the user is putting in, and
   //that the algorithm's output value type is what the output device expects to take in, both output devices line up properly, etc
   validConstruction = (inputType == cont1->inType) && (cont1->inType == cont2->inType);
