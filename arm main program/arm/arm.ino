@@ -315,7 +315,6 @@ void initialize()
   pinMode(HBRIDGE5_NFAULT_PIN,INPUT);
   pinMode(GRIPMOT_NFAULT_PIN,INPUT);
 
-  pinMode(OC_NFAULT_PIN,INPUT);
   pinMode(POWER_LINE_CONTROL_PIN,OUTPUT);
 
   //all joints are initialized to open loop control format
@@ -711,7 +710,7 @@ void computeIK(float* coordinates, float angles[ArmJointCount])
   temp /= (2*ElbowLength*WristLength);
   joint3Angle = acos(temp);
 
-  joint5Angle = negativeDegreeCorrection(joint3Angle - 2*M_PI - joint2Angle + gripperAngle); //M_PI given in math.h
+  joint5Angle = negativeDegreeCorrection(2*M_PI -joint3Angle - joint2Angle + gripperAngle); //M_PI given in math.h
 
   joint4Angle = joint4Encoder.getFeedback(); //joint4 not actually controlled in IK
 
@@ -731,7 +730,11 @@ void computeIK(float* coordinates, float angles[ArmJointCount])
   //make sure values are constrained
   for(i = 0; i < 5; i++)
   {
-    if(angles[i] > 360)
+    while(angles[i] < 0)
+    {
+      angles[i] += 360;
+    }
+    while(angles[i] > 360)
     {
       angles[i] -= 360;
     }
@@ -741,9 +744,9 @@ void computeIK(float* coordinates, float angles[ArmJointCount])
 //converts 0 to -2pi, to 0 to 2pi
 float negativeDegreeCorrection(float correctThis)
 {
-  if(correctThis < 0)
+  while(correctThis < 0)
   {
-    correctThis += 2*M_PI; // If it's in quadrant 3,4, add 2*pi to it to get the coordinates in positive radians. quads 1, 2 are correct as is when positive
+    correctThis += 2*M_PI; 
   }                        
 
   return(correctThis);
