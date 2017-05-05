@@ -1,7 +1,6 @@
 #include "Ma3Encoder12b.h"
 #include <PwmReader.h>
 
-//gets the positional feedback from the encoder. Returns positional values from POS_MIN and POS_MAX
 long Ma3Encoder12b::getFeedback()
 {
   uint32_t readOnPeriod = getOnPeriod_us(pwmMappedPin); 
@@ -16,7 +15,7 @@ long Ma3Encoder12b::getFeedback()
   //Alternatively, if the value read is 0 then it means the duty cycle is either at 0 or 100%, 
   //so if we get a 0 then we need to check the duty cycle to see which it is.
   //If it's 0%, then use min value. If it's 100%, use max value.
-  else if(readOnPeriod == 0)
+  if(readOnPeriod == 0)
   {
     if(getDuty(pwmMappedPin) == 0)
     {
@@ -27,14 +26,40 @@ long Ma3Encoder12b::getFeedback()
       readOnPeriod = PWM_READ_MAX;
     }
   }
-  //scale the values from the pwm values to the common position values, IE 1-4097 to POS_MIN-POS_MAX, and return it
-  return(map(readOnPeriod, PWM_READ_MIN, PWM_READ_MAX, POS_MIN, POS_MAX));
+  
+  //scale the values from the pwm values to the common position values, IE 1-4097 to POS_MIN-POS_MAX, giving the absolute read angle
+  long absoluteAngle = map(readOnPeriod, PWM_READ_MIN, PWM_READ_MAX, POS_MIN, POS_MAX);
+  
+  //set the relative angle, and account for any overflow due to the calculations
+  long relativeAngle = absoluteAngle+offsetAngle;
+  if(relativeAngle > POS_MAX)
+  {
+    relativeAngle -= (POS_MAX-POS_MIN); 
+  }
+  else if(relativeAngle < POS_MIN)
+  {
+    relativeAngle += (POS_MAX-POS_MIN);
+  }
+  
+  return(relativeAngle);
 }
-
 
 Ma3Encoder12b::Ma3Encoder12b(uint8_t mappedPinNumber): FeedbackDevice()
 {
-  initPwmRead(mappedPinNumber); 
   pwmMappedPin = mappedPinNumber;
   fType = pos;
+  
+  initPwmRead(pwmMappedPin); 
+}
+
+float Ma3Encoder12b::getFeedbackDegrees()
+{
+  float position = getFeedback();
+  return(map(position, (float)POS_MIN, (float)POS_MAX, 0.0, 360.0));
+}
+
+void Ma3Encoder12b::setOffsetAngle(float offset)
+{
+  offset = constrain(offset, 0.0, 360.0); //constrain offset to 0-360 degrees
+  offsetAngle = map(offset, 0.0, 360.0, POS_MIN, POS_MAX) ; //offset in 0-360, so convert to framework positional values
 }
