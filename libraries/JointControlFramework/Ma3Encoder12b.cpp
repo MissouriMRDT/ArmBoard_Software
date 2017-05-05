@@ -55,11 +55,11 @@ Ma3Encoder12b::Ma3Encoder12b(uint8_t mappedPinNumber): FeedbackDevice()
 float Ma3Encoder12b::getFeedbackDegrees()
 {
   float position = getFeedback();
-  return(map(position, (float)POS_MIN, (float)POS_MAX, 0.0, 360.0));
+  return(position * 360.0 / ((float)(POS_MAX-POS_MIN)));
 }
 
 void Ma3Encoder12b::setOffsetAngle(float offset)
 {
-  offset = constrain(offset, 0.0, 360.0); //constrain offset to 0-360 degrees
-  offsetAngle = map(offset, 0.0, 360.0, POS_MIN, POS_MAX) ; //offset in 0-360, so convert to framework positional values
+  offset = constrain(offset, -360.0, 360.0); //constrain offset to -360 - 360 degrees
+  offsetAngle = (offset * ((float)(POS_MAX - POS_MIN)) / 360.0) + POS_MIN; //offset in 0-360, so convert to framework positional values
 }
