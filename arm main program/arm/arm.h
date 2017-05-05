@@ -1,6 +1,7 @@
 #include <RoveBoard.h>
 #include <RoveComm.h>
 #include <stdint.h>
+#include <math.h>
 #include "JointControlFramework.h"
 #include "GenPwmPhaseHBridge.h"
 #include "PIAlgorithm.h"
@@ -31,6 +32,7 @@ typedef enum ArmCommandIds
   ArmEnableEndeff = 0x338,
   ArmEnableServo = 0x339,
   ArmAbsoluteAngle = 0x310,
+  ArmAbsoluteXYZ = 0x311,
   MoveGripper = 0x360, 
   ArmGetPosition = 0x319,
   MoveGripServo = 0x364,
@@ -52,8 +54,8 @@ typedef enum ArmTelemetryPayloadIds: int
   ArmFault_m3 = 3,
   ArmFault_m4 = 4,
   ArmFault_m5 = 5,
-  ArmFault_gripper = 6,
-  ArmFault_overcurrent = 7
+  ArmFault_gripper = 8,
+  ArmFault_overcurrent = 16
 }ArmTelemetryPayloadIds;
 
 //enum representing arm commands that are outdated, but kept around in case the user is using
@@ -130,11 +132,14 @@ const uint32_t OC_NFAULT_PIN = PE_5;
 const uint32_t CURRENT_READ_PIN = PD_3;
 const uint32_t POWER_LINE_CONTROL_PIN = PE_4;
 
-
 const float CURRENT_SENSOR_RATIO = .066; //current sensor ratio of outputted signal voltage/the current it's currently reading
 const float CURRENT_LIMIT = 18; //actual limit we want is 17, but because the calculations are just an estimate we overshoot it slightly for manual checks
 const float VCC = 3.3; //usually the V input is 3.3V
 const float PI_TIMESLICE_SECONDS = .04;
+
+const float ElbowLength = 0;
+const float BaseLength = 0;
+const float WristLength = 0;
 
 void initialize();
 void motorFaultHandling();
@@ -161,6 +166,8 @@ CommandResult moveGripServo(int16_t moveValue);
 
 CommandResult setArmDestinationAngles(float* angles);
 CommandResult getArmPositions(float positions[ArmJointCount]);
+void computeIK(float* coordinates, float angles[ArmJointCount]);
+float negativeDegreeCorrection(float correctThis);
 
 CommandResult switchToOpenLoop();
 CommandResult switchToClosedLoop();

@@ -174,6 +174,15 @@ void processBaseStationCommands()
         setArmDestinationAngles(((float*)(commandData)));
         break;
 
+      case ArmAbsoluteXYZ:
+        if(currentControlSystem != ClosedLoop)
+        {
+          switchToClosedLoop();
+        }
+        float absoluteAngles[ArmJointCount];
+        computeIK((float*)(commandData), absoluteAngles);
+        setArmDestinationAngles(absoluteAngles);
+
       case ArmGetPosition: 
         float currentPositions[ArmJointCount]; //empty array to fill, as this command expects an entire array of positions
         getArmPositions(currentPositions);
@@ -669,6 +678,75 @@ CommandResult getArmPositions(float positions[ArmJointCount])
   positions[2] = joint3Encoder.getFeedback() * ((360.0-0.0)/((float)(POS_MAX - POS_MIN)));
   positions[3] = joint4Encoder.getFeedback() * ((360.0-0.0)/((float)(POS_MAX - POS_MIN)));
   positions[4] = joint5Encoder.getFeedback() * ((360.0-0.0)/((float)(POS_MAX - POS_MIN)));
+}
+
+void computeIK(float* coordinates, float angles[ArmJointCount])
+{
+  float temp;
+  float temp2;
+  float tempNum;
+  float tempDen;
+  float cX = coordinates[0];
+  float cY = coordinates[1];
+  float cZ = coordinates[2];
+  float gripperAngle = coordinates[3];
+
+  float joint1Angle;
+  float joint2Angle;
+  float joint3Angle;
+  float joint4Angle;
+  float joint5Angle;
+  float d = sqrt((cX*cX) + (cY*cY));
+  
+  joint1Angle = negativeDegreeCorrection(atan2(cY, cX)); //joints will start being expressed in radians
+
+  tempNum = ElbowLength*ElbowLength + (d*d + (cZ- BaseLength)*(cZ - BaseLength)) - WristLength*WristLength; //elbow length = R2, base length = R1, Wrist length = R3
+  tempDen = (2*ElbowLength*sqrt(d*d + (cZ-BaseLength)*(cZ-BaseLength)));
+  temp = acos(tempNum/tempDen);
+  temp2 = negativeDegreeCorrection(atan2(cZ-BaseLength, d));
+
+  joint2Angle = temp + temp2;
+
+  temp = ElbowLength*ElbowLength + WristLength*WristLength -(d*d + (cZ-BaseLength)*(cZ-BaseLength));
+  temp /= (2*ElbowLength*WristLength);
+  joint3Angle = acos(temp);
+
+  joint5Angle = negativeDegreeCorrection(joint3Angle - 2*M_PI - joint2Angle + gripperAngle); //M_PI given in math.h
+
+  joint4Angle = joint4Encoder.getFeedback(); //joint4 not actually controlled in IK
+
+  angles[0] = joint1Angle;
+  angles[1] = joint2Angle;
+  angles[2] = joint3Angle;
+  angles[3] = joint4Angle;
+  angles[4] = joint5Angle;
+
+  //convert angles from 0-2pi to 0-360
+  int i;
+  for(i = 0; i < 5; i++)
+  {
+    angles[i] = angles[i] * 360 / (2*M_PI);
+  }
+
+  //make sure values are constrained
+  for(i = 0; i < 5; i++)
+  {
+    if(angles[i] > 360)
+    {
+      angles[i] -= 360;
+    }
+  }
+}
+
+//converts 0 to -2pi, to 0 to 2pi
+float negativeDegreeCorrection(float correctThis)
+{
+  if(correctThis < 0)
+  {
+    correctThis += 2*M_PI; // If it's in quadrant 3,4, add 2*pi to it to get the coordinates in positive radians. quads 1, 2 are correct as is when positive
+  }                        
+
+  return(correctThis);
 }
 
 //Timer 0 periodic timeout interrupt. 
