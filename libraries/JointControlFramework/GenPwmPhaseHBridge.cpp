@@ -81,3 +81,8 @@ void GenPwmPhaseHBridge::setPower(bool powerOn)
   
   enabled = powerOn;
 }
+
+void setRamping(unsigned int magnitudeChangeLimit)
+{
+  magChangeLimit = magnitudeChangeLimit;
+}

@@ -10,6 +10,8 @@ class GenPwmPhaseHBridge: public OutputDevice
     const int PWM_MIN = 0, PWM_MAX = 255;
     
     bool enableLogicHigh; //if there's an enable pin, this tracks if it's logic high or low
+    int currentSpeed = 0;
+    float magChangeLimit = (SPD_MAX - SPD_MIN);
 
   protected:
     //constants for hardware GPIO pin masks
@@ -36,6 +38,8 @@ class GenPwmPhaseHBridge: public OutputDevice
     //If the device class was constructed with an enable pin, the function will physically turn the device on or off
     //If it wasn't, it will virtually turn the device on or off, IE if it's off it will refuse to send an output
     void setPower(bool powerOn);
+    
+    void setRamping(float magnitudeChangeLimit)
 };
 
 #endif
