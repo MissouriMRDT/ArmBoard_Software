@@ -32,6 +32,13 @@ void GenPwmPhaseHBridge::move(const long movement)
 
   int mov = invert ? -movement : movement;
   
+  //scale the output so that it's not allowed to change once per call more than the amount specified by magChangeLimit
+  //exception is if it's 0, since the joint should halt all movement whenever commanded
+  if((abs(mov) > abs(currentSpeed) + magChangeLimit) && mov != 0)
+  {
+    mov = currentSpeed + sign(mov) * magChangeLimit;
+  }
+  
   //if supposed to move backwards
   if(mov < 0)
   {
@@ -82,7 +89,7 @@ void GenPwmPhaseHBridge::setPower(bool powerOn)
   enabled = powerOn;
 }
 
-void setRamping(unsigned int magnitudeChangeLimit)
+void GenPwmPhaseHBridge::setRamping(unsigned int magnitudeChangeLimit)
 {
   magChangeLimit = magnitudeChangeLimit;
 }

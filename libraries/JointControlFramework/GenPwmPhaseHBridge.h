@@ -11,7 +11,7 @@ class GenPwmPhaseHBridge: public OutputDevice
     
     bool enableLogicHigh; //if there's an enable pin, this tracks if it's logic high or low
     int currentSpeed = 0;
-    float magChangeLimit = (SPD_MAX - SPD_MIN);
+    unsigned int magChangeLimit = (SPEED_MAX - SPEED_MIN);
 
   protected:
     //constants for hardware GPIO pin masks
@@ -39,7 +39,10 @@ class GenPwmPhaseHBridge: public OutputDevice
     //If it wasn't, it will virtually turn the device on or off, IE if it's off it will refuse to send an output
     void setPower(bool powerOn);
     
-    void setRamping(float magnitudeChangeLimit)
+    //sets how much the speed of the device is allowed to change per call of move. Default is no limit on how high it can change per call
+    //input: The maximum amount the magnitude can change per call. If the speed is requested to change beyond this amount, the speed is instead 
+    //set to change by this amount
+    void setRamping(unsigned int magnitudeChangeLimit);
 };
 
 #endif
