@@ -330,17 +330,17 @@ void initialize()
   joint3 = new SingleMotorJoint(spd, &dev3);
   joint4 = new RotateJoint(spd, &dev4, &dev5);
   joint5 = new TiltJoint(spd, &dev4, &dev5);
+
+  //joint1 -> coupleJoint(joint2);
+  //joint4 -> coupleJoint(joint5);
+
+  currentControlSystem = OpenLoop;
   gripperMotor = new SingleMotorJoint(spd, &gripMotorDev);
   gripperServo = new SingleMotorJoint(spd, &gripServoDev);
-  
-  joint1 -> coupleJoint(joint2);
-  joint4 -> coupleJoint(joint5);
 
   masterPowerSet(false);
 
   allMotorsPowerSet(true);
-
-  currentControlSystem = OpenLoop;
   
   //set timer 0 to fire at a rate where the different PI algorithms will all be updated at their expected timeslice in seconds. 
   //There are 5 controls to update independently. They update one at a time, one being serviced every time the timer fires. So it takes 5 timer
@@ -484,11 +484,6 @@ CommandResult moveJ1(int16_t moveValue)
     else if(moveValue < 0)
       moveValue = -500;*/ //adjusting for base station 
     joint1->runOutputControl(moveValue);
-    if(moveValue != 0)
-    {
-      Serial.print("Moving j1: ");
-      Serial.println(moveValue);
-    }
   }
 }
 
@@ -505,11 +500,6 @@ CommandResult moveJ2(int16_t moveValue)
       moveValue = -500;*/ //adjusting for base station scaling
       
     joint2->runOutputControl(moveValue);
-    if(moveValue != 0)
-    {
-      Serial.print("Moving j2: ");
-      Serial.println(moveValue);
-    }
   }
 }
 
@@ -521,11 +511,6 @@ CommandResult moveJ3(int16_t moveValue)
   if(currentControlSystem == OpenLoop)
   {
     joint3->runOutputControl(moveValue);
-    if(moveValue != 0)
-    {
-      Serial.print("Moving j3: ");
-      Serial.println(moveValue);
-    }
   }
 }
 
@@ -537,11 +522,6 @@ CommandResult moveJ4(int16_t moveValue)
   if(currentControlSystem == OpenLoop)
   {
     joint4->runOutputControl(moveValue);
-    if(moveValue != 0)
-    {
-      Serial.print("Moving j4: ");
-      Serial.println(moveValue);
-    }
   }
 }
 
@@ -553,11 +533,6 @@ CommandResult moveJ5(int16_t moveValue)
   if(currentControlSystem == OpenLoop)
   {   
     joint5->runOutputControl(moveValue);
-    if(moveValue != 0)
-    {
-      Serial.print("Moving j5: ");
-      Serial.println(moveValue);
-    }
   }
 }
 
@@ -575,11 +550,6 @@ CommandResult moveGripper(int16_t moveValue)
     moveV = 0;
     
   gripperMotor->runOutputControl(moveV);
-  if(moveValue != 0)
-  {
-    Serial.print("Moving j6: ");
-    Serial.println(moveValue);
-  }
 }
 
 //spins the gripper servo
@@ -588,11 +558,6 @@ CommandResult moveGripper(int16_t moveValue)
 CommandResult moveGripServo(int16_t moveValue)
 {
   gripperServo->runOutputControl(moveValue);
-  if(moveValue != 0)
-  {
-    Serial.print("Moving gripper servo: ");
-    Serial.println(moveValue);
-  }
 }
 
 //switches the arm over to open loop control method; this will disable closed loop functions and functionality
@@ -616,6 +581,9 @@ CommandResult switchToOpenLoop()
   joint3 = new SingleMotorJoint(spd, &dev3);
   joint4 = new RotateJoint(spd, &dev4, &dev5);
   joint5 = new TiltJoint(spd, &dev4, &dev5);
+
+  //joint1 -> coupleJoint(joint2);
+  //joint4 -> coupleJoint(joint5);
 
   currentControlSystem = OpenLoop;
 }
@@ -647,6 +615,9 @@ CommandResult switchToClosedLoop()
   joint3 = new SingleMotorJoint(pos, joint3Alg, &dev3, &joint3Encoder);
   joint4 = new RotateJoint(pos, joint4Alg, &dev4, &dev5, &joint4Encoder);
   joint5 = new TiltJoint(pos, joint5Alg, &dev4, &dev5, &joint5Encoder);
+
+  joint1 -> coupleJoint(joint2);
+  joint4 -> coupleJoint(joint5);
 
   //have default position destination values be the joints' current positions, so they hold still when switchover occurs until base station sends a new position to go towards
   joint1Destination = joint1Encoder.getFeedback();
