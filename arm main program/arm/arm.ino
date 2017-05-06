@@ -50,6 +50,13 @@ unsigned long joint4Destination;
 unsigned long joint5Destination;
 
 ControlSystems currentControlSystem; //tracks what control system arm is currently using
+bool mainPowerOn;
+bool m1On;
+bool m2On;
+bool m3On;
+bool m4On;
+bool m5On;
+bool gripMotOn;
 
 void setup() {} //useless
 
@@ -65,7 +72,7 @@ void loop() {
 
   initialize();
   delay(1000);
-  
+
   //switchToClosedLoop(); //for debugging. RED currnetly lacks command to switch between schemes, has to be done manually
   
   while(1) //main loop begin
@@ -257,32 +264,32 @@ void processBaseStationCommands()
 //is sent to base station
 void motorFaultHandling()
 {
-  if(digitalRead(HBRIDGE1_NFAULT_PIN) == LOW)
+  if(digitalRead(HBRIDGE1_NFAULT_PIN) == LOW && mainPowerOn && m1On) //pins are always low when main power is off
   {
-    j12PowerSet(false); //motors 1 and 2 are a part of joints 1 and 2, which are interlinked together
-    roveComm_SendMsg(ArmFault, 1, (void*)ArmFault_m1);
+    //j12PowerSet(false); //motors 1 and 2 are a part of joints 1 and 2, which are interlinked together
+    //roveComm_SendMsg(ArmFault, 1, (void*)ArmFault_m1);
   }
-  if(digitalRead(HBRIDGE2_NFAULT_PIN) == LOW)
+  if(digitalRead(HBRIDGE2_NFAULT_PIN) == LOW && mainPowerOn && m2On)
   {
-    j12PowerSet(false); //motors 1 and 2 are a part of joints 1 and 2, which are interlinked together
-    roveComm_SendMsg(ArmFault, 1, (void*)ArmFault_m2);
+    //j12PowerSet(false); //motors 1 and 2 are a part of joints 1 and 2, which are interlinked together
+    //roveComm_SendMsg(ArmFault, 1, (void*)ArmFault_m2);
   }
-  if(digitalRead(HBRIDGE3_NFAULT_PIN) == LOW)
+  if(digitalRead(HBRIDGE3_NFAULT_PIN) == LOW && mainPowerOn && m3On)
   {
     j3PowerSet(false);
     roveComm_SendMsg(ArmFault, 1, (void*)ArmFault_m3);
   }
-  if(digitalRead(HBRIDGE4_NFAULT_PIN) == LOW)
+  if(digitalRead(HBRIDGE4_NFAULT_PIN) == LOW && mainPowerOn && m4On)
   {
     j45PowerSet(false); //motors 4 and 5 are a part of joints 4 and 5, which are interlinked together
     roveComm_SendMsg(ArmFault, 1, (void*)ArmFault_m4);
   }
-  if(digitalRead(HBRIDGE5_NFAULT_PIN) == LOW)
+  if(digitalRead(HBRIDGE5_NFAULT_PIN) == LOW && mainPowerOn && m5On)
   {
     j45PowerSet(false); //motors 4 and 5 are a part of joints 4 and 5, which are interlinked together
     roveComm_SendMsg(ArmFault, 1, (void*)ArmFault_m5);
   }
-  if(digitalRead(GRIPMOT_NFAULT_PIN) == LOW)
+  if(digitalRead(GRIPMOT_NFAULT_PIN) == LOW && gripMotOn)
   {
     gripperMotorPowerSet(false);
     roveComm_SendMsg(ArmFault, 1, (void*)ArmFault_gripper);
@@ -345,6 +352,9 @@ void initialize()
 //Turns on or off the main power line
 CommandResult masterPowerSet(bool enable)
 {
+  Serial.print("Setting master power: ");
+  Serial.println(enable);
+  mainPowerOn = enable;
   if(enable)
   {
     digitalWrite(POWER_LINE_CONTROL_PIN, HIGH);
@@ -358,6 +368,8 @@ CommandResult masterPowerSet(bool enable)
 //turns on or off all the motors
 void allMotorsPowerSet(bool enable)
 {
+  Serial.print("Setting all motor power: ");
+  Serial.println(enable);
   if(enable)
   {
     dev1.setPower(true);
@@ -410,12 +422,17 @@ void j12PowerSet(bool powerOn)
 {
   dev1.setPower(powerOn);
   dev2.setPower(powerOn);
+
+  m1On = powerOn;
+  m2On = powerOn;
 }
 
 //turns on or off the motor attached to joint 3
 void j3PowerSet(bool powerOn)
 {
   dev3.setPower(powerOn);
+
+  m3On = powerOn;
 }
 
 //turns on or off the motors attached to joint 4 and 5
@@ -423,12 +440,17 @@ void j45PowerSet(bool powerOn)
 {
   dev4.setPower(powerOn);
   dev5.setPower(powerOn);
+
+  m4On = powerOn;
+  m5On = powerOn;
 }
 
 //turns on or off the motor attached to the gripper
 void gripperMotorPowerSet(bool powerOn)
 {
   gripMotorDev.setPower(powerOn);
+
+  gripMotOn = powerOn;
 }
 
 //turns on or off the servo attached to the gripper
@@ -457,6 +479,10 @@ CommandResult moveJ1(int16_t moveValue)
 {
   if(currentControlSystem == OpenLoop)
   {
+    /*if(moveValue > 0)
+      moveValue = 500;
+    else if(moveValue < 0)
+      moveValue = -500;*/ //adjusting for base station 
     joint1->runOutputControl(moveValue);
     if(moveValue != 0)
     {
@@ -473,6 +499,11 @@ CommandResult moveJ2(int16_t moveValue)
 {
   if(currentControlSystem == OpenLoop)
   {
+    /*if(moveValue > 0)
+      moveValue = 500;
+    else if(moveValue < 0)
+      moveValue = -500;*/ //adjusting for base station scaling
+      
     joint2->runOutputControl(moveValue);
     if(moveValue != 0)
     {
@@ -520,7 +551,7 @@ CommandResult moveJ4(int16_t moveValue)
 CommandResult moveJ5(int16_t moveValue)
 {
   if(currentControlSystem == OpenLoop)
-  {
+  {   
     joint5->runOutputControl(moveValue);
     if(moveValue != 0)
     {
