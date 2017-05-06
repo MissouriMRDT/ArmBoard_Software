@@ -696,21 +696,24 @@ void computeIK(float* coordinates, float angles[ArmJointCount])
   float joint4Angle;
   float joint5Angle;
   float d = sqrt((cX*cX) + (cY*cY));
+  constrain(d, 0, (ElbowLength + WristLength));
+  float w = sqrt(d*d + (cZ-BaseLength)*(cZ-BaseLength));
+  constrain(w, (ElbowLength-WristLength), (ElbowLength + WristLength));
   
   joint1Angle = negativeDegreeCorrection(atan2(cY, cX)); //joints will start being expressed in radians
 
-  tempNum = ElbowLength*ElbowLength + (d*d + (cZ- BaseLength)*(cZ - BaseLength)) - WristLength*WristLength; //elbow length = R2, base length = R1, Wrist length = R3
-  tempDen = (2*ElbowLength*sqrt(d*d + (cZ-BaseLength)*(cZ-BaseLength)));
-  temp = acos(tempNum/tempDen);
+  temp = ElbowLength*ElbowLength + w*w - WristLength*WristLength; //elbow length = R2, base length = R1, Wrist length = R3
+  temp /= (2*ElbowLength*w);
+  temp = acos(temp);
   temp2 = negativeDegreeCorrection(atan2(cZ-BaseLength, d));
 
   joint2Angle = temp + temp2;
 
-  temp = ElbowLength*ElbowLength + WristLength*WristLength -(d*d + (cZ-BaseLength)*(cZ-BaseLength));
+  temp = ElbowLength*ElbowLength + WristLength*WristLength - w*w;
   temp /= (2*ElbowLength*WristLength);
   joint3Angle = acos(temp);
 
-  joint5Angle = negativeDegreeCorrection(2*M_PI -joint3Angle - joint2Angle + gripperAngle); //M_PI given in math.h
+  joint5Angle = negativeDegreeCorrection(M_PI -joint3Angle - joint2Angle + gripperAngle); //M_PI given in math.h
 
   joint4Angle = joint4Encoder.getFeedback(); //joint4 not actually controlled in IK
 
@@ -724,7 +727,7 @@ void computeIK(float* coordinates, float angles[ArmJointCount])
   int i;
   for(i = 0; i < 5; i++)
   {
-    angles[i] = angles[i] * 360 / (2*M_PI);
+    angles[i] = angles[i] * 360.0 / (2.0*M_PI);
   }
 
   //make sure values are constrained
@@ -746,7 +749,7 @@ float negativeDegreeCorrection(float correctThis)
 {
   while(correctThis < 0)
   {
-    correctThis += 2*M_PI; 
+    correctThis += 2.0*M_PI; 
   }                        
 
   return(correctThis);
