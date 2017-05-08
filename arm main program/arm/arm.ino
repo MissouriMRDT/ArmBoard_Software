@@ -14,19 +14,12 @@
 
 
 //Joint and hardware wrappers
-JointInterface* joint1;
-JointInterface* joint2;
-JointInterface* joint3;
-JointInterface* joint4;
-JointInterface* joint5;
-JointInterface* gripperMotor;
-JointInterface* gripperServo;
 
-PIAlgorithm* joint1Alg;
-PIAlgorithm* joint2Alg;
-PIAlgorithm* joint3Alg;
-PIAlgorithm* joint4Alg;
-PIAlgorithm* joint5Alg;
+PIAlgorithm joint1Alg(5,4,PI_TIMESLICE_SECONDS);
+PIAlgorithm joint2Alg(5,4,PI_TIMESLICE_SECONDS);
+PIAlgorithm joint3Alg(21,4,PI_TIMESLICE_SECONDS);
+PIAlgorithm joint4Alg(21,4,PI_TIMESLICE_SECONDS);
+PIAlgorithm joint5Alg(21,4,PI_TIMESLICE_SECONDS);
 
 Ma3Encoder12b joint1Encoder(ENCODER1_READING_PIN);
 Ma3Encoder12b joint2Encoder(ENCODER2_READING_PIN);
@@ -41,6 +34,21 @@ GenPwmPhaseHBridge dev4(MOT4_PWN_PIN, HBRIDGE4_PHASE_PIN, HBRIDGE4_NSLEEP_PIN, t
 GenPwmPhaseHBridge dev5(MOT5_PWN_PIN, HBRIDGE5_PHASE_PIN, HBRIDGE5_NSLEEP_PIN, true, true);
 GenPwmPhaseHBridge gripMotorDev(GRIPMOT_PWM_PIN, GRIPMOT_PHASE_PIN, GRIPMOT_NENABLE_PIN, false, true);
 RCContinuousServo gripServoDev(GRIPPER_SERVO_PWM_PIN, false);
+
+SingleMotorJoint gripperMotor(spd, &gripMotorDev);
+SingleMotorJoint gripperServo(spd, &gripServoDev);
+
+RotateJoint joint1Open(spd, &dev1, &dev2);
+TiltJoint joint2Open(spd, &dev1, &dev2);
+SingleMotorJoint joint3Open(spd, &dev3);
+RotateJoint joint4Open(spd, &dev4, &dev5);
+TiltJoint joint5Open(spd, &dev4, &dev5);
+
+RotateJoint joint1Closed(pos, &joint1Alg, &dev1, &dev2, &joint1Encoder);
+TiltJoint joint2Closed(pos, &joint2Alg, &dev1, &dev2, &joint2Encoder);
+SingleMotorJoint joint3Closed(pos, &joint3Alg, &dev3, &joint3Encoder);
+RotateJoint joint4Closed(pos, &joint4Alg, &dev4, &dev5, &joint4Encoder);
+TiltJoint joint5Closed(pos, &joint5Alg, &dev4, &dev5, &joint5Encoder);
 
 //variables used to control joints during closed loop control
 unsigned long joint1Destination;
@@ -323,10 +331,14 @@ void initialize()
 
   pinMode(POWER_LINE_CONTROL_PIN,OUTPUT);
 
-  //all joints are initialized to open loop control format
-  switchToOpenLoop();//doesn't cover gripper
-  gripperMotor = new SingleMotorJoint(spd, &gripMotorDev);
-  gripperServo = new SingleMotorJoint(spd, &gripServoDev);
+  joint1Open.coupleJoint(&joint2Open);
+  joint4Open.coupleJoint(&joint5Open);
+
+  joint1Closed.coupleJoint(&joint2Closed);
+  joint4Closed.coupleJoint(&joint5Closed);
+  
+  //initialze to open loop control format
+  switchToOpenLoop();
 
   masterPowerSet(false);
 
@@ -337,13 +349,13 @@ void initialize()
   //firings for any individual control to get updated again. Meaning the timeslice of the timer itself must be one fifth of the PI algorithms overall timeslice so that 
   //when it cycles back around the overall timeslice will have passed
   setupTimer0((PI_TIMESLICE_SECONDS/5.0) * 1000000.0); //function expects microseconds
+
+  initialized = true;
 }
 
 //Turns on or off the main power line
 CommandResult masterPowerSet(bool enable)
 {
-  Serial.print("Setting master power: ");
-  mainPowerOn = enable;
   if(enable)
   {
     digitalWrite(POWER_LINE_CONTROL_PIN, HIGH);
@@ -470,7 +482,7 @@ CommandResult moveJ1(int16_t moveValue)
       moveValue = BaseMaxSpeed;
     else if(moveValue < 0)
       moveValue = -BaseMaxSpeed; //adjusting for base station 
-    joint1->runOutputControl(moveValue);
+    joint1Open.runOutputControl(moveValue);
   }
 }
 
@@ -486,7 +498,7 @@ CommandResult moveJ2(int16_t moveValue)
     else if(moveValue < 0)
       moveValue = -BaseMaxSpeed; //adjusting for base station scaling
       
-    joint2->runOutputControl(moveValue);
+    joint2Open.runOutputControl(moveValue);
   }
 }
 
@@ -497,7 +509,7 @@ CommandResult moveJ3(int16_t moveValue)
 {
   if(currentControlSystem == OpenLoop)
   {
-    joint3->runOutputControl(moveValue);
+    joint3Open.runOutputControl(moveValue);
   }
 }
 
@@ -508,7 +520,7 @@ CommandResult moveJ4(int16_t moveValue)
 {
   if(currentControlSystem == OpenLoop)
   {
-    joint4->runOutputControl(moveValue);
+    joint4Open.runOutputControl(moveValue);
   }
 }
 
@@ -519,7 +531,7 @@ CommandResult moveJ5(int16_t moveValue)
 {
   if(currentControlSystem == OpenLoop)
   {   
-    joint5->runOutputControl(moveValue);
+    joint5Open.runOutputControl(moveValue);
   }
 }
 
@@ -536,7 +548,7 @@ CommandResult moveGripper(int16_t moveValue)
   else
     moveV = 0;
     
-  gripperMotor->runOutputControl(moveV);
+  gripperMotor.runOutputControl(moveV);
 }
 
 //spins the gripper servo
@@ -544,7 +556,7 @@ CommandResult moveGripper(int16_t moveValue)
 //note that the moveValue is numerically described using the joint control framework standard
 CommandResult moveGripServo(int16_t moveValue)
 {
-  gripperServo->runOutputControl(moveValue);
+  gripperServo.runOutputControl(moveValue);
 }
 
 //switches the arm over to open loop control method; this will disable closed loop functions and functionality
@@ -558,27 +570,7 @@ CommandResult switchToOpenLoop()
     TimerIntClear(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
     TimerIntDisable(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
     delay(10);
-    
-    delete joint1;
-    delete joint2;
-    delete joint3;
-    delete joint4;
-    delete joint5;
   }
-  else
-  {
-    initialized = true;
-  }
-
-  //reconstruct joint interfaces with open loop format
-  joint1 = new RotateJoint(spd, &dev1, &dev2);
-  joint2 = new TiltJoint(spd, &dev1, &dev2);
-  joint3 = new SingleMotorJoint(spd, &dev3);
-  joint4 = new RotateJoint(spd, &dev4, &dev5);
-  joint5 = new TiltJoint(spd, &dev4, &dev5);
-
-  joint1 -> coupleJoint(joint2);
-  joint4 -> coupleJoint(joint5);
 
   currentControlSystem = OpenLoop;
 
@@ -596,39 +588,6 @@ CommandResult switchToClosedLoop()
 {
   currentControlSystem = ClosedLoop;
     
-  //reconstruct joints with closed loop algorithms
-  if(initialized)
-  {
-    delete joint1;
-    delete joint2;
-    delete joint3;
-    delete joint4;
-    delete joint5;
-  }
-  else
-  {
-    initialized = true;
-  }
-  
-  delete joint1Alg;
-  delete joint2Alg;
-  delete joint3Alg;
-  delete joint4Alg;
-  delete joint5Alg;
-  joint1Alg = new PIAlgorithm(5,4,PI_TIMESLICE_SECONDS);
-  joint2Alg = new PIAlgorithm(5,4,PI_TIMESLICE_SECONDS);
-  joint3Alg = new PIAlgorithm(21,4,PI_TIMESLICE_SECONDS);
-  joint4Alg = new PIAlgorithm(21,4,PI_TIMESLICE_SECONDS);
-  joint5Alg = new PIAlgorithm(21,4,PI_TIMESLICE_SECONDS);
-  joint1 = new RotateJoint(pos, joint1Alg, &dev1, &dev2, &joint1Encoder);
-  joint2 = new TiltJoint(pos, joint2Alg, &dev1, &dev2, &joint2Encoder);
-  joint3 = new SingleMotorJoint(pos, joint3Alg, &dev3, &joint3Encoder);
-  joint4 = new RotateJoint(pos, joint4Alg, &dev4, &dev5, &joint4Encoder);
-  joint5 = new TiltJoint(pos, joint5Alg, &dev4, &dev5, &joint5Encoder);
-
-  joint1 -> coupleJoint(joint2);
-  joint4 -> coupleJoint(joint5);
-
   //have default position destination values be the joints' current positions, so they hold still when switchover occurs until base station sends a new position to go towards
   joint1Destination = joint1Encoder.getFeedback();
   joint2Destination = joint2Encoder.getFeedback();
@@ -636,11 +595,13 @@ CommandResult switchToClosedLoop()
   joint4Destination = joint4Encoder.getFeedback();
   joint5Destination = joint5Encoder.getFeedback();
 
-  //enable closed loop interrupts, and only after devices have been properly reconstructed with the new algorithms as we 
-  //don't want the timer interrupt firing while we're still modifying the classes
-  TimerIntClear(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
-  TimerIntEnable(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
-  TimerEnable(TIMER0_BASE, TIMER_A);
+  //enable closed loop interrupts, which will begin to move the arm towards its set destinations
+  if(initialized)
+  {
+    TimerIntClear(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
+    TimerIntEnable(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
+    TimerEnable(TIMER0_BASE, TIMER_A);
+  }
 }
 
 //sets up timer 0 so that it can service closed loop functionality; 
@@ -691,7 +652,7 @@ CommandResult getArmPositions(float positions[ArmJointCount])
   positions[4] = joint5Encoder.getFeedback() * ((360.0-0.0)/((float)(POS_MAX - POS_MIN)));
 }
 
-void computeIK(float* coordinates, float angles[ArmJointCount])
+void computeIK(float coordinates[IKArgCount], float angles[ArmJointCount])
 {
   float temp;
   float temp2;
@@ -783,23 +744,23 @@ void closedLoopUpdateHandler()
   }
   if(jointUpdated == 1)
   {
-    joint1->runOutputControl(joint1Destination);
+    joint1Closed.runOutputControl(joint1Destination);
   }
   else if(jointUpdated == 2)
   {
-    joint2->runOutputControl(joint2Destination);
+    joint2Closed.runOutputControl(joint2Destination);
   }
   else if(jointUpdated == 3)
   {
-    joint3->runOutputControl(joint3Destination);
+    joint3Closed.runOutputControl(joint3Destination);
   }
   else if(jointUpdated == 4)
   {
-    joint4->runOutputControl(joint4Destination);
+    joint4Closed.runOutputControl(joint4Destination);
   }
   else if(jointUpdated == 5)
   {
-    joint5->runOutputControl(joint5Destination);
+    joint5Closed.runOutputControl(joint5Destination);
   }
 }
 

@@ -88,6 +88,7 @@ typedef enum ControlSystems
 const uint32_t WATCHDOG_TIMEOUT_US = 2000000; //the amount of microseconds that should pass without getting a transmission from base station before the arm ceases moving for safety
 const uint8_t IP_ADDRESS [4] = {192, 168, 1, 131};
 const uint8_t ArmJointCount = 5;
+const uint8_t IKArgCount = 5;
 const int BaseMaxSpeed = 1000;
 const int BaseRampUp = 40;
 const int BaseRampDown = 40;
@@ -171,7 +172,7 @@ CommandResult moveGripServo(int16_t moveValue);
 
 CommandResult setArmDestinationAngles(float* angles);
 CommandResult getArmPositions(float positions[ArmJointCount]);
-void computeIK(float* coordinates, float angles[ArmJointCount]);
+void computeIK(float coordinates[IKArgCount], float angles[ArmJointCount]);
 float negativeDegreeCorrection(float correctThis);
 
 CommandResult switchToOpenLoop();
