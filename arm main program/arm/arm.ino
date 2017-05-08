@@ -580,6 +580,14 @@ CommandResult switchToOpenLoop()
   dev2.setRampUp(BaseRampUp);
   dev1.setRampDown(BaseRampDown);
   dev2.setRampDown(BaseRampDown);
+
+  if(!initialized)
+  {
+    //have arm soft reset when switching between control schemes
+    masterPowerSet(false);
+    delay(5000);
+    masterPowerSet(true);
+  }
 }
 
 //switches the arm over to closed loop control method; this will enable closed loop functions and functionality
@@ -595,8 +603,16 @@ CommandResult switchToClosedLoop()
   joint4Destination = joint4Encoder.getFeedback();
   joint5Destination = joint5Encoder.getFeedback();
 
+  if(!initialized)
+  {
+    //have arm soft reset when switching between control schemes
+    masterPowerSet(false);
+    delay(5000);
+    masterPowerSet(true);
+  }
+  
   //enable closed loop interrupts, which will begin to move the arm towards its set destinations
-  if(initialized)
+  else
   {
     TimerIntClear(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
     TimerIntEnable(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
