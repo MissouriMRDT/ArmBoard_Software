@@ -79,6 +79,8 @@ JointControlStatus RotateJoint::runOutputControl(const long movement)
   if(controller1->enabled == false || controller2->enabled == false)
   {
     returnStatus = DeviceDisabled;
+    motorOneVirtualSpeed = 0;
+    motorTwoVirtualSpeed = 0;
   }
   else if(verifyInput(movement) == false)
   {
