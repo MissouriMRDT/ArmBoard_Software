@@ -582,12 +582,12 @@ CommandResult switchToOpenLoop()
 
   currentControlSystem = OpenLoop;
 
-  dev3.setRampUp(100);
-  dev3.setRampDown(100);
-  dev1.setRampUp(40);
-  dev2.setRampUp(40);
-  dev1.setRampDown(40);
-  dev2.setRampDown(40);
+  dev3.setRampUp(ElbowRampUp);
+  dev3.setRampDown(ElbowRampDown);
+  dev1.setRampUp(BaseRampUp);
+  dev2.setRampUp(BaseRampUp);
+  dev1.setRampDown(BaseRampDown);
+  dev2.setRampDown(BaseRampDown);
 }
 
 //switches the arm over to closed loop control method; this will enable closed loop functions and functionality
