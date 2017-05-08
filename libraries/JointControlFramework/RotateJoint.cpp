@@ -130,7 +130,7 @@ JointControlStatus RotateJoint::runOutputControl(const long movement)
       {
         motorOneTrueSpeed = SPEED_MAX;
       }
-      if (motorOneTrueSpeed < SPEED_MIN)
+      else if (motorOneTrueSpeed < SPEED_MIN)
       {
         motorOneTrueSpeed = SPEED_MIN;
       }
@@ -140,7 +140,7 @@ JointControlStatus RotateJoint::runOutputControl(const long movement)
       {
         motorTwoTrueSpeed = SPEED_MAX;
       }
-      if (motorTwoTrueSpeed < SPEED_MIN)
+      else if (motorTwoTrueSpeed < SPEED_MIN)
       {
         motorTwoTrueSpeed = SPEED_MIN;
       }
