@@ -90,9 +90,9 @@ const uint8_t IP_ADDRESS [4] = {192, 168, 1, 131};
 const uint8_t ArmJointCount = 5;
 const uint8_t IKArgCount = 5;
 const int BaseMaxSpeed = 1000;
-const int BaseRampUp = 40;
-const int BaseRampDown = 40;
-const int ElbowRampUp = 100;
+const int BaseRampUp = 30;
+const int BaseRampDown = 60;
+const int ElbowRampUp = 75;
 const int ElbowRampDown = 100;
 
 
