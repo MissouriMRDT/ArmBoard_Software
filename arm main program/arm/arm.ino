@@ -38,7 +38,7 @@ GenPwmPhaseHBridge dev1(MOT1_PWN_PIN, HBRIDGE1_PHASE_PIN, HBRIDGE1_NSLEEP_PIN, t
 GenPwmPhaseHBridge dev2(MOT2_PWN_PIN, HBRIDGE2_PHASE_PIN, HBRIDGE2_NSLEEP_PIN, true, true);
 GenPwmPhaseHBridge dev3(MOT3_PWN_PIN, HBRIDGE3_PHASE_PIN, HBRIDGE3_NSLEEP_PIN, true, true);
 GenPwmPhaseHBridge dev4(MOT4_PWN_PIN, HBRIDGE4_PHASE_PIN, HBRIDGE4_NSLEEP_PIN, true, true);
-GenPwmPhaseHBridge dev5(MOT5_PWN_PIN, HBRIDGE5_PHASE_PIN, HBRIDGE5_NSLEEP_PIN, true, false);
+GenPwmPhaseHBridge dev5(MOT5_PWN_PIN, HBRIDGE5_PHASE_PIN, HBRIDGE5_NSLEEP_PIN, true, true);
 GenPwmPhaseHBridge gripMotorDev(GRIPMOT_PWM_PIN, GRIPMOT_PHASE_PIN, GRIPMOT_NENABLE_PIN, false, true);
 RCContinuousServo gripServoDev(GRIPPER_SERVO_PWM_PIN, false);
 
@@ -57,6 +57,7 @@ bool m3On;
 bool m4On;
 bool m5On;
 bool gripMotOn;
+bool initialized = false;
 
 void setup() {} //useless
 
@@ -245,14 +246,13 @@ void processBaseStationCommands()
   //Exception is if we're in closed loop, in which case it might be normal for the arm to not get commands for long periods of time
   else if(currentControlSystem != ClosedLoop)
   {
-    uint8_t microsecondDelay = 10;
+    uint8_t microsecondDelay = 1;
     delayMicroseconds(microsecondDelay);
 
     watchdogTimer_us += microsecondDelay;
 
     if(watchdogTimer_us >= WATCHDOG_TIMEOUT_US) //if more than our timeout period has passed, then kill arm movement
     {
-      Serial.println("Timed out");
       stopArm();
       watchdogTimer_us = 0;
     }
@@ -266,13 +266,13 @@ void motorFaultHandling()
 {
   if(digitalRead(HBRIDGE1_NFAULT_PIN) == LOW && mainPowerOn && m1On) //pins are always low when main power is off
   {
-    //j12PowerSet(false); //motors 1 and 2 are a part of joints 1 and 2, which are interlinked together
-    //roveComm_SendMsg(ArmFault, 1, (void*)ArmFault_m1);
+    j12PowerSet(false); //motors 1 and 2 are a part of joints 1 and 2, which are interlinked together
+    roveComm_SendMsg(ArmFault, 1, (void*)ArmFault_m1);
   }
   if(digitalRead(HBRIDGE2_NFAULT_PIN) == LOW && mainPowerOn && m2On)
   {
-    //j12PowerSet(false); //motors 1 and 2 are a part of joints 1 and 2, which are interlinked together
-    //roveComm_SendMsg(ArmFault, 1, (void*)ArmFault_m2);
+    j12PowerSet(false); //motors 1 and 2 are a part of joints 1 and 2, which are interlinked together
+    roveComm_SendMsg(ArmFault, 1, (void*)ArmFault_m2);
   }
   if(digitalRead(HBRIDGE3_NFAULT_PIN) == LOW && mainPowerOn && m3On)
   {
@@ -300,12 +300,11 @@ void motorFaultHandling()
 //User must manually re-enable power
 void armOvercurrentHandling()
 {
-    if(readMasterCurrent() > CURRENT_LIMIT)
-    { 
-      masterPowerSet(false);
-      Serial.println("Disabling power, OC");
-      roveComm_SendMsg(ArmFault, 1, (void*)ArmFault_overcurrent);
-    }
+  if(readMasterCurrent() > CURRENT_LIMIT)
+  { 
+    masterPowerSet(false);
+    roveComm_SendMsg(ArmFault, 1, (void*)ArmFault_overcurrent);
+  }
 }
 
 //setup all crucial software processes such as rovecomm, serial, and the closed loop timer, and set up static GPIO pins.
@@ -325,16 +324,7 @@ void initialize()
   pinMode(POWER_LINE_CONTROL_PIN,OUTPUT);
 
   //all joints are initialized to open loop control format
-  joint1 = new RotateJoint(spd, &dev1, &dev2);
-  joint2 = new TiltJoint(spd, &dev1, &dev2);
-  joint3 = new SingleMotorJoint(spd, &dev3);
-  joint4 = new RotateJoint(spd, &dev4, &dev5);
-  joint5 = new TiltJoint(spd, &dev4, &dev5);
-
-  //joint1 -> coupleJoint(joint2);
-  //joint4 -> coupleJoint(joint5);
-
-  currentControlSystem = OpenLoop;
+  switchToOpenLoop();//doesn't cover gripper
   gripperMotor = new SingleMotorJoint(spd, &gripMotorDev);
   gripperServo = new SingleMotorJoint(spd, &gripServoDev);
 
@@ -353,7 +343,6 @@ void initialize()
 CommandResult masterPowerSet(bool enable)
 {
   Serial.print("Setting master power: ");
-  Serial.println(enable);
   mainPowerOn = enable;
   if(enable)
   {
@@ -368,8 +357,6 @@ CommandResult masterPowerSet(bool enable)
 //turns on or off all the motors
 void allMotorsPowerSet(bool enable)
 {
-  Serial.print("Setting all motor power: ");
-  Serial.println(enable);
   if(enable)
   {
     dev1.setPower(true);
@@ -479,10 +466,10 @@ CommandResult moveJ1(int16_t moveValue)
 {
   if(currentControlSystem == OpenLoop)
   {
-    /*if(moveValue > 0)
-      moveValue = 500;
+    if(moveValue > 0)
+      moveValue = BaseMaxSpeed;
     else if(moveValue < 0)
-      moveValue = -500;*/ //adjusting for base station 
+      moveValue = -BaseMaxSpeed; //adjusting for base station 
     joint1->runOutputControl(moveValue);
   }
 }
@@ -494,10 +481,10 @@ CommandResult moveJ2(int16_t moveValue)
 {
   if(currentControlSystem == OpenLoop)
   {
-    /*if(moveValue > 0)
-      moveValue = 500;
+    if(moveValue > 0)
+      moveValue = BaseMaxSpeed;
     else if(moveValue < 0)
-      moveValue = -500;*/ //adjusting for base station scaling
+      moveValue = -BaseMaxSpeed; //adjusting for base station scaling
       
     joint2->runOutputControl(moveValue);
   }
@@ -563,29 +550,44 @@ CommandResult moveGripServo(int16_t moveValue)
 //switches the arm over to open loop control method; this will disable closed loop functions and functionality
 //while enabling open loop functions and functionality
 CommandResult switchToOpenLoop()
-{
-  //disable closed loop interrupts before doing any operation to preserve thread safety
-  TimerDisable(TIMER0_BASE, TIMER_A); 
-  TimerIntClear(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
-  TimerIntDisable(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
-  delay(10);
-  
+{ 
+  if(initialized)
+  {
+    //disable closed loop interrupts before doing any operation to preserve thread safety
+    TimerDisable(TIMER0_BASE, TIMER_A); 
+    TimerIntClear(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
+    TimerIntDisable(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
+    delay(10);
+    
+    delete joint1;
+    delete joint2;
+    delete joint3;
+    delete joint4;
+    delete joint5;
+  }
+  else
+  {
+    initialized = true;
+  }
+
   //reconstruct joint interfaces with open loop format
-  delete joint1;
-  delete joint2;
-  delete joint3;
-  delete joint4;
-  delete joint5;
   joint1 = new RotateJoint(spd, &dev1, &dev2);
   joint2 = new TiltJoint(spd, &dev1, &dev2);
   joint3 = new SingleMotorJoint(spd, &dev3);
   joint4 = new RotateJoint(spd, &dev4, &dev5);
   joint5 = new TiltJoint(spd, &dev4, &dev5);
 
-  //joint1 -> coupleJoint(joint2);
-  //joint4 -> coupleJoint(joint5);
+  joint1 -> coupleJoint(joint2);
+  joint4 -> coupleJoint(joint5);
 
   currentControlSystem = OpenLoop;
+
+  dev3.setRampUp(100);
+  dev3.setRampDown(100);
+  dev1.setRampUp(40);
+  dev2.setRampUp(40);
+  dev1.setRampDown(40);
+  dev2.setRampDown(40);
 }
 
 //switches the arm over to closed loop control method; this will enable closed loop functions and functionality
@@ -595,11 +597,19 @@ CommandResult switchToClosedLoop()
   currentControlSystem = ClosedLoop;
     
   //reconstruct joints with closed loop algorithms
-  delete joint1;
-  delete joint2;
-  delete joint3;
-  delete joint4;
-  delete joint5;
+  if(initialized)
+  {
+    delete joint1;
+    delete joint2;
+    delete joint3;
+    delete joint4;
+    delete joint5;
+  }
+  else
+  {
+    initialized = true;
+  }
+  
   delete joint1Alg;
   delete joint2Alg;
   delete joint3Alg;

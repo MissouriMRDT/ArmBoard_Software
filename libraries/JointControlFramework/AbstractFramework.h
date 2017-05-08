@@ -59,8 +59,8 @@ class JointInterface
   public:
 
     //variables to store the speed of either motor
-    int motorOneSpeed = 0;
-    int motorTwoSpeed = 0;
+    int motorOneVirtualSpeed = 0;
+    int motorTwoVirtualSpeed = 0;
 
     //Runs the output control for this joint, IE making it move or checking
     //feedback to see if it needs to move, whatever the algorithm for

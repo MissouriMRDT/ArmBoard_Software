@@ -113,8 +113,11 @@ JointControlStatus RotateJoint::runOutputControl(const long movement)
       returnStatus = OutputRunning;
     }
 
-    motorOneSpeed = mov;
-    motorTwoSpeed = -mov;
+    motorOneVirtualSpeed = mov;
+    motorTwoVirtualSpeed = -mov;
+    
+    int motorOneTrueSpeed = motorOneVirtualSpeed;
+    int motorTwoTrueSpeed = motorTwoVirtualSpeed;
 
     //this only happens if this joint has been coupled with another joint
     //the coupled logic will modify the speed calculated by the algorithm
@@ -122,32 +125,32 @@ JointControlStatus RotateJoint::runOutputControl(const long movement)
     //It is automatically assumed that the other joint is a tilt joint
     if(coupled)
     {
-      motorOneSpeed += coupledJoint->motorOneSpeed;
-      if (motorOneSpeed > 1000)
+      motorOneTrueSpeed += coupledJoint->motorOneVirtualSpeed;
+      if (motorOneTrueSpeed > SPEED_MAX)
       {
-        motorOneSpeed = 1000;
+        motorOneTrueSpeed = SPEED_MAX;
       }
-      if (motorOneSpeed < -1000)
+      if (motorOneTrueSpeed < SPEED_MIN)
       {
-        motorOneSpeed = -1000;
+        motorOneTrueSpeed = SPEED_MIN;
       }
 
-      motorTwoSpeed += coupledJoint->motorTwoSpeed;
-      if (motorTwoSpeed > 1000)
+      motorTwoTrueSpeed += coupledJoint->motorTwoVirtualSpeed;
+      if (motorTwoTrueSpeed > SPEED_MAX)
       {
-        motorTwoSpeed = 1000;
+        motorTwoTrueSpeed = SPEED_MAX;
       }
-      if (motorTwoSpeed < -1000)
+      if (motorTwoTrueSpeed < SPEED_MIN)
       {
-        motorTwoSpeed = -1000;
+        motorTwoTrueSpeed = SPEED_MIN;
       }
     }
 
     //send to the motor move command
-    controller1->move(motorOneSpeed);
+    controller1->move(motorOneTrueSpeed);
 
     //send command to motor 2. Since this is a rotate joint, the motors need to go in opposite directions so send the second one a negafied value
-    controller2->move(motorTwoSpeed);
+    controller2->move(motorTwoTrueSpeed);
   }
 
   //if this joint wasn't properly constructed, nothing is run

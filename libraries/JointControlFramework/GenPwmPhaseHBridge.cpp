@@ -6,9 +6,8 @@ GenPwmPhaseHBridge::GenPwmPhaseHBridge(const int PwmPin, const int PhPin, bool u
 {
   PWM_PIN = PwmPin;
   PHASE_PIN = PhPin;
-  inType = spd;
   invert = upsideDown;
-
+  inType = spd;
   pinMode(PHASE_PIN, OUTPUT);
 }
 
@@ -17,10 +16,9 @@ GenPwmPhaseHBridge::GenPwmPhaseHBridge(const int PwmPin, const int PhPin, const 
   PWM_PIN = PwmPin;
   PHASE_PIN = PhPin;
   ENABLE_PIN = EnPin;
+  enableLogicHigh = enLogicHigh;
   inType = spd;
   invert = upsideDown;
-  enableLogicHigh = enLogicHigh;
-
   pinMode(PHASE_PIN, OUTPUT);
   pinMode(ENABLE_PIN, OUTPUT);
   
@@ -28,83 +26,127 @@ GenPwmPhaseHBridge::GenPwmPhaseHBridge(const int PwmPin, const int PhPin, const 
 }
 
 
-//move function which passes in speed ( which is converted to phase and PWM) to move device
 void GenPwmPhaseHBridge::move(const long movement)
 {
-  int mov = movement;
-  int pwm = 0;
-  
-  if(enabled) //only perform output if the device has been enabled
-  {
-    
-    //if mounted upside down then invert the signal passed to it and move accordingly
-    if (invert)
-    {
-      mov = -mov;
-    }
-    
-    //if supposed to move backwards
-    if(mov < 0)
-    {
-      mov = abs(mov);
-      pwm = map(mov, 0, SPEED_MAX, PWM_MIN, PWM_MAX);
+  if(!enabled) return;
 
-      //set phase to 1 for "reverse" rotation
-      digitalWrite(PHASE_PIN, HIGH);
-      
-      //pulsate enable pin to control motor
-      PwmWrite(PWM_PIN, pwm);
-    }
-    
-    //if forwards
-    else if(mov > 0)
-    {
-      pwm = map(mov, 0, SPEED_MAX, PWM_MIN, PWM_MAX);
-        
-      //set phase to 0 for "forward" rotation
-      digitalWrite(PHASE_PIN, LOW);
-      
-      //pulsate enable pin to control motor
-      PwmWrite(PWM_PIN, pwm);
-    }
-    
-    //stop
-    else if(mov == 0)
-    {
-      PwmWrite(PWM_PIN, 0);//set enable to 0 to brake motor
-      //phase don't matter
-    }
+  int mov = invert ? -movement : movement;
+  
+  if(rampUsed)
+  {
+    mov = scaleRamp(mov);
   }
   
-  return;
+  currentSpeed = mov;
+  
+  //if supposed to move backwards
+  if(mov < 0)
+  {
+    int pwm = map(-mov, 0, SPEED_MAX, PWM_MIN, PWM_MAX);
+
+    //set phase to 1 for "reverse" rotation
+    digitalWrite(PHASE_PIN, HIGH);
+    
+    //pulsate enable pin to control motor
+    PwmWrite(PWM_PIN, pwm);
+  }
+  
+  //if forwards
+  else if(mov > 0)
+  {
+    int pwm = map(mov, 0, SPEED_MAX, PWM_MIN, PWM_MAX);
+      
+    //set phase to 0 for "forward" rotation
+    digitalWrite(PHASE_PIN, LOW);
+    
+    //pulsate enable pin to control motor
+    PwmWrite(PWM_PIN, pwm);
+  }
+  
+  //stop
+  else if(mov == 0)
+  {
+    PwmWrite(PWM_PIN, 0);//set enable to 0 to brake motor
+    //phase don't matter
+  }
 }
 
-//tells the device to power on or off. Note that on setup, device assumes power is off
-//If the device class was constructed with an enable pin, the function will physically turn the device on or off
-//If it wasn't, it will virtually turn the device on or off, IE if it's off it will refuse to send an output
 void GenPwmPhaseHBridge::setPower(bool powerOn)
 {
   //when enable pin does not have its default value, assume device was constructed with an enable pin
   if(ENABLE_PIN != -1)
   {
-    int pinNewState;
-    
-    if((powerOn && enableLogicHigh) || (!powerOn && !enableLogicHigh))
-    {
-      pinNewState = HIGH;
-    }
-    else
-    {
-      pinNewState = LOW;
-    }
+    int pinNewState = ((powerOn && enableLogicHigh) || (!powerOn && !enableLogicHigh)) ? HIGH : LOW;
     
     digitalWrite(ENABLE_PIN, pinNewState);
   }
   
-  if(powerOn == false)
+  if(!powerOn)
   {
-    move(0);
+    PwmWrite(PWM_PIN, 0);//set enable to 0 to brake motor
   }
   
   enabled = powerOn;
+}
+
+void GenPwmPhaseHBridge::setRampUp(unsigned int magnitudeChangeLimit)
+{
+  magChangeLimUp = magnitudeChangeLimit;
+  rampUsed = true;
+}
+
+void GenPwmPhaseHBridge::setRampDown(unsigned int magnitudeChangeLimit)
+{
+  magChangeLimDown = magnitudeChangeLimit;
+  rampUsed = true;
+}
+
+int GenPwmPhaseHBridge::scaleRamp(int desiredSpeed)
+{
+  bool accelerate;
+  int magnitudeChangeLimit;
+  
+  //scale the output so that it's not allowed to change once per call more than the amount specified by magChangeLimUp or Down, for accel and decel
+  if(sign(desiredSpeed) == sign(currentSpeed) || currentSpeed == 0) 
+  {
+    if(abs(desiredSpeed) - abs(currentSpeed ) >= 0)
+    {
+      accelerate = true;
+    }
+    else
+    {
+      accelerate = false;
+    }
+  }
+  
+  //if the destination speed and current speed are in different directions, we're decelerating until we get back to 0 speed
+  else
+  {
+    accelerate = false;
+  }
+  
+  if(accelerate)
+  {
+    magnitudeChangeLimit = magChangeLimUp;
+  }
+  else
+  {
+    magnitudeChangeLimit = magChangeLimDown;
+  }
+  
+  //if the desired change is greater than the maximum allowed step, scale it down
+  if(abs(desiredSpeed - currentSpeed) > magnitudeChangeLimit)
+  {
+    desiredSpeed = currentSpeed + sign(desiredSpeed - currentSpeed) * magnitudeChangeLimit;
+    if(desiredSpeed > SPEED_MAX)
+    {
+      desiredSpeed = SPEED_MAX;
+    }
+    else if(desiredSpeed < SPEED_MIN)
+    {
+      desiredSpeed = SPEED_MIN;
+    }
+  }
+    
+  return(desiredSpeed);
 }
