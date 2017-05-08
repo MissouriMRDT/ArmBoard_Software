@@ -35,6 +35,8 @@ void VNH5019::move(const long movement)
       mov = -mov;
     }
     
+    currentSpeed = mov;
+    
     //if supposed to move backwards
     if(mov < 0)
     {
@@ -82,4 +84,9 @@ void VNH5019::setPower(bool powerOn)
   }
   
   enabled = powerOn;
+}
+
+long VNH5019::getCurrentMove()
+{
+  return(currentSpeed);
 }

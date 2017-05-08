@@ -13,7 +13,9 @@ class Sdc2130: public OutputDevice
   private:
     int PWM_PIN, TX_PIN, RX_PIN;
     int pwmVal;
-
+    int currentSpeed = 0;
+    long currentPosition;
+    
     const int PWM_MIN = 0, PWM_MAX = 255;
     const int POS_INC = 2;
 
@@ -44,6 +46,10 @@ class Sdc2130: public OutputDevice
     
     //tells the device to power on or off. Note that on setup, devices should assume power is off
     void setPower(bool powerOn);
+    
+    //returns how quickly the device is moving if it's set up to use speed control, 
+    //or what it's destination position is if it's set up to use positional control
+    long getCurrentMove();
 };
 
 #endif

@@ -30,7 +30,9 @@ void DirectDiscreteHBridge::move(const long movement)
       //inverts the input easily
       mov = -mov;
     }
-
+    
+    currentSpeed = mov;
+    
     //if supposed to move backwards
     if(mov < 0)
     {
@@ -71,4 +73,10 @@ void DirectDiscreteHBridge::setPower(bool powerOn)
     move(0);
   }
   enabled = powerOn;
+}
+
+
+long DirectDiscreteHBridge::getCurrentMove()
+{
+  return(currentSpeed);
 }

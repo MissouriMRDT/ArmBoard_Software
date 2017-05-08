@@ -84,6 +84,7 @@ void GenPwmPhaseHBridge::setPower(bool powerOn)
   if(!powerOn)
   {
     PwmWrite(PWM_PIN, 0);//set enable to 0 to brake motor
+    currentSpeed = 0;
   }
   
   enabled = powerOn;
@@ -149,4 +150,9 @@ int GenPwmPhaseHBridge::scaleRamp(int desiredSpeed)
   }
     
   return(desiredSpeed);
+}
+
+long GenPwmPhaseHBridge::getCurrentMove()
+{
+  return(currentSpeed);
 }

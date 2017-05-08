@@ -51,6 +51,8 @@ void DynamixelController::move(const long movement)
       //inverts the input easily
       mov = -mov;
     }
+    
+    currentSpeed = mov;
 
     //if supposed to move backwards(ccw)
     if(mov < 0)
@@ -92,4 +94,9 @@ void DynamixelController::setPower(bool powerOn)
   }
   
   enabled = powerOn;
+}
+
+long DynamixelController::getCurrentMove()
+{
+  return(currentSpeed);
 }

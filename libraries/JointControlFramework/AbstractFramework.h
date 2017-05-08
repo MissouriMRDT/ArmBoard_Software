@@ -108,6 +108,10 @@ class OutputDevice
   
     //tells the device to power on or off. Note that on setup, devices should assume power is off
     virtual void setPower(bool powerOn) = 0;
+    
+    //gets the current moving value of the device. 
+    //return value depends on what value type the device operates on; a speed value for speed devices, etc.
+    virtual long getCurrentMove();
 
 	protected:
 

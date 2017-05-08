@@ -47,6 +47,8 @@ void Sdc2130::moveSpeed(const int movement)
       speed = -speed;
     }
 
+    currentSpeed = speed;
+    
     if(controlType == Pwm)
     {
       if(speed > 0)
@@ -88,4 +90,16 @@ void Sdc2130::setPower(bool powerOn)
   }
   
   enabled = powerOn;
+}
+
+long Sdc2130::getCurrentMove()
+{
+  if(inType == spd)
+  {
+    return(currentSpeed);
+  }
+  else if(inType == pos)
+  {
+    return(currentPosition);
+  }
 }

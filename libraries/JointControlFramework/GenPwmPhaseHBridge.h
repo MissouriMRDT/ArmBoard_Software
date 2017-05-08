@@ -56,6 +56,9 @@ class GenPwmPhaseHBridge: public OutputDevice
     //set to change by this amount
     //Note that a call to setPower(false) will cause it to stop instantly
     void setRampDown(unsigned int magnitudeChangeLimit);
+    
+    //gets the current speed value of the h bridge. 
+    long getCurrentMove();
 };
 
 #endif

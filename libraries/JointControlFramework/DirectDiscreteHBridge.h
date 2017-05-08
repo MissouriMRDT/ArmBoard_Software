@@ -14,6 +14,8 @@ class DirectDiscreteHBridge : public OutputDevice
 
     //Value ranges for conversting input to expected output when sending
     const int PWM_MIN = 0, PWM_MAX = 255;
+    
+    int currentSpeed = 0;
 
   protected:
     //function which directly moves the device.
@@ -26,6 +28,9 @@ class DirectDiscreteHBridge : public OutputDevice
     
     //turns device on or off. Note on startup device is considered off, user must call this function and enable device before joints will move
     void setPower(bool powerOn);
+    
+    //returns how fast the device is currently attempting to move
+    long getCurrentMove();
 
 };
 
