@@ -356,6 +356,7 @@ void initialize()
 //Turns on or off the main power line
 CommandResult masterPowerSet(bool enable)
 {
+  mainPowerOn = enable;
   if(enable)
   {
     digitalWrite(POWER_LINE_CONTROL_PIN, HIGH);
