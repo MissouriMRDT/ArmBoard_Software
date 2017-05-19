@@ -17,7 +17,7 @@
 
 PIAlgorithm joint1Alg(5,4,PI_TIMESLICE_SECONDS);
 PIAlgorithm joint2Alg(5,4,PI_TIMESLICE_SECONDS);
-PIAlgorithm joint3Alg(21,4,PI_TIMESLICE_SECONDS);
+PIAlgorithm joint3Alg(ElbowKp,ElbowKi,PI_TIMESLICE_SECONDS);
 PIAlgorithm joint4Alg(21,4,PI_TIMESLICE_SECONDS);
 PIAlgorithm joint5Alg(21,4,PI_TIMESLICE_SECONDS);
 
@@ -29,7 +29,7 @@ Ma3Encoder12b joint5Encoder(ENCODER5_READING_PIN);
 
 GenPwmPhaseHBridge dev1(MOT1_PWN_PIN, HBRIDGE1_PHASE_PIN, HBRIDGE1_NSLEEP_PIN, true, false);
 GenPwmPhaseHBridge dev2(MOT2_PWN_PIN, HBRIDGE2_PHASE_PIN, HBRIDGE2_NSLEEP_PIN, true, true);
-GenPwmPhaseHBridge dev3(MOT3_PWN_PIN, HBRIDGE3_PHASE_PIN, HBRIDGE3_NSLEEP_PIN, true, true);
+GenPwmPhaseHBridge dev3(MOT3_PWN_PIN, HBRIDGE3_PHASE_PIN, HBRIDGE3_NSLEEP_PIN, true, false);
 GenPwmPhaseHBridge dev4(MOT4_PWN_PIN, HBRIDGE4_PHASE_PIN, HBRIDGE4_NSLEEP_PIN, true, true);
 GenPwmPhaseHBridge dev5(MOT5_PWN_PIN, HBRIDGE5_PHASE_PIN, HBRIDGE5_NSLEEP_PIN, true, true);
 GenPwmPhaseHBridge gripMotorDev(GRIPMOT_PWM_PIN, GRIPMOT_PHASE_PIN, GRIPMOT_NENABLE_PIN, false, true);
@@ -80,10 +80,9 @@ after initialization, function has three responsibilities it juggles.
 void loop() {
 
   initialize();
-  delay(1000);
+  delay(100);
 
   //switchToClosedLoop(); //for debugging. RED currnetly lacks command to switch between schemes, has to be done manually
-  
   while(1) //main loop begin
   {
     processBaseStationCommands();
@@ -170,7 +169,7 @@ void processBaseStationCommands()
         break;
 
       case MoveGripServo: //gripper only ever operates in open loop but the rest of the system can be using other controls at the same time
-        result = moveGripper(*(int16_t*)(commandData));
+        result = moveGripServo(*(int16_t*)(commandData));
         break;
 
       case ArmEnableAll: 
@@ -261,6 +260,7 @@ void processBaseStationCommands()
 
     if(watchdogTimer_us >= WATCHDOG_TIMEOUT_US) //if more than our timeout period has passed, then kill arm movement
     {
+      Serial.println("Timeout");
       stopArm();
       watchdogTimer_us = 0;
     }
@@ -350,12 +350,19 @@ void initialize()
   //when it cycles back around the overall timeslice will have passed
   setupTimer0((PI_TIMESLICE_SECONDS/5.0) * 1000000.0); //function expects microseconds
 
+  joint3Alg.setDeadband(ElbowDeadband);
+  joint3Alg.setHardStopPositions(ElbowHardStopUp, ElbowHardStopDown);
+  
+  joint3Encoder.setOffsetAngle(ElbowOffsetAngle);
+  
   initialized = true;
 }
 
 //Turns on or off the main power line
 CommandResult masterPowerSet(bool enable)
 {
+  Serial.print("Enable master power: ");
+  Serial.println(enable);
   mainPowerOn = enable;
   if(enable)
   {
@@ -541,15 +548,12 @@ CommandResult moveJ5(int16_t moveValue)
 //note that the moveValue is numerically described using the joint control framework standard
 CommandResult moveGripper(int16_t moveValue)
 {
-  int moveV;
   if(moveValue > 0)
-    moveV = 1000;
+    moveValue = 1000;
   else if(moveValue < 0)
-    moveV = -1000;
-  else
-    moveV = 0;
+    moveValue = -1000;
     
-  gripperMotor.runOutputControl(moveV);
+  gripperMotor.runOutputControl(moveValue);
 }
 
 //spins the gripper servo
@@ -570,9 +574,16 @@ CommandResult switchToOpenLoop()
     TimerDisable(TIMER0_BASE, TIMER_A); 
     TimerIntClear(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
     TimerIntDisable(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
-    delay(10);
-  }
 
+    //have arm soft reset when switching between control schemes if power's on and we're potentially moving
+    if(mainPowerOn)
+    {
+      masterPowerSet(false);
+      delay(1000);
+      masterPowerSet(true);
+    }
+  }
+  
   currentControlSystem = OpenLoop;
 
   dev3.setRampUp(ElbowRampUp);
@@ -581,14 +592,6 @@ CommandResult switchToOpenLoop()
   dev2.setRampUp(BaseRampUp);
   dev1.setRampDown(BaseRampDown);
   dev2.setRampDown(BaseRampDown);
-
-  if(!initialized)
-  {
-    //have arm soft reset when switching between control schemes
-    masterPowerSet(false);
-    delay(5000);
-    masterPowerSet(true);
-  }
 }
 
 //switches the arm over to closed loop control method; this will enable closed loop functions and functionality
@@ -604,17 +607,17 @@ CommandResult switchToClosedLoop()
   joint4Destination = joint4Encoder.getFeedback();
   joint5Destination = joint5Encoder.getFeedback();
 
-  if(!initialized)
+  if(initialized)
   {
-    //have arm soft reset when switching between control schemes
-    masterPowerSet(false);
-    delay(5000);
-    masterPowerSet(true);
-  }
+    //have arm soft reset when switching between control schemes if power's on and we're potentially moving
+    if(mainPowerOn)
+    {
+      masterPowerSet(false);
+      delay(1000);
+      masterPowerSet(true);
+    }
   
-  //enable closed loop interrupts, which will begin to move the arm towards its set destinations
-  else
-  {
+    //enable closed loop interrupts, which will begin to move the arm towards its set destinations
     TimerIntClear(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
     TimerIntEnable(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
     TimerEnable(TIMER0_BASE, TIMER_A);

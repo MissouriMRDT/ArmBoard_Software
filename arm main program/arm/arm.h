@@ -85,15 +85,22 @@ typedef enum ControlSystems
   ClosedLoop
 } ControlSystems;
 
-const uint32_t WATCHDOG_TIMEOUT_US = 2000000; //the amount of microseconds that should pass without getting a transmission from base station before the arm ceases moving for safety
+const uint32_t WATCHDOG_TIMEOUT_US = 500000; //the amount of microseconds that should pass without getting a transmission from base station before the arm ceases moving for safety
 const uint8_t IP_ADDRESS [4] = {192, 168, 1, 131};
 const uint8_t ArmJointCount = 5;
 const uint8_t IKArgCount = 5;
 const int BaseMaxSpeed = 1000;
-const int BaseRampUp = 30;
+const int BaseRampUp = 20;
 const int BaseRampDown = 60;
-const int ElbowRampUp = 75;
-const int ElbowRampDown = 100;
+const int ElbowRampUp = 100;
+const int ElbowRampDown = 100; 
+
+const int ElbowKp = 125;
+const int ElbowKi = 100;
+const int ElbowDeadband = 2;
+const int ElbowOffsetAngle = -155;
+const int ElbowHardStopUp = 185;
+const int ElbowHardStopDown = 355;
 
 
 //hardware pin assignments
@@ -103,7 +110,7 @@ const uint32_t MOT3_PWN_PIN = PK_5;
 const uint32_t MOT4_PWN_PIN = PK_4;
 const uint32_t MOT5_PWN_PIN = PG_0;
 const uint32_t GRIPMOT_PWM_PIN = PF_2;
-const uint32_t GRIPPER_SERVO_PWM_PIN = PF_2;
+const uint32_t GRIPPER_SERVO_PWM_PIN = PF_1;
 
 const uint32_t HBRIDGE1_NFAULT_PIN = PM_7;
 const uint32_t HBRIDGE1_NSLEEP_PIN = PA_7;
