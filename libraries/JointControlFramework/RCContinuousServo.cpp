@@ -38,5 +38,12 @@ void RCContinuousServo::setPower(bool powerOn) {
 
 long RCContinuousServo::getCurrentMove()
 {
-  return(currentSpeed);
+  if(invert) //if we're inverted, then we technically move negatively even if we're moving in the 'positive' direction. The direction is the important part
+  {
+    return(currentSpeed * -1); 
+  }
+  else
+  {
+    return(currentSpeed);
+  }
 }
