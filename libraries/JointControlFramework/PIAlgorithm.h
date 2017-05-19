@@ -13,9 +13,10 @@ class PIAlgorithm : public IOAlgorithm
 {
 
   private:
-    const float DEG_DEADBAND = 1; //when the joint is within this many degrees of its destination, it stops
     const int DEFAULT_MINMAG = (SPEED_MAX * .1); //The default min magnitude of speed the motor is allowed to move at. 10% of motor power
     const float IMPOSSIBLE_MOVEMENT = 370; //return value for functions that calculate travel routes that means the destination can't be reached
+    
+    float deg_deadBand = 1;//when the joint is within this many degrees of its destination, it stops
     
     //Ki and Kp are PI loop values needed to calculate the output. SpeedMinMag represents the smallest speed (absolute value) that the
     //motor is allowed to move at when it's not simply stopping. This is because on most joints, the motor probably won't even move
@@ -64,6 +65,9 @@ class PIAlgorithm : public IOAlgorithm
     //function for specifying positions of hard stops attached to this joint, that is positions in degrees that the joint can't travel through
     //To disable hard stops, set one or both to -1.
     void setHardStopPositions(float hardStopPos1_deg, float hardStopPos2_deg);
+    
+    //sets the deadband for the PI algorithm, in degrees. When it gets within this many degrees of its destination it stops.
+    void setDeadband(float degrees);
 };
 
 #endif

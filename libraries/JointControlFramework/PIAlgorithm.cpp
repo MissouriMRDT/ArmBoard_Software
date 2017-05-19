@@ -219,7 +219,7 @@ long PIAlgorithm::runAlgorithm(const long input, bool * ret_OutputFinished)
 
   // Check if the current value of the rotation is within the margin-of-error acceptable for the location.
   // If so, set the value to be OutputFinished to be true, so that the function should not run again.
-  if (-DEG_DEADBAND < deg_disToDest && deg_disToDest < DEG_DEADBAND)
+  if (-deg_deadBand < deg_disToDest && deg_disToDest < deg_deadBand)
   {
     *ret_OutputFinished = true;
     return 0;
@@ -256,4 +256,9 @@ long PIAlgorithm::runAlgorithm(const long input, bool * ret_OutputFinished)
 	
   // return the value of the speed we calculated
   return spd_out;
+}
+
+void PIAlgorithm::setDeadband(float degrees)
+{
+  deg_deadBand = degrees;
 }
