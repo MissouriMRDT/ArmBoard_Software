@@ -15,11 +15,11 @@
 
 //Joint and hardware wrappers
 
-PIAlgorithm joint1Alg(5,4,PI_TIMESLICE_SECONDS);
-PIAlgorithm joint2Alg(5,4,PI_TIMESLICE_SECONDS);
+PIAlgorithm joint1Alg(BaseRotateKp,BaseRotateKi,PI_TIMESLICE_SECONDS);
+PIAlgorithm joint2Alg(BaseTiltKp,BaseTiltKi,PI_TIMESLICE_SECONDS);
 PIAlgorithm joint3Alg(ElbowKp,ElbowKi,PI_TIMESLICE_SECONDS);
 PIAlgorithm joint4Alg(21,4,PI_TIMESLICE_SECONDS);
-PIAlgorithm joint5Alg(21,4,PI_TIMESLICE_SECONDS);
+PIAlgorithm joint5Alg(WristTiltKp,WristTiltKi,PI_TIMESLICE_SECONDS, WristTiltMinMag);
 
 Ma3Encoder12b joint1Encoder(ENCODER1_READING_PIN);
 Ma3Encoder12b joint2Encoder(ENCODER2_READING_PIN);
@@ -31,7 +31,7 @@ GenPwmPhaseHBridge dev1(MOT1_PWN_PIN, HBRIDGE1_PHASE_PIN, HBRIDGE1_NSLEEP_PIN, t
 GenPwmPhaseHBridge dev2(MOT2_PWN_PIN, HBRIDGE2_PHASE_PIN, HBRIDGE2_NSLEEP_PIN, true, true);
 GenPwmPhaseHBridge dev3(MOT3_PWN_PIN, HBRIDGE3_PHASE_PIN, HBRIDGE3_NSLEEP_PIN, true, false);
 GenPwmPhaseHBridge dev4(MOT4_PWN_PIN, HBRIDGE4_PHASE_PIN, HBRIDGE4_NSLEEP_PIN, true, true);
-GenPwmPhaseHBridge dev5(MOT5_PWN_PIN, HBRIDGE5_PHASE_PIN, HBRIDGE5_NSLEEP_PIN, true, true);
+GenPwmPhaseHBridge dev5(MOT5_PWN_PIN, HBRIDGE5_PHASE_PIN, HBRIDGE5_NSLEEP_PIN, true, false);
 GenPwmPhaseHBridge gripMotorDev(GRIPMOT_PWM_PIN, GRIPMOT_PHASE_PIN, GRIPMOT_NENABLE_PIN, false, true);
 RCContinuousServo gripServoDev(GRIPPER_SERVO_PWM_PIN, false);
 
@@ -81,8 +81,7 @@ void loop() {
 
   initialize();
   delay(100);
-
-  //switchToClosedLoop(); //for debugging. RED currnetly lacks command to switch between schemes, has to be done manually
+  
   while(1) //main loop begin
   {
     processBaseStationCommands();
@@ -147,10 +146,10 @@ void processBaseStationCommands()
 
       case ArmJ4: 
       case LY_ArmJ4: 
-        if(currentControlSystem != OpenLoop)
+        /*if(currentControlSystem != OpenLoop)
         {
-          switchToOpenLoop();
-        }
+          switchToOpenLoop(); always considered open loop
+        }*/
         result = moveJ4(*(int16_t*)(commandData));
         break;
 
@@ -328,7 +327,11 @@ void initialize()
   pinMode(HBRIDGE4_NFAULT_PIN,INPUT);
   pinMode(HBRIDGE5_NFAULT_PIN,INPUT);
   pinMode(GRIPMOT_NFAULT_PIN,INPUT);
-
+  
+  pinMode(ELBOW_LIMIT_PIN,INPUT);
+  pinMode(WRIST_LIMIT_PIN,INPUT);
+  pinMode(BASE_LIMIT_PIN,INPUT);
+  
   pinMode(POWER_LINE_CONTROL_PIN,OUTPUT);
 
   joint1Open.coupleJoint(&joint2Open);
@@ -350,10 +353,30 @@ void initialize()
   //when it cycles back around the overall timeslice will have passed
   setupTimer0((PI_TIMESLICE_SECONDS/5.0) * 1000000.0); //function expects microseconds
 
+  joint1Alg.setDeadband(BaseRotateDeadband);
+  joint1Alg.setHardStopPositions(BaseRotateHardStopUp, BaseRotateHardStopDown);
+  joint2Alg.setDeadband(BaseTiltDeadband);
+  joint2Alg.setHardStopPositions(BaseTiltHardStopUp, BaseTiltHardStopDown);
   joint3Alg.setDeadband(ElbowDeadband);
   joint3Alg.setHardStopPositions(ElbowHardStopUp, ElbowHardStopDown);
-  
+  joint5Alg.setDeadband(WristTiltDeadband);
+  joint5Alg.setHardStopPositions(WristTiltHardStopUp, WristTiltHardStopDown);
+
+  joint1Encoder.setOffsetAngle(BaseRotateOffsetAngle);
+  joint2Encoder.setOffsetAngle(BaseTiltOffsetAngle);
   joint3Encoder.setOffsetAngle(ElbowOffsetAngle);
+  joint5Encoder.setOffsetAngle(WristTiltOffsetAngle);
+
+  dev3.setRampUp(ElbowRampUp);
+  dev3.setRampDown(ElbowRampDown);
+  dev1.setRampUp(BaseRampUp);
+  dev2.setRampUp(BaseRampUp);
+  dev1.setRampDown(BaseRampDown);
+  dev2.setRampDown(BaseRampDown);
+  dev4.setRampUp(WristRampUp);
+  dev4.setRampDown(WristRampDown);
+  dev5.setRampUp(WristRampUp);
+  dev5.setRampDown(WristRampDown);
   
   initialized = true;
 }
@@ -484,14 +507,12 @@ CommandResult setArmDestinationAngles(float* angles)
 //note that the moveValue is numerically described using the joint control framework standard
 CommandResult moveJ1(int16_t moveValue)
 {
-  if(currentControlSystem == OpenLoop)
-  {
-    if(moveValue > 0)
-      moveValue = BaseMaxSpeed;
-    else if(moveValue < 0)
-      moveValue = -BaseMaxSpeed; //adjusting for base station 
-    joint1Open.runOutputControl(moveValue);
-  }
+  if(moveValue > 0)
+    moveValue = BaseMaxSpeed;
+  else if(moveValue < 0)
+    moveValue = -BaseMaxSpeed; //adjusting for base station 
+
+  joint1Open.runOutputControl(moveValue);
 }
 
 //moves the second joint
@@ -499,15 +520,43 @@ CommandResult moveJ1(int16_t moveValue)
 //note that the moveValue is numerically described using the joint control framework standard
 CommandResult moveJ2(int16_t moveValue)
 {
-  if(currentControlSystem == OpenLoop)
+  static bool limitSwitchHit = false;
+  static int moveAllowedDir = 0;
+
+  if(moveValue > 0)
+    moveValue = BaseMaxSpeed;
+  else if(moveValue < 0)
+    moveValue = -BaseMaxSpeed; //adjusting for base station scaling
+
+  if(checkLimSwitch(BASE_LIMIT_PIN) && !limitSwitchHit)
   {
-    if(moveValue > 0)
-      moveValue = BaseMaxSpeed;
-    else if(moveValue < 0)
-      moveValue = -BaseMaxSpeed; //adjusting for base station scaling
-      
-    joint2Open.runOutputControl(moveValue);
+    float currentPos = joint2Encoder.getFeedbackDegrees();
+    limitSwitchHit = true;
+    if(350 < currentPos || currentPos < 70) //if we're at the lower end position, restrict movement to the positive direction
+    {
+      moveAllowedDir = 1;
+    }
+    else
+    {
+      moveAllowedDir = -1; 
+    }
+
+   moveValue = 0;
   }
+  else if(checkLimSwitch(BASE_LIMIT_PIN) && limitSwitchHit)
+  {
+    //if limit switch has already been hit, we need to move away from it. Restrict movement direction to away from the limit switch
+    if(!(moveValue > 0 && moveAllowedDir >= 0) && !(moveValue < 0 && moveAllowedDir <= 0)) 
+    {
+      moveValue = 0;
+    }
+  }
+  else if(!checkLimSwitch(BASE_LIMIT_PIN))
+  {
+    limitSwitchHit = false;
+  }
+  
+  joint2Open.runOutputControl(moveValue);
 }
 
 //moves the third joint
@@ -515,10 +564,38 @@ CommandResult moveJ2(int16_t moveValue)
 //note that the moveValue is numerically described using the joint control framework standard
 CommandResult moveJ3(int16_t moveValue)
 {
-  if(currentControlSystem == OpenLoop)
+  static bool limitSwitchHit = false;
+  static int moveAllowedDir = 0;
+
+  if(checkLimSwitch(ELBOW_LIMIT_PIN) && !limitSwitchHit)
   {
-    joint3Open.runOutputControl(moveValue);
+    float currentPos = joint3Encoder.getFeedbackDegrees();
+    limitSwitchHit = true;
+    if(350 < currentPos || currentPos < 70) //if we're at the lower end position, restrict movement to the positive direction
+    {
+      moveAllowedDir = 1;
+    }
+    else
+    {
+      moveAllowedDir = -1; 
+    }
+
+   moveValue = 0;
   }
+  else if(checkLimSwitch(ELBOW_LIMIT_PIN) && limitSwitchHit)
+  {
+    //if limit switch has already been hit, we need to move away from it. Restrict movement direction to away from the limit switch
+    if(!(moveValue > 0 && moveAllowedDir >= 0) && !(moveValue < 0 && moveAllowedDir <= 0)) 
+    {
+      moveValue = 0;
+    }
+  }
+  else if(!checkLimSwitch(ELBOW_LIMIT_PIN))
+  {
+    limitSwitchHit = false;
+  }
+
+  joint3Open.runOutputControl(moveValue);
 }
 
 //moves the fourth joint
@@ -526,10 +603,7 @@ CommandResult moveJ3(int16_t moveValue)
 //note that the moveValue is numerically described using the joint control framework standard
 CommandResult moveJ4(int16_t moveValue)
 {
-  if(currentControlSystem == OpenLoop)
-  {
-    joint4Open.runOutputControl(moveValue);
-  }
+  joint4Open.runOutputControl(moveValue);
 }
 
 //moves the fifth joint
@@ -537,10 +611,38 @@ CommandResult moveJ4(int16_t moveValue)
 //note that the moveValue is numerically described using the joint control framework standard
 CommandResult moveJ5(int16_t moveValue)
 {
-  if(currentControlSystem == OpenLoop)
-  {   
-    joint5Open.runOutputControl(moveValue);
+  static bool limitSwitchHit = false;
+  static int moveAllowedDir = 0;
+
+  if(checkLimSwitch(WRIST_LIMIT_PIN) && !limitSwitchHit)
+  {
+    float currentPos = joint5Encoder.getFeedbackDegrees();
+    limitSwitchHit = true;
+    if(350 < currentPos || currentPos < 70) //if we're at the lower end position, restrict movement to the positive direction
+    {
+      moveAllowedDir = 1;
+    }
+    else
+    {
+      moveAllowedDir = -1; 
+    }
+
+   moveValue = 0;
   }
+  else if(checkLimSwitch(WRIST_LIMIT_PIN) && limitSwitchHit)
+  {
+    //if limit switch has already been hit, we need to move away from it. Restrict movement direction to away from the limit switch
+    if(!(moveValue > 0 && moveAllowedDir >= 0) && !(moveValue < 0 && moveAllowedDir <= 0)) 
+    {
+      moveValue = 0;
+    }
+  }
+  else if(!checkLimSwitch(WRIST_LIMIT_PIN))
+  {
+    limitSwitchHit = false;
+  }
+  
+  joint5Open.runOutputControl(moveValue); 
 }
 
 //moves the gripper open/closed
@@ -552,7 +654,7 @@ CommandResult moveGripper(int16_t moveValue)
     moveValue = 1000;
   else if(moveValue < 0)
     moveValue = -1000;
-    
+
   gripperMotor.runOutputControl(moveValue);
 }
 
@@ -562,6 +664,11 @@ CommandResult moveGripper(int16_t moveValue)
 CommandResult moveGripServo(int16_t moveValue)
 {
   gripperServo.runOutputControl(moveValue);
+}
+
+bool checkLimSwitch(uint32_t switchPin)
+{
+  return(digitalRead(switchPin) == LOW); //switch pins active low
 }
 
 //switches the arm over to open loop control method; this will disable closed loop functions and functionality
@@ -574,24 +681,9 @@ CommandResult switchToOpenLoop()
     TimerDisable(TIMER0_BASE, TIMER_A); 
     TimerIntClear(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
     TimerIntDisable(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
-
-    //have arm soft reset when switching between control schemes if power's on and we're potentially moving
-    if(mainPowerOn)
-    {
-      masterPowerSet(false);
-      delay(1000);
-      masterPowerSet(true);
-    }
   }
   
   currentControlSystem = OpenLoop;
-
-  dev3.setRampUp(ElbowRampUp);
-  dev3.setRampDown(ElbowRampDown);
-  dev1.setRampUp(BaseRampUp);
-  dev2.setRampUp(BaseRampUp);
-  dev1.setRampDown(BaseRampDown);
-  dev2.setRampDown(BaseRampDown);
 }
 
 //switches the arm over to closed loop control method; this will enable closed loop functions and functionality
@@ -609,14 +701,6 @@ CommandResult switchToClosedLoop()
 
   if(initialized)
   {
-    //have arm soft reset when switching between control schemes if power's on and we're potentially moving
-    if(mainPowerOn)
-    {
-      masterPowerSet(false);
-      delay(1000);
-      masterPowerSet(true);
-    }
-  
     //enable closed loop interrupts, which will begin to move the arm towards its set destinations
     TimerIntClear(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
     TimerIntEnable(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
@@ -776,7 +860,7 @@ void closedLoopUpdateHandler()
   }
   else if(jointUpdated == 4)
   {
-    joint4Closed.runOutputControl(joint4Destination);
+    //joint4Closed.runOutputControl(joint4Destination); only 4 joints used
   }
   else if(jointUpdated == 5)
   {

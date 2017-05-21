@@ -93,7 +93,9 @@ const int BaseMaxSpeed = 1000;
 const int BaseRampUp = 20;
 const int BaseRampDown = 60;
 const int ElbowRampUp = 100;
-const int ElbowRampDown = 100; 
+const int ElbowRampDown = 75; 
+const int WristRampUp = 50;
+const int WristRampDown = 50;
 
 const int ElbowKp = 125;
 const int ElbowKi = 100;
@@ -101,6 +103,28 @@ const int ElbowDeadband = 2;
 const int ElbowOffsetAngle = -155;
 const int ElbowHardStopUp = 185;
 const int ElbowHardStopDown = 355;
+
+const int BaseTiltKp = 150;
+const int BaseTiltKi = 150;
+const int BaseTiltDeadband = 2;
+const int BaseTiltOffsetAngle = -103;
+const int BaseTiltHardStopUp = 120;
+const int BaseTiltHardStopDown = 355;
+
+const int BaseRotateKp = 100;
+const int BaseRotateKi = 100;
+const int BaseRotateDeadband = 2;
+const int BaseRotateOffsetAngle = -172;
+const int BaseRotateHardStopUp = 150;
+const int BaseRotateHardStopDown = 210;
+
+const int WristTiltKp = 40;
+const int WristTiltKi = 10;
+const int WristTiltDeadband = 2;
+const int WristTiltOffsetAngle = -50;
+const int WristTiltHardStopUp = 300;
+const int WristTiltHardStopDown = 350;
+const int WristTiltMinMag = 200;
 
 
 //hardware pin assignments
@@ -145,6 +169,10 @@ const uint32_t ENCODER5_READING_PIN = PM_0;
 const uint32_t CURRENT_READ_PIN = PD_3;
 const uint32_t POWER_LINE_CONTROL_PIN = PE_4;
 
+const uint32_t BASE_LIMIT_PIN = PD_7;
+const uint32_t ELBOW_LIMIT_PIN = PB_2;
+const uint32_t WRIST_LIMIT_PIN = PC_7; 
+
 const float CURRENT_SENSOR_RATIO = .066; //current sensor ratio of outputted signal voltage/the current it's currently reading
 const float CURRENT_LIMIT = 18; //actual limit we want is 17, but because the calculations are just an estimate we overshoot it slightly for manual checks
 const float VCC = 3.3; //usually the V input is 3.3V
@@ -167,6 +195,7 @@ void j3PowerSet(bool powerOn);
 void j45PowerSet(bool powerOn);
 void gripperMotorPowerSet(bool powerOn);
 void gripperServoPowerSet(bool powerOn);
+bool checkLimSwitch(uint32_t switchPin);
 
 CommandResult stopArm();
 CommandResult moveJ1(int16_t moveValue);
