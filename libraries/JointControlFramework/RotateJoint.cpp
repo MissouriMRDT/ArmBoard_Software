@@ -115,8 +115,8 @@ JointControlStatus RotateJoint::runOutputControl(const long movement)
       returnStatus = OutputRunning;
     }
 
-    motorOneVirtualSpeed = mov;
-    motorTwoVirtualSpeed = -mov;
+    motorOneVirtualSpeed = -mov;
+    motorTwoVirtualSpeed = mov;
     
     int motorOneTrueSpeed = motorOneVirtualSpeed;
     int motorTwoTrueSpeed = motorTwoVirtualSpeed;
