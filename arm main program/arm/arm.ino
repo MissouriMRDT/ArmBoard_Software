@@ -18,13 +18,11 @@
 PIAlgorithm joint1Alg(BaseRotateKp,BaseRotateKi,PI_TIMESLICE_SECONDS);
 PIAlgorithm joint2Alg(BaseTiltKp,BaseTiltKi,PI_TIMESLICE_SECONDS);
 PIAlgorithm joint3Alg(ElbowKp,ElbowKi,PI_TIMESLICE_SECONDS);
-PIAlgorithm joint4Alg(21,4,PI_TIMESLICE_SECONDS);
 PIAlgorithm joint5Alg(WristTiltKp,WristTiltKi,PI_TIMESLICE_SECONDS, WristTiltMinMag);
 
 Ma3Encoder12b joint1Encoder(ENCODER1_READING_PIN);
 Ma3Encoder12b joint2Encoder(ENCODER2_READING_PIN);
 Ma3Encoder12b joint3Encoder(ENCODER3_READING_PIN);
-Ma3Encoder12b joint4Encoder(ENCODER4_READING_PIN);
 Ma3Encoder12b joint5Encoder(ENCODER5_READING_PIN);
 
 GenPwmPhaseHBridge dev1(MOT1_PWN_PIN, HBRIDGE1_PHASE_PIN, HBRIDGE1_NSLEEP_PIN, true, false);
@@ -32,7 +30,7 @@ GenPwmPhaseHBridge dev2(MOT2_PWN_PIN, HBRIDGE2_PHASE_PIN, HBRIDGE2_NSLEEP_PIN, t
 GenPwmPhaseHBridge dev3(MOT3_PWN_PIN, HBRIDGE3_PHASE_PIN, HBRIDGE3_NSLEEP_PIN, true, false);
 GenPwmPhaseHBridge dev4(MOT4_PWN_PIN, HBRIDGE4_PHASE_PIN, HBRIDGE4_NSLEEP_PIN, true, true);
 GenPwmPhaseHBridge dev5(MOT5_PWN_PIN, HBRIDGE5_PHASE_PIN, HBRIDGE5_NSLEEP_PIN, true, false);
-GenPwmPhaseHBridge gripMotorDev(GRIPMOT_PWM_PIN, GRIPMOT_PHASE_PIN, GRIPMOT_NENABLE_PIN, false, true);
+GenPwmPhaseHBridge gripMotorDev(GRIPMOT_PWM_PIN, GRIPMOT_PHASE_PIN, GRIPMOT_NENABLE_PIN, false, false);
 RCContinuousServo gripServoDev(GRIPPER_SERVO_PWM_PIN, false);
 
 SingleMotorJoint gripperMotor(spd, &gripMotorDev);
@@ -47,14 +45,12 @@ TiltJoint joint5Open(spd, &dev4, &dev5);
 RotateJoint joint1Closed(pos, &joint1Alg, &dev1, &dev2, &joint1Encoder);
 TiltJoint joint2Closed(pos, &joint2Alg, &dev1, &dev2, &joint2Encoder);
 SingleMotorJoint joint3Closed(pos, &joint3Alg, &dev3, &joint3Encoder);
-RotateJoint joint4Closed(pos, &joint4Alg, &dev4, &dev5, &joint4Encoder);
 TiltJoint joint5Closed(pos, &joint5Alg, &dev4, &dev5, &joint5Encoder);
 
 //variables used to control joints during closed loop control
 unsigned long joint1Destination;
 unsigned long joint2Destination;
 unsigned long joint3Destination;
-unsigned long joint4Destination;
 unsigned long joint5Destination;
 
 ControlSystems currentControlSystem; //tracks what control system arm is currently using
@@ -81,7 +77,6 @@ void loop() {
 
   initialize();
   delay(100);
-  
   while(1) //main loop begin
   {
     processBaseStationCommands();
@@ -105,8 +100,10 @@ void processBaseStationCommands()
   size_t commandSize = 0;
   char commandData[255]; 
   static uint32_t watchdogTimer_us = 0; //increment this value everytime we don't get a command. When we've waited for a command for longer than our timeout value, stop all arm movement
-
+  static bool useWrist = false;
+  
   roveComm_GetMsg(&commandId, &commandSize, commandData);
+  
   if(commandId != 0) //command packets come in 1 or 2 bytes. If it's any other size, there was probably a comm error
   {
     watchdogTimer_us = 0; //reset watchdog timer since we received a command
@@ -142,6 +139,7 @@ void processBaseStationCommands()
           switchToOpenLoop();
         }
         result = moveJ3(*(int16_t*)(commandData));
+        result = moveGripServo(*(int16_t*)(commandData)); 
         break;
 
       case ArmJ4: 
@@ -338,7 +336,6 @@ void initialize()
   joint4Open.coupleJoint(&joint5Open);
 
   joint1Closed.coupleJoint(&joint2Closed);
-  joint4Closed.coupleJoint(&joint5Closed);
   
   //initialze to open loop control format
   switchToOpenLoop();
@@ -498,7 +495,6 @@ CommandResult setArmDestinationAngles(float* angles)
   joint1Destination = angles[0] * (((float)(POS_MAX - POS_MIN))/(360.0-0.0)); //convert from 0-360 float to framework's POSITION_MIN - POSITION_MAX long
   joint2Destination = angles[1] * (((float)(POS_MAX - POS_MIN))/(360.0-0.0));
   joint3Destination = angles[2] * (((float)(POS_MAX - POS_MIN))/(360.0-0.0));
-  joint4Destination = angles[3] * (((float)(POS_MAX - POS_MIN))/(360.0-0.0));
   joint5Destination = angles[4] * (((float)(POS_MAX - POS_MIN))/(360.0-0.0));
 }
 
@@ -667,7 +663,7 @@ CommandResult moveGripServo(int16_t moveValue)
 }
 
 bool checkLimSwitch(uint32_t switchPin)
-{
+{   
   return(digitalRead(switchPin) == LOW); //switch pins active low
 }
 
@@ -696,7 +692,6 @@ CommandResult switchToClosedLoop()
   joint1Destination = joint1Encoder.getFeedback();
   joint2Destination = joint2Encoder.getFeedback();
   joint3Destination = joint3Encoder.getFeedback();
-  joint4Destination = joint4Encoder.getFeedback();
   joint5Destination = joint5Encoder.getFeedback();
 
   if(initialized)
@@ -752,7 +747,6 @@ CommandResult getArmPositions(float positions[ArmJointCount])
   positions[0] = joint1Encoder.getFeedback() * ((360.0-0.0)/((float)(POS_MAX - POS_MIN))); //getFeedback returns from POS_MAX to POS_MIN long, convert it to 0-360 degrees float
   positions[1] = joint2Encoder.getFeedback() * ((360.0-0.0)/((float)(POS_MAX - POS_MIN)));
   positions[2] = joint3Encoder.getFeedback() * ((360.0-0.0)/((float)(POS_MAX - POS_MIN)));
-  positions[3] = joint4Encoder.getFeedback() * ((360.0-0.0)/((float)(POS_MAX - POS_MIN)));
   positions[4] = joint5Encoder.getFeedback() * ((360.0-0.0)/((float)(POS_MAX - POS_MIN)));
 }
 
@@ -791,8 +785,6 @@ void computeIK(float coordinates[IKArgCount], float angles[ArmJointCount])
   joint3Angle = acos(temp);
 
   joint5Angle = negativeDegreeCorrection(M_PI -joint3Angle - joint2Angle + gripperAngle); //M_PI given in math.h
-
-  joint4Angle = joint4Encoder.getFeedback(); //joint4 not actually controlled in IK
 
   angles[0] = joint1Angle;
   angles[1] = joint2Angle;
