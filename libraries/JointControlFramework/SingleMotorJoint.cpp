@@ -28,8 +28,7 @@ SingleMotorJoint::SingleMotorJoint(ValueType inputType, IOAlgorithm *alg, Output
   }
 }
 
-//constructor for single motor joints without feedback.
-//Constructor automatically chooses an open loop algorithm that inputs the specified inputType and outputs the values the output device accepts
+//constructor for single motor joints without feedback or an IO algorithm
 //inputType: What kind of movement this joint should be controlled by, such as speed or position input.
 //cont: The output device controlling the motor on this joint
 //feed: The feedback device used with this joint
@@ -41,10 +40,7 @@ SingleMotorJoint::SingleMotorJoint(ValueType inputType, OutputDevice* cont) : Jo
 
 	algorithmUsed = false;
 
-  //checks to make sure the passed arguments all work with each other, that is that the algorithm's input type is the same as what the user is putting in, and
-  //that the algorithm's output value type is what the output device expects to take in, etc.
-  //Technically this should never go wrong as long as the algorithmSelector is working properly, but it never hurts to double check. If indeed the construction
-  //winds up being invalid, for debugging try checking the algorithm selector method for bugs
+  //checks to make sure the passed arguments all work with each other, that is that device's input type is the same as what the user is putting in
   if(inputType == cont->inType)
   {
     validConstruction = true;
