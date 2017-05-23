@@ -437,11 +437,19 @@ float readMasterCurrent()
   }
 }
 
-//stops all arm movement by disabling the main power line and disabling all motors
+//stops all arm movement 
 CommandResult stopArm()
 {
-  masterPowerSet(false);
-  allMotorsPowerSet(false);
+  joint1Destination = joint1Encoder.getFeedbackDegrees();
+  joint2Destination = joint2Encoder.getFeedbackDegrees();
+  joint3Destination = joint3Encoder.getFeedbackDegrees();
+  joint5Destination = joint5Encoder.getFeedbackDegrees();
+
+  joint1Open.runOutputControl(0);
+  joint2Open.runOutputControl(0);
+  joint3Open.runOutputControl(0);
+  joint4Open.runOutputControl(0);
+  joint5Open.runOutputControl(0);
 }
 
 //turns on or off the motors attached to joint 1 and 2
@@ -658,12 +666,12 @@ CommandResult moveGripper(int16_t moveValue)
 //note that this function is used for open loop; use the setArmDestinationAngles function for closed loop movement
 //note that the moveValue is numerically described using the joint control framework standard
 CommandResult moveGripServo(int16_t moveValue)
-{
+{   
   gripperServo.runOutputControl(moveValue);
 }
 
 bool checkLimSwitch(uint32_t switchPin)
-{   
+{
   return(digitalRead(switchPin) == LOW); //switch pins active low
 }
 
