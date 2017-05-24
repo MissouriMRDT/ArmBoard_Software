@@ -139,7 +139,6 @@ void processBaseStationCommands()
           switchToOpenLoop();
         }
         result = moveJ3(*(int16_t*)(commandData));
-        result = moveGripServo(*(int16_t*)(commandData)); 
         break;
 
       case ArmJ4: 
@@ -666,7 +665,7 @@ CommandResult moveGripper(int16_t moveValue)
 //note that this function is used for open loop; use the setArmDestinationAngles function for closed loop movement
 //note that the moveValue is numerically described using the joint control framework standard
 CommandResult moveGripServo(int16_t moveValue)
-{   
+{  
   gripperServo.runOutputControl(moveValue);
 }
 
