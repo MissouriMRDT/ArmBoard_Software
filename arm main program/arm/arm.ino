@@ -17,7 +17,7 @@
 
 PIAlgorithm joint1Alg(BaseRotateKp,BaseRotateKi,PI_TIMESLICE_SECONDS);
 PIAlgorithm joint2Alg(BaseTiltKp,BaseTiltKi,PI_TIMESLICE_SECONDS);
-PIAlgorithm joint3Alg(ElbowKp,ElbowKi,PI_TIMESLICE_SECONDS);
+PIAlgorithm joint3Alg(ElbowKp,ElbowKi,PI_TIMESLICE_SECONDS, 200);
 PIAlgorithm joint5Alg(WristTiltKp,WristTiltKi,PI_TIMESLICE_SECONDS, WristTiltMinMag);
 
 Ma3Encoder12b joint1Encoder(ENCODER1_READING_PIN);
@@ -76,7 +76,7 @@ after initialization, function has three responsibilities it juggles.
 void loop() {
 
   initialize();
-  delay(100);
+  delay(10);
   while(1) //main loop begin
   {
     processBaseStationCommands();
@@ -195,9 +195,10 @@ void processBaseStationCommands()
         setArmDestinationAngles(absoluteAngles);
 
       case ArmGetPosition: 
-        float currentPositions[ArmJointCount]; //empty array to fill, as this command expects an entire array of positions
+        float currentPositions[6]; //six positions in the array because RED expects us to return 6 arguments even though we have 5 joints. 6th is just junk data
         getArmPositions(currentPositions);
-        roveComm_SendMsg(ArmCurrentPosition, sizeof(float) * ArmJointCount, currentPositions);
+        currentPositions[5] = 0;
+        roveComm_SendMsg(ArmCurrentPosition, sizeof(float) * 6, currentPositions);
         break;
 
       case ArmEnableJ1:
@@ -231,7 +232,7 @@ void processBaseStationCommands()
       case ArmCurrentMain:
         float *armCurrent;
         *armCurrent = readMasterCurrent();
-        roveComm_SendMsg(ArmCurrentPosition, sizeof(float), armCurrent);
+        roveComm_SendMsg(ArmCurrentMain, sizeof(float), armCurrent);
         break;
         
       default:
@@ -256,7 +257,6 @@ void processBaseStationCommands()
 
     if(watchdogTimer_us >= WATCHDOG_TIMEOUT_US) //if more than our timeout period has passed, then kill arm movement
     {
-      Serial.println("Timeout");
       stopArm();
       watchdogTimer_us = 0;
     }
@@ -268,7 +268,7 @@ void processBaseStationCommands()
 //is sent to base station
 void motorFaultHandling()
 {
-  if(digitalRead(HBRIDGE1_NFAULT_PIN) == LOW && mainPowerOn && m1On) //pins are always low when main power is off
+  if(digitalRead(HBRIDGE1_NFAULT_PIN) == LOW && mainPowerOn && m1On) //pins are always low when main power is off or if the hbridge isn't on
   {
     j12PowerSet(false); //motors 1 and 2 are a part of joints 1 and 2, which are interlinked together
     roveComm_SendMsg(ArmFault, 1, (void*)ArmFault_m1);
@@ -316,8 +316,8 @@ void armOvercurrentHandling()
 void initialize()
 {
   roveComm_Begin(IP_ADDRESS[0], IP_ADDRESS[1], IP_ADDRESS[2], IP_ADDRESS[3]);
-  Serial.begin(9600);
-
+  Serial.begin(115200);
+  
   pinMode(HBRIDGE1_NFAULT_PIN,INPUT);
   pinMode(HBRIDGE2_NFAULT_PIN,INPUT);
   pinMode(HBRIDGE3_NFAULT_PIN,INPUT);
@@ -380,8 +380,6 @@ void initialize()
 //Turns on or off the main power line
 CommandResult masterPowerSet(bool enable)
 {
-  Serial.print("Enable master power: ");
-  Serial.println(enable);
   mainPowerOn = enable;
   if(enable)
   {
@@ -439,11 +437,13 @@ float readMasterCurrent()
 //stops all arm movement 
 CommandResult stopArm()
 {
+  //stop all closed loop movement by setting destination position to where the arm currently is
   joint1Destination = joint1Encoder.getFeedbackDegrees();
   joint2Destination = joint2Encoder.getFeedbackDegrees();
   joint3Destination = joint3Encoder.getFeedbackDegrees();
   joint5Destination = joint5Encoder.getFeedbackDegrees();
 
+  //stop all open loop movement by just telling the joints to run at 0 speed
   joint1Open.runOutputControl(0);
   joint2Open.runOutputControl(0);
   joint3Open.runOutputControl(0);
@@ -495,7 +495,7 @@ void gripperServoPowerSet(bool powerOn)
 
 //Sets the angles for the joints of the arm to travel to
 //Input: an angle array. angles[0] = joint1 destination, etc. Joints are described in floats from 0 to 360 degrees
-//Note that this will only be performed when the current control system being used is closed loop
+//Note that this will only be acted on when the current control system being used is closed loop
 CommandResult setArmDestinationAngles(float* angles)
 { 
   //angles comes in as an array
@@ -666,9 +666,15 @@ CommandResult moveGripper(int16_t moveValue)
 //note that the moveValue is numerically described using the joint control framework standard
 CommandResult moveGripServo(int16_t moveValue)
 {  
+    if(moveValue > 0)
+    moveValue = 600;
+  else if(moveValue < 0)
+    moveValue = -600;
   gripperServo.runOutputControl(moveValue);
 }
 
+//checks to see if the limit switch on the passed pin has been activated.
+//Returns true if it's pushed, false otherwise
 bool checkLimSwitch(uint32_t switchPin)
 {
   return(digitalRead(switchPin) == LOW); //switch pins active low

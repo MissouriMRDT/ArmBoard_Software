@@ -85,7 +85,7 @@ typedef enum ControlSystems
   ClosedLoop
 } ControlSystems;
 
-const uint32_t WATCHDOG_TIMEOUT_US = 500000; //the amount of microseconds that should pass without getting a transmission from base station before the arm ceases moving for safety
+const uint32_t WATCHDOG_TIMEOUT_US = 100000; //the amount of microseconds that should pass without getting a transmission from base station before the arm ceases moving for safety
 const uint8_t IP_ADDRESS [4] = {192, 168, 1, 131};
 const uint8_t ArmJointCount = 5;
 const uint8_t IKArgCount = 5;
@@ -97,9 +97,9 @@ const int ElbowRampDown = 500;
 const int WristRampUp = 350;
 const int WristRampDown = 350;
 
-const int ElbowKp = 135;
-const int ElbowKi = 100;
-const int ElbowDeadband = 2;
+const int ElbowKp = 200;
+const int ElbowKi = 50;
+const int ElbowDeadband = 1;
 const int ElbowOffsetAngle = -155;
 const int ElbowHardStopUp = 185;
 const int ElbowHardStopDown = 355;
