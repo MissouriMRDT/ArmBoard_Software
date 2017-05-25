@@ -10,7 +10,7 @@ class RCContinuousServo : public OutputDevice
 {
   private:
     int PWM_PIN;
-    const int PWM_MAX_FWD = 2500, PWM_MAX_REV = 500, PWM_STOP = 1500; //values represent microseconds in pwm pulse width
+    const int PWM_MAX_FWD = 2500, PWM_MAX_REV = 500, PWM_STOP = 1495; //values represent microseconds in pwm pulse width
     const int PWM_PERIOD = 20000; // this is in microseconds
     int currentSpeed = 0;
 
