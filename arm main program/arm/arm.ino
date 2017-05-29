@@ -63,7 +63,74 @@ bool m5On;
 bool gripMotOn;
 bool initialized = false;
 
-void setup() {} //useless
+bool statusLED = false;
+
+void setup() 
+{
+  roveComm_Begin(IP_ADDRESS[0], IP_ADDRESS[1], IP_ADDRESS[2], IP_ADDRESS[3]);
+  Serial.begin(115200);
+  
+  pinMode(HBRIDGE1_NFAULT_PIN,INPUT);
+  pinMode(HBRIDGE2_NFAULT_PIN,INPUT);
+  pinMode(HBRIDGE3_NFAULT_PIN,INPUT);
+  pinMode(HBRIDGE4_NFAULT_PIN,INPUT);
+  pinMode(HBRIDGE5_NFAULT_PIN,INPUT);
+  pinMode(GRIPMOT_NFAULT_PIN,INPUT);
+  
+  pinMode(ELBOW_LIMIT_PIN,INPUT);
+  pinMode(WRIST_LIMIT_PIN,INPUT);
+  pinMode(BASE_LIMIT_PIN,INPUT);
+  
+  pinMode(POWER_LINE_CONTROL_PIN,OUTPUT);
+  pinMode(PN_1,OUTPUT);
+
+  joint1Open.coupleJoint(&joint2Open);
+  joint4Open.coupleJoint(&joint5Open);
+
+  joint1Closed.coupleJoint(&joint2Closed);
+  
+  //initialze to open loop control format
+  switchToOpenLoop();
+
+  masterPowerSet(false);
+
+  allMotorsPowerSet(true);
+  
+  //set timer 0 to fire at a rate where the different PI algorithms will all be updated at their expected timeslice in seconds. 
+  //There are 5 controls to update independently. They update one at a time, one being serviced every time the timer fires. So it takes 5 timer
+  //firings for any individual control to get updated again. Meaning the timeslice of the timer itself must be one fifth of the PI algorithms overall timeslice so that 
+  //when it cycles back around the overall timeslice will have passed
+  setupTimer7((PI_TIMESLICE_SECONDS/5.0) * 1000000.0); //function expects microseconds
+
+  joint1Alg.setDeadband(BaseRotateDeadband);
+  joint1Alg.setHardStopPositions(BaseRotateHardStopUp, BaseRotateHardStopDown);
+  joint2Alg.setDeadband(BaseTiltDeadband);
+  joint2Alg.setHardStopPositions(BaseTiltHardStopUp, BaseTiltHardStopDown);
+  joint3Alg.setDeadband(ElbowDeadband);
+  joint3Alg.setHardStopPositions(ElbowHardStopUp, ElbowHardStopDown);
+  joint5Alg.setDeadband(WristTiltDeadband);
+  joint5Alg.setHardStopPositions(WristTiltHardStopUp, WristTiltHardStopDown);
+
+  joint1Encoder.setOffsetAngle(BaseRotateOffsetAngle);
+  joint2Encoder.setOffsetAngle(BaseTiltOffsetAngle);
+  joint3Encoder.setOffsetAngle(ElbowOffsetAngle);
+  joint5Encoder.setOffsetAngle(WristTiltOffsetAngle);
+
+  dev3.setRampUp(ElbowRampUp);
+  dev3.setRampDown(ElbowRampDown);
+  dev1.setRampUp(BaseRampUp);
+  dev2.setRampUp(BaseRampUp);
+  dev1.setRampDown(BaseRampDown);
+  dev2.setRampDown(BaseRampDown);
+  dev4.setRampUp(WristRampUp);
+  dev4.setRampDown(WristRampDown);
+  dev5.setRampUp(WristRampUp);
+  dev5.setRampDown(WristRampDown);
+  
+  initialized = true;  
+
+  delay(10);
+} 
 
 /*main loop
 after initialization, function has three responsibilities it juggles. 
@@ -73,19 +140,13 @@ after initialization, function has three responsibilities it juggles.
  2) protect the arm from overcurrenting, by checking for an overcurrent condition and handling it by killing power and reporting the error to base station
  3) protect the individual motors from overcurrenting, by checking for motor fault conditions and handling it by killing power to those motors and reporting the error
 */
-void loop() {
+void loop()
+{
+  processBaseStationCommands();
 
-  initialize();
-  delay(10);
-  while(1) //main loop begin
-  {
-    processBaseStationCommands();
+  //armOvercurrentHandling(); arm current sensing is currently buggy
 
-    //armOvercurrentHandling(); arm current sensing is currently buggy
-
-    motorFaultHandling();
-  }
-
+  //motorFaultHandling(); //also might be buggy
 }
 
 //Listens for base station commands, and if any are detected carry out arm duties based off of them. 
@@ -100,7 +161,6 @@ void processBaseStationCommands()
   size_t commandSize = 0;
   char commandData[255]; 
   static uint32_t watchdogTimer_us = 0; //increment this value everytime we don't get a command. When we've waited for a command for longer than our timeout value, stop all arm movement
-  static bool useWrist = false;
   
   roveComm_GetMsg(&commandId, &commandSize, commandData);
   
@@ -143,10 +203,10 @@ void processBaseStationCommands()
 
       case ArmJ4: 
       case LY_ArmJ4: 
-        /*if(currentControlSystem != OpenLoop)
-        {
-          switchToOpenLoop(); always considered open loop
-        }*/
+        //if(currentControlSystem != OpenLoop)
+        //{
+         // switchToOpenLoop(); always considered open loop
+        //}
         result = moveJ4(*(int16_t*)(commandData));
         break;
 
@@ -158,9 +218,11 @@ void processBaseStationCommands()
         }
         result = moveJ5(*(int16_t*)(commandData));
         break;
-
-      case MoveGripper: 
-      case LY_MoveGripper: //gripper only ever operates in open loop but the rest of the system can be using other controls at the same time
+        
+      case ArmJ6:
+        break;
+        
+      case MoveGripper: //gripper only ever operates in open loop but the rest of the system can be using other controls at the same time
         result = moveGripper(*(int16_t*)(commandData));
         break;
 
@@ -250,7 +312,7 @@ void processBaseStationCommands()
   //Exception is if we're in closed loop, in which case it might be normal for the arm to not get commands for long periods of time
   else if(currentControlSystem != ClosedLoop)
   {
-    uint8_t microsecondDelay = 1;
+    uint8_t microsecondDelay = 4;
     delayMicroseconds(microsecondDelay);
 
     watchdogTimer_us += microsecondDelay;
@@ -259,6 +321,10 @@ void processBaseStationCommands()
     {
       stopArm();
       watchdogTimer_us = 0;
+      statusLED = !statusLED;
+      digitalWrite(PN_1, statusLED ? HIGH : LOW);
+
+      //resetTiva();
     }
   }//end else
 }
@@ -268,36 +334,44 @@ void processBaseStationCommands()
 //is sent to base station
 void motorFaultHandling()
 {
-  if(digitalRead(HBRIDGE1_NFAULT_PIN) == LOW && mainPowerOn && m1On) //pins are always low when main power is off or if the hbridge isn't on
+  if(mainPowerOn)
   {
-    j12PowerSet(false); //motors 1 and 2 are a part of joints 1 and 2, which are interlinked together
-    roveComm_SendMsg(ArmFault, 1, (void*)ArmFault_m1);
+    if(digitalRead(HBRIDGE1_NFAULT_PIN) == LOW && m1On) //pins are always low when main power is off or if the hbridge isn't on
+    {
+      j12PowerSet(false); //motors 1 and 2 are a part of joints 1 and 2, which are interlinked together
+      roveComm_SendMsg(ArmFault, sizeof(ArmFault_m1), (void*)ArmFault_m1);
+    }
+    if(digitalRead(HBRIDGE2_NFAULT_PIN) == LOW && m2On)
+    {
+      j12PowerSet(false); //motors 1 and 2 are a part of joints 1 and 2, which are interlinked together
+      roveComm_SendMsg(ArmFault, sizeof(ArmFault_m2), (void*)ArmFault_m2);
+    }
+    if(digitalRead(HBRIDGE3_NFAULT_PIN) == LOW && m3On)
+    {
+      j3PowerSet(false);
+      roveComm_SendMsg(ArmFault, sizeof(ArmFault_m3), (void*)ArmFault_m3);
+    }
+    if(digitalRead(HBRIDGE4_NFAULT_PIN) == LOW && m4On)
+    {
+      j45PowerSet(false); //motors 4 and 5 are a part of joints 4 and 5, which are interlinked together
+      roveComm_SendMsg(ArmFault, sizeof(ArmFault_m4), (void*)ArmFault_m4);
+    }
+    if(digitalRead(HBRIDGE5_NFAULT_PIN) == LOW && m5On)
+    {
+      j45PowerSet(false); //motors 4 and 5 are a part of joints 4 and 5, which are interlinked together
+      roveComm_SendMsg(ArmFault, sizeof(ArmFault_m5), (void*)ArmFault_m5);
+    }
+    if(digitalRead(GRIPMOT_NFAULT_PIN) == LOW && gripMotOn)
+    {
+      gripperMotorPowerSet(false);
+      roveComm_SendMsg(ArmFault, sizeof(ArmFault_gripper), (void*)ArmFault_gripper);
+    }
   }
-  if(digitalRead(HBRIDGE2_NFAULT_PIN) == LOW && mainPowerOn && m2On)
-  {
-    j12PowerSet(false); //motors 1 and 2 are a part of joints 1 and 2, which are interlinked together
-    roveComm_SendMsg(ArmFault, 1, (void*)ArmFault_m2);
-  }
-  if(digitalRead(HBRIDGE3_NFAULT_PIN) == LOW && mainPowerOn && m3On)
-  {
-    j3PowerSet(false);
-    roveComm_SendMsg(ArmFault, 1, (void*)ArmFault_m3);
-  }
-  if(digitalRead(HBRIDGE4_NFAULT_PIN) == LOW && mainPowerOn && m4On)
-  {
-    j45PowerSet(false); //motors 4 and 5 are a part of joints 4 and 5, which are interlinked together
-    roveComm_SendMsg(ArmFault, 1, (void*)ArmFault_m4);
-  }
-  if(digitalRead(HBRIDGE5_NFAULT_PIN) == LOW && mainPowerOn && m5On)
-  {
-    j45PowerSet(false); //motors 4 and 5 are a part of joints 4 and 5, which are interlinked together
-    roveComm_SendMsg(ArmFault, 1, (void*)ArmFault_m5);
-  }
-  if(digitalRead(GRIPMOT_NFAULT_PIN) == LOW && gripMotOn)
-  {
-    gripperMotorPowerSet(false);
-    roveComm_SendMsg(ArmFault, 1, (void*)ArmFault_gripper);
-  }
+}
+
+void resetTiva()
+{
+  HWREG(NVIC_APINT) = NVIC_APINT_VECTKEY | NVIC_APINT_SYSRESETREQ;
 }
 
 //Checks to see if there's an overcurrent condition. If there is, disable main power and report error to base station. 
@@ -309,72 +383,6 @@ void armOvercurrentHandling()
     masterPowerSet(false);
     roveComm_SendMsg(ArmFault, 1, (void*)ArmFault_overcurrent);
   }
-}
-
-//setup all crucial software processes such as rovecomm, serial, and the closed loop timer, and set up static GPIO pins.
-//Also initialize the joint constructs to their initial state, IE open loop controlled
-void initialize()
-{
-  roveComm_Begin(IP_ADDRESS[0], IP_ADDRESS[1], IP_ADDRESS[2], IP_ADDRESS[3]);
-  Serial.begin(115200);
-  
-  pinMode(HBRIDGE1_NFAULT_PIN,INPUT);
-  pinMode(HBRIDGE2_NFAULT_PIN,INPUT);
-  pinMode(HBRIDGE3_NFAULT_PIN,INPUT);
-  pinMode(HBRIDGE4_NFAULT_PIN,INPUT);
-  pinMode(HBRIDGE5_NFAULT_PIN,INPUT);
-  pinMode(GRIPMOT_NFAULT_PIN,INPUT);
-  
-  pinMode(ELBOW_LIMIT_PIN,INPUT);
-  pinMode(WRIST_LIMIT_PIN,INPUT);
-  pinMode(BASE_LIMIT_PIN,INPUT);
-  
-  pinMode(POWER_LINE_CONTROL_PIN,OUTPUT);
-
-  joint1Open.coupleJoint(&joint2Open);
-  joint4Open.coupleJoint(&joint5Open);
-
-  joint1Closed.coupleJoint(&joint2Closed);
-  
-  //initialze to open loop control format
-  switchToOpenLoop();
-
-  masterPowerSet(false);
-
-  allMotorsPowerSet(true);
-  
-  //set timer 0 to fire at a rate where the different PI algorithms will all be updated at their expected timeslice in seconds. 
-  //There are 5 controls to update independently. They update one at a time, one being serviced every time the timer fires. So it takes 5 timer
-  //firings for any individual control to get updated again. Meaning the timeslice of the timer itself must be one fifth of the PI algorithms overall timeslice so that 
-  //when it cycles back around the overall timeslice will have passed
-  setupTimer0((PI_TIMESLICE_SECONDS/5.0) * 1000000.0); //function expects microseconds
-
-  joint1Alg.setDeadband(BaseRotateDeadband);
-  joint1Alg.setHardStopPositions(BaseRotateHardStopUp, BaseRotateHardStopDown);
-  joint2Alg.setDeadband(BaseTiltDeadband);
-  joint2Alg.setHardStopPositions(BaseTiltHardStopUp, BaseTiltHardStopDown);
-  joint3Alg.setDeadband(ElbowDeadband);
-  joint3Alg.setHardStopPositions(ElbowHardStopUp, ElbowHardStopDown);
-  joint5Alg.setDeadband(WristTiltDeadband);
-  joint5Alg.setHardStopPositions(WristTiltHardStopUp, WristTiltHardStopDown);
-
-  joint1Encoder.setOffsetAngle(BaseRotateOffsetAngle);
-  joint2Encoder.setOffsetAngle(BaseTiltOffsetAngle);
-  joint3Encoder.setOffsetAngle(ElbowOffsetAngle);
-  joint5Encoder.setOffsetAngle(WristTiltOffsetAngle);
-
-  dev3.setRampUp(ElbowRampUp);
-  dev3.setRampDown(ElbowRampDown);
-  dev1.setRampUp(BaseRampUp);
-  dev2.setRampUp(BaseRampUp);
-  dev1.setRampDown(BaseRampDown);
-  dev2.setRampDown(BaseRampDown);
-  dev4.setRampUp(WristRampUp);
-  dev4.setRampDown(WristRampDown);
-  dev5.setRampUp(WristRampUp);
-  dev5.setRampDown(WristRampDown);
-  
-  initialized = true;
 }
 
 //Turns on or off the main power line
@@ -443,12 +451,10 @@ CommandResult stopArm()
   joint3Destination = joint3Encoder.getFeedbackDegrees();
   joint5Destination = joint5Encoder.getFeedbackDegrees();
 
-  //stop all open loop movement by just telling the joints to run at 0 speed
-  joint1Open.runOutputControl(0);
-  joint2Open.runOutputControl(0);
-  joint3Open.runOutputControl(0);
-  joint4Open.runOutputControl(0);
-  joint5Open.runOutputControl(0);
+  //cycle motor power to instantly stop
+  allMotorsPowerSet(false);
+  delay(10);
+  allMotorsPowerSet(true);
 }
 
 //turns on or off the motors attached to joint 1 and 2
@@ -531,7 +537,7 @@ CommandResult moveJ2(int16_t moveValue)
   else if(moveValue < 0)
     moveValue = -BaseMaxSpeed; //adjusting for base station scaling
 
-  if(checkLimSwitch(BASE_LIMIT_PIN) && !limitSwitchHit)
+  if(checkLimSwitch(BASE_LIMIT_PIN) && !limitSwitchHit) //first time code detects switch being hit
   {
     float currentPos = joint2Encoder.getFeedbackDegrees();
     limitSwitchHit = true;
@@ -570,7 +576,7 @@ CommandResult moveJ3(int16_t moveValue)
   static bool limitSwitchHit = false;
   static int moveAllowedDir = 0;
 
-  if(checkLimSwitch(ELBOW_LIMIT_PIN) && !limitSwitchHit)
+  if(checkLimSwitch(ELBOW_LIMIT_PIN) && !limitSwitchHit) //first time code detects switch being hit
   {
     float currentPos = joint3Encoder.getFeedbackDegrees();
     limitSwitchHit = true;
@@ -617,7 +623,7 @@ CommandResult moveJ5(int16_t moveValue)
   static bool limitSwitchHit = false;
   static int moveAllowedDir = 0;
 
-  if(checkLimSwitch(WRIST_LIMIT_PIN) && !limitSwitchHit)
+  if(checkLimSwitch(WRIST_LIMIT_PIN) && !limitSwitchHit) //first time code detects switch being hit
   {
     float currentPos = joint5Encoder.getFeedbackDegrees();
     limitSwitchHit = true;
@@ -720,32 +726,32 @@ CommandResult switchToClosedLoop()
 //closed loop works by periodically updating all of the joints' positional destinations on a consistent timeslice.
 //Safest option for this service is to use a timer, and timer 0 is the only timer that's not in use by the rest of the program (timers 1-5 are used to read pwm).
 //After setup, timer remains ready but not running. The switchToClosedLoop function turns on the timer and its interrupt, while switchToOpenLoop turns it back off.
-void setupTimer0(float timeout_micros)
+void setupTimer7(float timeout_micros)
 {
   uint32_t timerLoad = 16000000.0 * (timeout_micros/1000000.0); // clock cycle (cycle/second) * (microsecond timeout/10000000 to convert it to seconds) = cycles till the timeout passes
 
   //enable timer hardware
-  SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER0);
+  SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER7);
 
   delay(1); //let the periph finish processing
 
   //set clock to internal precision clock of 16 Mhz
-  TimerClockSourceSet(TIMER0_BASE, TIMER_CLOCK_PIOSC);
+  TimerClockSourceSet(TIMER7_BASE, TIMER_CLOCK_PIOSC);
 
   //configure timer for count up periodic
-  TimerConfigure(TIMER0_BASE, TIMER_CFG_PERIODIC);
+  TimerConfigure(TIMER7_BASE, TIMER_CFG_PERIODIC);
   
   //set timer load based on earlier calculated value
-  TimerLoadSet(TIMER0_BASE, TIMER_A, (timerLoad)); 
+  TimerLoadSet(TIMER7_BASE, TIMER_A, (timerLoad)); 
 
   //set up interrupts. The order here is actually important, TI's forums reccomend 
   //setting up new interrupts in this exact fashion
-  TimerIntClear(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
-  TimerIntEnable(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
-  IntEnable(INT_TIMER0A);
+  TimerIntClear(TIMER7_BASE, TIMER_TIMA_TIMEOUT);
+  TimerIntEnable(TIMER7_BASE, TIMER_TIMA_TIMEOUT);
+  IntEnable(INT_TIMER7A);
 
   //register interrupt functions 
-  TimerIntRegister(TIMER0_BASE, TIMER_A, &closedLoopUpdateHandler);
+  TimerIntRegister(TIMER7_BASE, TIMER_A, &closedLoopUpdateHandler);
   
   //enable master system interrupt
   IntMasterEnable();

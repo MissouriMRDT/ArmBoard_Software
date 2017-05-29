@@ -4,7 +4,7 @@
 #ifndef ROVECOMM_H
 #define ROVECOMM_H
 
-#include <RoveEthernet.h>
+#include "../RoveBoard/RoveEthernet.h"
 
 #include <stdint.h>
 

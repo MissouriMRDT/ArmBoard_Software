@@ -11,6 +11,8 @@
 #include "driverlib/interrupt.h"
 #include "driverlib/timer.h"
 #include "driverlib/sysctl.h"
+#include "inc/hw_nvic.h"
+#include "inc/hw_types.h"
 
 //enum representing the different arm commands we can receive from base station.
 //There is a spreadsheet for these under rovesodrive under software architecture
@@ -85,43 +87,43 @@ typedef enum ControlSystems
   ClosedLoop
 } ControlSystems;
 
-const uint32_t WATCHDOG_TIMEOUT_US = 100000; //the amount of microseconds that should pass without getting a transmission from base station before the arm ceases moving for safety
+const uint32_t WATCHDOG_TIMEOUT_US = 200000/4; //the amount of microseconds that should pass without getting a transmission from base station before the arm ceases moving for safety
 const uint8_t IP_ADDRESS [4] = {192, 168, 1, 131};
 const uint8_t ArmJointCount = 5;
 const uint8_t IKArgCount = 5;
 const int BaseMaxSpeed = 1000;
-const int BaseRampUp = 120;
-const int BaseRampDown = 300; 
-const int ElbowRampUp = 500;
-const int ElbowRampDown = 500; 
-const int WristRampUp = 350;
-const int WristRampDown = 350;
+const int BaseRampUp = 60;
+const int BaseRampDown = 150; 
+const int ElbowRampUp = 250;
+const int ElbowRampDown = 250; 
+const int WristRampUp = 200;
+const int WristRampDown = 200;
 
 const int ElbowKp = 200;
 const int ElbowKi = 50;
 const int ElbowDeadband = 1;
-const int ElbowOffsetAngle = -155;
+const int ElbowOffsetAngle = -195;
 const int ElbowHardStopUp = 185;
 const int ElbowHardStopDown = 355;
 
 const int BaseTiltKp = 175;
 const int BaseTiltKi = 100;
 const int BaseTiltDeadband = 2;
-const int BaseTiltOffsetAngle = -103;
+const int BaseTiltOffsetAngle = 79;
 const int BaseTiltHardStopUp = 150;
 const int BaseTiltHardStopDown = 355;
 
 const int BaseRotateKp = 125;
 const int BaseRotateKi = 125;
 const int BaseRotateDeadband = 2;
-const int BaseRotateOffsetAngle = -172;
+const int BaseRotateOffsetAngle = -174;
 const int BaseRotateHardStopUp = 150;
 const int BaseRotateHardStopDown = 210;
 
 const int WristTiltKp = 40;
 const int WristTiltKi = 10;
 const int WristTiltDeadband = 2;
-const int WristTiltOffsetAngle = -50;
+const int WristTiltOffsetAngle = 174;
 const int WristTiltHardStopUp = 300;
 const int WristTiltHardStopDown = 350;
 const int WristTiltMinMag = 200;
@@ -182,7 +184,6 @@ const float ElbowLength = 0;
 const float BaseLength = 0;
 const float WristLength = 0;
 
-void initialize();
 void motorFaultHandling();
 void processBaseStationCommands();
 void armOvercurrentHandling();
@@ -214,5 +215,5 @@ float negativeDegreeCorrection(float correctThis);
 CommandResult switchToOpenLoop();
 CommandResult switchToClosedLoop();
 
-void setupTimer0(float timeout_micros);
+void setupTimer7(float timeout_micros);
 void closedLoopUpdateHandler();
