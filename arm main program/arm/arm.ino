@@ -219,9 +219,6 @@ void processBaseStationCommands()
         result = moveJ5(*(int16_t*)(commandData));
         break;
         
-      case ArmJ6:
-        break;
-        
       case MoveGripper: //gripper only ever operates in open loop but the rest of the system can be using other controls at the same time
         result = moveGripper(*(int16_t*)(commandData));
         break;
@@ -693,9 +690,9 @@ CommandResult switchToOpenLoop()
   if(initialized)
   {
     //disable closed loop interrupts before doing any operation to preserve thread safety
-    TimerDisable(TIMER0_BASE, TIMER_A); 
-    TimerIntClear(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
-    TimerIntDisable(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
+    TimerDisable(TIMER7_BASE, TIMER_A); 
+    TimerIntClear(TIMER7_BASE, TIMER_TIMA_TIMEOUT);
+    TimerIntDisable(TIMER7_BASE, TIMER_TIMA_TIMEOUT);
   }
   
   currentControlSystem = OpenLoop;
@@ -716,9 +713,9 @@ CommandResult switchToClosedLoop()
   if(initialized)
   {
     //enable closed loop interrupts, which will begin to move the arm towards its set destinations
-    TimerIntClear(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
-    TimerIntEnable(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
-    TimerEnable(TIMER0_BASE, TIMER_A);
+    TimerIntClear(TIMER7_BASE, TIMER_TIMA_TIMEOUT);
+    TimerIntEnable(TIMER7_BASE, TIMER_TIMA_TIMEOUT);
+    TimerEnable(TIMER7_BASE, TIMER_A);
   }
 }
 
