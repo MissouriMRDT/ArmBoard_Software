@@ -847,7 +847,7 @@ float negativeDegreeCorrection(float correctThis)
 //on a consistent timeslice for its algorithm to calculate properly.
 void closedLoopUpdateHandler()
 {
-  TimerIntClear(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
+  TimerIntClear(TIMER7_BASE, TIMER_TIMA_TIMEOUT);
   static int jointUpdated = 1;
   jointUpdated += 1;
   if(jointUpdated > 5)
