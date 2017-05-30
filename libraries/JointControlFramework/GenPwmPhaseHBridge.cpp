@@ -31,18 +31,17 @@ void GenPwmPhaseHBridge::move(const long movement)
   if(!enabled) return;
 
   int mov = invert ? -movement : movement;
+  int pwm; 
   
   if(rampUsed)
   {
     mov = scaleRamp(mov);
   }
   
-  currentSpeed = mov;
-  
   //if supposed to move backwards
   if(mov < 0)
   {
-    int pwm = map(-mov, 0, SPEED_MAX, PWM_MIN, PWM_MAX);
+    pwm = map(-mov, 0, SPEED_MAX, PWM_MIN, PWM_MAX);
 
     //set phase to 1 for "reverse" rotation
     digitalWrite(PHASE_PIN, HIGH);
@@ -54,7 +53,7 @@ void GenPwmPhaseHBridge::move(const long movement)
   //if forwards
   else if(mov > 0)
   {
-    int pwm = map(mov, 0, SPEED_MAX, PWM_MIN, PWM_MAX);
+    pwm = map(mov, 0, SPEED_MAX, PWM_MIN, PWM_MAX);
       
     //set phase to 0 for "forward" rotation
     digitalWrite(PHASE_PIN, LOW);
@@ -66,9 +65,18 @@ void GenPwmPhaseHBridge::move(const long movement)
   //stop
   else if(mov == 0)
   {
+    if(hardStop && currentSpeed != 0) //reverse for a small period of time if hard stop is enabled
+    {
+      pwm = -1 * currentSpeed;
+      PwmWrite(PWM_PIN, pwm);
+      delay(1);
+    }
+    
     PwmWrite(PWM_PIN, 0);//set enable to 0 to brake motor
     //phase don't matter
   }
+  
+  currentSpeed = mov;
 }
 
 void GenPwmPhaseHBridge::setPower(bool powerOn)
@@ -162,4 +170,9 @@ long GenPwmPhaseHBridge::getCurrentMove()
   {
     return(currentSpeed);
   }
+}
+
+void GenPwmPhaseHBridge::setHardBrake(bool hardStopOn)
+{
+  hardStop = hardStopOn;
 }

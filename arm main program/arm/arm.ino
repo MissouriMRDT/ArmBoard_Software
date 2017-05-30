@@ -124,6 +124,9 @@ void setup()
   dev5.setRampUp(WristRampUp);
   dev5.setRampDown(WristRampDown);
 
+  dev4.setHardBrake(true);
+  dev5.setHardBrake(true);
+
   delay(2000); //let background processes finish before turning on the watchdog
   
   initWatchdog(WATCHDOG_TIMEOUT_US);

@@ -14,6 +14,7 @@ class GenPwmPhaseHBridge: public OutputDevice
     unsigned int magChangeLimUp = (SPEED_MAX - SPEED_MIN);
     unsigned int magChangeLimDown = (SPEED_MAX - SPEED_MIN);
     bool rampUsed = false;
+    bool hardStop = false;
 
   protected:
   
@@ -59,6 +60,8 @@ class GenPwmPhaseHBridge: public OutputDevice
     
     //gets the current speed value of the h bridge. 
     long getCurrentMove();
+    
+    void setHardBrake(bool hardStopOn);
 };
 
 #endif
