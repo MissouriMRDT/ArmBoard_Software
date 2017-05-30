@@ -667,8 +667,8 @@ CommandResult switchToOpenLoop()
   if(initialized)
   {
     //disable closed loop interrupts before doing any operation to preserve thread safety
-    TimerDisable(TIMER7_BASE, TIMER_A); 
     TimerIntClear(TIMER7_BASE, TIMER_TIMA_TIMEOUT);
+    TimerDisable(TIMER7_BASE, TIMER_A); 
     TimerIntDisable(TIMER7_BASE, TIMER_TIMA_TIMEOUT);
   }
   
