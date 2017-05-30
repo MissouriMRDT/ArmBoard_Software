@@ -13,6 +13,7 @@
 #include "driverlib/sysctl.h"
 #include "inc/hw_nvic.h"
 #include "inc/hw_types.h"
+#include "watchdog.h"
 
 //enum representing the different arm commands we can receive from base station.
 //There is a spreadsheet for these under rovesodrive under software architecture
@@ -87,10 +88,11 @@ typedef enum ControlSystems
   ClosedLoop
 } ControlSystems;
 
-const uint32_t WATCHDOG_TIMEOUT_US = 200000/4; //the amount of microseconds that should pass without getting a transmission from base station before the arm ceases moving for safety
+const uint32_t WATCHDOG_TIMEOUT_US = 1000000; //the amount of microseconds that should pass without getting a transmission from base station before the arm ceases moving for safety
 const uint8_t IP_ADDRESS [4] = {192, 168, 1, 131};
 const uint8_t ArmJointCount = 5;
 const uint8_t IKArgCount = 5;
+float Fcpu = 120000000;
 const int BaseMaxSpeed = 1000;
 const int BaseRampUp = 60;
 const int BaseRampDown = 150; 
@@ -217,3 +219,5 @@ CommandResult switchToClosedLoop();
 
 void setupTimer7(float timeout_micros);
 void closedLoopUpdateHandler();
+void initWatchdog(uint32_t timeout_us);
+void restartWatchdog(uint32_t timeout_us);

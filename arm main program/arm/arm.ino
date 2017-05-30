@@ -63,8 +63,6 @@ bool m5On;
 bool gripMotOn;
 bool initialized = false;
 
-bool statusLED = false;
-
 void setup() 
 {
   roveComm_Begin(IP_ADDRESS[0], IP_ADDRESS[1], IP_ADDRESS[2], IP_ADDRESS[3]);
@@ -82,7 +80,6 @@ void setup()
   pinMode(BASE_LIMIT_PIN,INPUT);
   
   pinMode(POWER_LINE_CONTROL_PIN,OUTPUT);
-  pinMode(PN_1,OUTPUT);
 
   joint1Open.coupleJoint(&joint2Open);
   joint4Open.coupleJoint(&joint5Open);
@@ -92,7 +89,7 @@ void setup()
   //initialze to open loop control format
   switchToOpenLoop();
 
-  masterPowerSet(false);
+  masterPowerSet(true);
 
   allMotorsPowerSet(true);
   
@@ -126,10 +123,12 @@ void setup()
   dev4.setRampDown(WristRampDown);
   dev5.setRampUp(WristRampUp);
   dev5.setRampDown(WristRampDown);
+
+  delay(2000); //let background processes finish before turning on the watchdog
+  
+  initWatchdog(WATCHDOG_TIMEOUT_US);
   
   initialized = true;  
-
-  delay(10);
 } 
 
 /*main loop
@@ -141,9 +140,8 @@ after initialization, function has three responsibilities it juggles.
  3) protect the individual motors from overcurrenting, by checking for motor fault conditions and handling it by killing power to those motors and reporting the error
 */
 void loop()
-{
+{ 
   processBaseStationCommands();
-
   //armOvercurrentHandling(); arm current sensing is currently buggy
 
   //motorFaultHandling(); //also might be buggy
@@ -160,13 +158,12 @@ void processBaseStationCommands()
   uint16_t commandId = 0;
   size_t commandSize = 0;
   char commandData[255]; 
-  static uint32_t watchdogTimer_us = 0; //increment this value everytime we don't get a command. When we've waited for a command for longer than our timeout value, stop all arm movement
-  
+ 
   roveComm_GetMsg(&commandId, &commandSize, commandData);
   
   if(commandId != 0) //command packets come in 1 or 2 bytes. If it's any other size, there was probably a comm error
   {
-    watchdogTimer_us = 0; //reset watchdog timer since we received a command
+    restartWatchdog(WATCHDOG_TIMEOUT_US); //reset watchdog timer since we received a command
 
     switch(commandId)
     {
@@ -304,26 +301,6 @@ void processBaseStationCommands()
       //todo: if there's ever any telemetry about what to do when the command isn't successful, this is where we'll send telemetry back about it
     }
   }//end if(commandId != 0)
-
-  //if no messages were received, increment our watchdog counter. If the counter has gone over a certain period of time since we last got a transmission, cease all movement.
-  //Exception is if we're in closed loop, in which case it might be normal for the arm to not get commands for long periods of time
-  else if(currentControlSystem != ClosedLoop)
-  {
-    uint8_t microsecondDelay = 4;
-    delayMicroseconds(microsecondDelay);
-
-    watchdogTimer_us += microsecondDelay;
-
-    if(watchdogTimer_us >= WATCHDOG_TIMEOUT_US) //if more than our timeout period has passed, then kill arm movement
-    {
-      stopArm();
-      watchdogTimer_us = 0;
-      statusLED = !statusLED;
-      digitalWrite(PN_1, statusLED ? HIGH : LOW);
-
-      //resetTiva();
-    }
-  }//end else
 }
 
 //Checks each motor for fault conditions.
@@ -701,7 +678,7 @@ CommandResult switchToOpenLoop()
 //switches the arm over to closed loop control method; this will enable closed loop functions and functionality
 //while disabling open loop functions and functionality
 CommandResult switchToClosedLoop()
-{
+{   
   currentControlSystem = ClosedLoop;
     
   //have default position destination values be the joints' current positions, so they hold still when switchover occurs until base station sends a new position to go towards
@@ -725,7 +702,7 @@ CommandResult switchToClosedLoop()
 //After setup, timer remains ready but not running. The switchToClosedLoop function turns on the timer and its interrupt, while switchToOpenLoop turns it back off.
 void setupTimer7(float timeout_micros)
 {
-  uint32_t timerLoad = 16000000.0 * (timeout_micros/1000000.0); // clock cycle (cycle/second) * (microsecond timeout/10000000 to convert it to seconds) = cycles till the timeout passes
+  uint32_t timerLoad = 16000000.0 * (timeout_micros/1000000.0); // clock cycle (120Mhz cycle/second) * (microsecond timeout/10000000 to convert it to seconds) = cycles till the timeout passes
 
   //enable timer hardware
   SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER7);
@@ -754,6 +731,57 @@ void setupTimer7(float timeout_micros)
   IntMasterEnable();
 
   delay(1);
+}
+
+//sets up the watchdog timer. Watchdog timer will restart the processor and the program when it times out
+//input: timeout value in microseconds
+void initWatchdog(uint32_t timeout_us)
+{
+  uint32_t load = Fcpu * (timeout_us/1000000.0); // clock cycle (120 MHz cycle/second) * (microsecond timeout/10000000 to convert it to seconds) = cycles till the timeout passes
+  load /=2; //watchdog resets after two timeouts
+  
+  //
+  // Enable the Watchdog 0 peripheral
+  //
+  SysCtlPeripheralEnable(SYSCTL_PERIPH_WDOG0);
+  
+  //
+  // Wait for the Watchdog 0 module to be ready.
+  //
+  while(!SysCtlPeripheralReady(SYSCTL_PERIPH_WDOG0))
+  {
+  }
+  
+  //
+  // Initialize the watchdog timer.
+  //
+  WatchdogReloadSet(WATCHDOG0_BASE, load);
+
+  //enable watchdog interrupts
+  WatchdogIntEnable(WATCHDOG0_BASE);
+  IntEnable(INT_WATCHDOG);
+  
+  //
+  // Enable the watchdog timer.
+  //
+  WatchdogEnable(WATCHDOG0_BASE);
+
+  //
+  // Enable the reset.
+  //
+  WatchdogResetEnable(WATCHDOG0_BASE);
+}
+
+//tells the watchdog to restart its count. Call this function periodically to keep the watchdog timer from firing during desired conditions
+void restartWatchdog(uint32_t timeout_us)
+{
+  if(WatchdogRunning(WATCHDOG0_BASE))
+  {
+    uint32_t load = Fcpu * (timeout_us/1000000.0); // clock cycle (120 MHz cycle/second) * (microsecond timeout/10000000 to convert it to seconds) = cycles till the timeout passes
+    load /=2; //watchdog resets after two timeouts
+    
+    WatchdogReloadSet(WATCHDOG0_BASE, load);
+  }
 }
 
 //fills a float array with the current positions of the joints. 
@@ -847,8 +875,10 @@ float negativeDegreeCorrection(float correctThis)
 //on a consistent timeslice for its algorithm to calculate properly.
 void closedLoopUpdateHandler()
 {
-  TimerIntClear(TIMER7_BASE, TIMER_TIMA_TIMEOUT);
   static int jointUpdated = 1;
+  TimerIntClear(TIMER7_BASE, TIMER_TIMA_TIMEOUT);
+  restartWatchdog(WATCHDOG_TIMEOUT_US);
+    
   jointUpdated += 1;
   if(jointUpdated > 5)
   {
