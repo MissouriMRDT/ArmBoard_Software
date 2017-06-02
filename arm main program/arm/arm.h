@@ -39,7 +39,9 @@ typedef enum ArmCommandIds
   MoveGripper = 0x360, 
   ArmGetPosition = 0x319,
   MoveGripServo = 0x364,
-  ArmCurrentMain = 0x370
+  ArmCurrentMain = 0x370,
+  DisableLimits = 896,
+  EnableLimits = 897
 } ArmCommandIds;
 
 //enum representing the different arm commands we can send to base station
@@ -104,9 +106,10 @@ const int WristRampDown = 200;
 const int ElbowKp = 200;
 const int ElbowKi = 50;
 const int ElbowDeadband = 1;
-const int ElbowOffsetAngle = -195;
+const int ElbowOffsetAngle = -211;
 const int ElbowHardStopUp = 185;
 const int ElbowHardStopDown = 355;
+const int ElbowMinMag = 200;
 
 const int BaseTiltKp = 175;
 const int BaseTiltKi = 100;
@@ -125,7 +128,7 @@ const int BaseRotateHardStopDown = 210;
 const int WristTiltKp = 40;
 const int WristTiltKi = 10;
 const int WristTiltDeadband = 2;
-const int WristTiltOffsetAngle = 180;
+const int WristTiltOffsetAngle = 84;
 const int WristTiltHardStopUp = 300;
 const int WristTiltHardStopDown = 350;
 const int WristTiltMinMag = 200;

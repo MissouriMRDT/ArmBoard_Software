@@ -9,7 +9,7 @@
  * For more information on the hardware, visit the MRDT ArmBoardHardware github
  * For more information on the software, visit the MRDT ArmBoardSoftware github, plus the assorted libraries used have documentation under their folders at energia\libraries
  * 
- * Hardware used: literally all of the timers and all of the pwm modules on the tiva tm4c1294ncpdt
+ * Hardware used: timers 1-5, 7, and all of the pwm modules on the tiva tm4c1294ncpdt
  */
 
 
@@ -17,7 +17,7 @@
 
 PIAlgorithm joint1Alg(BaseRotateKp,BaseRotateKi,PI_TIMESLICE_SECONDS);
 PIAlgorithm joint2Alg(BaseTiltKp,BaseTiltKi,PI_TIMESLICE_SECONDS);
-PIAlgorithm joint3Alg(ElbowKp,ElbowKi,PI_TIMESLICE_SECONDS, 200);
+PIAlgorithm joint3Alg(ElbowKp,ElbowKi,PI_TIMESLICE_SECONDS, ElbowMinMag);
 PIAlgorithm joint5Alg(WristTiltKp,WristTiltKi,PI_TIMESLICE_SECONDS, WristTiltMinMag);
 
 Ma3Encoder12b joint1Encoder(ENCODER1_READING_PIN);
@@ -62,6 +62,7 @@ bool m4On;
 bool m5On;
 bool gripMotOn;
 bool initialized = false;
+bool limitsEnabled = true;
 
 void setup() 
 {
@@ -124,8 +125,8 @@ void setup()
   dev5.setRampUp(WristRampUp);
   dev5.setRampDown(WristRampDown);
 
-  dev4.setHardBrake(true);
-  dev5.setHardBrake(true);
+  //dev4.setHardBrake(true);
+  //dev5.setHardBrake(true);
 
   delay(2000); //let background processes finish before turning on the watchdog
   
@@ -293,6 +294,14 @@ void processBaseStationCommands()
         *armCurrent = readMasterCurrent();
         roveComm_SendMsg(ArmCurrentMain, sizeof(float), armCurrent);
         break;
+
+      case EnableLimits:
+        limitsEnabled = true;
+        break;
+
+      case DisableLimits:
+        limitsEnabled = false;
+        break;
         
       default:
         break; //do nothing if it's not a known ID
@@ -346,6 +355,7 @@ void motorFaultHandling()
   }
 }
 
+//resets the microcontroller
 void resetTiva()
 {
   HWREG(NVIC_APINT) = NVIC_APINT_VECTKEY | NVIC_APINT_SYSRESETREQ;
@@ -514,32 +524,35 @@ CommandResult moveJ2(int16_t moveValue)
   else if(moveValue < 0)
     moveValue = -BaseMaxSpeed; //adjusting for base station scaling
 
-  if(checkLimSwitch(BASE_LIMIT_PIN) && !limitSwitchHit) //first time code detects switch being hit
+  if(limitsEnabled)
   {
-    float currentPos = joint2Encoder.getFeedbackDegrees();
-    limitSwitchHit = true;
-    if(350 < currentPos || currentPos < 70) //if we're at the lower end position, restrict movement to the positive direction
+    if(checkLimSwitch(BASE_LIMIT_PIN) && !limitSwitchHit) //first time code detects switch being hit
     {
-      moveAllowedDir = 1;
+      float currentPos = joint2Encoder.getFeedbackDegrees();
+      limitSwitchHit = true;
+      if(350 < currentPos || currentPos < 90) //if we're at the lower end position, restrict movement to the positive direction
+      {
+        moveAllowedDir = 1;
+      }
+      else
+      {
+        moveAllowedDir = -1; 
+      }
+  
+     moveValue = 0;
     }
-    else
+    else if(checkLimSwitch(BASE_LIMIT_PIN) && limitSwitchHit)
     {
-      moveAllowedDir = -1; 
+      //if limit switch has already been hit, we need to move away from it. Restrict movement direction to away from the limit switch
+      if(!(moveValue > 0 && moveAllowedDir >= 0) && !(moveValue < 0 && moveAllowedDir <= 0)) 
+      {
+        moveValue = 0;
+      }
     }
-
-   moveValue = 0;
-  }
-  else if(checkLimSwitch(BASE_LIMIT_PIN) && limitSwitchHit)
-  {
-    //if limit switch has already been hit, we need to move away from it. Restrict movement direction to away from the limit switch
-    if(!(moveValue > 0 && moveAllowedDir >= 0) && !(moveValue < 0 && moveAllowedDir <= 0)) 
+    else if(!checkLimSwitch(BASE_LIMIT_PIN))
     {
-      moveValue = 0;
+      limitSwitchHit = false;
     }
-  }
-  else if(!checkLimSwitch(BASE_LIMIT_PIN))
-  {
-    limitSwitchHit = false;
   }
   
   joint2Open.runOutputControl(moveValue);
@@ -553,35 +566,38 @@ CommandResult moveJ3(int16_t moveValue)
   static bool limitSwitchHit = false;
   static int moveAllowedDir = 0;
 
-  if(checkLimSwitch(ELBOW_LIMIT_PIN) && !limitSwitchHit) //first time code detects switch being hit
+  if(limitsEnabled)
   {
-    float currentPos = joint3Encoder.getFeedbackDegrees();
-    limitSwitchHit = true;
-    if(350 < currentPos || currentPos < 70) //if we're at the lower end position, restrict movement to the positive direction
+    if(checkLimSwitch(ELBOW_LIMIT_PIN) && !limitSwitchHit) //first time code detects switch being hit
     {
-      moveAllowedDir = 1;
+      float currentPos = joint3Encoder.getFeedbackDegrees();
+      limitSwitchHit = true;
+      if(350 < currentPos || currentPos < 100) //if we're at the lower end position, restrict movement to the positive direction
+      {
+        moveAllowedDir = 1;
+      }
+      else
+      {
+        moveAllowedDir = -1; 
+      }
+  
+     moveValue = 0;
     }
-    else
+    else if(checkLimSwitch(ELBOW_LIMIT_PIN) && limitSwitchHit)
     {
-      moveAllowedDir = -1; 
+      //if limit switch has already been hit, we need to move away from it. Restrict movement direction to away from the limit switch
+      if(!(moveValue > 0 && moveAllowedDir >= 0) && !(moveValue < 0 && moveAllowedDir <= 0)) 
+      {
+        moveValue = 0;
+      }
     }
-
-   moveValue = 0;
-  }
-  else if(checkLimSwitch(ELBOW_LIMIT_PIN) && limitSwitchHit)
-  {
-    //if limit switch has already been hit, we need to move away from it. Restrict movement direction to away from the limit switch
-    if(!(moveValue > 0 && moveAllowedDir >= 0) && !(moveValue < 0 && moveAllowedDir <= 0)) 
+    else if(!checkLimSwitch(ELBOW_LIMIT_PIN))
     {
-      moveValue = 0;
+      limitSwitchHit = false;
     }
   }
-  else if(!checkLimSwitch(ELBOW_LIMIT_PIN))
-  {
-    limitSwitchHit = false;
-  }
-
   joint3Open.runOutputControl(moveValue);
+  
 }
 
 //moves the fourth joint
@@ -600,32 +616,35 @@ CommandResult moveJ5(int16_t moveValue)
   static bool limitSwitchHit = false;
   static int moveAllowedDir = 0;
 
-  if(checkLimSwitch(WRIST_LIMIT_PIN) && !limitSwitchHit) //first time code detects switch being hit
+  if(limitsEnabled)
   {
-    float currentPos = joint5Encoder.getFeedbackDegrees();
-    limitSwitchHit = true;
-    if(350 < currentPos || currentPos < 70) //if we're at the lower end position, restrict movement to the positive direction
+    if(checkLimSwitch(WRIST_LIMIT_PIN) && !limitSwitchHit) //first time code detects switch being hit
     {
-      moveAllowedDir = 1;
+      float currentPos = joint5Encoder.getFeedbackDegrees();
+      limitSwitchHit = true;
+      if(350 < currentPos || currentPos < 100) //if we're at the lower end position, restrict movement to the positive direction
+      {
+        moveAllowedDir = 1;
+      }
+      else
+      {
+        moveAllowedDir = -1; 
+      }
+  
+     moveValue = 0;
     }
-    else
+    else if(checkLimSwitch(WRIST_LIMIT_PIN) && limitSwitchHit)
     {
-      moveAllowedDir = -1; 
+      //if limit switch has already been hit, we need to move away from it. Restrict movement direction to away from the limit switch
+      if(!(moveValue > 0 && moveAllowedDir >= 0) && !(moveValue < 0 && moveAllowedDir <= 0)) 
+      {
+        moveValue = 0;
+      }
     }
-
-   moveValue = 0;
-  }
-  else if(checkLimSwitch(WRIST_LIMIT_PIN) && limitSwitchHit)
-  {
-    //if limit switch has already been hit, we need to move away from it. Restrict movement direction to away from the limit switch
-    if(!(moveValue > 0 && moveAllowedDir >= 0) && !(moveValue < 0 && moveAllowedDir <= 0)) 
+    else if(!checkLimSwitch(WRIST_LIMIT_PIN))
     {
-      moveValue = 0;
+      limitSwitchHit = false;
     }
-  }
-  else if(!checkLimSwitch(WRIST_LIMIT_PIN))
-  {
-    limitSwitchHit = false;
   }
   
   joint5Open.runOutputControl(moveValue); 
@@ -650,7 +669,7 @@ CommandResult moveGripper(int16_t moveValue)
 CommandResult moveGripServo(int16_t moveValue)
 {  
     if(moveValue > 0)
-    moveValue = 600;
+    moveValue = 600; //largest value found that the servo moves at; starts not working beyond this
   else if(moveValue < 0)
     moveValue = -600;
   gripperServo.runOutputControl(moveValue);
@@ -871,7 +890,7 @@ float negativeDegreeCorrection(float correctThis)
   return(correctThis);
 }
 
-//Timer 0 periodic timeout interrupt. 
+//Timer 7 periodic timeout interrupt. 
 //In this interrupt, closed loop protocol is serviced by updating the arm joint's destination positions.
 //The interrupt doesn't decide the destination positions; that's done by other functions. Instead, it just tells the joints 
 //to go towards their predetermined positions. This is done because closed loop uses PI logic controls, and PI logic needs to be updated 
