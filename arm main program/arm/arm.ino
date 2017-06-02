@@ -61,7 +61,8 @@ bool m3On;
 bool m4On;
 bool m5On;
 bool gripMotOn;
-bool initialized = false;
+bool initialized = false; //tracks if program setup is finished. Needed as some closed loop interrupts will fail if parts of their code is run before initialize is finished, so this flag
+                          //prevents fragile hardware calls from firing before then
 bool limitsEnabled = true;
 
 void setup() 
@@ -125,10 +126,7 @@ void setup()
   dev5.setRampUp(WristRampUp);
   dev5.setRampDown(WristRampDown);
 
-  //dev4.setHardBrake(true);
-  //dev5.setHardBrake(true);
-
-  delay(2000); //let background processes finish before turning on the watchdog
+  delay(2000); //let background processes finish before turning on the watchdog. Experimentation found that 2 seconds worked while values such as 1.5 resulted in program failure
   
   initWatchdog(WATCHDOG_TIMEOUT_US);
   

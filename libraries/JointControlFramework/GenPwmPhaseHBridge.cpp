@@ -64,14 +64,7 @@ void GenPwmPhaseHBridge::move(const long movement)
   
   //stop
   else if(mov == 0)
-  {
-    if(hardStop && currentSpeed != 0) //reverse for a small period of time if hard stop is enabled
-    {
-      pwm = -1 * currentSpeed;
-      PwmWrite(PWM_PIN, pwm);
-      delay(1);
-    }
-    
+  {   
     PwmWrite(PWM_PIN, 0);//set enable to 0 to brake motor
     //phase don't matter
   }
@@ -170,9 +163,4 @@ long GenPwmPhaseHBridge::getCurrentMove()
   {
     return(currentSpeed);
   }
-}
-
-void GenPwmPhaseHBridge::setHardBrake(bool hardStopOn)
-{
-  hardStop = hardStopOn;
 }
