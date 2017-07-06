@@ -49,8 +49,8 @@ class JointInterface
   public:
 
     //variables to store the speed of either motor
-    int motorOneSpeed = 0;
-    int motorTwoSpeed = 0;
+    int motorOneVirtualSpeed = 0;
+    int motorTwoVirtualSpeed = 0;
 
     //Runs the output control for this joint, IE making it move or checking
     //feedback to see if it needs to move, whatever the algorithm for
@@ -94,6 +94,10 @@ class OutputDevice
   
     //tells the device to power on or off. Note that on setup, devices should assume power is off
     virtual void setPower(bool powerOn) = 0;
+    
+    //gets the current moving value of the device. 
+    //return value depends on what value type the device operates on; a speed value for speed devices, etc.
+    virtual long getCurrentMove();
 
 	protected:
 

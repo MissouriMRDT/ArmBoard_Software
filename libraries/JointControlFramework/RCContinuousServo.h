@@ -8,9 +8,9 @@ class RCContinuousServo : public OutputDevice
 {
   private:
     int PWM_PIN;
-    const int PWM_MAX_FWD = 2500, PWM_MAX_REV = 500, PWM_STOP = 1500; //values represent microseconds in pwm pulse width
+    const int PWM_MAX_FWD = 2500, PWM_MAX_REV = 500, PWM_STOP = 1495; //values represent microseconds in pwm pulse width
     const int PWM_PERIOD = 20000; // this is in microseconds
-
+    int currentSpeed = 0;
 
   protected:
     // move function which passes in speed to move the device
@@ -25,6 +25,9 @@ class RCContinuousServo : public OutputDevice
 
     // tells the device to power on or off. Note that on setup, device assumes power is off
     void setPower(bool powrOn);
+    
+    //returns how fast the device was last told to move
+    long getCurrentMove();
 };
 
 #endif

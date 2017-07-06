@@ -12,6 +12,7 @@ class DynamixelController : public OutputDevice
     int Tx_PIN;
     int Rx_PIN;
     uint32_t baudRate;
+    int currentSpeed = 0;
 
     //values which the dynamixel expects the speed to be between. CW = clockwise/positive/forward  CCW = counter-clockwise/negative/backwards
     const int DYNA_SPEED_CW_MAX = 1023;
@@ -46,6 +47,9 @@ class DynamixelController : public OutputDevice
     
     //tells the device to power on or off. Note that on setup, devices should assume power is off
     void setPower(bool powerOn);
+    
+    //gets how quickly the dynamixel is moving
+    long getCurrentMove();
 };
 
 #endif

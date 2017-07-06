@@ -8,7 +8,7 @@ class VNH5019 : public OutputDevice
   private:
     int PWM_PIN, INA_PIN, INB_PIN;
     const int PWM_MIN = 0, PWM_MAX = 255;
-
+    int currentSpeed = 0;
 
   protected:
     //move function which passes in speed (which is converted to phase and PWM) to move device
@@ -20,6 +20,8 @@ class VNH5019 : public OutputDevice
     
     //tells the device to power on or off. Note that on setup, device assumes power is off
     void setPower(bool powerOn);
+    
+    long getCurrentMove();
 };
 
 #endif
