@@ -3,7 +3,7 @@
 ## Overview
 Programmers: Drue Satterfield, David Strickland
 
-Used for controlling output devices and easily manipulating joints. The user will only ever interact with the Joint Interface, which keeps track of an output device which moves that joint, and an algorithm for controlling that joint.
+Used for controlling output devices and easily manipulating joints. The user interacts with the joint interface for main joint manipulation and management, while individual classes can be called for their specific responsibilities such as setting power to an motor device.
 
 [More Details Here](https://github.com/MST-MRDT/ArmBoardSoftware/wiki/Joint-control-framework-overview)
 
@@ -32,7 +32,6 @@ Interface for controlling the overall joint from the main program's perspective.
 
 ### Algorithms
 Algorithms convert the input from base station to whatever is needed to interpret the command.
-* `Spd to Spd no feedback` For inputting speed and outputting speed without feedback. Open loop speed control.
 * `PIAlgorithm` Closed loop algorithm, using PI logic. Logic is generalized, PI constants are accepted through constructors. To be used when position is recieved from the base station and the speed is to be sent to the device, which in turn, returns feedback of the device's current location. Note that this algorithm needs to be looped externally until `JointInterface` returns am `OutputComplete` status, as each call only executes the PI loop once instead of waiting until completion.
 
 ### Output Devices
@@ -40,7 +39,8 @@ Controls the devices which move the arm, such as motor controllers, using the ha
 * `DirectDiscreteHBridge` An h-bridge made out of discrete components (not an IC), and the microcontroller lines directly control it (no other devices in between them). Two inputs, NTransistor1 and NTransistor2. It's assumed the other two transistors will be p-type transistors so they don't need control lines to the microcontroller. 
 * `Sdc2130` A brushed DC motor controller, capable of being controlled via PWM or serial, and controlling the motor based on speed, position, or torque with feedback capabilities. Currently the only implemented modes are controlling it via PWM and moving by taking in a speed position. (Best we got it working is to make it slightly increment position when we tell it to move. So the only set up movement is for the device to take in a speed value, look at the value and if it's greater than 0, slightly move it up, and if it's less than 0 slightly move it down.)
 * `DynamixelController` Interfaces with either MX or AX dynamixel. They can operate in Wheel, Joint, and Multi-rotation modes which take speed, position, and position respectively. Requires `RoveDynamixel.h`.
-* `GenPwmPHaseHBridge` A class that represents any case where the h-bridge is controlled via two pins, specifically a speed pin controlled by PWM and a direction/phase pin.
+* `GenPwmPHaseHBridge` A class that represents any case where the h-bridge is controlled via two pins, specifically a speed pin controlled by PWM and a direction/phase pin. This class also has a great deal of extended functionality built in, due to being the 
+primary class used historically so the one with the most development. For more details, see its h file.
 * `RCContinuousServo` Generic class for any RC Continuous Servo device.
 * `VNH5019` VNH5019 H-bridge IC
 
@@ -53,6 +53,7 @@ In order to implement new modules into the framework:
 1) Inherit from the proper abstract class.
 2) Define a constructor.
    * If it's a device class then it should take in whatever parameters it needs to output properly such as hardware pins.
-   * If it's an open-loop algorithm class, then the constructor likely doesn't take anything and all it needs to do internally is set the algorithm's input and output types. Also for open-loop algorithm classes, their class setup must specify that `JointInterface` is a friend class (as the constructor should be protected since the user never needs it).
    * If it's a closed-loop algorithm class, then the constructor should take in any parameters used to configure the algorithm as well as internally set the input and output types. For closed-loop algorithm classes, the constructor should be public since the user will need to construct them personally.
 3) Document the module in this README.
+4) Make sure to test the module and see that it compiles properly; there are lots of minor tests programs included in this repo
+for example
