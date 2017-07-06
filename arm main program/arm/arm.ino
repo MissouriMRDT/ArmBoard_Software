@@ -4,12 +4,29 @@
  * Spring 17
  * 
  * The main arm program, for revision two of the arm hardware. 
- * Handles all arm processes and telemetry, based on commands from base station using the rovecomm standard.
- * 
+ * Handles all arm processes and telemetry, based on commands from base station using the rovecomm standard. 
+ * The program operates in two modes; open loop and closed loop mode. In the former, commands are interpreted as being based on 
+ * motor speed control, and no hardware feedabck is used. In the latter, the program uses PI control schemes to move the arm's 5 joints
+ * by positional control (except for the wrist rotation joint, we saw no value in controlling it with anything but open loop speed. 
+ * This is a recent change, so parts of the program might still refer to updating 5 joints rather than the 4 actually used).
+ * In the latter, timer 7 is used to consistently update the controls, periodically telling the PI algorithms to move their joints
+ * to their destination positions. 
+ * Which mode is used switches depending on which command we receive. Positional commands switch the program to closed loop, the rest 
+ * switch the program to open loop.
+ *
  * For more information on the hardware, visit the MRDT ArmBoardHardware github
  * For more information on the software, visit the MRDT ArmBoardSoftware github, plus the assorted libraries used have documentation under their folders at energia\libraries
  * 
- * Hardware used: timers 1-5, 7, and all of the pwm modules on the tiva tm4c1294ncpdt
+ * Hardware used: timers 1-5, 7, a watchdog timer, and all of the pwm modules on the tiva tm4c1294ncpdt
+ *
+ * Other notes: The program uses a watchdog timer to reset the microcontroller whenever we aren't receiving commands. This is because
+ * there's a critically unresolved issue where rovecomm_getMsg will cause latency build up and eventually crash the program,
+ * for unknown reasons. The issue is gotten around by reseting the core when the user isn't using the arm, resetting the latency 
+ * build up as well.
+ *
+ * Known issues: The latency buildup caused by rovecomm_getMsg. IK command compiles but is entirely untested. The hardware 
+ * for obtaining the arm's amperage draw and the motor's fault checking are both unreliable and need testing. Function 
+ * allMotorsPowerSet needs updating.
  */
 
 
@@ -63,7 +80,7 @@ bool m5On;
 bool gripMotOn;
 bool initialized = false; //tracks if program setup is finished. Needed as some closed loop interrupts will fail if parts of their code is run before initialize is finished, so this flag
                           //prevents fragile hardware calls from firing before then
-bool limitsEnabled = true;
+bool limitsEnabled = true; //tracks if hardware limit switches are being used or if they're being overridden
 
 void setup() 
 {
@@ -99,6 +116,8 @@ void setup()
   //There are 5 controls to update independently. They update one at a time, one being serviced every time the timer fires. So it takes 5 timer
   //firings for any individual control to get updated again. Meaning the timeslice of the timer itself must be one fifth of the PI algorithms overall timeslice so that 
   //when it cycles back around the overall timeslice will have passed
+  //Update: 4 controls are now used, but the setup still works just fine by firing off 5 times per overall timeslice and 
+  //changing it would require modifying the interrupt as well, so it's staying the way it is
   setupTimer7((PI_TIMESLICE_SECONDS/5.0) * 1000000.0); //function expects microseconds
 
   joint1Alg.setDeadband(BaseRotateDeadband);
@@ -137,16 +156,17 @@ void setup()
 after initialization, function has three responsibilities it juggles. 
  1) handle messages from base station and carry orders out. 
       a) if messages don't come in for a certain amount of time, assume line is disconnected or that the driver is no longer using the arm 
-      and stop the arm from moving until more commands come in
+      and watchdog resets the arm, stopping the arm from moving until more commands come in
  2) protect the arm from overcurrenting, by checking for an overcurrent condition and handling it by killing power and reporting the error to base station
  3) protect the individual motors from overcurrenting, by checking for motor fault conditions and handling it by killing power to those motors and reporting the error
 */
 void loop()
 { 
   processBaseStationCommands();
+  
   //armOvercurrentHandling(); arm current sensing is currently buggy
 
-  //motorFaultHandling(); //also might be buggy
+  //motorFaultHandling(); //hardware fault messages don't seem particularly reliable unfortunately
 }
 
 //Listens for base station commands, and if any are detected carry out arm duties based off of them. 
@@ -163,7 +183,7 @@ void processBaseStationCommands()
  
   roveComm_GetMsg(&commandId, &commandSize, commandData);
   
-  if(commandId != 0) //command packets come in 1 or 2 bytes. If it's any other size, there was probably a comm error
+  if(commandId != 0) //returns commandId == 0 if it didn't get any message
   {
     restartWatchdog(WATCHDOG_TIMEOUT_US); //reset watchdog timer since we received a command
 
@@ -385,6 +405,7 @@ CommandResult masterPowerSet(bool enable)
 }
 
 //turns on or off all the motors
+//TODO: current bug: m1On and etc aren't set, this function should probably call the individual poweron/off functions in this file
 void allMotorsPowerSet(bool enable)
 {
   if(enable)
@@ -511,7 +532,8 @@ CommandResult moveJ1(int16_t moveValue)
 
 //moves the second joint
 //note that this function is used for open loop; use the setArmDestinationAngles function for closed loop movement
-//note that the moveValue is numerically described using the joint control framework standard
+//note that the moveValue is numerically described using the joint control framework standard.
+//This being a tilt joint, limit switches are possibly used
 CommandResult moveJ2(int16_t moveValue)
 {
   static bool limitSwitchHit = false;
@@ -559,6 +581,7 @@ CommandResult moveJ2(int16_t moveValue)
 //moves the third joint
 //note that this function is used for open loop; use the setArmDestinationAngles function for closed loop movement
 //note that the moveValue is numerically described using the joint control framework standard
+//This being a tilting joint, limit switches are possibly used
 CommandResult moveJ3(int16_t moveValue)
 {
   static bool limitSwitchHit = false;
@@ -609,6 +632,7 @@ CommandResult moveJ4(int16_t moveValue)
 //moves the fifth joint
 //note that this function is used for open loop; use the setArmDestinationAngles function for closed loop movement
 //note that the moveValue is numerically described using the joint control framework standard
+//This being a tilt joint, limit switches are possibly used
 CommandResult moveJ5(int16_t moveValue)
 {
   static bool limitSwitchHit = false;
@@ -716,13 +740,13 @@ CommandResult switchToClosedLoop()
   }
 }
 
-//sets up timer 0 so that it can service closed loop functionality; 
+//sets up timer 7 so that it can service closed loop functionality; 
 //closed loop works by periodically updating all of the joints' positional destinations on a consistent timeslice.
-//Safest option for this service is to use a timer, and timer 0 is the only timer that's not in use by the rest of the program (timers 1-5 are used to read pwm).
+//Safest option for this service is to use a timer, and timers 1-5 are in use (timers 1-5 are used to read pwm).
 //After setup, timer remains ready but not running. The switchToClosedLoop function turns on the timer and its interrupt, while switchToOpenLoop turns it back off.
 void setupTimer7(float timeout_micros)
 {
-  uint32_t timerLoad = 16000000.0 * (timeout_micros/1000000.0); // clock cycle (120Mhz cycle/second) * (microsecond timeout/10000000 to convert it to seconds) = cycles till the timeout passes
+  uint32_t timerLoad = 16000000.0 * (timeout_micros/1000000.0); // timer clock cycle (16Mhz cycle/second) * (microsecond timeout/10000000 to convert it to seconds) = cycles till the timeout passes
 
   //enable timer hardware
   SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER7);
@@ -814,6 +838,11 @@ CommandResult getArmPositions(float positions[ArmJointCount])
   positions[4] = joint5Encoder.getFeedback() * ((360.0-0.0)/((float)(POS_MAX - POS_MIN)));
 }
 
+//takes in a series of 4 coordinates (x,y,z, and gripper angle) and uses inverse kinematics to compute 
+//what angle each individual joint of the arm needs to be at for the gripper's endpoint to be at that coordinate (wrist rotate aside,
+//it doesn't factor into the positional math).
+//input: the 4 coordinates, describing x,y,z coordiantes in inches, and gripper angle in degrees
+//output: 5 arm joint angles (for joints 1-5) in 0-360 degrees. Note that joint 4 is junk data, as it's not computed
 void computeIK(float coordinates[IKArgCount], float angles[ArmJointCount])
 {
   float temp;
