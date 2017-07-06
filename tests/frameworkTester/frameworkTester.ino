@@ -1,5 +1,3 @@
-#include "JointControlFramework.h"
-
 /* Programmers: Drue Satterfield, David Strickland
  * Date of creation: 10/11/2016
  * Sub system: arm board
@@ -8,12 +6,22 @@
  * Basically this is just a model of the main-ish program with the framework incorporated
  */
 
-#include "arm.h";
+
+#include "JointControlFramework.h"
+#include "arm.h"
+#include "Ma3Encoder12b.h"
+#include "DirectDiscreteHBridge.h"
+#include "DynamixelController.h"
+#include "GenPwmPhaseHBridge.h"
+#include "RCContinuousServo.h"
+#include "VNH5019.h"
+#include "Sdc2130.h"
+#include "GenPwmPhaseHBridge.h"
+#include "PIAlgorithm.h"
 
 FeedbackDevice* feedbackDevice;
 JointInterface * inHerFace;
 OutputDevice * controller;
-IOAlgorithm * algorithm;
 
 void setup() {} //fuck you setup
 
@@ -119,13 +127,15 @@ void initialize()
   delete inHerFace;
   delete controller;
 
-  controller = new DRV8388(PA_4, PK_2, false);
+  controller = new GenPwmPhaseHBridge(PA_4, PK_2, PA_2, true, false);
   inHerFace = new SingleMotorJoint(spd, controller);
 
   delete inHerFace;
   
-  algorithm = new PIAlgorithm(3,3,3);
+  PIAlgorithm* algorithm = new PIAlgorithm(3,3,3);
   inHerFace = new SingleMotorJoint(pos, algorithm, controller, feedbackDevice);
+
+  controller->setPower(true);
 }
 
 CommandResult sendMsgToEndef(uint16_t dataId, size_t dataSize, void * data)
