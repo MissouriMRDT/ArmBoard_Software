@@ -34,13 +34,13 @@ Interface for controlling the overall joint from the main program's perspective.
 Algorithms that convert the input from base station to whatever is needed for the output device interpret the command.
 This in turn is broken down into a variety of sub-abstract classes for derivitation.
 
-####Closed loop algorithms 
+#### Closed loop algorithms 
 IOConverters that take in feedback devices (sensors) to assist their calculations. This covers anything from feedback loops, to prediction loops, etc.
 
 **IMPORTANT:**  Note that these algorithms typically need to be periodically called, with the timing done externally, until `JointInterface` returns an `OutputComplete` status, as each call only executes the control loop once instead of waiting until completion.
 * `PIAlgorithm` Closed loop algorithm, using PI logic. Logic is generalized, PI constants are accepted through constructors. To be used when position is received from the base station and the speed is to be sent to the device, which in turn, returns feedback of the device's current location.
 
-####Open Loop Algorithms 
+#### Open Loop Algorithms 
 IOConverters that don't need external sensory information to perform their calculations.
 
 ### Output Devices
