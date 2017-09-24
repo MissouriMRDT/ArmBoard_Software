@@ -20,27 +20,28 @@ The `AbstractFramework.h` and `AbstractFramework.cpp` files holds the top level 
 ## Usage
 * 0) Include `RoveJointControl.h`. Then, include the derivative classes you want to use.
 * 1) Construct the `OutputDevice` representing the device (motor controller, h-bridge, etc) used to move the joint.
-* 2) If the joint is closed-loop controlled, then also construct a `FeedbackDevice` representing the device on the joint and the `IOAlgorithm` representing the desired closed-loop algorithm. Otherwise if it uses any other kind of algorithm to interpret commands for the motor, construct the `IOAlgorithm` without a feedback device. Using no `IOAlgorithm` is also an option, if the `OutputDevice` can understand the commands on its own.
-* 3) Finally, construct the `JointInterface` that represents this joint by passing in the `OutputDevice` and the `IOAlgorithm`. The constructor will also require what kind of values the `JointInterface` should expect, such as positional values or speed values. This is so that the interface knows how to properly interpret commands.
+* 2) If the joint is closed-loop controlled, then also construct a `FeedbackDevice` representing the device on the joint and the `IOAlgorithm` representing the desired closed-loop algorithm.
+* 3) Finally, construct the `JointInterface` that represents this joint by passing in the `OutputDevice`, the `FeedbackDevice`, and the `IOAlgorithm`. The constructor will also require what kind of values the `JointInterface` should expect, such as positional values or speed values. This is so that the interface knows how to properly interpret commands.
 * 4) The user should now be able to control the joint using the `JointInterface` object.
 
 ## Modules
 ### Joint Interfaces
 Interface for controlling the overall joint from the main program's perspective. It handles all duties of controlling the joint.
 * `SingleMotorJoint` Joint controlled by a singular motor device
-* `DifferentialJoint` Mechanical differential joint (two motors attached, with both motors technically controlling two degrees of freedom at once; making them move together causes the joint to move up/down so to speak, making them move in opposite causes the joint to spin in place). Typically, two instances are used together to represent the two degrees of motion the mechanical joint can do, with the user explicitely tying them together in software using the 'setDifferentialMode' function.
+* `RotateJoint` Differential joint rotational motion. Two motors move in opposite directions to control the joint. Should use the couple function with a tilt joint before using if both used
+* `TiltJoint` Differential joint tilt motion. Two motors move in the same direction to control the joint. Should use the couple function with a rotate joint before using if both used
 
 ### IOConverters
 Algorithms that convert the input from base station to whatever is needed for the output device interpret the command.
 This in turn is broken down into a variety of sub-abstract classes for derivitation.
 
-#### Closed loop algorithms 
+####Closed loop algorithms 
 IOConverters that take in feedback devices (sensors) to assist their calculations. This covers anything from feedback loops, to prediction loops, etc.
 
 **IMPORTANT:**  Note that these algorithms typically need to be periodically called, with the timing done externally, until `JointInterface` returns an `OutputComplete` status, as each call only executes the control loop once instead of waiting until completion.
 * `PIAlgorithm` Closed loop algorithm, using PI logic. Logic is generalized, PI constants are accepted through constructors. To be used when position is received from the base station and the speed is to be sent to the device, which in turn, returns feedback of the device's current location.
 
-#### Open Loop Algorithms 
+####Open Loop Algorithms 
 IOConverters that don't need external sensory information to perform their calculations.
 
 ### Output Devices

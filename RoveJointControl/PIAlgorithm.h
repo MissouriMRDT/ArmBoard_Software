@@ -4,10 +4,16 @@
 #include "AbstractFramework.h"
 #include "RoveJointUtilities.h"
 
-class PIAlgorithm : public ClosedLoopAlg
+class PIAlgorithm : public DrivingAlgorithm
 {
 
   private:
+
+    //This flag tracks whether or not the feedback device given to the algorithm is a proper fit for the algorithm
+    bool validConstruction;
+
+    //pointer to the feedback device used by this algorithm
+    FeedbackDevice * feedbackDev;
 
     float deg_deadBand;//when the joint is within this many degrees of its destination, it stops
     
