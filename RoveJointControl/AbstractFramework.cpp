@@ -15,7 +15,7 @@ bool JointInterface::verifyInput(long inputToVerify)
   }
 }
 
-bool JointInterface::switchModules(ValueType newInputType, DrivingAlgorithm* newAlgorithm)
+bool JointInterface::switchModules(ValueType newInputType, IOConverter* newAlgorithm)
 {
   if((newInputType == newAlgorithm->inType) && (controller1->inType == newAlgorithm->outType))
   {
@@ -32,7 +32,7 @@ bool JointInterface::switchModules(ValueType newInputType, DrivingAlgorithm* new
   }
 }
 
-bool JointInterface::switchModules(ValueType newInputType, DrivingAlgorithm* newAlgorithm, OutputDevice* newDevice)
+bool JointInterface::switchModules(ValueType newInputType, IOConverter* newAlgorithm, OutputDevice* newDevice)
 {
   if((newInputType == newAlgorithm->inType) && (newDevice->inType == newAlgorithm->outType))
    {
@@ -112,19 +112,5 @@ bool JointInterface::removeAlgorithm(ValueType newInputType, OutputDevice* newDe
   else
   {
     return(false);
-  }
-}
-
-bool IOConverter::addSupportingAlgorithm(SupportingAlgorithm* support)
-{
-  if(outType == ((IOConverter*)support)->outType && inType == ((IOConverter*)support)->inType)
-  {
-    supportingAlgorithm = support;
-    supportUsed = true;
-    return true;
-  }
-  else
-  {
-    return false;
   }
 }

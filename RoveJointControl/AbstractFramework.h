@@ -7,8 +7,6 @@ class JointInterface;
 class IOConverter;
 class OutputDevice;
 class FeedbackDevice;
-class SupportingAlgorithm;
-class DrivingAlgorithm;
 
 class DifferentialJoint;
 class SingleMotorJoint;
@@ -21,7 +19,7 @@ class JointInterface
     ValueType inType;
 
     //algorithm is either passed in, or created dymanically based on what is passed to the control framework interface.
-    DrivingAlgorithm* manip;
+    IOConverter* manip;
 
     //pointer to the output device instance which is passed in when creating the framework interface
     //called in runOutputControl
@@ -58,7 +56,7 @@ class JointInterface
     //       the new algorithm module
     //returns: true if swap was successful, false if not and previous settings retained
     //warning: not thread safe
-    bool switchModules(ValueType newInputType, DrivingAlgorithm* newAlgorithm);
+    bool switchModules(ValueType newInputType, IOConverter* newAlgorithm);
 
     //replaces the current joint's algorithm component and outputDevice components with different ones
     //input: the new type of input the joint is going to be given when runOutputControl is called
@@ -66,7 +64,7 @@ class JointInterface
     //       the new OutputDevice module
     //returns: true if swap was successful, false if not and previous settings retained
     //warning: not thread safe
-    bool switchModules(ValueType newInputType, DrivingAlgorithm* newAlgorithm, OutputDevice* newDevice);
+    bool switchModules(ValueType newInputType, IOConverter* newAlgorithm, OutputDevice* newDevice);
 
     //replaces the current joint's outputDevice components with a different one
     //input: the new type of input the joint is going to be given when runOutputControl is called
@@ -160,50 +158,44 @@ class OutputDevice
 
 class IOConverter
 {
-  public:
+	friend class SingleMotorJoint;
+	friend class DifferentialJoint;
+  friend class JointInterface;
 
-    bool addSupportingAlgorithm(SupportingAlgorithm* support);
-
-  protected:
-
-    SupportingAlgorithm* supportingAlgorithm;
-    bool supportUsed;
+	protected:
 
     //the types of values that the algorithm takes in and gives out
     ValueType inType;
     ValueType outType;
 
-    IOConverter()
-    {
-      supportUsed = false;
-      supportingAlgorithm = 0;
-    };
-};
+    IOConverter(){};
 
-class SupportingAlgorithm: public IOConverter
-{
-  public:
-
-    //public due to being allowed to be called by all the different DrivingAlgorithm classes, but
-    //not meant to be called by the user directly. C++ needs an internal modifier.
-    virtual long addToOutput(const long inputValue) = 0;
-};
-
-class DrivingAlgorithm: public IOConverter
-{
-  friend class SingleMotorJoint;
-  friend class DifferentialJoint;
-  friend class JointInterface;
-
-  protected:
-
-    //run whatever algorithm this implements, returns value that can be directly passed to an output device
-    //input: int in, representing the input values that need to be converted into output values.
-    //The specific value constraints depend on the input and output types the algorithm implements; for example if an algorithm
-    //is supposed to take in speed and output position, then its input is constrained by SPEED_MIN and SPEED_MAX, and its output is constrained by POS_MIN and POS_MAX
+		//run whatever algorithm this implements, returns value that can be directly passed to an output device
+		//input: int in, representing the input values that need to be converted into output values.
+		//The specific value constraints depend on the input and output types the algorithm implements; for example if an algorithm
+		//is supposed to take in speed and output position, then its input is constrained by SPEED_MIN and SPEED_MAX, and its output is constrained by POS_MIN and POS_MAX
     //bool * ret_outputFinished: parameter passed by pointer, returns true if the joint has finished its controlled movement and ready to exit the control loop,
     //false if it's still in the middle of getting to its desired finished state IE in the middle of moving to a desired end position or reaching a desired end speed
     //If ret_OutputFinished returns false but input returns 0, it's an indication that an error has occured
+		virtual long runAlgorithm(const long input, bool * ret_OutputFinished) = 0;
+};
+
+class ClosedLoopAlg : public IOConverter
+{
+  protected:
+
+    //pointer to the feedback device used by this algorithm (typically passed as a constructor argument)
+    FeedbackDevice * feedbackDev;
+
+    //This flag tracks whether or not the feedback device given to the algorithm is a proper fit for the algorithm
+    bool validConstruction;
+
+    virtual long runAlgorithm(const long input, bool * ret_OutputFinished) = 0;
+};
+
+class OpenLoopAlg: public IOConverter
+{
+  protected:
     virtual long runAlgorithm(const long input, bool * ret_OutputFinished) = 0;
 };
 

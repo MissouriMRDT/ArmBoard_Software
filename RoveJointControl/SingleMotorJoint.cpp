@@ -1,6 +1,6 @@
 #include "SingleMotorJoint.h"
 
-SingleMotorJoint::SingleMotorJoint(ValueType inputType, DrivingAlgorithm *alg, OutputDevice* cont) : JointInterface()
+SingleMotorJoint::SingleMotorJoint(ValueType inputType, IOConverter *alg, OutputDevice* cont) : JointInterface()
 {
 	//assignments
 	inType = inputType;

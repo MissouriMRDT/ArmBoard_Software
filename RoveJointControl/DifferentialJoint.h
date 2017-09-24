@@ -44,7 +44,7 @@ class DifferentialJoint : public JointInterface
 		//alg: the closed loop IOAlgorithm used by this joint
 		//cont1: The first output device controlling the first motor on this joint
 		//cont2: The second output device controlling the second motor on this joint
-		DifferentialJoint(DifferentialType jointType, ValueType inputType, DrivingAlgorithm *alg, OutputDevice* cont1, OutputDevice* cont2);
+		DifferentialJoint(DifferentialType jointType, ValueType inputType, IOConverter *alg, OutputDevice* cont1, OutputDevice* cont2);
 
 		//creates joint interface without an IO Converter, IE where output is passed straight to the output device
 		//DifferentialType: Whether this differnetial joint has tilt motion or rotate motion
@@ -62,7 +62,7 @@ class DifferentialJoint : public JointInterface
     //returns: The status of attempting to control this joint. Such as if the output is running, if it's complete, if there was an error, etc
 		JointControlStatus runOutputControl(const long movement);
 
-    bool switchDifferentialModules(ValueType newInputType, DrivingAlgorithm* newAlgorithm, OutputDevice* newDevice1, OutputDevice* newDevice2);
+    bool switchDifferentialModules(ValueType newInputType, IOConverter* newAlgorithm, OutputDevice* newDevice1, OutputDevice* newDevice2);
     
     //couples this differential joint with another; differential joints
     //are intertwined so need to interact with each other to properly gauge output power

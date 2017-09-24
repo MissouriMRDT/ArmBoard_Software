@@ -1,6 +1,6 @@
 #include "DifferentialJoint.h"
 
-DifferentialJoint::DifferentialJoint(DifferentialType jointType, ValueType inputType, DrivingAlgorithm *alg, OutputDevice* cont1, OutputDevice* cont2) : JointInterface()
+DifferentialJoint::DifferentialJoint(DifferentialType jointType, ValueType inputType, IOConverter *alg, OutputDevice* cont1, OutputDevice* cont2) : JointInterface()
 {
 	//assignments
 	inType = inputType;
@@ -176,7 +176,7 @@ void DifferentialJoint::disableJoint()
   enabled = false;
 }
 
-bool DifferentialJoint::switchDifferentialModules(ValueType newInputType, DrivingAlgorithm* newAlgorithm, OutputDevice* newDevice1, OutputDevice* newDevice2)
+bool DifferentialJoint::switchDifferentialModules(ValueType newInputType, IOConverter* newAlgorithm, OutputDevice* newDevice1, OutputDevice* newDevice2)
 {
   if((newInputType == newAlgorithm->inType) && (newDevice1->inType == newAlgorithm->outType) && (newDevice2->inType == newDevice1->inType))
   {
