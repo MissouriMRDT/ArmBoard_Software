@@ -5,7 +5,7 @@ static const int DEFAULT_MINMAG = (POWERPERCENT_MAX * .1); //The default min mag
 static const float IMPOSSIBLE_MOVEMENT = 370; //return value for functions that calculate travel routes that means the destination can't be reached
 
 
-PIAlgorithm::PIAlgorithm(int inKP, int inKI, float inDT, FeedbackDevice* fDev) : ClosedLoopAlg()
+PIAlgorithm::PIAlgorithm(int inKP, int inKI, float inDT, FeedbackDevice* fDev) : DrivingAlgorithm()
 {
   KI = inKI;
   KP = inKP;
@@ -32,7 +32,7 @@ PIAlgorithm::PIAlgorithm(int inKP, int inKI, float inDT, FeedbackDevice* fDev) :
   }
 }
 
-PIAlgorithm::PIAlgorithm(int inKP, int inKI, float inDT, FeedbackDevice* fDev, int inpower_minMag) : ClosedLoopAlg()
+PIAlgorithm::PIAlgorithm(int inKP, int inKI, float inDT, FeedbackDevice* fDev, int inpower_minMag) : DrivingAlgorithm()
 {
   KI = inKI;
   KP = inKP;
@@ -228,6 +228,12 @@ long PIAlgorithm::runAlgorithm(const long input, bool * ret_OutputFinished)
   // Calculate the value of how fast the motor needs to turn at its current interval
   int pwr_out = (KP * deg_disToDest + KI * errorSummation);
   
+  // if there's a supporting algorithm attached, run its output as well
+  if(supportUsed)
+  {
+    pwr_out += supportingAlgorithm->addToOutput(input);
+  }
+
   // Check for fringe cases if the power out value is outside of the acceptable range,
   // forcing the value to return back into the acceptable range.
   if (pwr_out > POWERPERCENT_MAX)

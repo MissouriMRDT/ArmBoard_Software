@@ -17,7 +17,7 @@ class SingleMotorJoint : public JointInterface
     //inputType: What kind of movement this joint should be controlled by, such as speed or position input.
     //alg: the closed loop IOAlgorithm used by this joint
     //cont: The first output device controlling the first motor on this joint
-		SingleMotorJoint(ValueType inputType, IOConverter *alg, OutputDevice* cont);
+		SingleMotorJoint(ValueType inputType, DrivingAlgorithm *alg, OutputDevice* cont);
 
 		~SingleMotorJoint();
 
