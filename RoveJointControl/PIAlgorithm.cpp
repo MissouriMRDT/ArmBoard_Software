@@ -218,11 +218,19 @@ long PIAlgorithm::runAlgorithm(const long input, bool * ret_OutputFinished)
   }
 
   // Check if the current value of the rotation is within the margin-of-error acceptable for the location.
-  // If so, set the value to be OutputFinished to be true, so that the function should not run again.
+  // If so, set the value to be OutputFinished to be true, so the user knows the movement is complete.
   if (-deg_deadBand < deg_disToDest && deg_disToDest < deg_deadBand)
   {
     *ret_OutputFinished = true;
-    return 0;
+
+    if(supportIsPersistant)
+    {
+      return supportingAlgorithm->addToOutput(input, 0);
+    }
+    else
+    {
+      return 0;
+    }
   }
   
   // Calculate the value of how fast the motor needs to turn at its current interval
@@ -231,7 +239,7 @@ long PIAlgorithm::runAlgorithm(const long input, bool * ret_OutputFinished)
   // if there's a supporting algorithm attached, run its output as well
   if(supportUsed)
   {
-    pwr_out += supportingAlgorithm->addToOutput(input);
+    pwr_out += supportingAlgorithm->addToOutput(input, pwr_out);
   }
 
   // Check for fringe cases if the power out value is outside of the acceptable range,

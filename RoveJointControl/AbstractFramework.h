@@ -13,6 +13,8 @@ class DrivingAlgorithm;
 class DifferentialJoint;
 class SingleMotorJoint;
 
+//Primary interface class for controlling the joint; manages the other classes and
+//computes any calculations that depend on the nature of the joint itself
 class JointInterface
 {
   protected:
@@ -20,7 +22,7 @@ class JointInterface
     //expected input type from the user
     ValueType inType;
 
-    //algorithm is either passed in, or created dymanically based on what is passed to the control framework interface.
+    //If the output device doesn't naturally understand the user's input type, then this will convert the values
     DrivingAlgorithm* manip;
 
     //pointer to the output device instance which is passed in when creating the framework interface
@@ -100,12 +102,9 @@ class JointInterface
     virtual void enableJoint() = 0;
 };
 
+//Represents a device (or any general method) used for getting sensory information.
 class FeedbackDevice
 {
-	friend class SingleMotorJoint;
-	friend class DifferentialJoint;
-  friend class JointInterface;
-
 	public:
 
 		//returns feedback. Public for everything to see, if desired
@@ -116,6 +115,7 @@ class FeedbackDevice
 		ValueType fType;
 };
 
+//represents the device (or any general method) used for physically causing movement
 class OutputDevice
 {
 	//Joint interface needs access to its functions
@@ -158,16 +158,30 @@ class OutputDevice
     virtual void setPower(bool powerOn) = 0;
 };
 
+//Represents any algorithm used for converting one type of data (such as position) to another (such as velocity)
 class IOConverter
 {
   public:
 
+    //Adds a supporting algorithm to be used in conjunction with this one;
+    //this IOConverter will calculate its own output, then call the supporting
+    //algorithm and ask for its as well. In this way, multiple algorithms can be
+    //made in parallel and add up with each other.
+    //Input: The supporting algorithm to add.
+    //Returns: True if successfully added, false if there was an issue.
+    //Warning: Supporting algorithm must have the same Input type and Output type as this IOConverter.
+    //Also this function doesn't stack; only one supporting algorithm attached at a time.
     bool addSupportingAlgorithm(SupportingAlgorithm* support);
+
+    //Sets whether or not the supporting algorithm will continue to output data once the motion is completed.
+    //If true, then the supporting algorithm will be allowed to keep compensating for whatever it's compensating for when the motion has stopped.
+    void persistantSupport(bool persistant);
 
   protected:
 
     SupportingAlgorithm* supportingAlgorithm;
     bool supportUsed;
+    bool supportIsPersistant;
 
     //the types of values that the algorithm takes in and gives out
     ValueType inType;
@@ -177,18 +191,23 @@ class IOConverter
     {
       supportUsed = false;
       supportingAlgorithm = 0;
+      supportIsPersistant = false;
     };
 };
 
+//Represents an IOConverter that doesn't drive the motion on its own, but supports another IOConverter with a separate control
+//calculation. Usually compensates for some force or state for the driving algorithm.
 class SupportingAlgorithm: public IOConverter
 {
   public:
 
     //public due to being allowed to be called by all the different DrivingAlgorithm classes, but
     //not meant to be called by the user directly. C++ needs an internal modifier.
-    virtual long addToOutput(const long inputValue) = 0;
+    virtual long addToOutput(const long inputValue, const long calculatedOutput) = 0;
 };
 
+//Represents an IOConverter that can cause motion all on its own, and is the driving
+//force behind the motion when used.
 class DrivingAlgorithm: public IOConverter
 {
   friend class SingleMotorJoint;
