@@ -1,5 +1,4 @@
 #include "Sdc2130.h"
-#include "RoveBoard.h"
 
 static const int PWM_MIN = 0, PWM_MAX = 255;
 static const int POS_INC = 2;

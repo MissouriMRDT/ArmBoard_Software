@@ -2,7 +2,7 @@
 #define GENPWMPHASEHBRIDGE_H_
 
 #include "AbstractFramework.h"
-#include "structures/RovePwmWriteStructures.h"
+#include "Roveboard.h"
 
 //generic wrapper for any brushed DC motor H bridge that takes two pins; a pwm pin and a direction pin
 class GenPwmPhaseHBridge: public OutputDevice

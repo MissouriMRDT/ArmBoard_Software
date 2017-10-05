@@ -1,5 +1,4 @@
 #include "DirectDiscreteHBridge.h"
-#include "RoveBoard.h"
 
 //Value ranges for conversting input to expected output when sending
 static const int PWM_MIN = 0, PWM_MAX = 255;

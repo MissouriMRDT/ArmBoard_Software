@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include "AbstractFramework.h"
-#include "structures/RovePwmReadStructures.h" //roveboard include
+#include "RoveBoard.h"
 
 class Ma3Encoder12b: public FeedbackDevice
 {

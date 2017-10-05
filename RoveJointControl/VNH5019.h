@@ -2,7 +2,7 @@
 #define VNH5019_H_
 
 #include "AbstractFramework.h"
-#include "structures/RovePwmWriteStructures.h" //roveboard include
+#include "RoveBoard.h"
 
 class VNH5019 : public OutputDevice
 {

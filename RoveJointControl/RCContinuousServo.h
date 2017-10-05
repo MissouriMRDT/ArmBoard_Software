@@ -2,7 +2,7 @@
 #define RCCONTINUOUSSERVO_H
 
 #include "AbstractFramework.h"
-#include "structures/RovePwmWriteStructures.h"
+#include "RoveBoard.h"
 
 class RCContinuousServo : public OutputDevice
 {

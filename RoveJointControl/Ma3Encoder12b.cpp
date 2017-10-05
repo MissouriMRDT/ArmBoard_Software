@@ -1,5 +1,4 @@
 #include "Ma3Encoder12b.h"
-#include "RoveBoard.h"
 
 static const int PWM_READ_MAX = 4097;
 static const int PWM_READ_MIN = 1;

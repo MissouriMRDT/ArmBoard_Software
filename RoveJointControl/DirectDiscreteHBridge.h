@@ -2,7 +2,7 @@
 #define DIRECTDISCRETEHBRIDGE_H_
 
 #include "AbstractFramework.h"
-#include "structures/RovePwmWriteStructures.h" //roveboard include
+#include "RoveBoard.h"
 
 class DirectDiscreteHBridge : public OutputDevice
 {

@@ -2,7 +2,7 @@
 #define SDC2130_H_
 
 #include "AbstractFramework.h"
-#include "structures/RovePwmWriteStructures.h"
+#include "RoveBoard.h"
 
 class Sdc2130: public OutputDevice
 {
