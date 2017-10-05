@@ -2,11 +2,12 @@
 #define SDC2130_H_
 
 #include "AbstractFramework.h"
+#include "RovePwmWriteStructures.h"
 
 class Sdc2130: public OutputDevice
 {
   private:
-    int PWM_PIN, TX_PIN, RX_PIN;
+    const rovePwmWrite_Handle PwmHandle;
     int pwmVal;
     int currentPower;
     long currentPosition;
@@ -36,11 +37,14 @@ class Sdc2130: public OutputDevice
   public:
 
     //constructor for control via pwm
-    //inputs:
-    //pwmPin: GPIO pin that's connected to the pwm input of the SDC2130 device. GPIO pin number id's are defined by roveboard's pinmapping
-    //inType: instance of the ValueType enum that defines what kind of input the device should take, currently just InputPowerPercent
-    //upside down: whether or not the motor is mounted in reverse so the input values would also need to be inverted
-    Sdc2130(const int pwmPin, ValueType inType, bool upsideDown);
+    //
+    //inputs: pwmGen: The index of the pwm hardware generator
+    //        pwmPin: GPIO pin that's connected to the pwm input of the SDC2130 device.
+    //                GPIO pin number id's are defined by roveboard's pinmapping
+    //        inType: instance of the ValueType enum that defines what kind of input the device should take.
+    //                Currently just InputPowerPercent
+    //        upside down: whether or not the motor is mounted in reverse so the input values would also need to be inverted
+    Sdc2130(const int pwmGen, const int pwmPin, ValueType inType, bool upsideDown);
 
     //constructor for controlling it via serial
     //Sdc2130(const int txPin, const int rxPin, ValueType inType, bool upsideDown); not implemented

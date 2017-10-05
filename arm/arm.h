@@ -10,18 +10,19 @@
 
 #include "RoveBoard_TivaTM4C1294NCPDT.h"
 #include "RoveComm.h"
-#include "inc/hw_ints.h"
-#include "driverlib/interrupt.h"
-#include "driverlib/timer.h"
-#include "driverlib/sysctl.h"
-#include "inc/hw_nvic.h"
-#include "inc/hw_types.h"
-#include "driverlib/watchdog.h"
+
 #include "GenPwmPhaseHBridge.h"
 #include "Ma3Encoder12b.h"
 #include "PIAlgorithm.h"
 #include "RCContinuousServo.h"
 #include "RoveJointControl.h"
+
+#include "inc/hw_ints.h"
+#include "driverlib/interrupt.h"
+#include "driverlib/sysctl.h"
+#include "inc/hw_nvic.h"
+#include "inc/hw_types.h"
+#include "driverlib/watchdog.h"
 
 //enum representing the different arm commands we can receive from base station.
 //There is a spreadsheet for these under rovesodrive under software architecture
@@ -229,5 +230,4 @@ void initWatchdog(uint32_t timeout_us);
 void restartWatchdog(uint32_t timeout_us);
 
 #endif /* MAIN_H_ */
-
 

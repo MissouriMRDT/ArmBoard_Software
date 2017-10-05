@@ -1,22 +1,22 @@
 #include "arm.h"
 
-Ma3Encoder12b joint1Encoder(ENCODER1_READING_PIN);
-Ma3Encoder12b joint2Encoder(ENCODER2_READING_PIN);
-Ma3Encoder12b joint3Encoder(ENCODER3_READING_PIN);
-Ma3Encoder12b joint5Encoder(ENCODER5_READING_PIN);
+Ma3Encoder12b joint1Encoder(readModule4, ENCODER1_READING_PIN);
+Ma3Encoder12b joint2Encoder(readModule1, ENCODER2_READING_PIN);
+Ma3Encoder12b joint3Encoder(readModule5, ENCODER3_READING_PIN);
+Ma3Encoder12b joint5Encoder(readModule2, ENCODER5_READING_PIN);
 
 PIAlgorithm joint1Alg(BaseRotateKp,BaseRotateKi,PI_TIMESLICE_SECONDS, &joint1Encoder);
 PIAlgorithm joint2Alg(BaseTiltKp,BaseTiltKi,PI_TIMESLICE_SECONDS, &joint2Encoder);
 PIAlgorithm joint3Alg(ElbowKp,ElbowKi,PI_TIMESLICE_SECONDS, &joint3Encoder, ElbowMinMag);
 PIAlgorithm joint5Alg(WristTiltKp,WristTiltKi,PI_TIMESLICE_SECONDS, &joint5Encoder, WristTiltMinMag);
 
-GenPwmPhaseHBridge dev1(MOT1_PWN_PIN, HBRIDGE1_PHASE_PIN, HBRIDGE1_NSLEEP_PIN, true, false);
-GenPwmPhaseHBridge dev2(MOT2_PWN_PIN, HBRIDGE2_PHASE_PIN, HBRIDGE2_NSLEEP_PIN, true, true);
-GenPwmPhaseHBridge dev3(MOT3_PWN_PIN, HBRIDGE3_PHASE_PIN, HBRIDGE3_NSLEEP_PIN, true, false);
-GenPwmPhaseHBridge dev4(MOT4_PWN_PIN, HBRIDGE4_PHASE_PIN, HBRIDGE4_NSLEEP_PIN, true, true);
-GenPwmPhaseHBridge dev5(MOT5_PWN_PIN, HBRIDGE5_PHASE_PIN, HBRIDGE5_NSLEEP_PIN, true, false);
-GenPwmPhaseHBridge gripMotorDev(GRIPMOT_PWM_PIN, GRIPMOT_PHASE_PIN, GRIPMOT_NENABLE_PIN, false, false);
-RCContinuousServo gripServoDev(GRIPPER_SERVO_PWM_PIN, false);
+GenPwmPhaseHBridge dev1(PwmGenerator2, MOT1_PWN_PIN, HBRIDGE1_PHASE_PIN, HBRIDGE1_NSLEEP_PIN, true, false);
+GenPwmPhaseHBridge dev2(PwmGenerator1, MOT2_PWN_PIN, HBRIDGE2_PHASE_PIN, HBRIDGE2_NSLEEP_PIN, true, true);
+GenPwmPhaseHBridge dev3(PwmGenerator3, MOT3_PWN_PIN, HBRIDGE3_PHASE_PIN, HBRIDGE3_NSLEEP_PIN, true, false);
+GenPwmPhaseHBridge dev4(PwmGenerator3, MOT4_PWN_PIN, HBRIDGE4_PHASE_PIN, HBRIDGE4_NSLEEP_PIN, true, true);
+GenPwmPhaseHBridge dev5(PwmGenerator2, MOT5_PWN_PIN, HBRIDGE5_PHASE_PIN, HBRIDGE5_NSLEEP_PIN, true, false);
+GenPwmPhaseHBridge gripMotorDev(PwmGenerator1, GRIPMOT_PWM_PIN, GRIPMOT_PHASE_PIN, GRIPMOT_NENABLE_PIN, false, false);
+RCContinuousServo gripServoDev(PwmGenerator0, GRIPPER_SERVO_PWM_PIN, false);
 
 SingleMotorJoint gripperMotor(InputPowerPercent, &gripMotorDev);
 SingleMotorJoint gripperServo(InputPowerPercent, &gripServoDev);
@@ -46,27 +46,29 @@ bool initialized = false;  //tracks if program setup is finished. Needed as some
 bool limitsEnabled = true; //tracks if hardware limit switches are being used or if they're being overridden
 bool watchdogUsed = false;
 
+roveTimer_Handle timer7Handle;
+
 void setup()
 {
   roveComm_Begin(192, 168, 1, 131);
-
   joint1.pairDifferentialJoint(&joint2);
   joint4.pairDifferentialJoint(&joint5);
 
-  //initialze to open loop control format
+  //Initialize to open loop control format
   switchToOpenLoop();
 
   masterPowerSet(true);
 
   allMotorsPowerSet(true);
 
-  //set timer 0 to fire at a rate where the different PI algorithms will all be updated at their expected timeslice in seconds.
+  //set timer 7 to fire at a rate where the different PI algorithms will all be updated at their expected timeslice in seconds.
   //There are 5 controls to update independently. They update one at a time, one being serviced every time the timer fires. So it takes 5 timer
   //firings for any individual control to get updated again. Meaning the timeslice of the timer itself must be one fifth of the PI algorithms overall timeslice so that
   //when it cycles back around the overall timeslice will have passed
   //Update: 4 controls are now used, but the setup still works just fine by firing off 5 times per overall timeslice and
   //changing it would require modifying the interrupt as well, so it's staying the way it is
-  setupTimer7((PI_TIMESLICE_SECONDS/5.0) * 1000000.0); //function expects microseconds
+  timer7Handle = setupTimer(Timer7, TimerPeriodicInterrupt, (PI_TIMESLICE_SECONDS/5.0) * 1000000.0);
+  attachTimerInterrupt(timer7Handle, &closedLoopUpdateHandler);
 
   joint1Alg.setDeadband(BaseRotateDeadband);
   joint1Alg.setHardStopPositions(BaseRotateHardStopUp, BaseRotateHardStopDown);
@@ -95,7 +97,7 @@ void setup()
 
   delay(2000); //let background processes finish before turning on the watchdog. Experimentation found that 2 seconds worked while values such as 1.5 resulted in program failure
 
-  initWatchdog(WATCHDOG_TIMEOUT_US);
+  //initWatchdog(WATCHDOG_TIMEOUT_US);
 
   initialized = true;
 }
@@ -272,7 +274,7 @@ CommandResult masterPowerSet(bool enable)
   }
   else
   {
-    digitalPinWrite(POWER_LINE_CONTROL_PIN, 0);
+      digitalPinWrite(POWER_LINE_CONTROL_PIN, 0);
   }
 
   return Success;
@@ -410,6 +412,10 @@ CommandResult moveJ1(int16_t moveValue)
     moveValue = BaseMaxSpeed;
   else if(moveValue < 0)
     moveValue = -BaseMaxSpeed; //adjusting for base station
+  if(moveValue != 0)
+  {
+    moveValue *= 1;
+  }
 
   joint1.runOutputControl(moveValue);
 
@@ -422,8 +428,8 @@ CommandResult moveJ1(int16_t moveValue)
 //This being a tilt joint, limit switches are possibly used
 CommandResult moveJ2(int16_t moveValue)
 {
-  static bool limitSwitchHit = false;
-  static int moveAllowedDir = 0;
+  //static bool limitSwitchHit = false;
+  //static int moveAllowedDir = 0;
 
   if(moveValue > 0)
     moveValue = BaseMaxSpeed;
@@ -460,6 +466,7 @@ CommandResult moveJ2(int16_t moveValue)
       limitSwitchHit = false;
     }
   }*/
+
   joint2.runOutputControl(moveValue);
 
   return Success;
@@ -607,9 +614,7 @@ CommandResult switchToOpenLoop()
   if(initialized)
   {
     //disable closed loop interrupts before doing any operation to preserve thread safety
-    TimerIntClear(TIMER7_BASE, TIMER_TIMA_TIMEOUT);
-    TimerDisable(TIMER7_BASE, TIMER_A);
-    TimerIntDisable(TIMER7_BASE, TIMER_TIMA_TIMEOUT);
+    stopTimer(timer7Handle);
 
     joint1.removeAlgorithm(InputPowerPercent);
     joint2.removeAlgorithm(InputPowerPercent);
@@ -642,57 +647,17 @@ CommandResult switchToClosedLoop()
     joint5.switchModules(InputPosition, &joint5Alg);
 
     //enable closed loop interrupts, which will begin to move the arm towards its set destinations
-    TimerIntClear(TIMER7_BASE, TIMER_TIMA_TIMEOUT);
-    TimerIntEnable(TIMER7_BASE, TIMER_TIMA_TIMEOUT);
-    TimerEnable(TIMER7_BASE, TIMER_A);
+    startTimer(timer7Handle);
   }
 
   return Success;
-}
-
-//sets up timer 7 so that it can service closed loop functionality;
-//closed loop works by periodically updating all of the joints' positional destinations on a consistent timeslice.
-//Safest option for this service is to use a timer, and timers 1-5 are in use (timers 1-5 are used to read pwm).
-//After setup, timer remains ready but not running. The switchToClosedLoop function turns on the timer and its interrupt, while switchToOpenLoop turns it back off.
-void setupTimer7(float timeout_micros)
-{
-  uint32_t timerLoad = 16000000.0 * (timeout_micros/1000000.0); // timer clock cycle (16Mhz cycle/second) * (microsecond timeout/10000000 to convert it to seconds) = cycles till the timeout passes
-
-  //enable timer hardware
-  SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER7);
-
-  delay(1); //let the periph finish processing
-
-  //set clock to internal precision clock of 16 Mhz
-  TimerClockSourceSet(TIMER7_BASE, TIMER_CLOCK_PIOSC);
-
-  //configure timer for count up periodic
-  TimerConfigure(TIMER7_BASE, TIMER_CFG_PERIODIC);
-
-  //set timer load based on earlier calculated value
-  TimerLoadSet(TIMER7_BASE, TIMER_A, (timerLoad));
-
-  //set up interrupts. The order here is actually important, TI's forums reccomend
-  //setting up new interrupts in this exact fashion
-  TimerIntClear(TIMER7_BASE, TIMER_TIMA_TIMEOUT);
-  TimerIntEnable(TIMER7_BASE, TIMER_TIMA_TIMEOUT);
-  IntEnable(INT_TIMER7A);
-
-  //register interrupt functions
-  TimerIntRegister(TIMER7_BASE, TIMER_A, &closedLoopUpdateHandler);
-
-  //enable master system interrupt
-  IntMasterEnable();
-
-  delay(1);
 }
 
 //sets up the watchdog timer. Watchdog timer will restart the processor and the program when it times out
 //input: timeout value in microseconds
 void initWatchdog(uint32_t timeout_us)
 {
-  if(watchdogUsed == false)
-    return;
+  watchdogUsed = true;
   uint32_t load = Fcpu * (timeout_us/1000000.0); // clock cycle (120 MHz cycle/second) * (microsecond timeout/10000000 to convert it to seconds) = cycles till the timeout passes
   load /=2; //watchdog resets after two timeouts
 
@@ -841,7 +806,6 @@ float negativeDegreeCorrection(float correctThis)
 void closedLoopUpdateHandler()
 {
   static int jointUpdated = 1;
-  TimerIntClear(TIMER7_BASE, TIMER_TIMA_TIMEOUT);
   restartWatchdog(WATCHDOG_TIMEOUT_US);
 
   jointUpdated += 1;
@@ -863,7 +827,7 @@ void closedLoopUpdateHandler()
   }
   else if(jointUpdated == 4)
   {
-    //joint4.runOutputControl(joint4Destination); only 4 joints used
+    //joint4.runOutputControl(joint4Destination); //only 4 joints used
   }
   else if(jointUpdated == 5)
   {

@@ -3,33 +3,23 @@
 
 static const int PWM_MIN = 0, PWM_MAX = 255;
 
-GenPwmPhaseHBridge::GenPwmPhaseHBridge(const int PwmPin, const int PhPin, bool upsideDown) : OutputDevice()
+GenPwmPhaseHBridge::GenPwmPhaseHBridge(const int PwmGen, const int PwmPin, const int PhPin, bool upsideDown)
+  : OutputDevice(InputPowerPercent, upsideDown), PHASE_PIN(PhPin), PwmHandle(setupPwmWrite(PwmGen, PwmPin)),
+    currentPower(0), rampUsed(false), ENABLE_PIN(-1)
 {
-  PWM_PIN = PwmPin;
-  PHASE_PIN = PhPin;
-  invert = upsideDown;
-  inType = InputPowerPercent;
-
-  currentPower = 0;
   magChangeLimUp = (POWERPERCENT_MAX - POWERPERCENT_MIN);
   magChangeLimDown = (POWERPERCENT_MAX - POWERPERCENT_MIN);
-  rampUsed = false;
-  ENABLE_PIN = -1;
 }
 
-GenPwmPhaseHBridge::GenPwmPhaseHBridge(const int PwmPin, const int PhPin, const int EnPin, bool enLogicHigh, bool upsideDown) : OutputDevice()
+GenPwmPhaseHBridge::GenPwmPhaseHBridge(const int PwmGen, const int PwmPin, const int PhPin, const int EnPin, bool enLogicHigh, bool upsideDown)
+  : OutputDevice(InputPowerPercent, upsideDown), PHASE_PIN(PhPin), PwmHandle(setupPwmWrite(PwmGen, PwmPin)),
+    currentPower(0), rampUsed(false), ENABLE_PIN(EnPin), enableLogicHigh(enLogicHigh)
 {
-  PWM_PIN = PwmPin;
-  PHASE_PIN = PhPin;
-  ENABLE_PIN = EnPin;
-  enableLogicHigh = enLogicHigh;
-  inType = InputPowerPercent;
-  invert = upsideDown;
-
-  currentPower = 0;
   magChangeLimUp = (POWERPERCENT_MAX - POWERPERCENT_MIN);
   magChangeLimDown = (POWERPERCENT_MAX - POWERPERCENT_MIN);
-  rampUsed = false;
+
+  //set power will actually toggle turning on or off the device with the enable pin, so we want to make sure it's physically turned on
+  //at the start instead of just simply setting the enabled flag
   setPower(true);
 }
 
@@ -55,7 +45,7 @@ void GenPwmPhaseHBridge::move(const long movement)
     digitalPinWrite(PHASE_PIN, HIGH);
     
     //pulsate enable pin to control motor
-    pwmWrite(PWM_PIN, pwm);
+    pwmWriteDuty(PwmHandle, pwm);
   }
   
   //if forwards
@@ -67,7 +57,7 @@ void GenPwmPhaseHBridge::move(const long movement)
     digitalPinWrite(PHASE_PIN, LOW);
     
     //pulsate enable pin to control motor
-    pwmWrite(PWM_PIN, pwm);
+    pwmWriteDuty(PwmHandle, pwm);
   }
   
   //stop
@@ -175,6 +165,6 @@ long GenPwmPhaseHBridge::getCurrentMove()
 
 void GenPwmPhaseHBridge::stop()
 {
-  pwmWrite(PWM_PIN, 0);
+  pwmWriteDuty(PwmHandle, 0);
   currentPower = 0;
 }

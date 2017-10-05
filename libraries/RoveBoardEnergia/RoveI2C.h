@@ -1,9 +1,10 @@
 #ifndef ROVEI2C_H_
 #define ROVEI2C_H_
 
-#include "RoveI2cTypenames.h"
 #include <stdint.h>
 #include <stddef.h>
+
+#include "RoveI2cStructures.h"
 
 //Initializes the i2c module for usage
 //input: i2cIndex: the index of the module, based on board specific constatns

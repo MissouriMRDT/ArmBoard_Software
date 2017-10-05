@@ -1,7 +1,8 @@
-#include "RoveI2CEnergia_TivaTM4C1294NCPDT.h"
+#include <RoveI2CEnergia_TivaTM4C1294NCPDT.h>
+#include "Debug.h"
+#include "Energia.h"
 #include "RovePinMapEnergia_TivaTM4C1294NCPDT.h"
 #include "ClockingEnergia_TivaTM4C1294NCPDT.h"
-#include "Energia.h"
 #include "driverlib/pin_map.h"
 #include "inc/hw_i2c.h"
 #include "inc/hw_memmap.h"
@@ -11,9 +12,10 @@
 #include "driverlib/sysctl.h"
 #include "driverlib/gpio.h"
 
-static void debugFault(char msg[]);
 static void masterInitExpClk(uint32_t ui32Base, RoveI2C_Speed speed);
 static void initVerifyInput(uint8_t i2cIndex, RoveI2C_Speed speed, uint8_t clockPin, uint8_t dataPin);
+static RoveI2C_Error transferHandleError(uint32_t i2cBase);
+static RoveI2C_Error transferHandleError(uint32_t i2cBase, uint32_t stopControl);
 
 static const uint32_t i2cIndexToI2cBase[] = 
 {
@@ -385,7 +387,6 @@ RoveI2C_Error roveI2cSend(RoveI2C_Handle handle, uint16_t SlaveAddr, uint8_t msg
 
   uint32_t i2cBase = i2cIndexToI2cBase[handle.index];
   bool receive = false;
-  bool timedOut = false;
 
   //slave address is bits 6:0 of byte
   SlaveAddr &= 0b01111111;
@@ -406,33 +407,8 @@ RoveI2C_Error roveI2cSend(RoveI2C_Handle handle, uint16_t SlaveAddr, uint8_t msg
   //Initiate send of data from the MCU
   I2CMasterControl(i2cBase, I2C_MASTER_CMD_SINGLE_SEND);
 
-  //wait for MCU to start transaction
-  while(!I2CMasterBusy(i2cBase));
-
-  // Wait until MCU is done transferring or it times out.
-  while(I2CMasterBusy(i2cBase) && !timedOut)
-  {
-    //check to see if the clock out bit in the master control register has been set or not; if it has, then
-    //the device has held the clock line low for too long and the module needs reset
-    timedOut = (HWREG(i2cBase + I2C_O_MCS) & I2C_MCS_CLKTO) > 0 ? true: false;
-  }
-
-  if(timedOut)
-  {
-    return(I2CERROR_TIMEOUT);
-  }
-  else if(I2CMasterErr(i2cBase) == I2C_MASTER_ERR_ADDR_ACK || I2CMasterErr(i2cBase) == I2C_MASTER_ERR_DATA_ACK)
-  {
-    return(I2CERROR_ACK);
-  }
-  else if(I2CMasterErr(i2cBase) != I2C_MASTER_ERR_NONE)
-  {
-    return(I2CERROR_OTHER);
-  }
-  else
-  {
-    return(I2CERROR_NONE);
-  }
+  //do data transfer with slave
+  return transferHandleError(i2cBase);
 }
 
 RoveI2C_Error roveI2cSend(RoveI2C_Handle handle, uint16_t SlaveAddr, uint8_t reg, uint8_t msg)
@@ -449,12 +425,11 @@ RoveI2C_Error roveI2cSendBurst(RoveI2C_Handle handle, uint16_t SlaveAddr, uint8_
 
   uint32_t i2cBase = i2cIndexToI2cBase[handle.index];
   bool receive = false;
-  bool timedOut = false;
+  RoveI2C_Error errorGot;
 
   //slave address is bits 6:0 of byte
   SlaveAddr = SlaveAddr & 0b01111111;
 
-  //if array size is 1, just call the send single byte function
   if(msgSize == 1)
   {
     return roveI2cSend(handle, SlaveAddr, msg[0]);
@@ -470,74 +445,29 @@ RoveI2C_Error roveI2cSendBurst(RoveI2C_Handle handle, uint16_t SlaveAddr, uint8_
     return(I2CERROR_BUSY);
   }
 
-  //put first byte of data to be sent into FIFO
-  I2CMasterDataPut(i2cBase, msg[0]);
-
-  //Initiate burst message send from the MCU
-  I2CMasterControl(i2cBase, I2C_MASTER_CMD_BURST_SEND_START);
-
-  //wait for MCU to start transaction
-  while(!I2CMasterBusy(i2cBase));
-
-  // Wait until MCU is done transferring or it times out.
-  while(I2CMasterBusy(i2cBase) && !timedOut)
-  {
-    //check to see if the clock out bit in the master control register has been set or not; if it has, then
-    //the device has held the clock line low for too long and the module needs reset
-    timedOut = (HWREG(i2cBase + I2C_O_MCS) & I2C_MCS_CLKTO) > 0 ? true: false;
-  }
-  if(timedOut)
-  {
-    return(I2CERROR_TIMEOUT);
-  }
-  else if(I2CMasterErr(i2cBase) == I2C_MASTER_ERR_ADDR_ACK || I2CMasterErr(i2cBase) == I2C_MASTER_ERR_DATA_ACK)
-  {
-    I2CMasterControl(i2cBase, I2C_MASTER_CMD_BURST_SEND_ERROR_STOP);
-    return(I2CERROR_ACK);
-  }
-  else if(I2CMasterErr(i2cBase) != I2C_MASTER_ERR_NONE)
-  {
-    I2CMasterControl(i2cBase, I2C_MASTER_CMD_BURST_SEND_ERROR_STOP);
-    return(I2CERROR_OTHER);
-  }
-  else {}  //error == err_none, so continue
-
-
   //send more of the data, up till the last byte, using the
   //BURST_SEND_CONT command of the I2C module
-  for(uint32_t i = 1; i < (msgSize) - 1; i++)
+  for(uint32_t i = 0; i < (msgSize) - 1; i++)
   {
     //put next piece of data into I2C FIFO
     I2CMasterDataPut(i2cBase, msg[i]);
 
     //send next data that was just placed into FIFO
-    I2CMasterControl(i2cBase, I2C_MASTER_CMD_BURST_SEND_CONT);
+    if(i == 0)
+    {
+      I2CMasterControl(i2cBase, I2C_MASTER_CMD_BURST_SEND_START);
+    }
+    else
+    {
+      I2CMasterControl(i2cBase, I2C_MASTER_CMD_BURST_SEND_CONT);
+    }
 
-    //wait for MCU to start transaction
-    while(!I2CMasterBusy(i2cBase));
-
-    // Wait until MCU is done transferring or it times out.
-    while(I2CMasterBusy(i2cBase) && !timedOut)
+    //do data transfer with slave
+    errorGot = transferHandleError(i2cBase, I2C_MASTER_CMD_BURST_SEND_ERROR_STOP);
+    if(errorGot != I2CERROR_NONE)
     {
-      //check to see if the clock out bit in the master control register has been set or not; if it has, then
-      //the device has held the clock line low for too long and the module needs reset
-      timedOut = (HWREG(i2cBase + I2C_O_MCS) & I2C_MCS_CLKTO) > 0 ? true: false;
+      return errorGot;
     }
-    if(timedOut)
-    {
-      return(I2CERROR_TIMEOUT);
-    }
-    else if(I2CMasterErr(i2cBase) == I2C_MASTER_ERR_ADDR_ACK || I2CMasterErr(i2cBase) == I2C_MASTER_ERR_DATA_ACK)
-    {
-      I2CMasterControl(i2cBase, I2C_MASTER_CMD_BURST_SEND_ERROR_STOP);
-      return(I2CERROR_ACK);
-    }
-    else if(I2CMasterErr(i2cBase) != I2C_MASTER_ERR_NONE)
-    {
-      I2CMasterControl(i2cBase, I2C_MASTER_CMD_BURST_SEND_ERROR_STOP);
-      return(I2CERROR_OTHER);
-    }
-    else {}  //error == err_none, so continue
   }
 
   //put last piece of data into I2C FIFO
@@ -546,32 +476,8 @@ RoveI2C_Error roveI2cSendBurst(RoveI2C_Handle handle, uint16_t SlaveAddr, uint8_
   //send next data that was just placed into FIFO
   I2CMasterControl(i2cBase, I2C_MASTER_CMD_BURST_SEND_FINISH);
 
-  //wait for MCU to start transaction
-  while(!I2CMasterBusy(i2cBase));
-
-  // Wait until MCU is done transferring or it times out.
-  while(I2CMasterBusy(i2cBase) && !timedOut)
-  {
-    //check to see if the clock out bit in the master control register has been set or not; if it has, then
-    //the device has held the clock line low for too long and the module needs reset
-    timedOut = (HWREG(i2cBase + I2C_O_MCS) & I2C_MCS_CLKTO) > 0 ? true: false;
-  }
-  if(timedOut)
-  {
-    return(I2CERROR_TIMEOUT);
-  }
-  else if(I2CMasterErr(i2cBase) == I2C_MASTER_ERR_ADDR_ACK || I2CMasterErr(i2cBase) == I2C_MASTER_ERR_DATA_ACK)
-  {
-    return(I2CERROR_ACK);
-  }
-  else if(I2CMasterErr(i2cBase) != I2C_MASTER_ERR_NONE)
-  {
-    return(I2CERROR_OTHER);
-  }
-  else
-  {
-    return(I2CERROR_NONE);
-  }
+  //do data transfer with slave
+  return transferHandleError(i2cBase);
 }
 
 RoveI2C_Error roveI2cSendBurst(RoveI2C_Handle handle, uint16_t SlaveAddr, uint8_t reg, uint8_t msg[], size_t msgSize)
@@ -594,7 +500,7 @@ RoveI2C_Error roveI2cReceive(RoveI2C_Handle handle, uint16_t SlaveAddr, uint8_t*
 {
   uint32_t i2cBase = i2cIndexToI2cBase[handle.index];
   bool receive = true;
-  bool timedOut = false;
+  RoveI2C_Error errorGot;
 
   //slave address is bits 6:0 of byte
   SlaveAddr = SlaveAddr & 0b01111111;
@@ -611,35 +517,14 @@ RoveI2C_Error roveI2cReceive(RoveI2C_Handle handle, uint16_t SlaveAddr, uint8_t*
   //send control byte and read from the register we specified earlier
   I2CMasterControl(i2cBase, I2C_MASTER_CMD_SINGLE_RECEIVE);
 
-  //wait for MCU to start transaction
-  while(!I2CMasterBusy(i2cBase));
-
-  //Wait until MCU is done transferring or it times out
-  while(I2CMasterBusy(i2cBase) && !timedOut)
-  {
-   //check to see if the clock out bit in the master control register has been set or not; if it has, then
-   //the device has held the clock line low for too long and the module needs reset
-   timedOut = (HWREG(i2cBase + I2C_O_MCS) & I2C_MCS_CLKTO) > 0 ? true: false;
-  }
-
-  if(timedOut)
-  {
-    return(I2CERROR_TIMEOUT);
-  }
-  else if(I2CMasterErr(i2cBase) == I2C_MASTER_ERR_ADDR_ACK || I2CMasterErr(i2cBase) == I2C_MASTER_ERR_DATA_ACK)
-  {
-    return(I2CERROR_ACK);
-  }
-  else if(I2CMasterErr(i2cBase) != I2C_MASTER_ERR_NONE)
-  {
-    return(I2CERROR_OTHER);
-  }
-  else
+  //do data transfer with slave
+  errorGot = transferHandleError(i2cBase);
+  if(errorGot == I2CERROR_NONE)
   {
     //return data pulled from the specified register, returns uint32_t even though it only contains a byte
     *buffer = I2CMasterDataGet(i2cBase);
-    return(I2CERROR_NONE);
   }
+  return errorGot;
 }
 
 RoveI2C_Error roveI2cReceive(RoveI2C_Handle handle, uint16_t SlaveAddr, uint8_t reg, uint8_t* buffer)
@@ -647,7 +532,7 @@ RoveI2C_Error roveI2cReceive(RoveI2C_Handle handle, uint16_t SlaveAddr, uint8_t 
   uint32_t i2cBase = i2cIndexToI2cBase[handle.index];
 
   bool receive = false;
-  bool timedOut = false;
+  RoveI2C_Error errorGot;
 
   //specify that we are writing (a register address) to the
   //slave device
@@ -666,32 +551,12 @@ RoveI2C_Error roveI2cReceive(RoveI2C_Handle handle, uint16_t SlaveAddr, uint8_t 
   //say we're sending a burst for some intricate i2c protocol-y reason.
   I2CMasterControl(i2cBase, I2C_MASTER_CMD_BURST_SEND_START);
 
-  //wait for MCU to start transaction
-  while(!I2CMasterBusy(i2cBase));
-
-  //Wait until MCU is done transferring or it times out
-  while(I2CMasterBusy(i2cBase) && !timedOut)
+  //do data transfer with slave
+  errorGot = transferHandleError(i2cBase, I2C_MASTER_CMD_BURST_SEND_ERROR_STOP);
+  if(errorGot != I2CERROR_NONE)
   {
-   //check to see if the clock out bit in the master control register has been set or not; if it has, then
-   //the device has held the clock line low for too long and the module needs reset
-   timedOut = (HWREG(i2cBase + I2C_O_MCS) & I2C_MCS_CLKTO) > 0 ? true: false;
+    return errorGot;
   }
-
-  if(timedOut)
-  {
-    return(I2CERROR_TIMEOUT);
-  }
-  else if(I2CMasterErr(i2cBase) == I2C_MASTER_ERR_ADDR_ACK || I2CMasterErr(i2cBase) == I2C_MASTER_ERR_DATA_ACK)
-  {
-    I2CMasterControl(i2cBase, I2C_MASTER_CMD_BURST_SEND_ERROR_STOP);
-    return(I2CERROR_ACK);
-  }
-  else if(I2CMasterErr(i2cBase) != I2C_MASTER_ERR_NONE)
-  {
-    I2CMasterControl(i2cBase, I2C_MASTER_CMD_BURST_SEND_ERROR_STOP);
-    return(I2CERROR_OTHER);
-  }
-  else {} //error == err_none, so continue
 
   receive = true;
 
@@ -701,35 +566,14 @@ RoveI2C_Error roveI2cReceive(RoveI2C_Handle handle, uint16_t SlaveAddr, uint8_t 
   //send control byte and read from the register we specified earlier
   I2CMasterControl(i2cBase, I2C_MASTER_CMD_SINGLE_RECEIVE);
 
-  //wait for MCU to start transaction
-  while(!I2CMasterBusy(i2cBase));
-
-  //Wait until MCU is done transferring or it times out
-  while(I2CMasterBusy(i2cBase) && !timedOut)
-  {
-    //check to see if the clock out bit in the master control register has been set or not; if it has, then
-    //the device has held the clock line low for too long and the module needs reset
-    timedOut = (HWREG(i2cBase + I2C_O_MCS) & I2C_MCS_CLKTO) > 0 ? true: false;
-  }
-
-  if(timedOut)
-  {
-    return(I2CERROR_TIMEOUT);
-  }
-  else if(I2CMasterErr(i2cBase) == I2C_MASTER_ERR_ADDR_ACK || I2CMasterErr(i2cBase) == I2C_MASTER_ERR_DATA_ACK)
-  {
-    return(I2CERROR_ACK);
-  }
-  else if(I2CMasterErr(i2cBase) != I2C_MASTER_ERR_NONE)
-  {
-    return(I2CERROR_OTHER);
-  }
-  else
+  //do data transfer with slave
+  errorGot = transferHandleError(i2cBase);
+  if(errorGot == I2CERROR_NONE)
   {
      //return data pulled from the specified register, returns uint32_t even though it only contains a byte
      *buffer = I2CMasterDataGet(i2cBase);
-     return(I2CERROR_NONE);
   }
+  return errorGot;
 }
 
 RoveI2C_Error roveI2cReceiveBurst(RoveI2C_Handle handle, uint16_t SlaveAddr, uint8_t* buffer, size_t sizeOfReceive)
@@ -737,7 +581,7 @@ RoveI2C_Error roveI2cReceiveBurst(RoveI2C_Handle handle, uint16_t SlaveAddr, uin
   uint8_t * receivedData = buffer;
   uint32_t i2cBase = i2cIndexToI2cBase[handle.index];
   bool receive = true;
-  bool timedOut = false;
+  RoveI2C_Error errorGot;
 
   //specify that we are going to read from slave device
   I2CMasterSlaveAddrSet(i2cBase, SlaveAddr, receive);
@@ -748,70 +592,23 @@ RoveI2C_Error roveI2cReceiveBurst(RoveI2C_Handle handle, uint16_t SlaveAddr, uin
     return(I2CERROR_BUSY);
   }
 
-  //receive control byte and read from the register we specified earlier
-  I2CMasterControl(i2cBase, I2C_MASTER_CMD_BURST_RECEIVE_START);
-
-  //wait for MCU to start transaction
-  while(!I2CMasterBusy(i2cBase));
-
-  //Wait until MCU is done transferring or it times out
-  while(I2CMasterBusy(i2cBase) && !timedOut)
+  for(uint32_t i = 0; i < (sizeOfReceive) - 1; i++)
   {
-   //check to see if the clock out bit in the master control register has been set or not; if it has, then
-   //the device has held the clock line low for too long and the module needs reset
-   timedOut = (HWREG(i2cBase + I2C_O_MCS) & I2C_MCS_CLKTO) > 0 ? true: false;
-  }
-
-  if(timedOut)
-  {
-   return(I2CERROR_TIMEOUT);
-  }
-  else if(I2CMasterErr(i2cBase) == I2C_MASTER_ERR_ADDR_ACK || I2CMasterErr(i2cBase) == I2C_MASTER_ERR_DATA_ACK)
-  {
-    I2CMasterControl(i2cBase, I2C_MASTER_CMD_BURST_RECEIVE_ERROR_STOP);
-    return(I2CERROR_ACK);
-  }
-  else if(I2CMasterErr(i2cBase) != I2C_MASTER_ERR_NONE)
-  {
-    I2CMasterControl(i2cBase, I2C_MASTER_CMD_BURST_RECEIVE_ERROR_STOP);
-    return(I2CERROR_OTHER);
-  }
-  else
-  {
-    //return data pulled from the specified register, returns uint32_t even though it's a byte of info
-    receivedData[0] = I2CMasterDataGet(i2cBase);
-  }
-
-
-  for(uint32_t i = 1; i < (sizeOfReceive) - 1; i++)
-  {
-    //send next data that was just placed into FIFO
-    I2CMasterControl(i2cBase, I2C_MASTER_CMD_BURST_RECEIVE_CONT);
-
-    //wait for MCU to start transaction
-    while(!I2CMasterBusy(i2cBase));
-
-    //Wait until MCU is done transferring or it times out
-    while(I2CMasterBusy(i2cBase) && !timedOut)
+    //receive control byte and read from the register we specified earlier
+    if(i == 0)
     {
-     //check to see if the clock out bit in the master control register has been set or not; if it has, then
-     //the device has held the clock line low for too long and the module needs reset
-     timedOut = (HWREG(i2cBase + I2C_O_MCS) & I2C_MCS_CLKTO) > 0 ? true: false;
+      I2CMasterControl(i2cBase, I2C_MASTER_CMD_BURST_RECEIVE_START);
     }
-
-    if(timedOut)
+    else
     {
-      return(I2CERROR_TIMEOUT);
+      I2CMasterControl(i2cBase, I2C_MASTER_CMD_BURST_RECEIVE_CONT);
     }
-    else if(I2CMasterErr(i2cBase) == I2C_MASTER_ERR_ADDR_ACK || I2CMasterErr(i2cBase) == I2C_MASTER_ERR_DATA_ACK)
+    
+    //do data transfer with slave
+    errorGot = transferHandleError(i2cBase, I2C_MASTER_CMD_BURST_RECEIVE_ERROR_STOP);
+    if(errorGot != I2CERROR_NONE)
     {
-      I2CMasterControl(i2cBase, I2C_MASTER_CMD_BURST_RECEIVE_ERROR_STOP);
-      return(I2CERROR_ACK);
-    }
-    else if(I2CMasterErr(i2cBase) != I2C_MASTER_ERR_NONE)
-    {
-      I2CMasterControl(i2cBase, I2C_MASTER_CMD_BURST_RECEIVE_ERROR_STOP);
-      return(I2CERROR_OTHER);
+      return errorGot;
     }
     else
     {
@@ -823,35 +620,14 @@ RoveI2C_Error roveI2cReceiveBurst(RoveI2C_Handle handle, uint16_t SlaveAddr, uin
   //send next data that was just placed into FIFO
   I2CMasterControl(i2cBase, I2C_MASTER_CMD_BURST_RECEIVE_FINISH);
 
-  //wait for MCU to start transaction
-  while(!I2CMasterBusy(i2cBase));
-
-  //Wait until MCU is done transferring or it times out
-  while(I2CMasterBusy(i2cBase) && !timedOut)
-  {
-   //check to see if the clock out bit in the master control register has been set or not; if it has, then
-   //the device has held the clock line low for too long and the module needs reset
-   timedOut = (HWREG(i2cBase + I2C_O_MCS) & I2C_MCS_CLKTO) > 0 ? true: false;
-  }
-
-  if(timedOut)
-  {
-   return(I2CERROR_TIMEOUT);
-  }
-  else if(I2CMasterErr(i2cBase) == I2C_MASTER_ERR_ADDR_ACK || I2CMasterErr(i2cBase) == I2C_MASTER_ERR_DATA_ACK)
-  {
-   return(I2CERROR_ACK);
-  }
-  else if(I2CMasterErr(i2cBase) != I2C_MASTER_ERR_NONE)
-  {
-   return(I2CERROR_OTHER);
-  }
-  else
+  //do data transfer with slave
+  errorGot = transferHandleError(i2cBase, I2C_MASTER_CMD_BURST_RECEIVE_ERROR_STOP);
+  if(errorGot == I2CERROR_NONE)
   {
     //return data pulled from specified register
     receivedData [sizeOfReceive-1] = I2CMasterDataGet(i2cBase);
-    return(I2CERROR_NONE);
   }
+  return errorGot;
 }
 
 RoveI2C_Error roveI2cReceiveBurst(RoveI2C_Handle handle, uint16_t SlaveAddr,  uint8_t reg, uint8_t* buffer, size_t sizeOfReceive)
@@ -859,7 +635,7 @@ RoveI2C_Error roveI2cReceiveBurst(RoveI2C_Handle handle, uint16_t SlaveAddr,  ui
   uint8_t* receivedData = buffer;
   uint32_t i2cBase = i2cIndexToI2cBase[handle.index];
   bool receive = false;
-  bool timedOut = false;
+  RoveI2C_Error errorGot;
 
   //specify that we are writing (a register address) to the
   //slave device
@@ -877,141 +653,54 @@ RoveI2C_Error roveI2cReceiveBurst(RoveI2C_Handle handle, uint16_t SlaveAddr,  ui
   //send control byte and register address byte to slave device
   I2CMasterControl(i2cBase, I2C_MASTER_CMD_BURST_SEND_START);
 
-  //wait for MCU to start transaction
-  while(!I2CMasterBusy(i2cBase));
-
-  //Wait until MCU is done transferring or it times out
-  while(I2CMasterBusy(i2cBase) && !timedOut)
+  //do data transfer with slave
+  errorGot = transferHandleError(i2cBase, I2C_MASTER_CMD_BURST_SEND_ERROR_STOP);
+  if(errorGot != I2CERROR_NONE)
   {
-   //check to see if the clock out bit in the master control register has been set or not; if it has, then
-   //the device has held the clock line low for too long and the module needs reset
-   timedOut = (HWREG(i2cBase + I2C_O_MCS) & I2C_MCS_CLKTO) > 0 ? true: false;
+    return errorGot;
   }
-
-  if(timedOut)
-  {
-    return(I2CERROR_TIMEOUT);
-  }
-  else if(I2CMasterErr(i2cBase) == I2C_MASTER_ERR_ADDR_ACK || I2CMasterErr(i2cBase) == I2C_MASTER_ERR_DATA_ACK)
-  {
-    I2CMasterControl(i2cBase, I2C_MASTER_CMD_BURST_SEND_ERROR_STOP);
-    return(I2CERROR_ACK);
-  }
-  else if(I2CMasterErr(i2cBase) != I2C_MASTER_ERR_NONE)
-  {
-    I2CMasterControl(i2cBase, I2C_MASTER_CMD_BURST_SEND_ERROR_STOP);
-    return(I2CERROR_OTHER);
-  }
-  else {} //no error, continue
 
   receive = true;
 
   //specify that we are going to read from slave device
   I2CMasterSlaveAddrSet(i2cBase, SlaveAddr, receive);
 
-  //receive control byte and read from the register we specified earlier
-  I2CMasterControl(i2cBase, I2C_MASTER_CMD_BURST_RECEIVE_START);
-
-  //wait for MCU to start transaction
-  while(!I2CMasterBusy(i2cBase));
-
-  //Wait until MCU is done transferring or it times out
-  while(I2CMasterBusy(i2cBase) && !timedOut)
+  for(uint32_t i = 0; i < (sizeOfReceive) - 1; i++)
   {
-   //check to see if the clock out bit in the master control register has been set or not; if it has, then
-   //the device has held the clock line low for too long and the module needs reset
-   timedOut = (HWREG(i2cBase + I2C_O_MCS) & I2C_MCS_CLKTO) > 0 ? true: false;
-  }
-
-  if(timedOut)
-  {
-    return(I2CERROR_TIMEOUT);
-  }
-  else if(I2CMasterErr(i2cBase) == I2C_MASTER_ERR_ADDR_ACK || I2CMasterErr(i2cBase) == I2C_MASTER_ERR_DATA_ACK)
-  {
-    I2CMasterControl(i2cBase, I2C_MASTER_CMD_BURST_RECEIVE_ERROR_STOP);
-    return(I2CERROR_ACK);
-  }
-  else if(I2CMasterErr(i2cBase) != I2C_MASTER_ERR_NONE)
-  {
-    I2CMasterControl(i2cBase, I2C_MASTER_CMD_BURST_RECEIVE_ERROR_STOP);
-    return(I2CERROR_OTHER);
-  }
-  else
-  {} //no error, continue
-
-  //return data pulled from the specified register, returns uint32_t despite being a byte of info
-  receivedData[0] = I2CMasterDataGet(i2cBase);
-
-
-  for(uint32_t i = 1; i < (sizeOfReceive) - 1; i++)
-  {
-    //send next data that was just placed into FIFO
-    I2CMasterControl(i2cBase, I2C_MASTER_CMD_BURST_RECEIVE_CONT);
-
-    //wait for MCU to start transaction
-    while(!I2CMasterBusy(i2cBase));
-
-    //Wait until MCU is done transferring or it times out
-    while(I2CMasterBusy(i2cBase) && !timedOut)
+    //receive control byte and read from the register we specified earlier
+    if(i == 0)
     {
-     //check to see if the clock out bit in the master control register has been set or not; if it has, then
-     //the device has held the clock line low for too long and the module needs reset
-     timedOut = (HWREG(i2cBase + I2C_O_MCS) & I2C_MCS_CLKTO) > 0 ? true: false;
+      I2CMasterControl(i2cBase, I2C_MASTER_CMD_BURST_RECEIVE_START);
+    }
+    else
+    {
+      I2CMasterControl(i2cBase, I2C_MASTER_CMD_BURST_RECEIVE_CONT);
     }
 
-    if(timedOut)
+    //do data transfer with slave
+    errorGot = transferHandleError(i2cBase, I2C_MASTER_CMD_BURST_RECEIVE_ERROR_STOP);
+    if(errorGot != I2CERROR_NONE)
     {
-     return(I2CERROR_TIMEOUT);
+      return errorGot;
     }
-    else if(I2CMasterErr(i2cBase) == I2C_MASTER_ERR_ADDR_ACK || I2CMasterErr(i2cBase) == I2C_MASTER_ERR_DATA_ACK)
+    else
     {
-      I2CMasterControl(i2cBase, I2C_MASTER_CMD_BURST_RECEIVE_ERROR_STOP);
-      return(I2CERROR_ACK);
+      //return data pulled from specified register
+      receivedData [i] = I2CMasterDataGet(i2cBase);
     }
-    else if(I2CMasterErr(i2cBase) != I2C_MASTER_ERR_NONE)
-    {
-      I2CMasterControl(i2cBase, I2C_MASTER_CMD_BURST_RECEIVE_ERROR_STOP);
-      return(I2CERROR_OTHER);
-    }
-    else {} //no error, continue
-
-    //return data pulled from specified register
-    receivedData [i] = I2CMasterDataGet(i2cBase);
   }
 
-  //send next data that was just placed into FIFO
+  //finish receive
   I2CMasterControl(i2cBase, I2C_MASTER_CMD_BURST_RECEIVE_FINISH);
 
-  //wait for MCU to start transaction
-  while(!I2CMasterBusy(i2cBase));
-
-  //Wait until MCU is done transferring or it times out
-  while(I2CMasterBusy(i2cBase) && !timedOut)
-  {
-   //check to see if the clock out bit in the master control register has been set or not; if it has, then
-   //the device has held the clock line low for too long and the module needs reset
-   timedOut = (HWREG(i2cBase + I2C_O_MCS) & I2C_MCS_CLKTO) > 0 ? true: false;
-  }
-
-  if(timedOut)
-  {
-   return(I2CERROR_TIMEOUT);
-  }
-  else if(I2CMasterErr(i2cBase) == I2C_MASTER_ERR_ADDR_ACK || I2CMasterErr(i2cBase) == I2C_MASTER_ERR_DATA_ACK)
-  {
-   return(I2CERROR_ACK);
-  }
-  else if(I2CMasterErr(i2cBase) != I2C_MASTER_ERR_NONE)
-  {
-   return(I2CERROR_OTHER);
-  }
-  else
+  //do data transfer with slave
+  errorGot = transferHandleError(i2cBase);
+  if(errorGot == I2CERROR_NONE)
   {
     //return data pulled from specified register
     receivedData [sizeOfReceive-1] = I2CMasterDataGet(i2cBase);
-    return(I2CERROR_NONE);
   }
+  return errorGot;
 }
 
 // Enable and initialize the I2C0 master module.  Use the system clock for
@@ -1084,10 +773,56 @@ static void initVerifyInput(uint8_t i2cIndex, RoveI2C_Speed speed, uint8_t clock
   }
 }
 
-static void debugFault(char msg[])
+//attempt to have I2C module do a transfer with slave.
+//Returns any errors encountered
+static RoveI2C_Error transferHandleError(uint32_t i2cBase)
 {
-  while(1)
-  {
+  bool timedOut = false;
 
+  //wait for MCU to start transaction
+  while(!I2CMasterBusy(i2cBase));
+
+  // Wait until MCU is done transferring or it times out.
+  while(I2CMasterBusy(i2cBase) && !timedOut)
+  {
+    //check to see if the clock out bit in the master control register has been set or not; if it has, then
+    //the device has held the clock line low for too long and the module needs reset
+    timedOut = (HWREG(i2cBase + I2C_O_MCS) & I2C_MCS_CLKTO) > 0 ? true: false;
   }
+
+  if(timedOut)
+  {
+    return(I2CERROR_TIMEOUT);
+  }
+  else if(I2CMasterErr(i2cBase) == I2C_MASTER_ERR_ADDR_ACK || I2CMasterErr(i2cBase) == I2C_MASTER_ERR_DATA_ACK)
+  {
+    return(I2CERROR_ACK);
+  }
+  else if(I2CMasterErr(i2cBase) != I2C_MASTER_ERR_NONE)
+  {
+    return(I2CERROR_OTHER);
+  }
+  else
+  {
+    return(I2CERROR_NONE);
+  }
+}
+
+//attempts to do data transfer with slave.
+//returns any errors encountered.
+//If an error is encountered besides timeout, then function will load
+//the stop control int into the i2C register to try and get the hardware to do its own error handling.
+//Module is frozen if timeout is encountered, so doesn't try in that case.
+static RoveI2C_Error transferHandleError(uint32_t i2cBase, uint32_t stopControl)
+{
+  RoveI2C_Error errorGot;
+
+  //do data transfer with slave
+  errorGot = transferHandleError(i2cBase);
+  if(errorGot != I2CERROR_NONE && errorGot != I2CERROR_TIMEOUT)
+  {
+    I2CMasterControl(i2cBase, I2C_MASTER_CMD_BURST_SEND_ERROR_STOP);
+  }
+
+  return errorGot;
 }

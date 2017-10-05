@@ -2,11 +2,13 @@
 #define VNH5019_H_
 
 #include "AbstractFramework.h"
+#include "RovePwmWriteStructures.h" //roveboard include
 
 class VNH5019 : public OutputDevice
 {
   private:
-    int PWM_PIN, INA_PIN, INB_PIN;
+    const int INA_PIN, INB_PIN;
+    const rovePwmWrite_Handle PwmHandle;
     int currentPower;
 
   protected:
@@ -22,9 +24,11 @@ class VNH5019 : public OutputDevice
     
   public:
   
-    //pin asignments for hardware pins, also a bool to determine the orientation of the motor.
+    //Inputs: pwm generator reference to output a pwm wave on the pwm pin,
+    //        pin assignments for hardware pins,
+    //        a bool to determine the orientation of the motor.
     //Pin numbers based on the roveboard standard
-    VNH5019 (const int PwmPin, const int InaPin, const int InbPin, bool upsideDown);
+    VNH5019(const int PwmGen, const int PwmPin, const int InaPin, const int InbPin, bool upsideDown);
     
     //returns the last move command this device got commanded.
     long getCurrentMove();

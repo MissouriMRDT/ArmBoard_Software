@@ -1,5 +1,6 @@
 #include "DigitalPinEnergia_TivaTM4C1294NCPDT.h"
 #include "RovePinMapEnergia_TivaTM4C1294NCPDT.h"
+#include "Energia.h"
 #include "driverlib/gpio.h"
 #include "driverlib/sysctl.h"
 #include "inc/hw_gpio.h"
@@ -8,6 +9,9 @@
 static const uint8_t MaxPower = MA_12;
 static const uint8_t MinPower = MA_2;
 static bool validatePin(uint8_t pinNumber, uint8_t * pinMask, uint32_t *portBase);
+
+const uint8_t InvalidPinCount = 1;
+const uint8_t InvalidPins[InvalidPinCount] = {PD_7}; //locked or used by JTAG
 
 static uint32_t constToPinStrength[] = {GPIO_STRENGTH_2MA, GPIO_STRENGTH_4MA, GPIO_STRENGTH_6MA, GPIO_STRENGTH_8MA, GPIO_STRENGTH_10MA, GPIO_STRENGTH_12MA};
 

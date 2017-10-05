@@ -1,5 +1,5 @@
-#ifndef ROVEETHERNETTYPENAMES_H_
-#define ROVEETHERNETTYPENAMES_H_
+#ifndef ROVEETHERNETSTRUCTURES_H_
+#define ROVEETHERNETSTRUCTURES_H_
 
 #include <stdint.h>
 #include "IPAddress.h"

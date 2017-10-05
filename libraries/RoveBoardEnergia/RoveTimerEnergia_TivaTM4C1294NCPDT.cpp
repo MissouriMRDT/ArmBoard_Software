@@ -6,7 +6,8 @@
  */
 
 
-#include "TimerInterfaceEnergia_TivaTM4C1294NCPDT.h"
+#include "RoveTimerEnergia_TivaTM4C1294NCPDT.h"
+#include "Debug.h"
 #include "driverlib/timer.h"
 #include "inc/hw_memmap.h"
 #include "driverlib/interrupt.h"
@@ -101,7 +102,7 @@ static TimerData timer5Data(Timer5, 0, 0, 0, 0, 0, 0, TIMER5_BASE, SYSCTL_PERIPH
 static TimerData timer6Data(Timer6, 0, 0, 0, 0, 0, 0, TIMER6_BASE, SYSCTL_PERIPH_TIMER6, INT_TIMER6A, INT_TIMER6B, timer6AHandler, timer6BHandler);
 static TimerData timer7Data(Timer7, 0, 0, 0, 0, 0, 0, TIMER7_BASE, SYSCTL_PERIPH_TIMER7, INT_TIMER7A, INT_TIMER7B, timer7AHandler, timer7BHandler);
 
-void setupTimer(uint32_t timerId, uint32_t interruptId, uint32_t timerTimeout_us)
+roveTimer_Handle setupTimer(uint32_t timerId, uint32_t interruptId, uint32_t timerTimeout_us)
 {
   assertTimerId(timerId);
   assertInterruptId(interruptId);
@@ -139,11 +140,23 @@ void setupTimer(uint32_t timerId, uint32_t interruptId, uint32_t timerTimeout_us
   
   //enable master system interrupt
   IntMasterEnable();
+
+  roveTimer_Handle handle;
+  handle.index = timerId;
+  handle.initialized = true;
+
+  return handle;
 }
 
-void startTimer(uint32_t timerId)
+void startTimer(roveTimer_Handle handle)
 {
-  assertTimerId(timerId);
+  if(handle.initialized == false)
+  {
+    debugFault("startTimer: timer handle not initialized");
+  }
+
+  uint16_t timerId = handle.index;
+
   TimerData * timerData = getTimerData(timerId);
   
   TimerIntClear(timerData->timerBase, timerData->timerAInterrupt);
@@ -151,9 +164,14 @@ void startTimer(uint32_t timerId)
   TimerEnable(timerData->timerBase, TIMER_A);
 }
 
-void stopTimer(uint32_t timerId)
+void stopTimer(roveTimer_Handle handle)
 {
-  assertTimerId(timerId);
+  if(handle.initialized == false)
+  {
+    debugFault("stopTimer: timer handle not initialized");
+  }
+
+  uint16_t timerId = handle.index;
   TimerData * timerData = getTimerData(timerId);
   
   TimerIntClear(timerData->timerBase, timerData->timerAInterrupt);
@@ -161,8 +179,14 @@ void stopTimer(uint32_t timerId)
   TimerIntDisable(timerData->timerBase, timerData->timerAInterrupt);
 }
 
-void attachTimerInterrupt(uint32_t timerId, void (*interruptFunc)(void) )
+void attachTimerInterrupt(roveTimer_Handle handle, void (*interruptFunc)(void) )
 {
+  if(handle.initialized == false)
+  {
+    debugFault("startTimer: timer handle not initialized");
+  }
+
+  uint16_t timerId = handle.index;
   TimerData * timerData = getTimerData(timerId);
   
   timerData->attachedAFunction = interruptFunc;

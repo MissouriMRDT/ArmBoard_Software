@@ -11,6 +11,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "DigitalPinStructures.h"
+
 //returns if the voltage on the passed pin is at the digital HIGH voltage level or the digital LOW voltage level.
 //High voltage = 1 in code, low voltage = 0 in code, what those are in volts is hardware dependant.
 //Inputs: number of the pin to read from, as defined in the board's PinMap file.
@@ -34,8 +36,5 @@ extern bool digitalPinWrite(uint8_t pinNumber, bool outputLevel);
 //Inputs: number of the pin to read from, as defined in the board's PinMap file. 1 for high output, 0 for low output.
 //returns true if successful, false if incorrect arguments are passed.
 extern bool digitalPinWrite(uint8_t pinNumber, bool outputLevel, uint8_t outputMode);
-
-#define HIGH 1
-#define LOW 0
 
 #endif

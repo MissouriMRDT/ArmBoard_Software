@@ -1,5 +1,5 @@
-#ifndef ROVEI2CENERGIA_TIVATM4C1294NCPDT_H_
-#define ROVEI2CENERGIA_TIVATM4C1294NCPDT_H_
+#ifndef ROVEI2C_TIVATM4C1294NCPDT_H_
+#define ROVEI2C_TIVATM4C1294NCPDT_H_
 
 /* Programmer: Drue Satterfield, Jimmy Haviland
  * Date of creation: Original program: sometime 2016. Revised for roveboard: September 2017
@@ -33,9 +33,10 @@
  * If the function returns a timeout error, you'll need to re-initialize the i2c module.
  */
 
-#include "RoveI2cTypenames.h"
+#include "RoveI2cStructures.h"
 #include <stdint.h>
 #include <stddef.h>
+#include "Energia.h"
 
 #define I2C_Module0 0
 #define I2C_Module1 1

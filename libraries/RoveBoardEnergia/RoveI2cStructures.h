@@ -1,5 +1,5 @@
-#ifndef ROVEI2CTYPENAMES_H_
-#define ROVEI2CTYPENAMES_H_
+#ifndef ROVEI2CSTRUCTURES_H_
+#define ROVEI2CSTRUCTURES_H_
 
 #include <stdint.h>
 

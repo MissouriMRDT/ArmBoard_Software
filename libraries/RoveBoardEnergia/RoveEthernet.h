@@ -7,7 +7,7 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#include "RoveEthernetTypenames.h"
+#include "RoveEthernetStructures.h"
 
 
 #define ROVE_IP_ADDR_NONE INADDR_NONE

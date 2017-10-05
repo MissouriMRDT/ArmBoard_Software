@@ -58,39 +58,61 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "Energia.h"
-
+#include "RovePwmWriteStructures.h"
 //Decides the alignment of the PWM wave. That is, where the pulse is generated in the overall waveform.
 //For example, leftAligned generates a pulse like this:   --____
 //Center aligned would look like this: __--__
-enum pwmAlignment {LeftAligned = 0, CenterAligned = 1};
+typedef enum pwmAlignment {LeftAligned = 0, CenterAligned = 1} pwmAlignment;
 
-//outputs a pwm wave at the specified duty cycle on the specified pin
-//pin: PF_0  PF_1  PF_2  PF_3  PG_0  PG_1  PK_4  PK_5
-//Duty: between 0 and 255 with 0 being 0% and 255 being 100% duty cycle
-//defaults are left alignment and non-inverted, with frequency of 490 hz
-//Note that since they all have the same frequency and settings, all 8 pins can be used seperately with this function
-void pwmWrite(uint8_t pin, uint8_t duty);
+const int PwmGenerator0 = 0;
+const int PwmGenerator1 = 1;
+const int PwmGenerator2 = 2;
+const int PwmGenerator3 = 3;
 
-//outputs a pwm wave on the specified pin, where the wave will have the specified on period/pulse width, and the specified total period (on period + off period)
-//pin: PF_0  PF_1  PF_2  PF_3  PG_0  PG_1  PK_4  PK_5
-//PulseW_us is the time in microseconds which you want the PWM to be high. 0 for 0% duty cycle and = to the PulsePeriod_us for 100% duty cycle.
-//PulsePeriod_us is the pulse overall period in microseconds. Should never exceed 32 bits(3 min or so, quite the long pwm wave)
-//defaults are left alignment and non-inverted
-void pwmWrite(uint8_t pin, uint32_t PulseW_us, uint32_t PulsePeriod_us);
+//sets up the pwm generator to be able to write a pwm wave on the specified pin
+//inputs:
+//  writeModule: the generator to use to write a pwm wave, 0 to 3
+//  pin: the pin to output the pwm wave on, must is used by the module. See header comments above for which pins are used by which generator.
+//returns: a handle to the initialized pwm instance
+//warning: Function will enter an infinite fault loop if arguments are incorrect
+//note: You CAN call this multiple times to set up a module with different pins without issue. To use all 8 pwm write pins,
+//  you'd call this twice for each pwm generator, once for each pin.
+//note: Default settings are: Left aligned wave, 2040 microsecond total period, and output isn't inverted.
+rovePwmWrite_Handle setupPwmWrite(uint8_t writeModule, uint8_t pin);
 
-//outputs a pwm wave ont eh specified pin, where the wave will have the specified on period/pulse width, the specified total period (on period + off period), the on-period pulses
-//will have the specified alignment in the total waveform, and specified inversion.
-//pin: PF_0  PF_1  PF_2  PF_3  PG_0  PG_1  PK_4  PK_5
-//PulseW_us is the time in microseconds which you want the PWM to be high. 0 for 0% duty cycle and = to the PulsePeriod_us for 100% duty cycle.
-//PulsePeriod_us is the period in microseconds which the PWM will be read. Should never exceed 32 bits(3 min or so)
-//pwmAlignemt is an enum to select the desired alignment of the PWM pulse. LeftAligned gives left alignement and CenterAligned makes center aligned.
-//invertOutput inverts the output. Makes wave either act as active low for certain components as well as right align the wave (when left aligned).
-//************************************************************************************************************************************************
-//         MAKE SURE NOT TO USE THE SAME GENERATOR IF PULSE PERIOD ALIGNMENT OR INVERT ARE DIFFERENT DOUBLE CHECK
-//************************************************************************************************************************************************
-void pwmWrite(uint8_t pin, float pulseW_us, float pulsePeriod_us, pwmAlignment alignment, bool invertOutput);    //Most complex PWM write, has all implemented options required
+//outputs a pwm wave at the specified duty cycle
+//inputs:
+//  handle: the handle of the pwm instance to write with
+//  duty: duty cycle, between 0 and 255 with 0 being 0% and 255 being 100% duty cycle
+void pwmWriteDuty(rovePwmWrite_Handle handle, uint8_t duty);
 
+//outputs a pwm wave at the specified pulse width
+//inputs:
+//  handle: the handle of the pwm instance to write with
+//  pulseW_us: width of the pwm's On period, in microseconds. 0 for 0% duty cycle, and >= to the pulse total period for 100% duty cycle.
+void pwmWriteWidth(rovePwmWrite_Handle handle, uint32_t pulseW_us);
 
+//sets the pwm total period for this generator.
+//inputs:
+//  handle: the handle of the pwm instance to write with
+//  pulsePeriod_us: width of the entire pwm wave, in microseconds. Should never exceed 32 bits(3 min or so, quite the long pwm wave)
+//warning: This will affect all the handles that are using the generator this handle uses.
+void setPwmTotalPeriod(rovePwmWrite_Handle handle, uint32_t pulsePeriod_us);
+
+//sets the pwm wave alignment for this generator.
+//inputs:
+//  handle: the handle of the pwm instance to write with
+//  alignment: pwm wave alignment
+//warning: This will affect all the handles that are using the generator this handle uses.
+void setPwmAlignment(rovePwmWrite_Handle handle, pwmAlignment alignment);
+
+//sets whether or not the output of this generator is inverted (whether the On period is a high voltage or a low, inverted means latter).
+//inputs:
+//  handle: the handle of the pwm instance to write with
+//  invertOutput: whether or not the invert the pwm wave
+//warning: This will affect all the handles that are using the generator this handle uses.
+//note: if the wave form is left aligned normally, inverting it will actually make it right aligned.
+void setPwmInvert(rovePwmWrite_Handle handle, bool invertOutput);
 
 
 #endif /* ROVEBOARD_ENERGIA_VERSION_ROVEBOARD_PWMWRITERENERGIA_TIVATM4C1294NCPDT_H_ */

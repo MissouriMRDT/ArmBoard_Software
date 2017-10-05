@@ -15,12 +15,13 @@ The `AbstractFramework.h` and `AbstractFramework.cpp` files holds the top level 
 
 ## Dependencies
 * RoveBoard
-* [RoveDynamixel](https://github.com/MST-MRDT/RoveWare)
+* [RoveDynamixel](https://github.com/MST-MRDT/RoveWare) If you want to actually control dynamixels; otherwise, that module is usually commented out due to being untested and proven to be buggy.
 
 ## Usage
 * 0) Include `RoveJointControl.h`. Then, include the derivative classes you want to use.
 * 1) Construct the `OutputDevice` representing the device (motor controller, h-bridge, etc) used to move the joint.
 * 2) If the joint is closed-loop controlled, then also construct a `FeedbackDevice` representing the device on the joint and the `IOAlgorithm` representing the desired closed-loop algorithm. Otherwise if it uses any other kind of algorithm to interpret commands for the motor, construct the `IOAlgorithm` without a feedback device. Using no `IOAlgorithm` is also an option, if the `OutputDevice` can understand the commands on its own.
+** Note that if you want to use more complicated control schemes, you can weave multiple `IOAlgorithm`'s together; `IOAlgorithm` supports lacing multiple algorithms in order so that multiple are ran in sequence whenever the joint is updated. More details in its module description below
 * 3) Finally, construct the `JointInterface` that represents this joint by passing in the `OutputDevice` and the `IOAlgorithm`. The constructor will also require what kind of values the `JointInterface` should expect, such as positional values or speed values. This is so that the interface knows how to properly interpret commands.
 * 4) The user should now be able to control the joint using the `JointInterface` object.
 
@@ -32,16 +33,17 @@ Interface for controlling the overall joint from the main program's perspective.
 
 ### IOConverters
 Algorithms that convert the input from base station to whatever is needed for the output device interpret the command.
-This in turn is broken down into a variety of sub-abstract classes for derivitation.
-
-#### Closed loop algorithms 
-IOConverters that take in feedback devices (sensors) to assist their calculations. This covers anything from feedback loops, to prediction loops, etc.
+This in turn is broken down into two sub-abstract classes.
 
 **IMPORTANT:**  Note that these algorithms typically need to be periodically called, with the timing done externally, until `JointInterface` returns an `OutputComplete` status, as each call only executes the control loop once instead of waiting until completion.
+
+#### Driving Algorithm
+IOConverters that are meant to be the driving force behind a joint, and are capable of moving it without the need of any other algorithm to support it. Only driving algorithms can be directly used by the joint interfae.
+
 * `PIAlgorithm` Closed loop algorithm, using PI logic. Logic is generalized, PI constants are accepted through constructors. To be used when position is received from the base station and the speed is to be sent to the device, which in turn, returns feedback of the device's current location.
 
-#### Open Loop Algorithms 
-IOConverters that don't need external sensory information to perform their calculations.
+#### Supporting algorithms
+IOConverters that are meant to support other algorithms, likely compensating for something during movement rather than being the driving force behind the movement itself. Supporting algorithms are passed to the driving algorithms that a joint is using, and multiple can be chained to each other.
 
 ### Output Devices
 Controls the devices which move the arm, such as motor controllers, using the hardware specifics of the devices, such as what GPIO pins.
@@ -57,18 +59,16 @@ primary class used historically so the one with the most development. For more d
 Feedback devices are used to help determine where the arm is and what steps need to be taken. Used by the `IOAlgorithm` class to perform looping.
 * `Ma3Encoder12b` MA3 magnetic encoder, 12 bit pwm version. Communicates via PWM, 12-bit resolution of degrees over 360 degrees.
 
-##Examples
-* Examples can be found in the test programs under the test folder
+## Examples
+* Examples can be found in the ArmBoardSoftware repo, where RoveJointControl was created.
 
 ## Extension
 In order to implement new modules into the framework:
 * 1) Inherit from the proper abstract class.
 * 2) Define a constructor.
    * ...If it's a device class then it should take in whatever parameters it needs to output properly such as hardware pins.
-   * ...If it's a closed-loop algorithm class, then the constructor should take in any parameters used to configure the algorithm as well as internally set the input and output types. For closed-loop algorithm classes, the constructor should be public since the user will need to construct them personally.
+   * ...If it's a closed-loop algorithm class, then the constructor should take in any parameters used to configure the algorithm as well as internally set the input and output types. For closed-loop algorithm classes, the constructor should be public since the user will need to construct them personally. As well, it should take in any FeedbackDevices it needs.
    * ...In the constructor, make sure to define what the module's expected input type is (and or output type if it wants both, check the abstract classes to see what has what).
 * 3) Document the module in this README.
-* 4) Make sure to test the module and see that it compiles properly; there are lots of minor tests programs included in this repo
-for example
-* 5) Remember, operation-wide functions should be implemented in the joint interface modules, while specific operation setting functions can be handled
-by the other classes.
+* 4) Make sure to test the module and see that it compiles properly
+* 5) Remember, operation-wide functions should be implemented in the joint interface modules, while specific operation settings can be handled by the other classes.

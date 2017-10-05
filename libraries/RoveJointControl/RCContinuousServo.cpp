@@ -3,15 +3,12 @@
 
 //static const int PWM_MAX_FWD = 2500, PWM_MAX_REV = 500; //values represent microseconds in pwm pulse width
 static const int PWM_PERIOD = 20000; // also in microseconds
+static const int DEFAULT_STOP_US = 1495; //default pulse width needed to make servo stop moving
 
-RCContinuousServo::RCContinuousServo(const int pwmPin, bool upsideDown)
+RCContinuousServo::RCContinuousServo(const int pwmGen, const int pwmPin, bool upsideDown)
+  : OutputDevice(InputPowerPercent, upsideDown), pwm_stop_us(DEFAULT_STOP_US), currentPower(0), PwmHandle(setupPwmWrite(pwmGen, pwmPin))
 {
-  PWM_PIN = pwmPin;
-  inType = InputPowerPercent;
-  invert = upsideDown;
-
-  PWM_STOP = 1495;  //some devices stop at values a little bit different from others, so it's modifiable
-  currentPower = 0;
+  setPwmTotalPeriod(PwmHandle, PWM_PERIOD);
 }
 
 void RCContinuousServo::move(const long movement) {
@@ -33,8 +30,8 @@ void RCContinuousServo::move(const long movement) {
     // Unless PMW_STOP has been modified by the user; keep the different ranges
     // in case the servo with the different stop PWM pulse also has modified
     // max and min values correspondingly
-    pwm = mov+PWM_STOP;
-    pwmWrite(PWM_PIN, pwm, PWM_PERIOD);
+    pwm = mov+pwm_stop_us;
+    pwmWriteWidth(PwmHandle, pwm);
   }
 }
 
@@ -59,12 +56,12 @@ long RCContinuousServo::getCurrentMove()
 
 void RCContinuousServo::stop()
 {
-  pwmWrite(PWM_PIN, PWM_STOP, PWM_PERIOD);
+  pwmWriteWidth(PwmHandle, pwm_stop_us);
   
   currentPower = 0;
 }
 
 void RCContinuousServo::setStopPeriod(long stopPeriod_us)
 {
-  PWM_STOP = stopPeriod_us;
+  pwm_stop_us = stopPeriod_us;
 }

@@ -7,6 +7,7 @@
  * Update 10/20/16: works for 0% and 100%. All pins tested.
  * Update 10/21/16: Works when all 5 are on at once
  * Update 11/3/16: added pin map layer so the user now only has to pass in one argument
+ * Update 10/4/17: Redid external API to now need a pwmRead handle instance, to enforce the user actually calling init beforehand
  *
  * Description: This library is used to read a pwm signal on
  * pins utilized by timers 1-5. The program is started by calling the
@@ -45,39 +46,44 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "Energia.h"
+#include "RovePwmReadStructures.h"
 
-//Begins reading pwm pulses on the specified pin.
-//Input: The pin to cease reading pwm on, using the energia
-//pin map standard
-//Output: True if initialized successfully, false if error
-//occured (most likely you input a pin that can't read pwm pulses
-bool initPwmRead(uint8_t mappedPin);
+const int readModule1 = 1;
+const int readModule2 = 2;
+const int readModule3 = 3;
+const int readModule4 = 4;
+const int readModule5 = 5;
 
-//Stops reading pwm.
-//Input: The pin to cease reading pwm on, using the energia
-//pin map standard
-void stopPwmRead(uint8_t mappedPin);
+//Begins reading pwm pulses on the specified pin using the specified timer.
+//Input: The pwmRead module to use, and which of its associated GPIO pins are to be used
+//Returns a rovePwmRead handle with internal settings initialized
+//warning: if the arguments are invalid, the function enters an infinite loop fault routine for checking in a debugger
+rovePwmRead_Handle initPwmRead(uint8_t readingModule, uint8_t mappedPin);
+
+//Stops reading pwm. 
+//Input: The handle for the pwm reading instance to stop reading with
+//Note: initPwmRead must be called before hand
+void stopPwmRead(rovePwmRead_Handle handle);
 
 //gets the duty cycle being read on the specified pin.
-//Input: The pin to cease reading pwm on, using the energia
-//pin map standard
+//Input: The handle for the pwm reading instance to stop reading with
+//Note: initPwmRead must be called before hand
 //Output: 0-100 duty cycle
-uint8_t getDuty(uint8_t mappedPin);
+uint8_t getDuty(rovePwmRead_Handle handle);
 
-//gets the total period of the PWM signal last transmitted for
+//gets the total period of the PWM signal last transmitted for 
 //the specified pin
-//Input: The pin to cease reading pwm on, using the energia
-//pin map standard
+//Input: The handle for the pwm reading instance to stop reading with
+//Note: initPwmRead must be called before hand
 //Output: period of last transmission in microseconds
-uint32_t getTotalPeriod_us(uint8_t mappedPin);
+uint32_t getTotalPeriod_us(rovePwmRead_Handle handle);
 
 //Gets the on period of the last tramsittted PWM signal for
 //the specified pin
-//Input: The pin to cease reading pwm on, using the energia
-//pin map standard
+//Input: The handle for the pwm reading instance to stop reading with
+//Note: initPwmRead must be called before hand
 //Output: On-period of pulse in microseconds
-uint32_t getOnPeriod_us(uint8_t mappedPin);
-
+uint32_t getOnPeriod_us(rovePwmRead_Handle handle);
 
 
 

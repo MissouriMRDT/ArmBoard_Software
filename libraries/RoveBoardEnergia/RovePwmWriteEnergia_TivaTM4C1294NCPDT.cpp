@@ -1,5 +1,6 @@
 #include "ClockingEnergia_TivaTM4C1294NCPDT.h"
-#include "PwmWriterEnergia_TivaTM4C1294NCPDT.h"
+#include "RovePwmWriteEnergia_TivaTM4C1294NCPDT.h"
+#include "Debug.h"
 #include "driverlib/pin_map.h"
 #include "inc/hw_memmap.h"
 #include "driverlib/sysctl.h"
@@ -8,6 +9,23 @@
 
 
 static const float DEFAULT_WAVE_FREQ = 490.0;//the default pwm frequency if none specified
+
+typedef struct PwmModuleData
+{
+  uint16_t index;
+  bool setup;
+  uint32_t f_cpuAdjusted;
+  uint32_t pulseTotalPeriod_us;
+
+  PwmModuleData(uint16_t in_index)
+  {
+    index = in_index;
+    setup = false;
+  }
+
+}PwmModuleData;
+
+PwmModuleData mod0Data(0), mod1Data(1), mod2Data(2), mod3Data(3);
 
 ////////////////////////constant static lookup tables//////////////
 
@@ -817,78 +835,168 @@ static void getAlignment(uint32_t &alignment, pwmAlignment align)
   return;
 }
 
-//most basic of the pwmWrite functions it only takes a pin and a duty cycle.
-//uses left alignment as wave alignment default, and default hz of 490
-void pwmWrite(uint8_t pin, uint8_t duty)
+static PwmModuleData* getPwmModule(uint16_t moduleIndex)
+{
+  switch(moduleIndex)
+  {
+    case 0:
+      return &mod0Data;
+
+    case 1:
+      return &mod1Data;
+
+    case 2:
+      return &mod2Data;
+
+    case 3:
+      return &mod3Data;
+  }
+
+  return 0;
+}
+
+bool validateInput(uint8_t writeModule, uint8_t pin)
+{
+  switch(writeModule)
+  {
+    case 0:
+      if(pin == PF_0 || pin == PF_1)
+      {
+        return true;
+      }
+      break;
+
+    case 1:
+      if(pin == PF_2 || pin == PF_3)
+      {
+        return true;
+      }
+      break;
+
+    case 2:
+      if(pin == PG_0 || pin == PG_1)
+      {
+        return true;
+      }
+      break;
+
+    case 3:
+      if(pin == PK_4 || pin == PK_5)
+      {
+        return true;
+      }
+      break;
+  }
+
+  return false;
+}
+
+rovePwmWrite_Handle setupPwmWrite(uint8_t writeModule, uint8_t pin)
+{
+  uint32_t gpioConfigConst, gen, pulseP_Ticks, PulsePeriod_us;
+  rovePwmWrite_Handle handle;
+  PwmModuleData* moduleData;
+
+  if(pin > 95)
+  {
+    debugFault("setupPwmWrite: pin value is nonsense");
+  }
+  else if (writeModule > 4)
+  {
+    debugFault("setupPwmWrite: writeModule value is nonsense");
+  }
+  else if(validateInput(writeModule, pin) == false)
+  {
+    debugFault("setupPwmWrite: module doesn't fit pin");
+  }
+
+  moduleData = getPwmModule(writeModule);
+
+  if(!moduleData->setup)
+  {
+    getPwmPinConfig(gpioConfigConst, pin);
+    getPwmGen(gen, pin);
+
+    //Enable PWM module
+    SysCtlPeripheralEnable(PWMPeriph);
+    while(!SysCtlPeripheralReady(PWMPeriph));
+
+    //setup pwm clock, and calculate the period and pulse width values in ticks based off of
+    //the calculated pwm clock
+    moduleData->f_cpuAdjusted = setupPwmClock(getCpuClockFreq());
+    PulsePeriod_us = (1.0/DEFAULT_WAVE_FREQ) * 1000000.0; //1/wavePeriod_hz = wavePeriod_s
+    pulseP_Ticks = moduleData->f_cpuAdjusted * (PulsePeriod_us/1000000.0); // Freq * totalPulsePeriod_s = SysFreq * (totalPulsePeriod_us / 1,000,000) = (system ticks/second) * ( totalPulsePeriod_seconds) = ticks needed
+
+    //Configure Generator no sync and no gen sync, no Deadband sync, and sets the alignment for the generator
+    PWMGenConfigure(PWMBase, gen, PWM_GEN_MODE_NO_SYNC | PWM_GEN_MODE_DOWN);
+
+    //disable the dead band
+    PWMDeadBandDisable(PWMBase, gen);
+
+    //Set default period
+    PWMGenPeriodSet(PWMBase, gen, pulseP_Ticks);
+
+    //Enable generator
+    PWMGenEnable(PWMBase, gen);
+
+    moduleData->setup = true;
+    moduleData->pulseTotalPeriod_us = PulsePeriod_us;
+  }
+
+  handle.initialized = true;
+  handle.index = writeModule;
+  handle.pin = pin;
+
+  return handle;
+}
+
+void pwmWriteDuty(rovePwmWrite_Handle handle, uint8_t duty)
 {
   uint32_t pulseW_us;
   uint32_t wavePeriod_us;
+  float percentDuty;
+  PwmModuleData* moduleData;
 
-  //convert duty cycle into a percentage
-  float percentDuty = (float)duty/255.0; //0-255 is input for duty, being 8 bit
+  if(handle.initialized == false)
+  {
+    debugFault("pwmWriteDuty: handle not initialized");
+  }
 
-  //get the waveperiod in microseconds
-  wavePeriod_us = (1.0/DEFAULT_WAVE_FREQ) * 1000000.0; //1/wavePeriod_hz = wavePeriod_s
+  moduleData = getPwmModule(handle.index);
+
+  percentDuty = (float)duty/255.0; //0-255 is input for duty, being 8 bit
+  wavePeriod_us = moduleData->pulseTotalPeriod_us;
 
   //get the microseconds that the pulse is high, which is duty percentage * wavePeriod_us
   //since duty percentage = (on period_us / wavePeriod_us)
   pulseW_us = (percentDuty * (float)wavePeriod_us);
 
-  //calls more complex function using defaults
-  pwmWrite(pin, pulseW_us, wavePeriod_us, LeftAligned, false);
+  pwmWriteWidth(handle, pulseW_us);
 }
 
-//slightly more advanced. Allows more precise control of the PWM wave.
-//Directly control the period and ontime of the PWM
-//calls most complex write function and uses default values
-void pwmWrite(uint8_t pin, uint32_t PulseW_us, uint32_t PulsePeriod_us)
+void pwmWriteWidth(rovePwmWrite_Handle handle, uint32_t pulseW_us)
 {
-  pwmWrite(pin, PulseW_us, PulsePeriod_us, LeftAligned, false);
-}
-
-//Takes in a uint8_t pin, uint32_t Pulse Width, uint32_t Pulse Period, pwmAlignemnet enum, and bool for inverting the PWM
-//The uint8_t pin should be one of the 8 available pins on the board(1-95) that is capable of supporting PWM module
-//Thes pin are 37,38,39,40,78,79,80,84
-//PulseW_us is the time in microseconds which you want the PWM to be high. 0 for 0% duty cycle and = to the PulsePeriod_us for 100% duty cycle.
-//PulsePeriod_us is the period in microseconds which the PWM will be read. Should never exceed 32 bits(3 min or so)
-//pwmAlignemt is an enum to select the desired alignment of the PWM pulses. LeftAligned gives left alignement and CenterAligned makes center aligned.
-//invertOutput inverts the output. If true, makes wave act as active low for certain components as well as right align the wave (when left aligned).
-void pwmWrite(uint8_t pin, float pulseW_us, float pulsePeriod_us, pwmAlignment alignment, bool invertOutput)
-{
-  uint32_t gpioPortBase, gpioPortPeriph, gpioConfigConst, gen, pwmPin, pwmPinBit, alignValue, pulseW_Ticks, pulseP_Ticks;
+  uint32_t gpioPortBase, gpioPortPeriph, gpioConfigConst, gen, pwmPin, pwmPinBit, pulseW_Ticks;
   uint8_t pinMask;
+  uint8_t pin = handle.pin;
+  PwmModuleData * moduleData;
 
-  if(pin > 95) //energia pinmap for tm4c1294ncpdt only goes up to 95
+  if(handle.initialized == false)
   {
-    return;
+    debugFault("pwmWriteWidth: handle not initialized");
   }
 
-  //get values from look up tables and store in variables
-  //checks first value and if valid then all others are good
-  if(getPortPeriph(gpioPortPeriph, pin) == false)
-  {
-    return; //invalid pin input
-  }
-
-  //get the necessary hardware constants for the hardware setup functions based off of the
-  //users pin
+  getPortPeriph(gpioPortPeriph, pin);
   getGPIOPinMask(pinMask, pin);
   getGPIOPortBase(gpioPortBase, pin);
   getPwmPinConfig(gpioConfigConst, pin);
   getPwmGen(gen, pin);
   getPwmPin(pwmPin, pin);
   getPwmPinBit(pwmPinBit, pin);
-  getAlignment(alignValue, alignment);
+  moduleData = getPwmModule(handle.index);
 
-  //Enable PWM
-  SysCtlPeripheralEnable(PWMPeriph);
-
-  //Enable GPIO port
-  SysCtlPeripheralEnable(gpioPortPeriph);
-
-  //checks if the pulse width is larger than the pulse period
-  //if yes diable PWM output, set GPIO pin to output and write 1 to pin.
-  if(pulseW_us >= pulsePeriod_us)
+  //if the pulse width is larger than or equal to the pulse period then disable PWM output, set GPIO pin to output and write 1 to pin.
+  if(pulseW_us >= moduleData->pulseTotalPeriod_us)
   {
     PWMOutputState(PWMBase, pwmPinBit, false);
     GPIOPinTypeGPIOOutput(gpioPortBase, pinMask);
@@ -911,36 +1019,70 @@ void pwmWrite(uint8_t pin, float pulseW_us, float pulsePeriod_us, pwmAlignment a
     GPIOPinTypePWM(gpioPortBase, pinMask);
     GPIOPinConfigure(gpioConfigConst);
 
-    //Configure Generator no sync and no gen sync, no Deadband sync, and sets the alignment for the generator
-    PWMGenConfigure(PWMBase, gen, PWM_GEN_MODE_NO_SYNC | alignValue);
-
-    //disable the dead band
-    PWMDeadBandDisable(PWMBase, gen);
-
-    //setup pwm clock, and calculate the period and pulse width values in ticks based off of
-    //the calculated pwm clock
-    uint32_t f_cpuAdjusted = setupPwmClock(getCpuClockFreq());
-    pulseP_Ticks = f_cpuAdjusted * (pulsePeriod_us/1000000.0); // Freq * totalPulsePeriod_s = SysFreq * (totalPulsePeriod_us / 1,000,000) = (system ticks/second) * ( totalPulsePeriod_seconds) = ticks needed
-    pulseW_Ticks = f_cpuAdjusted * (pulseW_us/1000000.0);
-
-    //Set period
-    PWMGenPeriodSet(PWMBase, gen, pulseP_Ticks);
+    //calculate the pulse width values in ticks based off the pwm clock
+    pulseW_Ticks = moduleData->f_cpuAdjusted * (pulseW_us/1000000.0);
 
     //Set Pulse width
     PWMPulseWidthSet(PWMBase, pwmPin, pulseW_Ticks);
-
-    //output Invert if needed
-    PWMOutputInvert(PWMBase , pwmPinBit, invertOutput);
-
-    //Enable generator
-    PWMGenEnable(PWMBase, gen);
 
     //Enable Output
     PWMOutputState(PWMBase, pwmPinBit, true);
   }
 }
 
-//configures the pwm clock source for operation.
+void setPwmTotalPeriod(rovePwmWrite_Handle handle, uint32_t pulsePeriod_us)
+{
+  uint32_t gen, pulseP_Ticks;
+  PwmModuleData * moduleData;
+
+  if(handle.initialized == false)
+  {
+   debugFault("setPwmPeriod: handle not initialized");
+  }
+
+  getPwmGen(gen, handle.pin);
+  moduleData = getPwmModule(handle.index);
+
+  pulseP_Ticks = moduleData->f_cpuAdjusted * (pulsePeriod_us/1000000.0); // Freq * totalPulsePeriod_s = SysFreq * (totalPulsePeriod_us / 1,000,000) = (system ticks/second) * ( totalPulsePeriod_seconds) = ticks needed
+
+  //Set period
+  PWMGenPeriodSet(PWMBase, gen, pulseP_Ticks);
+
+  moduleData->pulseTotalPeriod_us = pulsePeriod_us;
+}
+
+void setPwmAlignment(rovePwmWrite_Handle handle, pwmAlignment alignment)
+{
+  uint32_t gen, alignValue;
+  if(handle.initialized == false)
+  {
+   debugFault("setPwmAlignment: handle not initialized");
+  }
+
+  getPwmGen(gen, handle.pin);
+  getAlignment(alignValue, alignment);
+
+  //Configure Generator no sync and no gen sync, no Deadband sync, and sets the alignment for the generator
+  PWMGenConfigure(PWMBase, gen, PWM_GEN_MODE_NO_SYNC | alignValue);
+}
+
+void setPwmInvert(rovePwmWrite_Handle handle, bool invertOutput)
+{
+  uint32_t gen, pwmPinBit;
+
+  if(handle.initialized == false)
+  {
+   debugFault("setPwmAlignment: handle not initialized");
+  }
+
+  getPwmGen(gen, handle.pin);
+  getPwmPinBit(pwmPinBit, handle.pin);
+
+  //output Invert if needed
+  PWMOutputInvert(PWMBase, pwmPinBit, invertOutput);
+}
+
+//configures the pwm clock source for operation. 
 //input: frequency of the main system clock in hz, which for the tm4c1294 is max at 120Mhz. Min for this library is 1.875 Mhz
 //returns: the frequency of the pwm clock, for calculating pwm loads
 uint32_t setupPwmClock(long f_cpu)
@@ -948,9 +1090,9 @@ uint32_t setupPwmClock(long f_cpu)
   uint32_t clockDivisor;
   uint32_t f_cpuAdjusted;
 
-  //try to get the pwm clock as close to the desired freq as possible.
-  //We can only change the clock by dividing the system clock by 2^n 1-64, so we have to
-  //simply get it as close as possible.
+  //try to get the pwm clock as close to the desired freq as possible. 
+  //We can only change the clock by dividing the system clock by 2^n 1-64, so we have to 
+  //simply get it as close as possible. 
   //Deliberately put into ascending order, starting at the lowest value we can get and going up
   if((f_cpu / 64) >=PWM_CLOCK_DESIRED_FREQ)
   {

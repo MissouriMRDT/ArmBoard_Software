@@ -1,4 +1,5 @@
-#include "PwmReaderEnergia_TivaTM4C1294NCPDT.h"
+#include "RovePwmReadEnergia_TivaTM4C1294NCPDT.h"
+#include "Debug.h"
 #include "inc/hw_ints.h" //hardware constants for interrupts
 #include "inc/hw_memmap.h" //hardware memory for things such as peripheral device base address
 #include "inc/hw_types.h" //hardware macros such as HWREG which is a macro used to access registers
@@ -88,11 +89,11 @@
 
 */
 
-const uint8_t PortARef = 0;
-const uint8_t PortBRef = 1;
-const uint8_t PortDRef = 2;
-const uint8_t PortLRef = 3;
-const uint8_t PortMRef = 4;
+const uint8_t Internal_PortARef = 0;
+const uint8_t Internal_PortBRef = 1;
+const uint8_t Internal_PortDRef = 2;
+const uint8_t Internal_PortLRef = 3;
+const uint8_t Internal_PortMRef = 4;
 
 const float SysClockFreq = 16000000; //frequency of the internal precision clock, which the timers use
 
@@ -144,8 +145,8 @@ static const uint8_t pinToTimerNumberTable[5][8] =
 //input: pin 0-96
 //output: letter for the related pin port, like 'P' for port P. 0 (null in ascii) if not a usable pin
 static const char pinMapToPort[]       = {
-    0,      		// dummy 
-    0,      		// 01 - 3.3v       X8_01
+    0,          // dummy 
+    0,          // 01 - 3.3v       X8_01
     'E',            // 02 - PE_4       X8_03
     'C',            // 03 - PC_4       X8_05
     'C',            // 04 - PC_5       X8_07
@@ -160,13 +161,13 @@ static const char pinMapToPort[]       = {
     'N',            // 13 - PN_2       X9_16
     'D',            // 14 - PD_0       X9_14
     'D',            // 15 - PD_1       X9_12
-    0,      		// 16 - RST        X9_10
+    0,          // 16 - RST        X9_10
     'H',            // 17 - PH_3       X9_08
     'H',            // 18 - PH_2       X9_06
     'M',            // 19 - PM_3       X9_04
-    0,      		// 20 - GND        X9_02
-    0,     		 	// 21 - 5v         X8_02
-    0,      		// 22 - GND        X8_04
+    0,          // 20 - GND        X9_02
+    0,          // 21 - 5v         X8_02
+    0,          // 22 - GND        X8_04
     'E',            // 23 - PE_0       X8_06
     'E',            // 24 - PE_1       X8_08
     'E',            // 25 - PE_2       X8_10
@@ -185,7 +186,7 @@ static const char pinMapToPort[]       = {
     'F',            // 38 - PF_3       X9_05
     'F',            // 39 - PF_2       X9_03
     'F',            // 40 - PF_1       X9_01
-    0,     			// 41 - 3.3v       X6_01
+    0,          // 41 - 3.3v       X6_01
     'D',            // 42 - PD_2       X6_03
     'P',            // 43 - PP_0       X6_05
     'P',            // 44 - PP_1       X6_07
@@ -200,13 +201,13 @@ static const char pinMapToPort[]       = {
     'P',            // 53 - PP_3       X7_16
     'Q',            // 54 - PQ_3       X7_14
     'Q',            // 55 - PQ_2       X7_12
-    0,     			// 56 - RESET      X7_10
+    0,          // 56 - RESET      X7_10
     'A',            // 57 - PA_7       X7_08
     'P',            // 58 - PP_5       X7_06
     'M',            // 59 - PM_7       X7_04
-    0,      		// 6Z - GND        X7_02
-    0,      		// 61 - 5v         X6_02
-    0,      		// 62 - GND        X6_04
+    0,          // 6Z - GND        X7_02
+    0,          // 61 - 5v         X6_02
+    0,          // 62 - GND        X6_04
     'B',            // 63 - PB_4       X6_06
     'B',            // 64 - PB_5       X6_08
     'K',            // 65 - PK_0       X6_10
@@ -248,8 +249,8 @@ static const char pinMapToPort[]       = {
 //input: pins mapped 0-96
 //output: 0-7, for pin 0,1,2,3...7. 255 if not a usable pin
 static const uint8_t pinMapToPinNum[]   = {
-    255,    	  // dummy 
-    255,    	  // 01 - 3.3v       X8_01
+    255,        // dummy 
+    255,        // 01 - 3.3v       X8_01
     (4),          // 02 - PE_4       X8_03
     (4),          // 03 - PC_4       X8_05
     (5),          // 04 - PC_5       X8_07
@@ -264,13 +265,13 @@ static const uint8_t pinMapToPinNum[]   = {
     (2),          // 13 - PN_2       X9_16
     (0),          // 14 - PD_0       X9_14
     (1),          // 15 - PD_1       X9_12
-    255,    	  // 16 - RST        X9_10
+    255,        // 16 - RST        X9_10
     (3),          // 17 - PH_3       X9_08
     (2),          // 18 - PH_2       X9_06
     (3),          // 19 - PM_3       X9_04
-    255,      	  // 20 - GND        X9_02
-    255,      	  // 21 - 5v         X8_02
-    255,    	  // 22 - GND        X8_04
+    255,          // 20 - GND        X9_02
+    255,          // 21 - 5v         X8_02
+    255,        // 22 - GND        X8_04
     (0),          // 23 - PE_0       X8_06
     (1),          // 24 - PE_1       X8_08
     (2),          // 25 - PE_2       X8_10
@@ -289,7 +290,7 @@ static const uint8_t pinMapToPinNum[]   = {
     (3),          // 38 - PF_3       X9_05
     (2),          // 39 - PF_2       X9_03
     (1),          // 40 - PF_1       X9_01
-    255,      	  // 41 - 3.3v       X6_01
+    255,          // 41 - 3.3v       X6_01
     (2),          // 42 - PD_2       X6_03
     (0),          // 43 - PP_0       X6_05
     (1),          // 44 - PP_1       X6_07
@@ -304,13 +305,13 @@ static const uint8_t pinMapToPinNum[]   = {
     (3),          // 53 - PP_3       X7_16
     (3),          // 54 - PQ_3       X7_14
     (2),          // 55 - PQ_2       X7_12
-    255,      	  // 56 - RESET      X7_10
+    255,          // 56 - RESET      X7_10
     (7),          // 57 - PA_7       X7_08
     (5),          // 58 - PP_5       X7_06
     (7),          // 59 - PM_7       X7_04
-    255,      	  // 60 - GND        X7_02
-    255,      	  // 61 - 5v         X6_02
-    255,      	  // 62 - GND        X6_04
+    255,          // 60 - GND        X7_02
+    255,          // 61 - 5v         X6_02
+    255,          // 62 - GND        X6_04
     (4),          // 63 - PB_4       X6_06
     (5),          // 64 - PB_5       X6_08
     (0),          // 65 - PK_0       X6_10
@@ -413,6 +414,9 @@ static uint8_t getTimerNumber(char gpioPortLetter, uint8_t pinNumber);
 //with the number representing the port for those tables. Returns -1 if improper input
 static int getPortRefNum(char portLetter);
 
+//returns whether or not the timer module can use the mapped pin
+static bool moduleUsesCorrectPins(uint8_t timerModule, uint8_t mappedPin);
+
 //each timer and through them PWM line has a data struct 
 //for their usage
 static timerData timer1Data, timer2Data, timer3Data, timer4Data, timer5Data;
@@ -423,7 +427,7 @@ static timerData timer1Data, timer2Data, timer3Data, timer4Data, timer5Data;
 static volatile uint8_t timeoutCounter = 0;
 
 //edge-not-recieved timeout check should do its checking after this many timeouts (start with 1, not 0)
-static const uint8_t TimeoutCounterLimit = 1;
+//static const uint8_t TimeoutCounterLimit = 1; didn't wind up needing it
 
 //interrupt handler for timer 1's timeout event. 
 static void timeout1Handler()
@@ -522,12 +526,12 @@ static void timeoutGenHandler(timerData * data)
   //precaution to make sure we only actually check after any transmission should have already come if it wasn't at 0 or 100%.
   //that way, we know that if we haven't received an edge it's because the line is idling at 100% or 0% duty, and not just 
   //because the pwm line didn't have a chance to receive the next edge before we checked
-  if(timeoutCounter < TimeoutCounterLimit - 1) 
-  {
-    timeoutCounter++;
-  }
-  else
-  {
+  //if(timeoutCounter < TimeoutCounterLimit - 1)
+  //{
+    //timeoutCounter++; never wound up needing this
+  //}
+  //else
+  //{
     timeoutCounter = 0;
     uint32_t portBase = data->portBase;
     uint8_t pinMacro = data->pinMacro;
@@ -572,7 +576,7 @@ static void timeoutGenHandler(timerData * data)
     {
       data->edgeRecieved = false;
     }
-  }//end else
+  //}//end else
 }
 
 //general interrupt handler for edge capture events. 
@@ -650,26 +654,41 @@ static void edgeCaptureGenHandler(timerData * data, uint32_t timerBase)
 }
 //Wrapper for internal initPwmRead, added layer to let the user pass
 //an energia pin map value. Returns false if user input a parameter incorrectly
-bool initPwmRead(uint8_t mappedPin)
-{	
-	if(mappedPin > 95) //only 95 mapped pins
-	{
-		return(false);
-	}
-	
-	char gpioPort = pinMapToPort[mappedPin];
-	if(gpioPort == 0) //0 is error value for this table
-	{
-		return(false);
-	}
-	
-	uint8_t pinNumber = pinMapToPinNum[mappedPin];
-	if(pinNumber == 255)
-	{
-		return(false); //255 is error value for this table
-	}
-	
-	return(initPwmRead(gpioPort, pinNumber));
+rovePwmRead_Handle initPwmRead(uint8_t readingModule, uint8_t mappedPin)
+{ 
+  if(mappedPin > 95) //only 95 mapped pins
+  {
+    debugFault("initPwmRead: mapped pin too large");
+  }
+  
+  char gpioPort = pinMapToPort[mappedPin];
+  if(gpioPort == 0) //0 is error value for this table
+  {
+    debugFault("initPwmRead: mappedPin error with getting gpio port");
+  }
+  
+  uint8_t pinNumber = pinMapToPinNum[mappedPin];
+  if(pinNumber == 255) //255 is error value for this table
+  {
+    debugFault("initPwmRead: mappedPin error with getting hardware pin number");
+  }
+  
+  if(!moduleUsesCorrectPins(readingModule, mappedPin))
+  {
+    debugFault("initPwmRead: pwm read module doesn't use that pin");
+  }
+
+  if(!initPwmRead(gpioPort, pinNumber))
+  {
+    debugFault("initPwmRead: other error");
+  }
+
+  rovePwmRead_Handle handle;
+
+  handle.initialized = true;
+  handle.mappedPin = mappedPin;
+
+  return(handle);
 }
 
 //Begins reading pwm pulses on the specified pin. Inits timer, interrupts, GPIO pins, 
@@ -716,26 +735,28 @@ static bool initPwmRead(char gpioPort, uint8_t pinNumber)
 
 //wrapper for internal stopPwmRead function, added layer to allow 
 //the user to pass an energia pin map value 
-void stopPwmRead(uint8_t mappedPin)
-{	
-	if(mappedPin > 95) //only 95 mapped pins
-	{
-		return;
-	}
-	
-	char gpioPort = pinMapToPort[mappedPin];
-	if(gpioPort == 0) //0 is error value for this table
-	{
-		return;
-	}
-	
-	uint8_t pinNumber = pinMapToPinNum[mappedPin];
-	if(pinNumber == 255)
-	{
-		return; //255 is error value for this table
-	}
-	
-	stopPwmRead(gpioPort, pinNumber);
+void stopPwmRead(rovePwmRead_Handle handle)
+{ 
+  if(handle.initialized == false)
+  {
+    debugFault("stopPwmRead: pwmRead handle not initialized (did you call the init function?)");
+  }
+
+  uint8_t mappedPin = handle.mappedPin;
+  
+  char gpioPort = pinMapToPort[mappedPin];
+  if(gpioPort == 0) //0 is error value for this table
+  {
+    return;
+  }
+  
+  uint8_t pinNumber = pinMapToPinNum[mappedPin];
+  if(pinNumber == 255)
+  {
+    return; //255 is error value for this table
+  }
+  
+  stopPwmRead(gpioPort, pinNumber);
 }
 
 //Stops reading pwm. 
@@ -796,26 +817,28 @@ static void stopPwmRead(char portLetter, uint8_t pinNumber)
 
 //wrapper for internal getDuty function, added layer to allow 
 //the user to pass an energia pin map value 
-uint8_t getDuty(uint8_t mappedPin)
-{	
-	if(mappedPin > 95) //only 95 mapped pins
-	{
-		return(false);
-	}
-	
-	char gpioPort = pinMapToPort[mappedPin];
-	if(gpioPort == 0) //0 is error value for this table
-	{
-		return(false);
-	}
-	
-	uint8_t pinNumber = pinMapToPinNum[mappedPin];
-	if(pinNumber == 255)
-	{
-		return(false); //255 is error value for this table
-	}
-	
-	return(getDuty(gpioPort, pinNumber));
+uint8_t getDuty(rovePwmRead_Handle handle)
+{ 
+  if(handle.initialized == false)
+  {
+    debugFault("getDuty: pwmRead handle not initialized (did you call the init function?)");
+  }
+
+  uint8_t mappedPin = handle.mappedPin;
+  
+  char gpioPort = pinMapToPort[mappedPin];
+  if(gpioPort == 0) //0 is error value for this table
+  {
+    return(false);
+  }
+  
+  uint8_t pinNumber = pinMapToPinNum[mappedPin];
+  if(pinNumber == 255)
+  {
+    return(false); //255 is error value for this table
+  }
+  
+  return(getDuty(gpioPort, pinNumber));
 }
 
 //gets the duty cycle being read on the specified pin.
@@ -871,26 +894,28 @@ static uint8_t getDuty(char portLetter, uint8_t pinNumber)
 
 //wrapper for internal getTotalPeriod_us function, added layer to allow 
 //the user to pass an energia pin map value 
-uint32_t getTotalPeriod_us(uint8_t mappedPin)
-{	
-	if(mappedPin > 95) //only 95 mapped pins
-	{
-		return(false);
-	}
-	
-	char gpioPort = pinMapToPort[mappedPin];
-	if(gpioPort == 0) //0 is error value for this table
-	{
-		return(false);
-	}
-	
-	uint8_t pinNumber = pinMapToPinNum[mappedPin];
-	if(pinNumber == 255)
-	{
-		return(false); //255 is error value for this table
-	}
-	
-	return(getTotalPeriod_us(gpioPort, pinNumber));
+uint32_t getTotalPeriod_us(rovePwmRead_Handle handle)
+{
+  if(handle.initialized == false)
+  {
+    debugFault("stopPwmRead: pwmRead handle not initialized (did you call the init function?)");
+  }
+
+  uint8_t mappedPin = handle.mappedPin;
+  
+  char gpioPort = pinMapToPort[mappedPin];
+  if(gpioPort == 0) //0 is error value for this table
+  {
+    return(false);
+  }
+  
+  uint8_t pinNumber = pinMapToPinNum[mappedPin];
+  if(pinNumber == 255)
+  {
+    return(false); //255 is error value for this table
+  }
+  
+  return(getTotalPeriod_us(gpioPort, pinNumber));
 }
 
 //gets the total period of the PWM signal last transmitted for 
@@ -956,26 +981,28 @@ static uint32_t getTotalPeriod_us(char portLetter, uint8_t pinNumber)
 
 //wrapper for internal getOnPeriod_s function, added layer to allow 
 //the user to pass an energia pin map value 
-uint32_t getOnPeriod_us(uint8_t mappedPin)
-{	
-	if(mappedPin > 95) //only 95 mapped pins
-	{
-		return(false);
-	}
-	
-	char gpioPort = pinMapToPort[mappedPin];
-	if(gpioPort == 0) //0 is error value for this table
-	{
-		return(false);
-	}
-	
-	uint8_t pinNumber = pinMapToPinNum[mappedPin];
-	if(pinNumber == 255)
-	{
-		return(false); //255 is error value for this table
-	}
+uint32_t getOnPeriod_us(rovePwmRead_Handle handle)
+{ 
+  if(handle.initialized == false)
+  {
+    debugFault("stopPwmRead: pwmRead handle not initialized (did you call the init function?)");
+  }
+
+  uint8_t mappedPin = handle.mappedPin;
+  
+  char gpioPort = pinMapToPort[mappedPin];
+  if(gpioPort == 0) //0 is error value for this table
+  {
+    return(false);
+  }
+  
+  uint8_t pinNumber = pinMapToPinNum[mappedPin];
+  if(pinNumber == 255)
+  {
+    return(false); //255 is error value for this table
+  }
  
-	return(getOnPeriod_us(gpioPort, pinNumber));
+  return(getOnPeriod_us(gpioPort, pinNumber));
 }
 
 //Gets the on period of the last tramsittted PWM signal for
@@ -1046,23 +1073,23 @@ static int getPortRefNum(char portLetter)
   
   if(portLetter == 'A' || portLetter == 'a')
   {
-    portRefNum = PortARef;
+    portRefNum = Internal_PortARef;
   }
   else if (portLetter == 'B' || portLetter == 'b')
   {
-    portRefNum = PortBRef;
+    portRefNum = Internal_PortBRef;
   }
   else if(portLetter == 'D' || portLetter == 'd')
   {
-    portRefNum = PortDRef;
+    portRefNum = Internal_PortDRef;
   }
   else if(portLetter == 'L' || portLetter == 'l')
   {
-    portRefNum = PortLRef;
+    portRefNum = Internal_PortLRef;
   }
   else if(portLetter == 'M' || portLetter == 'm')
   {
-    portRefNum = PortMRef;
+    portRefNum = Internal_PortMRef;
   }
   else
   {
@@ -1271,5 +1298,48 @@ static bool initGPIO(uint8_t portLetter, uint8_t pinNum, uint8_t * pinInitState,
   *pin_macro = pinMacro;
   *port_base = portBase;
   return(true);
+}
+
+static bool moduleUsesCorrectPins(uint8_t timerModule, uint8_t mappedPin)
+{
+  switch(timerModule)
+  {
+    case readModule1:
+      if(mappedPin == PA_2 || mappedPin == PD_2 || mappedPin == PL_6)
+      {
+        return true;
+      }
+      break;
+
+    case readModule2:
+      if(mappedPin == PA_4 || mappedPin == PM_0)
+      {
+        return true;
+      }
+      break;
+
+    case readModule3:
+      if(mappedPin == PA_6 || mappedPin == PD_4 || mappedPin == PM_2)
+      {
+        return true;
+      }
+      break;
+
+    case readModule4:
+      if(mappedPin == PB_0 || mappedPin == PM_4)
+      {
+        return true;
+      }
+      break;
+
+    case readModule5:
+      if(mappedPin == PB_2 || mappedPin == PM_6)
+      {
+        return true;
+      }
+      break;
+  }
+
+  return false;
 }
 

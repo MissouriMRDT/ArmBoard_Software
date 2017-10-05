@@ -4,15 +4,9 @@
 static const int PWM_MIN = 0, PWM_MAX = 255;
 static const int POS_INC = 2;
 
-Sdc2130::Sdc2130(const int pwmPin, ValueType inType, bool upsideDown): OutputDevice()
-{
-	PWM_PIN = pwmPin;
-	inType = inType;
-	invert = upsideDown;
-	controlType = Pwm;
-	pwmVal = 0;
-	currentPower = 0;
-}
+Sdc2130::Sdc2130(const int pwmGen, const int pwmPin, ValueType inType, bool upsideDown)
+  : OutputDevice(inType, upsideDown), controlType(Pwm), pwmVal(0), currentPower(0), PwmHandle(setupPwmWrite(pwmGen, pwmPin))
+{}
 
 void Sdc2130::move(const long movement)
 {
@@ -60,7 +54,7 @@ void Sdc2130::moveSpeed(const int movement)
         pwmVal = PWM_MAX;
       }
 
-      pwmWrite(PWM_PIN, pwmVal);
+      pwmWriteDuty(PwmHandle, pwmVal);
 
     }
 
