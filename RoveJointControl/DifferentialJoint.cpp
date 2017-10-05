@@ -1,18 +1,8 @@
 #include "DifferentialJoint.h"
 
-DifferentialJoint::DifferentialJoint(DifferentialType jointType, ValueType inputType, DrivingAlgorithm *alg, OutputDevice* cont1, OutputDevice* cont2) : JointInterface()
+DifferentialJoint::DifferentialJoint(DifferentialType jointType, ValueType inputType, DrivingAlgorithm *alg, OutputDevice* cont1, OutputDevice* cont2)
+  : JointInterface(inputType, alg, cont1), controller2(cont2), coupled(false), thisJointType(jointType), motorOneVirtualPower(0), motorTwoVirtualPower(0)
 {
-	//assignments
-	inType = inputType;
-	controller1 = cont1;
-	controller2 = cont2;
-  coupled = false;
-  motorOneVirtualPower = 0;
-  motorTwoVirtualPower = 0;
-  thisJointType = jointType;
-  manip = alg;
-  algorithmUsed = true;
-
   //checks to make sure the passed arguments all work with each other, that is that the algorithm's input type
   //is the same as what the user is putting in, and that the algorithm's output value type is what the output device
   //expects to take in, etc
@@ -26,18 +16,9 @@ DifferentialJoint::DifferentialJoint(DifferentialType jointType, ValueType input
   }
 }
 
-DifferentialJoint::DifferentialJoint(DifferentialType jointType, ValueType inputType, OutputDevice* cont1, OutputDevice* cont2) : JointInterface()
+DifferentialJoint::DifferentialJoint(DifferentialType jointType, ValueType inputType, OutputDevice* cont1, OutputDevice* cont2)
+  : JointInterface(inputType, cont1), controller2(cont2), coupled(false), thisJointType(jointType), motorOneVirtualPower(0), motorTwoVirtualPower(0)
 {
-	//assignments
-	inType = inputType;
-	controller1 = cont1;
-	controller2 = cont2;
-  coupled = false;
-  motorOneVirtualPower = 0;
-  motorTwoVirtualPower = 0;
-	thisJointType = jointType;
-	algorithmUsed = false;
-
   //checks to make sure the passed arguments all work with each other, IE that the two output devices both take the same type.
   if((inputType == cont1->inType) && (cont1->inType == cont2->inType))
   {

@@ -4,25 +4,9 @@
 static const int DEFAULT_MINMAG = (POWERPERCENT_MAX * .1); //The default min magnitude of power the motor is allowed to move at. 10% of motor power
 static const float IMPOSSIBLE_MOVEMENT = 370; //return value for functions that calculate travel routes that means the destination can't be reached
 
-
-PIAlgorithm::PIAlgorithm(int inKP, int inKI, float inDT, FeedbackDevice* fDev) : DrivingAlgorithm()
+void PIAlgorithm::verifyFdev()
 {
-  KI = inKI;
-  KP = inKP;
-  DT = inDT;
-  power_minMag = DEFAULT_MINMAG;
-  deg_deadBand = 1;
-  errorSummation = 0;
-  inType = InputPosition;
-  outType = InputPowerPercent;
-  hardStopPos1 = -1;
-  hardStopPos2 = -1;
-
-  feedbackDev = fDev;
-
-  //if the feedback device's data type doesn't mesh with our data type, then
-  //it won't work
-  if(fDev->fType == inType)
+  if(feedbackDev->fType == inType)
   {
     validConstruction = true;
   }
@@ -32,31 +16,22 @@ PIAlgorithm::PIAlgorithm(int inKP, int inKI, float inDT, FeedbackDevice* fDev) :
   }
 }
 
-PIAlgorithm::PIAlgorithm(int inKP, int inKI, float inDT, FeedbackDevice* fDev, int inpower_minMag) : DrivingAlgorithm()
+PIAlgorithm::PIAlgorithm(int inKP, int inKI, float inDT, FeedbackDevice* fDev)
+: DrivingAlgorithm(InputPosition, InputPowerPercent), KI(inKI), KP(inKP), DT(inDT), power_minMag(DEFAULT_MINMAG),
+  deg_deadBand(1), errorSummation(0), hardStopPos1(-1), hardStopPos2(-1), feedbackDev(fDev)
 {
-  KI = inKI;
-  KP = inKP;
-  DT = inDT;
-  power_minMag = inpower_minMag;
-  deg_deadBand = 1;
-  errorSummation = 0;
-  inType = InputPosition;
-  outType = InputPowerPercent;
-  hardStopPos1 = -1;
-  hardStopPos2 = -1;
-
   //if the feedback device's data type doesn't mesh with our data type, then
   //it won't work
-  if(fDev->fType == inType)
-  {
-    validConstruction = true;
-  }
-  else
-  {
-    validConstruction = false;
-  }
+  verifyFdev();
+}
 
-  feedbackDev = fDev;
+PIAlgorithm::PIAlgorithm(int inKP, int inKI, float inDT, FeedbackDevice* fDev, int inpower_minMag)
+  : DrivingAlgorithm(InputPosition, InputPowerPercent), KI(inKI), KP(inKP), DT(inDT), power_minMag(inpower_minMag),
+    deg_deadBand(1), errorSummation(0), hardStopPos1(-1), hardStopPos2(-1), feedbackDev(fDev)
+{
+  //if the feedback device's data type doesn't mesh with our data type, then
+  //it won't work
+  verifyFdev();
 }
 
 float PIAlgorithm::dist360(int pos_rotationUnits)

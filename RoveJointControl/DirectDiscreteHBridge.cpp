@@ -4,14 +4,10 @@
 //Value ranges for conversting input to expected output when sending
 static const int PWM_MIN = 0, PWM_MAX = 255;
 
-DirectDiscreteHBridge::DirectDiscreteHBridge(const int FPIN, const int RPIN, bool upsideDown) : OutputDevice()
-{
-	FPWM_PIN = FPIN;
-	RPWM_PIN = RPIN;
-	inType = InputPowerPercent;
-	invert = upsideDown;
-	currentPower = 0;
-}
+DirectDiscreteHBridge::DirectDiscreteHBridge(const int FPIN_GEN, const int RPIN_GEN, const int FPIN, const int RPIN, bool upsideDown)
+  : OutputDevice(InputPowerPercent, upsideDown), currentPower(0), fpwm_handle(setupPwmWrite(FPIN_GEN, FPIN)),
+    rpwm_handle(setupPwmWrite(RPIN_GEN, RPIN))
+{}
 
 void DirectDiscreteHBridge::move(const long movement)
 {
@@ -36,8 +32,8 @@ void DirectDiscreteHBridge::move(const long movement)
       pwm = map(mov, 0, POWERPERCENT_MAX, PWM_MIN, PWM_MAX);
 
       //stop the transistor for the other direction -- if both were on, the h bridge would short out
-      pwmWrite(FPWM_PIN, 0);
-      pwmWrite(RPWM_PIN, pwm);
+      pwmWriteDuty(fpwm_handle, 0);
+      pwmWriteDuty(rpwm_handle, pwm);
     }
 
     //if forwards
@@ -46,8 +42,8 @@ void DirectDiscreteHBridge::move(const long movement)
       pwm = map(mov, 0, POWERPERCENT_MAX, PWM_MIN, PWM_MAX);
 
       //stop the transistor for the other direction -- if both were on, the h bridge would short out
-      pwmWrite(FPWM_PIN, pwm);
-      pwmWrite(RPWM_PIN, 0);
+      pwmWriteDuty(fpwm_handle, pwm);
+      pwmWriteDuty(rpwm_handle, 0);
     }
 
     //stop
@@ -84,8 +80,8 @@ long DirectDiscreteHBridge::getCurrentMove()
 
 void DirectDiscreteHBridge::stop()
 {
-  pwmWrite(RPWM_PIN, 0);
-  pwmWrite(FPWM_PIN, 0);
+  pwmWriteDuty(fpwm_handle, 0);
+  pwmWriteDuty(rpwm_handle, 0);
   
   currentPower = 0;
 }

@@ -37,45 +37,50 @@ class DifferentialJoint : public JointInterface
     int motorOneVirtualPower;
     int motorTwoVirtualPower;
     
-		//creates the joint interface with an IOConverter to translate commands for the output devices.
-    //Note both output devices have to have the same input type.
-    //DifferentialType: Whether this differnetial joint has tilt motion or rotate motion
-		//inputType: What kind of movement this joint should be controlled by, such as speed or position input.
-		//alg: the closed loop IOAlgorithm used by this joint
-		//cont1: The first output device controlling the first motor on this joint
-		//cont2: The second output device controlling the second motor on this joint
+		//Overview: creates the joint interface with an IOConverter to translate commands for the output devices.
+    //          Note both output devices have to have the same input type.
+    //
+    //Inputs:   DifferentialType: Whether this differnetial joint has tilt motion or rotate motion
+		//          inputType: What kind of movement this joint should be controlled by, such as speed or position input.
+		//          alg: the Driving Algorithm used by this joint
+		//          cont1: The first output device controlling the first motor on this joint
+		//          cont2: The second output device controlling the second motor on this joint
 		DifferentialJoint(DifferentialType jointType, ValueType inputType, DrivingAlgorithm *alg, OutputDevice* cont1, OutputDevice* cont2);
 
-		//creates joint interface without an IO Converter, IE where output is passed straight to the output device
-		//DifferentialType: Whether this differnetial joint has tilt motion or rotate motion
-		//Note both output devices are assumed to have the same input type
-		//inputType: What kind of movement this joint should be controlled by, such as speed or position input.
-		//cont1: The first output device controlling the first motor on this joint
-		//cont2: The second output device controlling the second motor on this joint
+		//Overview: creates joint interface without an IO Converter, IE where output is passed straight to the output device
+		//
+		//Input:    DifferentialType: Whether this differnetial joint has tilt motion or rotate motion
+		//          Note both output devices are assumed to have the same input type
+		//          inputType: What kind of movement this joint should be controlled by, such as speed or position input.
+		//          cont1: The first output device controlling the first motor on this joint
+		//          cont2: The second output device controlling the second motor on this joint
 		DifferentialJoint(DifferentialType jointType, ValueType inputType, OutputDevice* cont1, OutputDevice* cont2);
 
 		~DifferentialJoint();
 
-		//runs algorithm for moving two motors together so that it moves the joint, rotating it or tilting it.
-		//input: a long that represents the desired movement. Value constraints and meaning depend on the inputType.
-		//For example, if this joint runs off of speed input then the values are constrained between SPEED_MIN and SPEED_MAX, and otherwise
-    //returns: The status of attempting to control this joint. Such as if the output is running, if it's complete, if there was an error, etc
+		//Overview: runs algorithm for moving two motors together so that it moves the joint, rotating it or tilting it.
+		//input:    movement, a long that represents the desired movement. Value constraints and meaning depend on the inputType.
+		//          For example, if this joint runs off of speed input then the values are constrained between SPEED_MIN and SPEED_MAX
+    //returns:  The status of attempting to control this joint. Such as if the output is running, if it's complete, if there was an error, etc
 		JointControlStatus runOutputControl(const long movement);
 
     bool switchDifferentialModules(ValueType newInputType, DrivingAlgorithm* newAlgorithm, OutputDevice* newDevice1, OutputDevice* newDevice2);
     
-    //couples this differential joint with another; differential joints
-    //are intertwined so need to interact with each other to properly gauge output power
+    //Overview: couples this differential joint with another; differential joints
+    //          are intertwined so need to interact with each other to properly gauge output power
+    //
+    //Inputs:   The other differential joint to couple this one with. If this joint is a rotate joint then the other must be a tilt
+    //          and vice versa; they can't be the same type.
     void pairDifferentialJoint(DifferentialJoint* otherJoint);
     
-    //tells the joint to halt. Note that this won't keep the joint from moving if called again; 
-    //use disable for that
+    //Overview: tells the joint to halt. Note that this won't keep the joint from moving if called again;
+    //          use disable for that
     void stop();
     
-    //turns the joint off; it will stop moving until enabled
+    //Overview: turns the joint off; it will stop moving until enabled
     void disableJoint();
     
-    //turns the joint on after being disabled
+    //Overview: turns the joint on after being disabled
     void enableJoint();
 };
 

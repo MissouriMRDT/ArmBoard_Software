@@ -1,14 +1,7 @@
 #include "SingleMotorJoint.h"
 
-SingleMotorJoint::SingleMotorJoint(ValueType inputType, DrivingAlgorithm *alg, OutputDevice* cont) : JointInterface()
+SingleMotorJoint::SingleMotorJoint(ValueType inputType, DrivingAlgorithm *alg, OutputDevice* cont) : JointInterface(inputType, alg, cont)
 {
-	//assignments
-	inType = inputType;
-	controller1 = cont;
-	manip = alg;
-
-  algorithmUsed = true;
-  
   //checks to make sure the passed arguments all work with each other, that is that the algorithm's input type is the same as what the user is putting in, and
   //that the algorithm's output value type is what the output device expects to take in, etc
   if((inputType == alg->inType) && (cont->inType == alg->outType))
@@ -21,14 +14,8 @@ SingleMotorJoint::SingleMotorJoint(ValueType inputType, DrivingAlgorithm *alg, O
   }
 }
 
-SingleMotorJoint::SingleMotorJoint(ValueType inputType, OutputDevice* cont) : JointInterface()
+SingleMotorJoint::SingleMotorJoint(ValueType inputType, OutputDevice* cont) : JointInterface(inputType, cont)
 {
-	//assignments
-	inType = inputType;
-	controller1 = cont;
-
-	algorithmUsed = false;
-
   //checks to make sure the passed arguments all work with each other, that is that device's input type is the same as what the user is putting in
   if(inputType == cont->inType)
   {

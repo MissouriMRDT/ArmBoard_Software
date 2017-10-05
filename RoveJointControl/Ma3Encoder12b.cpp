@@ -6,7 +6,7 @@ static const int PWM_READ_MIN = 1;
 
 long Ma3Encoder12b::getFeedback()
 {
-  uint32_t readOnPeriod = getOnPeriod_us(pwmMappedPin); 
+  uint32_t readOnPeriod = getOnPeriod_us(PwmHandle);
   
   //values will be between PWM_READ_MIN and PWM_READ_MAX, that is 1 and 4097. 
   //Or at least they should be; if it's above there was slight comm error and it can be scaled down to the max val.
@@ -20,7 +20,7 @@ long Ma3Encoder12b::getFeedback()
   //If it's 0%, then use min value. If it's 100%, use max value.
   if(readOnPeriod == 0)
   {
-    if(getDuty(pwmMappedPin) == 0)
+    if(getDuty(PwmHandle) == 0)
     {
       readOnPeriod = PWM_READ_MIN;
     }
@@ -47,14 +47,9 @@ long Ma3Encoder12b::getFeedback()
   return(relativeAngle);
 }
 
-Ma3Encoder12b::Ma3Encoder12b(uint8_t mappedPinNumber): FeedbackDevice()
-{
-  pwmMappedPin = mappedPinNumber;
-  fType = InputPosition;
-  offsetAngle = 0;
-  
-  initPwmRead(pwmMappedPin); 
-}
+Ma3Encoder12b::Ma3Encoder12b(uint16_t pwmReadModule, uint16_t mappedPinNumber)
+  : FeedbackDevice(InputPosition), offsetAngle(0), PwmHandle(initPwmRead(pwmReadModule, mappedPinNumber))
+{}
 
 float Ma3Encoder12b::getFeedbackDegrees()
 {

@@ -2,13 +2,13 @@
 #define RCCONTINUOUSSERVO_H
 
 #include "AbstractFramework.h"
-
+#include "structures/RovePwmWriteStructures.h"
 
 class RCContinuousServo : public OutputDevice
 {
   private:
-    int PWM_PIN;
-    int PWM_STOP;  //some devices stop at values a little bit different from others, so it's modifiable
+    const rovePwmWrite_Handle PwmHandle;
+    int pwm_stop_us;  //some devices stop at values a little bit different from others, so it's modifiable
     int currentPower;
 
   protected:
@@ -22,10 +22,12 @@ class RCContinuousServo : public OutputDevice
     void stop();
 
   public:
-    // constructor for a RC Continuous Servo device.
-    // inputs are: pin assignments for the PWM pin, and whether or not the device is inverted
-    // pin assignment masks are based on roveboard's pin standard
-    RCContinuousServo(const int pwnPin, bool upsideDown);
+    // overview: constructor for a RC Continuous Servo device.
+    // inputs:   pwmGen: pwm generator reference
+    //           pwmPin: pin assignment for the PWM pin
+    //           upsideDown: whether or not the device is inverted
+    //           pin assignment masks are based on roveboard's pin standard
+    RCContinuousServo(const int pwmGen, const int pwmPin, bool upsideDown);
 
     //returns how much power the device was last told to move at
     long getCurrentMove();

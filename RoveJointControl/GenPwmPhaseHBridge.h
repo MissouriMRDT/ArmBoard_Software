@@ -2,6 +2,7 @@
 #define GENPWMPHASEHBRIDGE_H_
 
 #include "AbstractFramework.h"
+#include "structures/RovePwmWriteStructures.h"
 
 //generic wrapper for any brushed DC motor H bridge that takes two pins; a pwm pin and a direction pin
 class GenPwmPhaseHBridge: public OutputDevice
@@ -17,19 +18,23 @@ class GenPwmPhaseHBridge: public OutputDevice
   protected:
   
     //constants for hardware GPIO pin masks
-    int PWM_PIN, PHASE_PIN;
-    int ENABLE_PIN; //not all general devices have an enable pin, so this pin defaults to -1
+    const int PHASE_PIN;
+    const int ENABLE_PIN; //not all general devices have an enable pin, so this pin defaults to -1
     
+    const rovePwmWrite_Handle PwmHandle;
+
     //move function which passes in power percent ( which is converted to phase and PWM) to move device
     void move(const long movement); 
     
-    //compares the user's desired power against the allowed amount of change per move() call, and
-    //returns the ramped power
+    //compares the user's desired power against the allowed amount of change per move() call
+    //returns: the ramped power
     int scaleRamp(int desiredpower);
     
-    //tells the device to power on or off. 
-    //If the device class was constructed with an enable pin, the function will physically turn the device on or off
-    //If it wasn't, it will virtually turn the device on or off, IE if it's off it will refuse to send an output
+    //Overview: tells the device to power on or off.
+    //          If the device class was constructed with an enable pin, the function will physically turn the device on or off
+    //          If it wasn't, it will virtually turn the device on or off, IE if it's off it will refuse to send an output
+    //
+    //Input:    whether to turn the device on or off
     void setPower(bool powerOn);
     
     //tells device to stop moving.
@@ -37,26 +42,31 @@ class GenPwmPhaseHBridge: public OutputDevice
     
   public:
 
-    //constructor for h bridge devices controlled with a pwm pin and a phase/direction pin
-    //inputs: pin asignments for enable pin and phase pin, also a bool to determine if da motor is mounted backwards so
-    //input logic needs to be inverted.
-    //Pin assignment masks are based on roveboard pin standard
-    GenPwmPhaseHBridge(const int PwmPin, const int PhPin, bool upsideDown);
+    //overview: constructor for h bridge devices controlled with a pwm pin and a phase/direction pin
+    //
+    //inputs:   PwmPin/PhPin: pin asignments for pwm pin and phase pin
+    //          pwmGen: pwm generator to output a pwm wave on the pwm pin
+    //          upsideDown: a bool to determine if da motor is mounted backwards so input logic needs to be inverted.
+    //          Pin assignment masks are based on roveboard pin standard
+    GenPwmPhaseHBridge(const int PwmGen, const int PwmPin, const int PhPin, bool upsideDown);
     
-    //constructor for h bridge devices controlled with a pwm pin and a phase/direction pin and an enable pin
-    //inputs: pin asignments for enable pin and phase pin, also a bool to determine if da motor is mounted backwards so
-    //input logic needs to be inverted. Also a bool representing whether the enable pin is logic high or low
-    //Pin assignment masks are based on roveboard pin standard
-    GenPwmPhaseHBridge(const int PwmPin, const int PhPin, const int EnPin, bool enableLogicHigh, bool upsideDown);
+    //overview: constructor for h bridge devices controlled with a pwm pin and a phase/direction pin and an enable pin
+    //
+    //inputs:   PwmPin/PhPin/EnPin: pin asignments for pwm pin and phase pin and enable pin
+    //          pwmGen: pwm generator to output a pwm wave on the pwm pin
+    //          upsideDown: a bool to determine if da motor is mounted backwards so input logic needs to be inverted.
+    //          enableLogicHigh: a bool to determine if the enable pin is logic high (true) or logic low (false)
+    //          Pin assignment masks are based on roveboard pin standard
+    GenPwmPhaseHBridge(const int PwmGen, const int PwmPin, const int PhPin, const int EnPin, bool enableLogicHigh, bool upsideDown);
     
-    //sets how much the powerpercent of the device is allowed to accelerate per call of move. Default is no limit.
-    //input: The maximum amount the magnitude can change upward per call. If the power is requested to accelerate beyond this amount,
-    //the power is instead set to change by this amount
+    //overview: sets how much the powerpercent of the device is allowed to accelerate per call of move. Default is no limit.
+    //input:    The maximum amount the magnitude can change upward per call. If the power is requested to accelerate beyond this amount,
+    //          the power is instead set to change by this amount
     void setRampUp(unsigned int magnitudeChangeLimit);
     
-    //sets how much the powerpercent of the device is allowed to decelerate per call of move.
-    //input: The maximum amount the magnitude can change downward per call. If the power is requested to decelerate beyond this amount,
-    //the power is instead set to change by this amount
+    //overview: sets how much the powerpercent of the device is allowed to decelerate per call of move.
+    //input:    The maximum amount the magnitude can change downward per call. If the power is requested to decelerate beyond this amount,
+    //          the power is instead set to change by this amount
     void setRampDown(unsigned int magnitudeChangeLimit);
     
     //gets the current powerpercent value of the h bridge.

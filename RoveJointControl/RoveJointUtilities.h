@@ -14,7 +14,7 @@ enum ValueType{InputSpeed, InputPosition, InputPowerPercent};
 //the caller of the status of the joint after attempting to carry out the user's command
 enum JointControlStatus
 {
-  //user's input was outside of the range boundaries accepted, user should check the valid input ranges based on what value type they specified in the interface's construction.4
+  //user's input was outside of the range boundaries accepted, user should check the valid input ranges based on what value type they specified in the interface's construction.
   //For instance, if the user constructed the interface to use speed values, then the inputs must be between SPEED_MIN and SPEED_MAX
   InvalidInput,
 
