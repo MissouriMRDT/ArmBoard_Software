@@ -4,29 +4,11 @@
 static const float IMPOSSIBLE_MOVEMENT = 370; //return value for functions that calculate travel routes that means the destination can't be reached
 static const int DEFAULT_RATIO = 5;
 
-PIVConverter :: PIVConverter(uint32_t inKPP, uint32_t inKIP, uint32_t inKPV, uint32_t inKIV, float inDT, FeedbackDevice* posFeed, FeedbackDevice* velFeed) : DrivingAlgorithm()
+PIVConverter :: PIVConverter(uint32_t inKPP, uint32_t inKIP, uint32_t inKPV, uint32_t inKIV, float inDT, FeedbackDevice* posFeed, FeedbackDevice* velFeed)
+: DrivingAlgorithm(InputPosition, InputPowerPercent), KIP(inKIP), KPP(inKPP), KPV(inKPV), KIV(inKIV), DT(inDT), posReloadCycles(DEFAULT_RATIO),
+  posCyclesLeft(DEFAULT_RATIO), deg_deadBand(1), errorPosSummation(0), errorVelSummation(0), hardStopPos1(-1), hardStopPos2(-1),
+  feedbackDevVelocity(velFeed), feedbackDevPosition(posFeed)
 {
-  posReloadCycles = DEFAULT_RATIO;
-  posCyclesLeft = posReloadCycles;
-
-  KPP = inKPP;
-  KIP = inKIP;
-  KPV = inKPV;
-  KIV = inKIV;
-  DT = inDT;
-
-  deg_deadBand = 1;
-  errorPosSummation = 0;
-  errorVelSummation = 0;
-  inType = InputPosition;
-  outType = InputPowerPercent;
-  hardStopPos1 = -1;
-  hardStopPos2 = -1;
-
-  feedbackDevVelocity = velFeed;
-  feedbackDevPosition = posFeed;
-
-
   if(posFeed->fType == InputPosition && velFeed->fType == InputSpeed)
   {
     validConstruction = true;
