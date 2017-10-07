@@ -1,8 +1,7 @@
-
-#include "SystemStatus.h"
+#include <GravityInertiaSystemStatus.h>
 #include "RoveBoard.h"
 
-SystemStatus::SystemStatus(const double j1CenterOfGravity, const double j1Weight, const double j1Length,
+GravityInertiaSystemStatus::GravityInertiaSystemStatus(const double j1CenterOfGravity, const double j1Weight, const double j1Length,
                            const double j2CenterOfGravity, const double j2Weight, const double j2Length,
                            const double j3CenterOfGravity, const double j3Weight, const double j3Length,
                            const double j4CenterOfGravity, const double j4Weight, const double j4Length,
@@ -18,16 +17,16 @@ SystemStatus::SystemStatus(const double j1CenterOfGravity, const double j1Weight
 }
 
 // Empty because there are no pointers.
-SystemStatus::~SystemStatus()
+GravityInertiaSystemStatus::~GravityInertiaSystemStatus()
 {
 }
 
-void SystemStatus::update()
+void GravityInertiaSystemStatus::update()
 {
     // Math here.
 }
 
-double SystemStatus::getGravity(uint32_t id)
+double GravityInertiaSystemStatus::getGravity(uint32_t id)
 {
     // Return the appropriate value based on the joint.
     // id 1 corresponds to joint 1, id 2 corresponds to joint 2, etc.
@@ -50,7 +49,7 @@ double SystemStatus::getGravity(uint32_t id)
     }
 }
 
-double SystemStatus::getInertia(uint32_t id)
+double GravityInertiaSystemStatus::getInertia(uint32_t id)
 {
     // Return the appropriate value based on the joint.
     // id 1 corresponds to joint 1, id 2 corresponds to joint 2, etc.

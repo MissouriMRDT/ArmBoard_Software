@@ -9,7 +9,7 @@
 
 #include "AbstractFramework.h"
 
-class SystemStatus
+class GravityInertiaSystemStatus
 {
 private:
     // Constants.
@@ -69,13 +69,13 @@ public:
     //                  j6Weight          - Weight for joint 6.
     //                  j6Length          - Length for joint 6.
     // Derived From:    Nothing
-    SystemStatus(const double j1CenterOfGravity, const double j1Weight, const double j1Length,
+    GravityInertiaSystemStatus(const double j1CenterOfGravity, const double j1Weight, const double j1Length,
                  const double j2CenterOfGravity, const double j2Weight, const double j2Length,
                  const double j3CenterOfGravity, const double j3Weight, const double j3Length,
                  const double j4CenterOfGravity, const double j4Weight, const double j4Length,
                  const double j5CenterOfGravity, const double j5Weight, const double j5Length,
                  const double j6CenterOfGravity, const double j6Weight, const double j6Length);
-    ~SystemStatus();
+    ~GravityInertiaSystemStatus();
 
     // Description: Calculates the gravity and inertia values of all joints.
     //              Uses the joint constants in the calculations, so no parameters are necessary.
