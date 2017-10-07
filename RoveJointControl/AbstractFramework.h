@@ -132,7 +132,8 @@ class FeedbackDevice
 
 	public:
 
-		//Overview: returns feedback. Public for everything to see, if desired
+		//Overview: returns the sensor's feedback information, such as last read position or speed, depending on
+    //          what the feedback type is. Public for everything to see, if desired
     //
 		//returns:  a value representing feedback, the range of the value depends on what input type this device returns.
 		//          For example, if this device returns speed feedback, the values shall be in the range between SPEED_MIN and SPEED_MAX

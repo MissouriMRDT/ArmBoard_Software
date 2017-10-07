@@ -16,7 +16,7 @@ typedef enum TorqueConverterMotorTypes
   TorqueConvert_BrushedDC
 } TorqueConverterMotorTypes;
 
-class TorquePowerPercentConverter: public DrivingAlgorithm
+class TtoPPOpenLConverter: public DrivingAlgorithm
 {
   private:
     TorqueConverterMotorTypes motorType;
@@ -29,8 +29,8 @@ class TorquePowerPercentConverter: public DrivingAlgorithm
     long runAlgorithm(const long input, bool * ret_OutputFinished);
 
   public:
-    TorquePowerPercentConverter(TorqueConverterMotorTypes motor_type, float Ki, FeedbackDevice *voltSensor);
-    TorquePowerPercentConverter(TorqueConverterMotorTypes motor_type, float Ki, int staticMillivolts);
+    TtoPPOpenLConverter(TorqueConverterMotorTypes motor_type, float Ki, FeedbackDevice *voltSensor);
+    TtoPPOpenLConverter(TorqueConverterMotorTypes motor_type, float Ki, int staticMillivolts);
 
 };
 
