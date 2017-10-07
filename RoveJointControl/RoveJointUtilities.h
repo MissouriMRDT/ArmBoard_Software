@@ -1,6 +1,8 @@
 #ifndef JOINTFRAMEWORKUTILITIES_H_
 #define JOINTFRAMEWORKUTILITIES_H_
 
+#include <stdint.h>
+
 //sign macro. Returns 1 if passed number is positive, -1 if it's negative, 0 if it's 0
 #define sign(x) ((x > 0) ? 1 : ((x < 0) ? -1 : 0))
 
@@ -8,7 +10,7 @@
 #define constrain(amt,low,high) ((amt)<(low)?(low):((amt)>(high)?(high):(amt)))
 
 //All the types of values that can be passed to and be returned from the clases in the control framework
-enum ValueType{InputSpeed, InputPosition, InputPowerPercent};
+enum ValueType{InputSpeed, InputPosition, InputPowerPercent, InputTorque, InputVoltage};
 
 //the types of return statuses that can be returned from the joint interface's 'run output' methods. They are to inform
 //the caller of the status of the joint after attempting to carry out the user's command
@@ -40,8 +42,10 @@ enum JointControlStatus
 };
 
 //The common inputs and outputs between classes will fall between these limits, class should not expect to take or return values outside of these
-const int SPEED_MIN = -10000, SPEED_MAX = 10000; //1 value = .01 in/s
-const long POS_MIN = 0, POS_MAX = 360000; //started with base of 360.000 for deg, made to 360000 to work without float math. Each value means 360/360000 = .001 deg per value
-const int POWERPERCENT_MIN = -1000, POWERPERCENT_MAX = 1000; //measured in percentile, 1 = .1% power
+const int32_t SPEED_MIN = -100000, SPEED_MAX = 100000; //1 value = .01 in/s
+const uint32_t POS_MIN = 0, POS_MAX = 360000; //started with base of 360.000 for deg, made to 360000 to work without float math. Each value means 360/360000 = .001 deg per value
+const int16_t POWERPERCENT_MIN = -1000, POWERPERCENT_MAX = 1000; //measured in percentile, 1 = .1% power
+const int32_t TORQUE_MIN = -100000, TORQUE_MAX = 100000; // 1 value = 1 milliNewton
+const int32_t VOLT_MIN = -1000000, VOLT_MAX = 1000000; //1 value = 1 milliVolt
 
 #endif
