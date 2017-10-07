@@ -20,17 +20,19 @@ class TtoPPOpenLConverter: public DrivingAlgorithm
 {
   private:
     TorqueConverterMotorTypes motorType;
-    const float KI;
-    const FeedbackDevice* VoltSensor;
+    const float KT;
+    FeedbackDevice* const VoltSensor;
     const bool voltConverterUsed;
     const unsigned int staticMilliVolts;
+    const int motorR_mOhm;
 
+    long runAlgorithmBrushedDC(const long torque_milliNewtons);
 
     long runAlgorithm(const long input, bool * ret_OutputFinished);
 
   public:
-    TtoPPOpenLConverter(TorqueConverterMotorTypes motor_type, float Ki, FeedbackDevice *voltSensor);
-    TtoPPOpenLConverter(TorqueConverterMotorTypes motor_type, float Ki, int staticMillivolts);
+    TtoPPOpenLConverter(TorqueConverterMotorTypes motor_type, float Kt, int motResistance_milliOhms, FeedbackDevice *voltSensor);
+    TtoPPOpenLConverter(TorqueConverterMotorTypes motor_type, float Kt, int motResistance_milliOhms, int staticMillivolts);
 
 };
 

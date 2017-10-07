@@ -48,4 +48,6 @@ const int16_t POWERPERCENT_MIN = -1000, POWERPERCENT_MAX = 1000; //measured in p
 const int32_t TORQUE_MIN = -100000, TORQUE_MAX = 100000; // 1 value = 1 milliNewton
 const int32_t VOLT_MIN = -1000000, VOLT_MAX = 1000000; //1 value = 1 milliVolt
 
+const char PERCENT_TO_POWERPERCENT = POWERPERCENT_MAX / 100;
+
 #endif
