@@ -6,7 +6,7 @@ static const float IMPOSSIBLE_MOVEMENT = 370; //return value for functions that 
 
 void PIAlgorithm::verifyFdev()
 {
-  if(feedbackDev->fType == inType)
+  if(feedbackDev->getFeedbackType() == inType)
   {
     validConstruction = true;
   }

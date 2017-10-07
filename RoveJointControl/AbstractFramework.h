@@ -12,6 +12,7 @@ class DrivingAlgorithm;
 
 class DifferentialJoint;
 class SingleMotorJoint;
+class GravityCompensator;
 
 //Primary interface class for controlling the joint; manages the other classes and
 //computes any calculations that depend on the nature of the joint itself
@@ -127,6 +128,8 @@ class FeedbackDevice
     FeedbackDevice(ValueType type)
     : fType(type) {};
 
+    ValueType fType;
+
 	public:
 
 		//Overview: returns feedback. Public for everything to see, if desired
@@ -135,7 +138,7 @@ class FeedbackDevice
 		//          For example, if this device returns speed feedback, the values shall be in the range between SPEED_MIN and SPEED_MAX
 		virtual long getFeedback() = 0;
 
-		ValueType fType;
+		ValueType getFeedbackType() { return fType; }
 };
 
 //represents the device (or any general method) used for physically causing movement
@@ -183,6 +186,8 @@ class OutputDevice
 //Represents any algorithm used for converting one type of data (such as position) to another (such as velocity)
 class IOConverter
 {
+  friend class GravityCompensator;
+
   public:
 
     //Overview: Adds a supporting algorithm to be used in conjunction with this one; this IOConverter will calculate its own output,
@@ -197,23 +202,23 @@ class IOConverter
     //          Also this function doesn't stack; only one supporting algorithm attached at a time.
     bool addSupportingAlgorithm(SupportingAlgorithm* support);
 
-    //Sets whether or not the supporting algorithm will continue to output data once the motion is completed.
-    //If true, then the supporting algorithm will be allowed to keep compensating for whatever it's compensating for when the motion has stopped.
-    void persistantSupport(bool persistant);
-
   protected:
 
     SupportingAlgorithm* supportingAlgorithm;
     bool supportUsed;
-    bool supportIsPersistant;
 
     //the types of values that the algorithm takes in and gives out
     ValueType inType;
     ValueType outType;
 
     IOConverter(ValueType in, ValueType out)
-    : supportUsed(false), supportingAlgorithm(0), supportIsPersistant(false), inType(in), outType(out)
+    : supportUsed(false), supportingAlgorithm(0), inType(in), outType(out)
     {};
+
+  public:
+
+    ValueType getInType() { return inType; }
+    ValueType getOutType() { return outType; }
 };
 
 //Represents an IOConverter that doesn't drive the motion on its own, but supports another IOConverter with a separate control
@@ -237,10 +242,13 @@ class DrivingAlgorithm: public IOConverter
   friend class SingleMotorJoint;
   friend class DifferentialJoint;
   friend class JointInterface;
+  friend class GravityCompensator;
 
   protected:
 
-    DrivingAlgorithm(ValueType in, ValueType out): IOConverter(in, out) {};
+    bool supportIsPersistant;
+
+    DrivingAlgorithm(ValueType in, ValueType out): IOConverter(in, out), supportIsPersistant(false)  {};
 
     //overview: run whatever algorithm this implements, returns value that can be directly passed to an output device
     //
@@ -257,6 +265,13 @@ class DrivingAlgorithm: public IOConverter
     //
     //Note:     If ret_OutputFinished returns false but input returns 0, it's an indication that an error has occured
     virtual long runAlgorithm(const long input, bool * ret_OutputFinished) = 0;
+
+  public:
+
+    //Sets whether or not the supporting algorithm coupled with this (if there's one) will continue to output data once the motion is completed.
+    //If true, then the supporting algorithm will be allowed to keep compensating for whatever it's compensating for when the motion has stopped.
+    void persistantSupport(bool persistant);
+
 };
 
 #endif

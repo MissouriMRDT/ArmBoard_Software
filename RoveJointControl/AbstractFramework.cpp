@@ -129,7 +129,7 @@ bool IOConverter::addSupportingAlgorithm(SupportingAlgorithm* support)
   }
 }
 
-void IOConverter::persistantSupport(bool persistant)
+void DrivingAlgorithm::persistantSupport(bool persistant)
 {
   supportIsPersistant = persistant;
 }

@@ -9,7 +9,7 @@ PIVConverter :: PIVConverter(uint32_t inKPP, uint32_t inKIP, uint32_t inKPV, uin
   posCyclesLeft(DEFAULT_RATIO), deg_deadBand(1), errorPosSummation(0), errorVelSummation(0), hardStopPos1(-1), hardStopPos2(-1),
   feedbackDevVelocity(velFeed), feedbackDevPosition(posFeed)
 {
-  if(posFeed->fType == InputPosition && velFeed->fType == InputSpeed)
+  if(posFeed->getFeedbackType() == InputPosition && velFeed->getFeedbackType() == InputSpeed)
   {
     validConstruction = true;
   }
