@@ -5,7 +5,7 @@
  *      Author: drue
  */
 
-#include "TorquePowerPercentConverter.h"
+#include "TtoPPOpenLConverter.h"
 #include "RoveBoard.h"
 
 TtoPPOpenLConverter::TtoPPOpenLConverter(TorqueConverterMotorTypes motor_type, float Ki, int staticMillivolts)
