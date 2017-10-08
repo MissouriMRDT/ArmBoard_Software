@@ -42,8 +42,8 @@ enum JointControlStatus
 };
 
 //The common inputs and outputs between classes will fall between these limits, class should not expect to take or return values outside of these
-const int32_t SPEED_MIN = -100000, SPEED_MAX = 100000; //1 value = .01 in/s
-const uint32_t POS_MIN = 0, POS_MAX = 360000; //started with base of 360.000 for deg, made to 360000 to work without float math. Each value means 360/360000 = .001 deg per value
+const int32_t SPEED_MIN = -100000, SPEED_MAX = 100000; //1 value = 1 milliDegree/s
+const uint64_t POS_MIN = 0, POS_MAX = 360000; //started with base of 360.000 for deg, made to 360000 to work without float math. Each value means 360/360000 = .001 deg per value
 const int16_t POWERPERCENT_MIN = -1000, POWERPERCENT_MAX = 1000; //measured in percentile, 1 = .1% power
 const int32_t TORQUE_MIN = -100000, TORQUE_MAX = 100000; // 1 value = 1 milliNewton-meter
 const int32_t VOLT_MIN = -1000000, VOLT_MAX = 1000000; //1 value = 1 milliVolt

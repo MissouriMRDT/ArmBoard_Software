@@ -34,11 +34,11 @@ long Ma3Encoder12b::getFeedback()
   
   //set the relative angle, and account for any overflow due to the calculations
   long relativeAngle = absoluteAngle+offsetAngle;
-  if(relativeAngle > POS_MAX)
+  if(relativeAngle > (long)POS_MAX) //cast to long as math screws up if it doesn't
   {
     relativeAngle -= (POS_MAX-POS_MIN); 
   }
-  else if(relativeAngle < POS_MIN)
+  else if(relativeAngle < (long)POS_MIN)
   {
     relativeAngle += (POS_MAX-POS_MIN);
   }
