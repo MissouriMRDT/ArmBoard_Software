@@ -3,10 +3,11 @@
 
 static const float IMPOSSIBLE_MOVEMENT = 370; //return value for functions that calculate travel routes that means the destination can't be reached
 static const int DEFAULT_RATIO = 5;
-
+static const char STARTING_CYCLES_LEFT = 1; //Default value is 1 to make sure that the position function runs first.
+//If it was zero, then the arm would calculate the velocity without a position to go to.
 PIVConverter :: PIVConverter(uint32_t inKPP, uint32_t inKIP, uint32_t inKPV, uint32_t inKIV, float inDT, FeedbackDevice* posFeed, FeedbackDevice* velFeed)
 : DrivingAlgorithm(InputPosition, InputPowerPercent), KIP(inKIP), KPP(inKPP), KPV(inKPV), KIV(inKIV), DT(inDT), posReloadCycles(DEFAULT_RATIO),
-  posCyclesLeft(DEFAULT_RATIO), deg_deadBand(1), errorPosSummation(0), errorVelSummation(0), hardStopPos1(-1), hardStopPos2(-1),
+  posCyclesLeft(STARTING_CYCLES_LEFT), deg_deadBand(1), errorPosSummation(0), errorVelSummation(0), hardStopPos1(-1), hardStopPos2(-1),
   feedbackDevVelocity(velFeed), feedbackDevPosition(posFeed)
 {
   if(posFeed->getFeedbackType() == InputPosition && velFeed->getFeedbackType() == InputSpeed)
@@ -218,7 +219,7 @@ long PIVConverter :: runAlgorithm(const long input, bool * ret_OutputFinished)
 
   //ALG TO RUN CYCLES///////////
   posCyclesLeft --;
-  if(posCyclesLeft == 0)
+  if(posCyclesLeft <= 0)
   {
     calcPos = true;
     posCyclesLeft = posReloadCycles;
