@@ -12,11 +12,7 @@
 
 class PIVConverter : public DrivingAlgorithm
 {
-
-
-    private:
-
-
+  private:
 
     //This flag tracks whether or not the feedback device given to the algorithm is a proper fit for the algorithm
     bool validConstruction;
@@ -27,7 +23,8 @@ class PIVConverter : public DrivingAlgorithm
 
     float deg_deadBand;//when the joint is within this many degrees of its destination, it stops
 
-    //Ki and Kp are PI loop values needed to calculate the output.
+    //KPP and KIP are values needed to calculate the output for the position algorithm
+    //KPV and KIV are values needed to calculate the output for the velocity algorithm
     int KPP, KIP, KPV, KIV;
 
     //Represents how many cycles are left before the timer resets
@@ -52,24 +49,44 @@ class PIVConverter : public DrivingAlgorithm
     //Returns IMPOSSIBLE_MOVEMENT if it can't reach the destination.
     float calcRouteToDest(float present, float dest);
 
-    // Full function that takes a postion input (an value for the gear to move to) as well as a boolean to check if the movement
-    // of the gear has been succeeded. If the bool "ret_OutputFinished" is true, then
-    // the joint has reached its desired position and the method will return 0 power.
-    // Upon being called, the method will run PI logic on the passed input and return a value of power for how fast
-    // the motor controlling this joint should move
-    // If ret_OutputFinished returns false but input returns 0, it's an indication that an error has occured
-
-
-    //long runAlgorithm(const long input, bool * ret_OutputFinished, bool calcPos);
-    long runPosAlgorithm(const long posDest, float *deg_disToDest);
-    int runVelAlgorithm(int speedDest, int *speedError);
+    // Overview: Full function that takes a postion input (an value for the gear to move to) as well as a boolean to check if the movement
+    //           of the gear has been succeeded. Upon being called, the method will run PI logic on the passed input and return
+    //           the calculated output value to pass to the output device.
+    //
+    // Inputs:  ret_OutputFinished: a return-by-reference. If true, then the joint has reached its desired position.
+    //                              If false, function should be called again until movement is complete.
+    //                              If ret_OutputFinished returns false but input returns 0, it's an indication that an error has occurred
+    //          input: The position to attempt to go towards, expressed from POS_MAX to POS_MIN
+    //
+    // returns: The calculated value to pass to the joint's output device, based on how far from the destination the joint is.
     long runAlgorithm(const long input, bool * ret_OutputFinished);
 
+    // Overview: Full function that calculates the distance the arm is from its destination
+    //
+    // Inputs:  input: the position left from the destination as a floating point value
+    //          input: the degrees left to turn for the arm to get to the appropriate destination
+    //
+    // returns: if arm is at position then the arm stops moving else, the veloicty algorithm is prompted for in runAlgorithm
+    long runPosAlgorithm(const long posDest, float *deg_disToDest);
 
-    public:
+    // Overview: Full function that determines how much power will be output by the arm to get to its destination
+    //
+    // Inputs:  speedDest, the integer that represents if the arm is moving, "if speedDest = 0 then arm is not moving"
+    //          *speedError, the integer that accounts for minor errors in the speed calculations
+    //
+    // returns: the amount of power that the arm should output in order to get to its destination
+    int runVelAlgorithm(int speedDest, int *speedError);
 
 
+  public:
 
+    //Input: inKPP, the integer representing the constant for porportional position
+    //       inKIP, the integer representing the constant for integral position
+    //       inKPV, the integer representing the constant for porportional velocity
+    //       inKIV, the integer representing the constant for integral velocity
+    //       inDT, the float representing the amount of time that should be paused in between each loop
+    //       posFeed, a FeedbackDevice that gets the device that controls position
+    //       velFeed, a FeedbackDevice that gets the device that controls velocity
     PIVConverter(uint32_t inKPP, uint32_t inKIP, uint32_t inKPV, uint32_t inKIV, float inDT, FeedbackDevice* posFeed, FeedbackDevice* velFeed);
 
     //function for specifying positions of hard stops attached to this joint, that is positions in degrees that the joint can't travel through
@@ -83,7 +100,5 @@ class PIVConverter : public DrivingAlgorithm
     void setPosValLoopRatio(int ratio);
 
 };
-
-
 
 #endif /* ROVEJOINTCONTROL_PIVCONVERTER_H_ */

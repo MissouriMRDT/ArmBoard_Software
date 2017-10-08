@@ -5,20 +5,21 @@ static const float IMPOSSIBLE_MOVEMENT = 370; //return value for functions that 
 static const int DEFAULT_RATIO = 5;
 static const char STARTING_CYCLES_LEFT = 1; //Default value is 1 to make sure that the position function runs first.
 //If it was zero, then the arm would calculate the velocity without a position to go to.
+
 PIVConverter :: PIVConverter(uint32_t inKPP, uint32_t inKIP, uint32_t inKPV, uint32_t inKIV, float inDT, FeedbackDevice* posFeed, FeedbackDevice* velFeed)
 : DrivingAlgorithm(InputPosition, InputPowerPercent), KIP(inKIP), KPP(inKPP), KPV(inKPV), KIV(inKIV), DT(inDT), posReloadCycles(DEFAULT_RATIO),
   posCyclesLeft(STARTING_CYCLES_LEFT), deg_deadBand(1), errorPosSummation(0), errorVelSummation(0), hardStopPos1(-1), hardStopPos2(-1),
   feedbackDevVelocity(velFeed), feedbackDevPosition(posFeed)
-{
-  if(posFeed->getFeedbackType() == InputPosition && velFeed->getFeedbackType() == InputSpeed)
   {
-    validConstruction = true;
+    if(posFeed->getFeedbackType() == InputPosition && velFeed->getFeedbackType() == InputSpeed)
+    {
+      validConstruction = true;
+    }
+    else
+    {
+      validConstruction = false;
+    }
   }
-  else
-  {
-    validConstruction = false;
-  }
-}
 
 
 float PIVConverter::dist360(int pos_rotationUnits)
@@ -44,7 +45,6 @@ float PIVConverter::calcShortPath(float present, float dest)
 
   return degToDest;
 }
-//--------------------------------------------------------------------------------------------------------------ROUTE---------------------
 
 float PIVConverter::calcRouteToDest(float present, float dest)
 {
@@ -156,11 +156,13 @@ void PIVConverter::setHardStopPositions(float hardStopPos1_deg, float hardStopPo
   }
 }
 
-
-
-
-
-//------------------------------------------------------------------------------------------POS--------------------------------
+/********************************************
+ *
+ *
+ * THIS IS THE POSITION ALGORITHM
+ *
+ *
+ ********************************************/
 long PIVConverter::runPosAlgorithm(const long posDest, float * deg_disToDest)
 {
 
@@ -190,7 +192,13 @@ long PIVConverter::runPosAlgorithm(const long posDest, float * deg_disToDest)
   return speedOut;
 }
 
-//---------------------------------------------------------------------------------------VELOCITY--------------------------
+/************************************
+ *
+ *
+ * THIS IS THE VELOCITY ALGORITHM
+ *
+ *
+ ***********************************/
 int PIVConverter :: runVelAlgorithm(int speedDest, int *speedError)
 {
   if(speedDest == 0)
@@ -208,7 +216,13 @@ int PIVConverter :: runVelAlgorithm(int speedDest, int *speedError)
   return pwrOut;
 }
 
-//----------------------------------------------------------------------------------------MANAGER------------------------
+/***********************************
+ *
+ *
+ * THIS IS THE MANGAGING ALGORITHM FOR POSITION AND VELOCITY
+ *
+ *
+ ***********************************/
 long PIVConverter :: runAlgorithm(const long input, bool * ret_OutputFinished)
 {
   float deg_disToDest;
