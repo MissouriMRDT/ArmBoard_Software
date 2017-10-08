@@ -47,7 +47,11 @@ JointControlStatus SingleMotorJoint::runOutputControl(const long movement)
     returnStatus = InvalidInput;
   }
 
-  else if(validConstruction)
+  else if(!validConstruction)
+  {
+    returnStatus = InvalidConstruction;
+  }
+  else
   {
   	//calls algorithm if there's one used. If not, output passed directly to output device
     if(algorithmUsed)
@@ -65,24 +69,20 @@ JointControlStatus SingleMotorJoint::runOutputControl(const long movement)
     {
       returnStatus = AlgorithmError;
     }
-    
-    else if(motionComplete == true)
-    {
-      returnStatus = OutputComplete;
-    }
     else
     {
-      returnStatus = OutputRunning;
-    }
-    
-  	//moves device with output decided on by the algorithm
-  	controller1->move(mov);
-  }
+      if(motionComplete == true)
+      {
+        returnStatus = OutputComplete;
+      }
+      else
+      {
+        returnStatus = OutputRunning;
+      }
 
-  //if this joint wasn't properly constructed, nothing is run
-  else
-  {
-    returnStatus = InvalidConstruction;
+      //moves device with output decided on by the algorithm
+      controller1->move(mov);
+    }
   }
 
 	return(returnStatus);

@@ -49,7 +49,11 @@ JointControlStatus DifferentialJoint::runOutputControl(const long movement)
   {
     returnStatus = InvalidInput;
   }
-  else if(validConstruction)
+  else if(!validConstruction)
+  {
+    returnStatus = InvalidConstruction;
+  }
+  else
   {
   	//runs the algorithm on the input if there is one. Else it just passes the output directly to the output device
     if(algorithmUsed)
@@ -67,64 +71,60 @@ JointControlStatus DifferentialJoint::runOutputControl(const long movement)
     {
       returnStatus = AlgorithmError;
     }
-    
-    else if(motionComplete == true)
-    {
-      returnStatus = OutputComplete;
-    }
     else
     {
-      returnStatus = OutputRunning;
-    }
-    
-    if(thisJointType == DifferentialTilt)
-    {
-      motorOneVirtualPower = mov;
-      motorTwoVirtualPower = mov;
-    }
-    else
-    {
-      motorOneVirtualPower = -mov;
-      motorTwoVirtualPower = mov;
-    }
-    
-    int motorOneTruePower = motorOneVirtualPower;
-    int motorTwoTruePower = motorTwoVirtualPower;
-
-    //this only happens if this joint has been coupled with another joint.
-    //The coupled logic will modify the power calculated by the algorithm
-    //to allow smooth tilting and rotating at the same time.
-    if(coupled && controller1->inType == InputPowerPercent)
-    {
-      motorOneTruePower += coupledJoint->motorOneVirtualPower;
-      if (motorOneTruePower > POWERPERCENT_MAX)
+      if(motionComplete == true)
       {
-        motorOneTruePower = POWERPERCENT_MAX;
+        returnStatus = OutputComplete;
       }
-      else if (motorOneTruePower < POWERPERCENT_MIN)
+      else
       {
-        motorOneTruePower = POWERPERCENT_MIN;
+        returnStatus = OutputRunning;
       }
 
-      motorTwoTruePower += coupledJoint->motorTwoVirtualPower;
-      if (motorTwoTruePower > POWERPERCENT_MAX)
+      if(thisJointType == DifferentialTilt)
       {
-        motorTwoTruePower = POWERPERCENT_MAX;
+        motorOneVirtualPower = mov;
+        motorTwoVirtualPower = mov;
       }
-      else if (motorTwoTruePower < POWERPERCENT_MIN)
+      else
       {
-        motorTwoTruePower = POWERPERCENT_MIN;
+        motorOneVirtualPower = -mov;
+        motorTwoVirtualPower = mov;
       }
-    }
-    
-  	controller1->move(motorOneTruePower);
-  	controller2->move(motorTwoTruePower);
-  }
 
-  //if this joint wasn't properly constructed, nothing is run
-  else
-  {
-    returnStatus = InvalidConstruction;
+      int motorOneTruePower = motorOneVirtualPower;
+      int motorTwoTruePower = motorTwoVirtualPower;
+
+      //this only happens if this joint has been coupled with another joint.
+      //The coupled logic will modify the power calculated by the algorithm
+      //to allow smooth tilting and rotating at the same time.
+      if(coupled && controller1->inType == InputPowerPercent)
+      {
+        motorOneTruePower += coupledJoint->motorOneVirtualPower;
+        if (motorOneTruePower > POWERPERCENT_MAX)
+        {
+          motorOneTruePower = POWERPERCENT_MAX;
+        }
+        else if (motorOneTruePower < POWERPERCENT_MIN)
+        {
+          motorOneTruePower = POWERPERCENT_MIN;
+        }
+
+        motorTwoTruePower += coupledJoint->motorTwoVirtualPower;
+        if (motorTwoTruePower > POWERPERCENT_MAX)
+        {
+          motorTwoTruePower = POWERPERCENT_MAX;
+        }
+        else if (motorTwoTruePower < POWERPERCENT_MIN)
+        {
+          motorTwoTruePower = POWERPERCENT_MIN;
+        }
+      }
+
+      controller1->move(motorOneTruePower);
+      controller2->move(motorTwoTruePower);
+    }
   }
 
   return(returnStatus);
