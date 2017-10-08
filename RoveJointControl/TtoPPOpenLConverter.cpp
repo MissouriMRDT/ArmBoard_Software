@@ -6,6 +6,7 @@
  */
 
 #include "TtoPPOpenLConverter.h"
+#include "RoveJointUtilities.h"
 #include "RoveBoard.h"
 
 TtoPPOpenLConverter::TtoPPOpenLConverter(TorqueConverterMotorTypes motor_type, float Kt, int motResistance_milliOhms, int staticMillivolts)
@@ -55,15 +56,7 @@ long TtoPPOpenLConverter::runAlgorithmBrushedDC(const long torque_milliNewtons)
   {
     return 0;
   }
-
-  //for brushed DC, torque is just a linear scaling of voltage using the equation
-  //Vapplied = (L/Kt) * (dT/dt) + (R/Kt) * T + Kw * W.
-  //There's some idealization there with motor windings and such, but in general the error is fairly small.
-  //As such, since it's an entirely linear equation, we can use superposition to just say
-  //Vapplied_to_torque = (R/Kt) * T
-  milliVoltsToApply = (((f_motorR_mOhm / 1000.0) / KT) * (f_torque_milliNewtons / 1000.0)) * 1000.0;
-
-  if(voltConverterUsed)
+  else if(voltConverterUsed)
   {
     milliVoltsAvailable = VoltSensor->getFeedback();
   }
@@ -72,13 +65,20 @@ long TtoPPOpenLConverter::runAlgorithmBrushedDC(const long torque_milliNewtons)
     milliVoltsAvailable = staticMilliVolts;
   }
 
+  //for brushed DC, torque is just a linear scaling of voltage using the equation
+  //Vapplied = (L/Kt) * (dT/dt) + (R/Kt) * T + Kw * W.
+  //There's some idealization there with motor windings and such, but in general the error is fairly small.
+  //As such, since it's an entirely linear equation, we can use superposition to just say
+  //Vapplied_to_torque = (R/Kt) * T
+  milliVoltsToApply = (((f_motorR_mOhm / 1000.0) / KT) * (f_torque_milliNewtons / 1000.0)) * 1000.0;
+
   if(milliVoltsToApply > milliVoltsAvailable)
   {
     powPercent = POWERPERCENT_MAX * sign(torque_milliNewtons);
   }
   else
   {
-    powPercent = ((milliVoltsToApply / milliVoltsAvailable) * 100) * PERCENT_TO_POWERPERCENT * sign(torque_milliNewtons);
+    powPercent = ((milliVoltsToApply / milliVoltsAvailable) * 100.0) * ((float)PERCENT_TO_POWERPERCENT) * sign(torque_milliNewtons);
   }
 
   if(powPercent > POWERPERCENT_MAX)

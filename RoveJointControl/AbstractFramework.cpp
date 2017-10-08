@@ -10,6 +10,10 @@ bool JointInterface::verifyInput(long inputToVerify)
 		return POS_MIN <= inputToVerify && inputToVerify <= POS_MAX;
 	  case InputPowerPercent:
 		return POWERPERCENT_MIN <= inputToVerify && inputToVerify <= POWERPERCENT_MAX;
+	  case InputTorque:
+	  return TORQUE_MIN <= inputToVerify && inputToVerify <= TORQUE_MAX;
+	  case InputVoltage:
+	  return VOLT_MIN <= inputToVerify && inputToVerify <= VOLT_MAX;
 	  default:
 	    return inputToVerify == 0;
   }
