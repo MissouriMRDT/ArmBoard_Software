@@ -10,6 +10,7 @@ VelocityDeriver::VelocityDeriver(FeedbackDevice* posSensor, float filter_Constan
     debugFault("VelocityDeriver constructor: position feedback device doesn't give position data");
   }
 
+  filterConstant = constrain(filterConstant, 0, 1);
   lastPosition = posDev->getFeedback();
   lastTime_ms = millis();
 }
