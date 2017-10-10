@@ -258,13 +258,13 @@ long PIVConverter :: runAlgorithm(const long input, bool * ret_OutputFinished)
   if(desiredSpeed == 0)
   {
     *ret_OutputFinished = true;
+    pwr_out = 0;
   }
   else
   {
     *ret_OutputFinished = false;
+    pwr_out += runVelAlgorithm(desiredSpeed, &speedError);
   }
-
-  pwr_out += runVelAlgorithm(desiredSpeed, &speedError);
 
   // if there's a supporting algorithm attached, run its output as well
   if(supportUsed)
@@ -287,7 +287,7 @@ long PIVConverter :: runAlgorithm(const long input, bool * ret_OutputFinished)
   {
     pwr_out = POWERPERCENT_MIN;
   }
-  else
+  else if (pwr_out != 0)
   {
     errorVelSummation+=(speedError * DT);
 
