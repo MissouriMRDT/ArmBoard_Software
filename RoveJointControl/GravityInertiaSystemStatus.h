@@ -8,29 +8,33 @@
 #define ROVEJOINTCONTROL_ARMBOARDSOFTWARE_ROVEJOINTCONTROL_SYSTEMSTATUS_H_
 
 #include "AbstractFramework.h"
+#include "Roveboard.h"
+
+typedef enum ArmModel {gryphonArm} ArmModel;
 
 class GravityInertiaSystemStatus
 {
 private:
     // Constants.
-    const double J1_CENTER_OF_GRAVITY;
-    const double J1_WEIGHT;
-    const double J1_LENGTH;
-    const double J2_CENTER_OF_GRAVITY;
-    const double J2_WEIGHT;
-    const double J2_LENGTH;
-    const double J3_CENTER_OF_GRAVITY;
-    const double J3_WEIGHT;
-    const double J3_LENGTH;
-    const double J4_CENTER_OF_GRAVITY;
-    const double J4_WEIGHT;
-    const double J4_LENGTH;
-    const double J5_CENTER_OF_GRAVITY;
-    const double J5_WEIGHT;
-    const double J5_LENGTH;
-    const double J6_CENTER_OF_GRAVITY;
-    const double J6_WEIGHT;
-    const double J6_LENGTH;
+    const double GRIPPER_WEIGHT;
+    const double GRIPPER_LENGTH;
+    const double GRIPPER_CENTER_OF_GRAVITY;
+    const double FOREARM_WEIGHT;
+    const double FOREARM_LENGTH;
+    const double FOREARM_CENTER_OF_GRAVITY;
+    const double BICEP_WEIGHT;
+	const double BICEP_LENGTH;
+    const double BICEP_CENTER_OF_GRAVITY;
+
+    FeedbackDevice* const JOINT1ANGLE;
+    FeedbackDevice* const JOINT2ANGLE;
+    FeedbackDevice* const JOINT3ANGLE;
+    FeedbackDevice* const JOINT4ANGLE;
+    FeedbackDevice* const JOINT5ANGLE;
+    FeedbackDevice* const JOINT6ANGLE;
+
+
+
 
     // Member variables.
     double j1Gravity;
@@ -48,33 +52,27 @@ private:
 
 protected:
 
+    float puToRad(uint32_t p_units);
+    const ArmModel Model;
+
 public:
     // Description:     Constructor
-    // Arguments:       j1CenterOfGravity - Center of gravity for joint 1.
-    //                  j1Weight          - Weight for joint 1.
-    //                  j1Length          - Length for joint 1.
-    //                  j2CenterOfGravity - Center of gravity for joint 2.
-    //                  j2Weight          - Weight for joint 2.
-    //                  j2Length          - Length for joint 2.
-    //                  j3CenterOfGravity - Center of gravity for joint 3.
-    //                  j3Weight          - Weight for joint 3.
-    //                  j3Length          - Length for joint 3.
-    //                  j4CenterOfGravity - Center of gravity for joint 4.
-    //                  j4Weight          - Weight for joint 4.
-    //                  j4Length          - Length for joint 4.
-    //                  j5CenterOfGravity - Center of gravity for joint 5.
-    //                  j5Weight          - Weight for joint 5.
-    //                  j5Length          - Length for joint 5.
-    //                  j6CenterOfGravity - Center of gravity for joint 6.
-    //                  j6Weight          - Weight for joint 6.
-    //                  j6Length          - Length for joint 6.
+    // Arguments:       gripperCenterOfGravity - Center of gravity for gripper.
+    //                  gripperWeight          - Weight for gripper.
+    //                  gripperLength          - Length for gripper.
+    //                  forearmCenterOfGravity - Center of gravity for forearm.
+    //                  forearmWeight          - Weight for forearm.
+    //                  forearmLength          - Length for forearm.
+    //                  bicepCenterOfGravity   - Center of gravity for bicep.
+    //                  bicepWeight            - Weight for bicep.
+    //                  bicepLength            - Length for bicep.
+    //
     // Derived From:    Nothing
-    GravityInertiaSystemStatus(const double j1CenterOfGravity, const double j1Weight, const double j1Length,
-                 const double j2CenterOfGravity, const double j2Weight, const double j2Length,
-                 const double j3CenterOfGravity, const double j3Weight, const double j3Length,
-                 const double j4CenterOfGravity, const double j4Weight, const double j4Length,
-                 const double j5CenterOfGravity, const double j5Weight, const double j5Length,
-                 const double j6CenterOfGravity, const double j6Weight, const double j6Length);
+    GravityInertiaSystemStatus(ArmModel model, const double GRIPPER_WEIGHT, const double GRIPPER_LENGTH, const double GRIPPER_CENTER_OF_GRAVITY,
+    						   const double FOREARM_WEIGHT, const double FOREARM_LENGTH, const double FOREARM_CENTER_OF_GRAVITY,
+							   const double BICEP_WEIGHT, const double BICEP_LENGTH, const double BICEP_CENTER_OF_GRAVITY,
+							   FeedbackDevice* joint1, FeedbackDevice* joint2, FeedbackDevice* joint3,
+							   FeedbackDevice* joint4, FeedbackDevice* joint5, FeedbackDevice* joint6);
     ~GravityInertiaSystemStatus();
 
     // Description: Calculates the gravity and inertia values of all joints.
@@ -95,3 +93,8 @@ public:
 };
 
 #endif /* ROVEJOINTCONTROL_ARMBOARDSOFTWARE_ROVEJOINTCONTROL_SYSTEMSTATUS_H_ */
+
+
+
+
+

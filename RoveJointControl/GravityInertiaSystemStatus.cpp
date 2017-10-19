@@ -1,19 +1,20 @@
 #include <GravityInertiaSystemStatus.h>
 #include "RoveBoard.h"
+#include <stdint.h>
 
-GravityInertiaSystemStatus::GravityInertiaSystemStatus(const double j1CenterOfGravity, const double j1Weight, const double j1Length,
-                           const double j2CenterOfGravity, const double j2Weight, const double j2Length,
-                           const double j3CenterOfGravity, const double j3Weight, const double j3Length,
-                           const double j4CenterOfGravity, const double j4Weight, const double j4Length,
-                           const double j5CenterOfGravity, const double j5Weight, const double j5Length,
-                           const double j6CenterOfGravity, const double j6Weight, const double j6Length) :
-                           J1_CENTER_OF_GRAVITY(j1CenterOfGravity), J1_WEIGHT(j1Weight), J1_LENGTH(j1Length),
-                           J2_CENTER_OF_GRAVITY(j2CenterOfGravity), J2_WEIGHT(j2Weight), J2_LENGTH(j2Length),
-                           J3_CENTER_OF_GRAVITY(j3CenterOfGravity), J3_WEIGHT(j3Weight), J3_LENGTH(j3Length),
-                           J4_CENTER_OF_GRAVITY(j4CenterOfGravity), J4_WEIGHT(j4Weight), J4_LENGTH(j4Length),
-                           J5_CENTER_OF_GRAVITY(j5CenterOfGravity), J5_WEIGHT(j5Weight), J5_LENGTH(j5Length),
-                           J6_CENTER_OF_GRAVITY(j6CenterOfGravity), J6_WEIGHT(j6Weight), J6_LENGTH(j6Length)
+
+GravityInertiaSystemStatus::GravityInertiaSystemStatus(ArmModel model, const double gripperWeight, const double gripperLength, const double gripperCenterOfGravity,
+		   const double forearmWeight, const double forearmLength, const double forearmCenterOfGravity,
+		   const double bicepWeight, const double bicepLength, const double bicepCenterOfGravity,
+		   FeedbackDevice* joint1, FeedbackDevice* joint2, FeedbackDevice* joint3,
+		   FeedbackDevice* joint4, FeedbackDevice* joint5, FeedbackDevice* joint6) :
+		   GRIPPER_WEIGHT(gripperWeight), GRIPPER_LENGTH(gripperLength), GRIPPER_CENTER_OF_GRAVITY(gripperCenterOfGravity),
+		   FOREARM_WEIGHT(forearmWeight), FOREARM_LENGTH(forearmLength), FOREARM_CENTER_OF_GRAVITY(forearmCenterOfGravity),
+		   BICEP_WEIGHT(bicepWeight), BICEP_LENGTH(bicepLength), BICEP_CENTER_OF_GRAVITY(bicepCenterOfGravity),
+		   JOINT1ANGLE(joint1), JOINT2ANGLE(joint2), JOINT3ANGLE(joint3), JOINT4ANGLE(joint4), JOINT5ANGLE(joint5),
+		   JOINT6ANGLE(joint6), Model(model)
 {
+
 }
 
 // Empty because there are no pointers.
@@ -23,7 +24,23 @@ GravityInertiaSystemStatus::~GravityInertiaSystemStatus()
 
 void GravityInertiaSystemStatus::update()
 {
-    // Math here.
+	uint32_t joint1Feed = JOINT1ANGLE->getFeedback();
+	uint32_t joint2Feed = JOINT2ANGLE->getFeedback();
+	uint32_t joint3Feed = JOINT3ANGLE->getFeedback();
+	uint32_t joint4Feed = JOINT4ANGLE->getFeedback();
+	uint32_t joint5Feed = JOINT5ANGLE->getFeedback();
+	uint32_t joint6Feed = JOINT6ANGLE->getFeedback();
+
+	if(Model == gryphonArm)
+	{
+		j2Gravity = 0;
+		j3Gravity = (FOREARM_WEIGHT*FOREARM_CENTER_OF_GRAVITY+GRIPPER_WEIGHT*FOREARM_LENGTH)*cosLW(puToRad(joint1Feed)+puToRad(joint3Feed)) + GRIPPER_WEIGHT*GRIPPER_CENTER_OF_GRAVITY*cosLW(puToRad(joint1Feed)+puToRad(joint3Feed))*cosLW(puToRad(joint4Feed));
+		j4Gravity = GRIPPER_WEIGHT*GRIPPER_CENTER_OF_GRAVITY*sinLW(puToRad(joint5Feed))*cos(puToRad(joint1Feed)+puToRad(joint3Feed))*-sinLW(puToRad(joint4Feed));
+		j5Gravity = GRIPPER_WEIGHT*GRIPPER_CENTER_OF_GRAVITY*cosLW(puToRad(joint1Feed)+puToRad(joint3Feed)+puToRad(joint5Feed));
+		j6Gravity = 0;
+		//depends on torque calculated for joint 3
+		j1Gravity = ((FOREARM_WEIGHT+GRIPPER_WEIGHT)*BICEP_LENGTH + BICEP_WEIGHT*BICEP_CENTER_OF_GRAVITY)*cosLW(puToRad(joint1Feed))+j3Gravity;
+	}
 }
 
 double GravityInertiaSystemStatus::getGravity(uint32_t id)
@@ -70,4 +87,11 @@ double GravityInertiaSystemStatus::getInertia(uint32_t id)
     default:
         return 0.0;
     }
+}
+
+float GravityInertiaSystemStatus::puToRad(uint32_t p_units)
+{
+  float degrees = static_cast<float>(p_units)*360.0/(POS_MAX-POS_MIN);
+
+  return radians(degrees);
 }
