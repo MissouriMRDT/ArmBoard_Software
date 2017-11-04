@@ -1,7 +1,9 @@
 // roveBoard.h for Tiva/Energia
 // Author: Gbenga Osibodu
 
-#include "RoveEthernet.h"
+#include <Ethernet.h>
+#include <EthernetUdp.h>
+#include "RoveEthernetEnergia_TivaTM4C1294NCPDT.h"
 
 EthernetUDP udpReceiver;
 
@@ -34,8 +36,8 @@ roveEthernet_Error roveEthernet_SendUdpPacket(roveIP destIP, uint16_t destPort, 
 
 roveEthernet_Error roveEthernet_GetUdpMsg(roveIP* senderIP, void* buffer, size_t bufferSize)
 {
-  int packetSize = udpReceiver.parsePacket(); 
-  
+  int packetSize = udpReceiver.parsePacket();
+
   if (packetSize > 0) //if there is a packet available
   {
     udpReceiver.read((char*)buffer, bufferSize);
