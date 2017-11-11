@@ -15,8 +15,16 @@ long GravityCompensator::addToOutput(const long inputValue, const long calculate
   long gravPwm;
   bool dummy;
 
-  gravTorque = systemStatus->getGravity(jointId);
-  gravPwm = torqueConverter->runAlgorithm(gravTorque, &dummy);
+  gravTorque = -1 * systemStatus->getGravity(jointId);
+
+  if(gravTorque != 0)
+  {
+    gravPwm = torqueConverter->runAlgorithm(gravTorque, &dummy);
+  }
+  else
+  {
+    gravPwm = 0;
+  }
 
   if(supportUsed)
   {

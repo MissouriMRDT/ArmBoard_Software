@@ -3,6 +3,7 @@
 #include "RoveJointUtilities.h"
 #include <stdint.h>
 
+const float FootPoundToNewtonMeter = 1.36;
 
 GravityInertiaSystemStatus::GravityInertiaSystemStatus(ArmModel model, const double gripperWeight, const double gripperLength, const double gripperCenterOfGravity,
 		   const double forearmWeight, const double forearmLength, const double forearmCenterOfGravity,
@@ -41,6 +42,11 @@ void GravityInertiaSystemStatus::update()
 		j6Gravity = 0;
 		//depends on torque calculated for joint 3
 		j1Gravity = ((FOREARM_WEIGHT+GRIPPER_WEIGHT)*BICEP_LENGTH + BICEP_WEIGHT*BICEP_CENTER_OF_GRAVITY)*cosLW(puToRad(joint1Feed))+j3Gravity;
+
+		j3Gravity *= FootPoundToNewtonMeter * 1000;
+		j4Gravity *= FootPoundToNewtonMeter * 1000;
+		j5Gravity *= FootPoundToNewtonMeter * 1000;
+		j1Gravity *= FootPoundToNewtonMeter * 1000;
 	}
 }
 
