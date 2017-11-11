@@ -1,4 +1,5 @@
 #include "DirectDiscreteHBridge.h"
+#include "RoveJointUtilities.h"
 
 //Value ranges for conversting input to expected output when sending
 static const int PWM_MIN = 0, PWM_MAX = 255;

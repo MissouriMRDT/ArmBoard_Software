@@ -9,6 +9,7 @@
 
 #include "AbstractFramework.h"
 #include "Roveboard.h"
+#include "RoveJointUtilities.h"
 
 typedef enum ArmModel {gryphonArm} ArmModel;
 

@@ -1,5 +1,6 @@
 #include "PIVConverter.h"
 #include "RoveBoard.h"
+#include "RoveJointUtilities.h"
 
 static const float IMPOSSIBLE_MOVEMENT = 370; //return value for functions that calculate travel routes that means the destination can't be reached
 static const int DEFAULT_RATIO = 5;

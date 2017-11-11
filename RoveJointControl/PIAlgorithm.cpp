@@ -1,5 +1,6 @@
 #include "PIAlgorithm.h"
 #include "RoveBoard.h"
+#include "RoveJointUtilities.h"
 
 static const int DEFAULT_MINMAG = (POWERPERCENT_MAX * .1); //The default min magnitude of power the motor is allowed to move at. 10% of motor power
 static const float IMPOSSIBLE_MOVEMENT = 370; //return value for functions that calculate travel routes that means the destination can't be reached

@@ -1,5 +1,6 @@
 #include "VelocityDeriver.h"
 #include "RoveBoard.h"
+#include "RoveJointUtilities.h"
 #include <stdint.h>
 
 VelocityDeriver::VelocityDeriver(FeedbackDevice* posSensor, float filter_Constant)

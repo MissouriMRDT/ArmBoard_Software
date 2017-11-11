@@ -1,4 +1,5 @@
 #include "GenPwmPhaseHBridge.h"
+#include "RoveJointUtilities.h"
 
 static const int PWM_MIN = 0, PWM_MAX = 255;
 

@@ -7,6 +7,7 @@
 
 #include "GravityCompensator.h"
 #include "RoveBoard.h"
+#include "RoveJointUtilities.h"
 
 long GravityCompensator::addToOutput(const long inputValue, const long calculatedOutput)
 {
@@ -25,7 +26,7 @@ long GravityCompensator::addToOutput(const long inputValue, const long calculate
   return gravPwm;
 }
 
-GravityCompensator::GravityCompensator(GravityInertiaSystemStatus* sysStatus, DrivingAlgorithm* torquePowerPercentConverter, uint8_t joint_Id)
+GravityCompensator::GravityCompensator(GravityInertiaSystemStatus* sysStatus, TtoPPOpenLConverter* torquePowerPercentConverter, uint8_t joint_Id)
   : SupportingAlgorithm(InputPosition, InputPowerPercent), systemStatus(sysStatus), jointId(joint_Id), torqueConverter(torquePowerPercentConverter)
 {
   if(!(torquePowerPercentConverter->getInType() == InputTorque && torquePowerPercentConverter->getOutType() == InputPowerPercent))

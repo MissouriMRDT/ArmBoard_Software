@@ -1,4 +1,5 @@
 #include "RCContinuousServo.h"
+#include "RoveJointUtilities.h"
 
 //static const int PWM_MAX_FWD = 2500, PWM_MAX_REV = 500; //values represent microseconds in pwm pulse width
 static const int PWM_PERIOD = 20000; // also in microseconds

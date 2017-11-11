@@ -1,4 +1,5 @@
 #include "SingleMotorJoint.h"
+#include "RoveJointUtilities.h"
 
 SingleMotorJoint::SingleMotorJoint(ValueType inputType, DrivingAlgorithm *alg, OutputDevice* cont) : JointInterface(inputType, alg, cont)
 {

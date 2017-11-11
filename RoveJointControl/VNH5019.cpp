@@ -1,4 +1,5 @@
 #include "VNH5019.h"
+#include "RoveJointUtilities.h"
 
 static const int PWM_MIN = 0, PWM_MAX = 255;
 

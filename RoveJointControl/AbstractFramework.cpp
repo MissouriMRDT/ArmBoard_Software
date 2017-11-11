@@ -1,4 +1,5 @@
 ﻿#include "AbstractFramework.h"
+#include "RoveJointUtilities.h"
 
 bool JointInterface::verifyInput(long inputToVerify)
 {

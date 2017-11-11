@@ -1,5 +1,6 @@
 #include "DynamixelController.h"
 #include "RoveBoard.h"
+#include "RoveJointUtilities.h"
 
 //constructor for a dynamixel for any mode
 //Calls the init function from RoveDynamixel.h to initialize the dynamixel

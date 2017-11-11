@@ -1,4 +1,5 @@
 #include "DifferentialJoint.h"
+#include "RoveJointUtilities.h"
 
 DifferentialJoint::DifferentialJoint(DifferentialType jointType, ValueType inputType, DrivingAlgorithm *alg, OutputDevice* cont1, OutputDevice* cont2)
   : JointInterface(inputType, alg, cont1), controller2(cont2), coupled(false), thisJointType(jointType), motorOneVirtualPower(0), motorTwoVirtualPower(0)
