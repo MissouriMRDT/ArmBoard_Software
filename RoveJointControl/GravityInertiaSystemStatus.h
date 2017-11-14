@@ -58,9 +58,9 @@ protected:
 
 public:
     // Description:     Constructor
-    // Arguments:       gripperCenterOfGravity - Center of gravity for gripper.
-    //                  gripperWeight          - Weight for gripper.
-    //                  gripperLength          - Length for gripper.
+    // Arguments:       gripperCenterOfGravity - Center of gravity for gripper. Inches
+    //                  gripperWeight          - Weight for gripper. Pounds
+    //                  gripperLength          - Length for gripper. Inches
     //                  forearmCenterOfGravity - Center of gravity for forearm.
     //                  forearmWeight          - Weight for forearm.
     //                  forearmLength          - Length for forearm.

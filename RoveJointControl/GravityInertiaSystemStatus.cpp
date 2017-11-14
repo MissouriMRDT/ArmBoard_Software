@@ -10,9 +10,9 @@ GravityInertiaSystemStatus::GravityInertiaSystemStatus(ArmModel model, const dou
 		   const double bicepWeight, const double bicepLength, const double bicepCenterOfGravity,
 		   FeedbackDevice* joint1, FeedbackDevice* joint2, FeedbackDevice* joint3,
 		   FeedbackDevice* joint4, FeedbackDevice* joint5, FeedbackDevice* joint6) :
-		   GRIPPER_WEIGHT(gripperWeight), GRIPPER_LENGTH(gripperLength), GRIPPER_CENTER_OF_GRAVITY(gripperCenterOfGravity),
-		   FOREARM_WEIGHT(forearmWeight), FOREARM_LENGTH(forearmLength), FOREARM_CENTER_OF_GRAVITY(forearmCenterOfGravity),
-		   BICEP_WEIGHT(bicepWeight), BICEP_LENGTH(bicepLength), BICEP_CENTER_OF_GRAVITY(bicepCenterOfGravity),
+		   GRIPPER_WEIGHT(gripperWeight), GRIPPER_LENGTH(gripperLength/12), GRIPPER_CENTER_OF_GRAVITY(gripperCenterOfGravity/12),
+		   FOREARM_WEIGHT(forearmWeight), FOREARM_LENGTH(forearmLength/12), FOREARM_CENTER_OF_GRAVITY(forearmCenterOfGravity/12),
+		   BICEP_WEIGHT(bicepWeight), BICEP_LENGTH(bicepLength/12), BICEP_CENTER_OF_GRAVITY(bicepCenterOfGravity/12),
 		   JOINT1ANGLE(joint1), JOINT2ANGLE(joint2), JOINT3ANGLE(joint3), JOINT4ANGLE(joint4), JOINT5ANGLE(joint5),
 		   JOINT6ANGLE(joint6), Model(model)
 {
