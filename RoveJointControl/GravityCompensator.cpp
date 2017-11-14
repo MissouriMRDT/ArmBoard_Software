@@ -19,7 +19,7 @@ long GravityCompensator::addToOutput(const long inputValue, const long calculate
 
   if(gravTorque != 0)
   {
-    gravPwm = torqueConverter->runAlgorithm(gravTorque, &dummy);
+    gravPwm = ((DrivingAlgorithm*)(&torqueConverter))->runAlgorithm(gravTorque, &dummy);
   }
   else
   {
@@ -34,11 +34,13 @@ long GravityCompensator::addToOutput(const long inputValue, const long calculate
   return gravPwm;
 }
 
-GravityCompensator::GravityCompensator(GravityInertiaSystemStatus* sysStatus, TtoPPOpenLConverter* torquePowerPercentConverter, uint8_t joint_Id)
-  : SupportingAlgorithm(InputPosition, InputPowerPercent), systemStatus(sysStatus), jointId(joint_Id), torqueConverter(torquePowerPercentConverter)
+GravityCompensator::GravityCompensator(GravityInertiaSystemStatus* sysStatus, TorqueConverterMotorTypes motor_type, float Kt, int motResistance_milliOhms, int staticMillivolts, uint8_t joint_Id)
+  : SupportingAlgorithm(InputPosition, InputPowerPercent), systemStatus(sysStatus), jointId(joint_Id), torqueConverter(motor_type, Kt, motResistance_milliOhms, staticMillivolts)
 {
-  if(!(torquePowerPercentConverter->getInType() == InputTorque && torquePowerPercentConverter->getOutType() == InputPowerPercent))
-  {
-    debugFault("GravityCompensator constructor: passed torque converter class doesn't have the right input type or output type");
-  }
 }
+
+GravityCompensator::GravityCompensator(GravityInertiaSystemStatus* sysStatus, TorqueConverterMotorTypes motor_type, float Kt, int motResistance_milliOhms, FeedbackDevice* fdev, uint8_t joint_Id)
+  : SupportingAlgorithm(InputPosition, InputPowerPercent), systemStatus(sysStatus), jointId(joint_Id), torqueConverter(motor_type, Kt, motResistance_milliOhms, fdev)
+{
+}
+
