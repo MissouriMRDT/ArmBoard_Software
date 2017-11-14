@@ -1,9 +1,4 @@
 #include "main.h"
-#include "VelocityDeriver.h"
-#include "PIVConverter.h"
-#include "stdio.h"
-#include "GravityInertiaSystemStatus.h"
-#include "GravityCompensator.h"
 
 Ma3Encoder12b joint1Encoder(ReadModule4, ENCODER1_READING_PIN);
 Ma3Encoder12b joint2Encoder(ReadModule1, ENCODER2_READING_PIN);
@@ -13,13 +8,13 @@ Ma3Encoder12b joint5Encoder(ReadModule2, ENCODER5_READING_PIN);
 
 VelocityDeriver joint1Vel(&joint1Encoder, .9);
 VelocityDeriver joint2Vel(&joint2Encoder, .9);
-VelocityDeriver joint3Vel(&joint3Encoder, .9);
+VelocityDeriver joint3Vel(&joint3Encoder, .1);
 VelocityDeriver joint5Vel(&joint5Encoder, .9);
 
 PIAlgorithm joint1Alg(BaseRotateKp,BaseRotateKi,PI_TIMESLICE_SECONDS, &joint1Encoder);
 PIAlgorithm joint2Alg(BaseTiltKp,BaseTiltKi,PI_TIMESLICE_SECONDS, &joint2Encoder);
-PIAlgorithm joint3Alg(ElbowKp,ElbowKi,PI_TIMESLICE_SECONDS, &joint3Encoder, ElbowMinMag);
-PIAlgorithm joint5Alg(WristTiltKp,WristTiltKi,PI_TIMESLICE_SECONDS, &joint5Encoder, WristTiltMinMag);
+PIAlgorithm joint3Alg(ElbowKp,ElbowKi,PI_TIMESLICE_SECONDS, &joint3Encoder);
+PIAlgorithm joint5Alg(WristTiltKp,WristTiltKi,PI_TIMESLICE_SECONDS, &joint5Encoder);
 
 PIVConverter joint1PIV(BaseRotateKp, BaseRotateKi, BaseRotateKp, BaseRotateKi, PIV_TIMESLICE_SECONDS, &joint1Encoder, &joint1Vel);
 PIVConverter joint2PIV(BaseTiltKp, BaseTiltKi, BaseTiltKp, BaseTiltKi, PIV_TIMESLICE_SECONDS, &joint2Encoder, &joint2Vel);
@@ -29,17 +24,11 @@ PIVConverter joint5PIV(WristTiltKp, WristTiltKi, WristTiltKp, WristTiltKi, PIV_T
 GravityInertiaSystemStatus sysStatus(gryphonArm, WristWeight, WristLength, WristCoG, ElbowWeight, ElbowLength, ElbowCoG, BaseWeight, BaseLength,
     BaseCoG, &joint1Encoder, &joint2Encoder, &joint3Encoder, &joint4Encoder, &joint5Encoder, &joint5Encoder);
 
-TtoPPOpenLConverter j1TtoPP(TorqueConvert_BrushedDC, J12Kt, J1Resistance, MotorVoltage);
-TtoPPOpenLConverter j2TtoPP(TorqueConvert_BrushedDC, J12Kt, J2Resistance, MotorVoltage);
-TtoPPOpenLConverter j3TtoPP(TorqueConvert_BrushedDC, J3Kt, J3Resistance, MotorVoltage);
-TtoPPOpenLConverter j4TtoPP(TorqueConvert_BrushedDC, J45Kt, J4Resistance, MotorVoltage);
-TtoPPOpenLConverter j5TtoPP(TorqueConvert_BrushedDC, J45Kt, J5Resistance, MotorVoltage);
-
-GravityCompensator j1Grav(&sysStatus, &j1TtoPP, 1);
-GravityCompensator j2Grav(&sysStatus, &j2TtoPP, 2);
-GravityCompensator j3Grav(&sysStatus, &j3TtoPP, 3);
-GravityCompensator j4Grav(&sysStatus, &j4TtoPP, 4);
-GravityCompensator j5Grav(&sysStatus, &j5TtoPP, 5);
+GravityCompensator j1Grav(&sysStatus, TorqueConvert_BrushedDC, J12Kt, J1Resistance, MotorVoltage, 1);
+GravityCompensator j2Grav(&sysStatus, TorqueConvert_BrushedDC, J12Kt, J2Resistance, MotorVoltage, 2);
+GravityCompensator j3Grav(&sysStatus, TorqueConvert_BrushedDC, J3Kt, J3Resistance, MotorVoltage, 3);
+GravityCompensator j4Grav(&sysStatus, TorqueConvert_BrushedDC, J45Kt, J4Resistance, MotorVoltage, 4);
+GravityCompensator j5Grav(&sysStatus, TorqueConvert_BrushedDC, J45Kt, J5Resistance, MotorVoltage, 5);
 
 GenPwmPhaseHBridge dev1(PwmGenerator2, MOT1_PWN_PIN, HBRIDGE1_PHASE_PIN, HBRIDGE1_NSLEEP_PIN, true, false);
 GenPwmPhaseHBridge dev2(PwmGenerator1, MOT2_PWN_PIN, HBRIDGE2_PHASE_PIN, HBRIDGE2_NSLEEP_PIN, true, true);
@@ -78,6 +67,7 @@ bool limitsEnabled = true; //tracks if hardware limit switches are being used or
 bool watchdogUsed = false;
 
 roveTimer_Handle timer7Handle;
+roveTimer_Handle timer6Handle;
 
 void init()
 {
@@ -98,7 +88,9 @@ void init()
   //when it cycles back around the overall timeslice will have passed
   //Update: 4 controls are now used, but the setup still works just fine by firing off 5 times per overall timeslice and
   //changing it would require modifying the interrupt as well, so it's staying the way it is
-  timer7Handle = setupTimer(Timer7, TimerPeriodicInterrupt, (PIV_TIMESLICE_SECONDS/1.0) * 1000000.0);
+  timer7Handle = setupTimer(Timer7, TimerPeriodicInterrupt, (PI_TIMESLICE_SECONDS/5.0) * 1000000.0);
+  timer6Handle = setupTimer(Timer6, TimerPeriodicInterrupt, (PI_TIMESLICE_SECONDS) * 1000000);
+  attachTimerInterrupt(timer6Handle, &sysStatusUpdater);
   attachTimerInterrupt(timer7Handle, &closedLoopUpdateHandler);
 
   joint1Alg.setDeadband(BaseRotateDeadband);
@@ -116,26 +108,25 @@ void init()
   joint4Encoder.setOffsetAngle(WristRotateOffsetAngle);
   joint5Encoder.setOffsetAngle(WristTiltOffsetAngle);
 
-  /*joint1Alg.addSupportingAlgorithm(&j1Grav);
+  joint1Alg.addSupportingAlgorithm(&j1Grav);
   joint2Alg.addSupportingAlgorithm(&j2Grav);
   joint3Alg.addSupportingAlgorithm(&j3Grav);
-  joint5Alg.addSupportingAlgorithm(&j5Grav);*/
+  //joint5Alg.addSupportingAlgorithm(&j5Grav);
 
   dev3.setRampUp(ElbowRampUp);
   dev3.setRampDown(ElbowRampDown);
-  dev1.setRampUp(BaseRampUp);
+  dev1.setRampUp(BaseRampUp - 20);
   dev2.setRampUp(BaseRampUp);
-  dev1.setRampDown(BaseRampDown);
+  dev1.setRampDown(BaseRampDown - 20);
   dev2.setRampDown(BaseRampDown);
-  dev4.setRampUp(WristRampUp);
-  dev4.setRampDown(WristRampDown);
-  dev5.setRampUp(WristRampUp);
-  dev5.setRampDown(WristRampDown);
+  //dev4.setRampUp(WristRampUp);
+  //dev4.setRampDown(WristRampDown);
+  //dev5.setRampUp(WristRampUp);
+  //dev5.setRampDown(WristRampDown);
 
   delay(2000); //let background processes finish before turning on the watchdog. Experimentation found that 2 seconds worked while values such as 1.5 resulted in program failure
 
   //initWatchdog(WATCHDOG_TIMEOUT_US);
-
   initialized = true;
 }
 
@@ -238,6 +229,7 @@ int main()
           float absoluteAngles[ArmJointCount];
           computeIK((float*)(commandData), absoluteAngles);
           setArmDestinationAngles(absoluteAngles);
+          break;
 
         case ArmGetPosition:
           float currentPositions[6]; //six positions in the array because RED expects us to return 6 arguments even though we have 5 joints. 6th is just junk data
@@ -305,14 +297,7 @@ int main()
 CommandResult masterPowerSet(bool enable)
 {
   mainPowerOn = enable;
-  if(enable)
-  {
-    digitalPinWrite(POWER_LINE_CONTROL_PIN, 1);
-  }
-  else
-  {
-    digitalPinWrite(POWER_LINE_CONTROL_PIN, 0);
-  }
+  digitalPinWrite(POWER_LINE_CONTROL_PIN, enable);
 
   return Success;
 }
@@ -449,10 +434,6 @@ CommandResult moveJ1(int16_t moveValue)
     moveValue = BaseMaxSpeed;
   else if(moveValue < 0)
     moveValue = -BaseMaxSpeed; //adjusting for base station
-  if(moveValue != 0)
-  {
-    moveValue *= 1;
-  }
 
   joint1.runOutputControl(moveValue);
 
@@ -627,7 +608,7 @@ CommandResult moveGripper(int16_t moveValue)
 //note that the moveValue is numerically described using the joint control framework standard
 CommandResult moveGripServo(int16_t moveValue)
 {
-    if(moveValue > 0)
+  if(moveValue > 0)
     moveValue = 600; //largest value found that the servo moves at; starts not working beyond this
   else if(moveValue < 0)
     moveValue = -600;
@@ -651,11 +632,11 @@ CommandResult switchToOpenLoop()
   {
     //disable closed loop interrupts before doing any operation to preserve thread safety
     stopTimer(timer7Handle);
-
-    joint1.removeAlgorithm(InputPowerPercent);
-    joint2.removeAlgorithm(InputPowerPercent);
-    joint3.removeAlgorithm(InputPowerPercent);
-    joint5.removeAlgorithm(InputPowerPercent);
+    stopTimer(timer6Handle);
+    joint1.removeIOConverter(InputPowerPercent);
+    joint2.removeIOConverter(InputPowerPercent);
+    joint3.removeIOConverter(InputPowerPercent);
+    joint5.removeIOConverter(InputPowerPercent);
   }
 
   currentControlSystem = OpenLoop;
@@ -689,6 +670,7 @@ CommandResult switchToClosedLoop()
 
     //enable closed loop interrupts, which will begin to move the arm towards its set destinations
     startTimer(timer7Handle);
+    startTimer(timer6Handle);
   }
 
   return Success;
@@ -752,11 +734,11 @@ void restartWatchdog(uint32_t timeout_us)
 //Angles are numerically described as 0-360 degrees
 CommandResult getArmPositions(float positions[ArmJointCount])
 {
-  positions[0] = joint1Encoder.getFeedback() * ((360.0-0.0)/((float)(POS_MAX - POS_MIN))); //getFeedback returns from POS_MAX to POS_MIN long, convert it to 0-360 degrees float
-  positions[1] = joint2Encoder.getFeedback() * ((360.0-0.0)/((float)(POS_MAX - POS_MIN)));
-  positions[2] = joint3Encoder.getFeedback() * ((360.0-0.0)/((float)(POS_MAX - POS_MIN)));
-  positions[3] = joint4Encoder.getFeedback() * ((360.0-0.0)/((float)(POS_MAX - POS_MIN)));
-  positions[4] = joint5Encoder.getFeedback() * ((360.0-0.0)/((float)(POS_MAX - POS_MIN)));
+  positions[0] = joint1Encoder.getFeedbackDegrees();
+  positions[1] = joint2Encoder.getFeedbackDegrees();
+  positions[2] = joint3Encoder.getFeedbackDegrees();
+  positions[3] = joint4Encoder.getFeedbackDegrees();
+  positions[4] = joint5Encoder.getFeedbackDegrees();
 
   return Success;
 }
@@ -825,58 +807,6 @@ void computeIK(float coordinates[IKArgCount], float angles[ArmJointCount])
   angles[2] = degrees(joint3Angle);
   angles[3] = 0;
   angles[4] = degrees(joint5Angle);
-  
-  //This is Drue's implementation of my Gryphon Code from last year. there may be some mistakes in the math or implementation
-  /* float temp;
-  float temp2;
-  float tempNum;
-  float tempDen;
-  float cX = coordinates[0];
-  float cY = coordinates[1];
-  float cZ = coordinates[2];
-  float gripperAngle = coordinates[3];
-  float joint1Angle;
-  float joint2Angle;
-  float joint3Angle;
-  float joint4Angle;
-  float joint5Angle;
-  float d = sqrt((cX*cX) + (cY*cY));
-  constrain(d, 0, (ElbowLength + WristLength));
-  float w = sqrt(d*d + (cZ-BaseLength)*(cZ-BaseLength));
-  constrain(w, (ElbowLength-WristLength), (ElbowLength + WristLength));
-  joint1Angle = negativeDegreeCorrection(atan2(cY, cX)); //joints will start being expressed in radians
-  temp = ElbowLength*ElbowLength + w*w - WristLength*WristLength; //elbow length = R2, base length = R1, Wrist length = R3
-  temp /= (2*ElbowLength*w);
-  temp = acos(temp);
-  temp2 = negativeDegreeCorrection(atan2(cZ-BaseLength, d));
-  joint2Angle = temp + temp2;
-  temp = ElbowLength*ElbowLength + WristLength*WristLength - w*w;
-  temp /= (2*ElbowLength*WristLength);
-  joint3Angle = acos(temp);
-  joint5Angle = negativeDegreeCorrection(PI -joint3Angle - joint2Angle + gripperAngle); //M_PI given in math.h
-  angles[0] = joint1Angle;
-  angles[1] = joint2Angle;
-  angles[2] = joint3Angle;
-  angles[3] = joint4Angle;
-  angles[4] = joint5Angle;
-  //convert angles from 0-2pi to 0-360
-  int i;
-  for(i = 0; i < 5; i++)
-  {
-    angles[i] = angles[i] * 360.0 / (2.0*PI);
-  }
-  //make sure values are constrained
-  for(i = 0; i < 5; i++)
-  {
-    while(angles[i] < 0)
-    {
-      angles[i] += 360;
-    }
-    while(angles[i] > 360)
-    {
-      angles[i] -= 360;
-    }
-  }*/
 }
 
 //converts 0 to -2pi, to 0 to 2pi
@@ -925,4 +855,9 @@ void closedLoopUpdateHandler()
   {
     //joint5.runOutputControl(joint5Destination);
   }
+}
+
+void sysStatusUpdater()
+{
+  sysStatus.update();
 }

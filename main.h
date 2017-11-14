@@ -8,6 +8,7 @@
 #ifndef MAIN_H_
 #define MAIN_H_
 
+#include "stdio.h"
 #include "RoveBoard_TivaTM4C1294NCPDT.h"
 #include "RoveComm.h"
 
@@ -16,6 +17,10 @@
 #include "PIAlgorithm.h"
 #include "RCContinuousServo.h"
 #include "RoveJointControl.h"
+#include "VelocityDeriver.h"
+#include "PIVConverter.h"
+#include "GravityInertiaSystemStatus.h"
+#include "GravityCompensator.h"
 
 #include "tm4c1294ncpdt_API/tivaware/inc/hw_ints.h"
 #include "tm4c1294ncpdt_API/tivaware/driverlib/interrupt.h"
@@ -118,15 +123,14 @@ const int ElbowKpv = 10;
 const int ElbowKiv = 1;
 
 const int ElbowKp = 200;
-const int ElbowKi = 50;
-const int ElbowDeadband = 1;
+const int ElbowKi = 70;
+const float ElbowDeadband = 1.5;
 const int ElbowOffsetAngle = -66;
 const int ElbowHardStopUp = 185;
 const int ElbowHardStopDown = 355;
-const int ElbowMinMag = 200;
 
-const int BaseTiltKp = 175;
-const int BaseTiltKi = 100;
+const int BaseTiltKp = 175 - 20;
+const int BaseTiltKi = 100 - 15;
 const int BaseTiltDeadband = 2;
 const int BaseTiltOffsetAngle = -253;
 const int BaseTiltHardStopUp = 150;
@@ -134,7 +138,7 @@ const int BaseTiltHardStopDown = 355;
 
 const int BaseRotateKp = 125;
 const int BaseRotateKi = 125;
-const int BaseRotateDeadband = -2;
+const int BaseRotateDeadband = 2;
 const int BaseRotateOffsetAngle = -174;
 const int BaseRotateHardStopUp = 150;
 const int BaseRotateHardStopDown = 210;
@@ -142,13 +146,11 @@ const int BaseRotateHardStopDown = 210;
 const int WristRotateOffsetAngle = -34;
 
 const int WristTiltKp = 40;
-const int WristTiltKi = 10;
-const int WristTiltDeadband = 2;
-const int WristTiltOffsetAngle = -25;
+const int WristTiltKi = 1;
+const float WristTiltDeadband = 1;
+const int WristTiltOffsetAngle = 15;
 const int WristTiltHardStopUp = 300;
 const int WristTiltHardStopDown = 350;
-const int WristTiltMinMag = 200;
-
 
 //hardware pin assignments
 const uint32_t MOT1_PWN_PIN = PG_1;
@@ -196,11 +198,8 @@ const uint32_t BASE_LIMIT_PIN = PD_7;
 const uint32_t ELBOW_LIMIT_PIN = PB_2;
 const uint32_t WRIST_LIMIT_PIN = PC_7;
 
-const float CURRENT_SENSOR_RATIO = .066; //current sensor ratio of outputted signal voltage/the current it's currently reading
-const float CURRENT_LIMIT = 18; //actual limit we want is 17, but because the calculations are just an estimate we overshoot it slightly for manual checks
-const float VCC = 3.3; //usually the V input is 3.3V
 const float PI_TIMESLICE_SECONDS = .04;
-const float PIV_TIMESLICE_SECONDS = .010;
+const float PIV_TIMESLICE_SECONDS = .004;
 
 const float ElbowLength = 14;  //all of these are just rough estimates. NEED TO BE ACTUALLY DETERMINED!!!!!!!!!!!!!!
 const float BaseLength = 16;
@@ -212,9 +211,9 @@ const float ElbowWeight = 8.25;
 const float BaseWeight = 2;
 const float WristWeight = 4;
 
-const float J12Kt = (0.12 * 672) * 2;
-const float J3Kt = 0.12 * 672;
-const float J45Kt = (3.125 * 131) * 2;
+const float J12Kt = (0.014 * 672) * 2; //newton-meters per amp
+const float J3Kt = 0.014 * 672;
+const float J45Kt = (0.353 * 131) * 2;
 const int MotorVoltage = 12000;
 const int J1Resistance = 800;
 const int J2Resistance = 800;
@@ -250,6 +249,7 @@ CommandResult switchToClosedLoop();
 
 void setupTimer7(float timeout_micros);
 void closedLoopUpdateHandler();
+void sysStatusUpdater();
 void initWatchdog(uint32_t timeout_us);
 void restartWatchdog(uint32_t timeout_us);
 
