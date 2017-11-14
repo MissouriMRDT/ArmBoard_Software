@@ -98,7 +98,7 @@ class JointInterface
     //returns:  true if swap was successful, false if not and previous settings retained
     //
     //warning:  not thread safe
-    bool removeAlgorithm(ValueType newInputType);
+    bool removeIOConverter(ValueType newInputType);
     
     //Overview: tells joint to stop using an IOConverter, IE values should be passes straight to the output,
     //          and swap the joint's outputDevice with a different one.
@@ -108,7 +108,7 @@ class JointInterface
     //returns:  true if swap was successful, false if not and previous settings retained
     //
     //warning: not thread safe
-    bool removeAlgorithm(ValueType newInputType, OutputDevice* newDevice);
+    bool removeIOConverter(ValueType newInputType, OutputDevice* newDevice);
 
     //tells the joint to halt. Note that this won't keep the joint from moving if called again; 
     //use disable for that
@@ -203,6 +203,9 @@ class IOConverter
     //          Also this function doesn't stack; only one supporting algorithm attached at a time.
     bool addSupportingAlgorithm(SupportingAlgorithm* support);
 
+    ValueType getInType() { return inType; }
+    ValueType getOutType() { return outType; }
+
   protected:
 
     SupportingAlgorithm* supportingAlgorithm;
@@ -215,11 +218,6 @@ class IOConverter
     IOConverter(ValueType in, ValueType out)
     : supportUsed(false), supportingAlgorithm(0), inType(in), outType(out)
     {};
-
-  public:
-
-    ValueType getInType() { return inType; }
-    ValueType getOutType() { return outType; }
 };
 
 //Represents an IOConverter that doesn't drive the motion on its own, but supports another IOConverter with a separate control

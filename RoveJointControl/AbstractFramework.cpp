@@ -83,7 +83,7 @@ bool JointInterface::switchModules(ValueType newInputType, OutputDevice* newDevi
   }
 }
 
-bool JointInterface::removeAlgorithm(ValueType newInputType)
+bool JointInterface::removeIOConverter(ValueType newInputType)
 {
   if(!algorithmUsed)
   {
@@ -103,7 +103,7 @@ bool JointInterface::removeAlgorithm(ValueType newInputType)
   }
 }
 
-bool JointInterface::removeAlgorithm(ValueType newInputType, OutputDevice* newDevice)
+bool JointInterface::removeIOConverter(ValueType newInputType, OutputDevice* newDevice)
 {
   if(newInputType == newDevice->inType)
   {
