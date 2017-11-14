@@ -7,7 +7,17 @@ static const int PWM_READ_MIN = 1;
 long Ma3Encoder12b::getFeedback()
 {
   uint32_t readOnPeriod = getOnPeriod_us(PwmHandle);
+
+  if(abs(lastReading - readOnPeriod) < deadband)
+  {
+    readOnPeriod = lastReading;
+  }
+  else
+  {
+    lastReading = readOnPeriod;
+  }
   
+
   //values will be between PWM_READ_MIN and PWM_READ_MAX, that is 1 and 4097. 
   //Or at least they should be; if it's above there was slight comm error and it can be scaled down to the max val.
   if(readOnPeriod > PWM_READ_MAX)
@@ -48,7 +58,7 @@ long Ma3Encoder12b::getFeedback()
 }
 
 Ma3Encoder12b::Ma3Encoder12b(uint16_t pwmReadModule, uint16_t mappedPinNumber)
-  : FeedbackDevice(InputPosition), offsetAngle(0), PwmHandle(initPwmRead(pwmReadModule, mappedPinNumber))
+  : FeedbackDevice(InputPosition), offsetAngle(0), PwmHandle(initPwmRead(pwmReadModule, mappedPinNumber)), deadband(5), lastReading(0)
 {}
 
 float Ma3Encoder12b::getFeedbackDegrees()

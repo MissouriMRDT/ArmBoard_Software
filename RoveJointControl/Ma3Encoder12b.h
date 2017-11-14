@@ -10,6 +10,8 @@ class Ma3Encoder12b: public FeedbackDevice
   private:
     const rovePwmRead_Handle PwmHandle;
     long offsetAngle;
+    short deadband;
+    short lastReading;
 
   public:
 
