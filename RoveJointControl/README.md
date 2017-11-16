@@ -33,17 +33,10 @@ Interface for controlling the overall joint from the main program's perspective.
 
 ### IOConverters
 Algorithms that convert the input from base station to whatever is needed for the output device interpret the command.
-This in turn is broken down into two sub-abstract classes.
 
-**IMPORTANT:**  Note that these algorithms typically need to be periodically called, with the timing done externally, until `JointInterface` returns an `OutputComplete` status, as each call only executes the control loop once instead of waiting until completion.
-
-#### Driving Algorithm
-IOConverters that are meant to be the driving force behind a joint, and are capable of moving it without the need of any other algorithm to support it. Only driving algorithms can be directly used by the joint interfae.
+**IMPORTANT:**  Note that these algorithms, when they use feedback such as PID loops, typically need to be periodically called, with the timing done externally, until `JointInterface` returns an `OutputComplete` status, as each call only executes the control loop once instead of waiting until completion.
 
 * `PIAlgorithm` Closed loop algorithm, using PI logic. Logic is generalized, PI constants are accepted through constructors. To be used when position is received from the base station and the speed is to be sent to the device, which in turn, returns feedback of the device's current location.
-
-#### Supporting algorithms
-IOConverters that are meant to support other algorithms, likely compensating for something during movement rather than being the driving force behind the movement itself. Supporting algorithms are passed to the driving algorithms that a joint is using, and multiple can be chained to each other.
 
 ### Output Devices
 Controls the devices which move the arm, such as motor controllers, using the hardware specifics of the devices, such as what GPIO pins.
