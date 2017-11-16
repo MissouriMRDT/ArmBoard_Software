@@ -122,12 +122,13 @@ const int ElbowKip = 1;
 const int ElbowKpv = 10;
 const int ElbowKiv = 1;
 
-const int ElbowKp = 200;
-const int ElbowKi = 70;
+const int ElbowKp = 200 - 50;
+const int ElbowKi = 70 - 20;
 const float ElbowDeadband = 1.5;
 const int ElbowOffsetAngle = -66;
 const int ElbowHardStopUp = 185;
 const int ElbowHardStopDown = 355;
+const float ScalarJ3 = .5;
 
 const int BaseTiltKp = 175 - 20;
 const int BaseTiltKi = 100 - 15;

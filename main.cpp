@@ -108,6 +108,7 @@ void init()
   joint4Encoder.setOffsetAngle(WristRotateOffsetAngle);
   joint5Encoder.setOffsetAngle(WristTiltOffsetAngle);
 
+  j3Grav.setScalar(ScalarJ3);
   joint1Alg.addSupportingAlgorithm(&j1Grav);
   joint2Alg.addSupportingAlgorithm(&j2Grav);
   joint3Alg.addSupportingAlgorithm(&j3Grav);
