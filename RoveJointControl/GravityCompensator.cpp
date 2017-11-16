@@ -31,16 +31,21 @@ long GravityCompensator::addToOutput(const long inputValue, const long calculate
     gravPwm += supportingAlgorithm->addToOutput(inputValue, calculatedOutput + gravPwm);
   }
 
-  return gravPwm;
+  return gravPwm * scalar;
 }
 
 GravityCompensator::GravityCompensator(GravityInertiaSystemStatus* sysStatus, TorqueConverterMotorTypes motor_type, float Kt, int motResistance_milliOhms, int staticMillivolts, uint8_t joint_Id)
-  : SupportingAlgorithm(InputPosition, InputPowerPercent), systemStatus(sysStatus), jointId(joint_Id), torqueConverter(motor_type, Kt, motResistance_milliOhms, staticMillivolts)
+  : SupportingAlgorithm(InputPosition, InputPowerPercent), systemStatus(sysStatus), jointId(joint_Id), torqueConverter(motor_type, Kt, motResistance_milliOhms, staticMillivolts), scalar(1)
 {
 }
 
 GravityCompensator::GravityCompensator(GravityInertiaSystemStatus* sysStatus, TorqueConverterMotorTypes motor_type, float Kt, int motResistance_milliOhms, FeedbackDevice* fdev, uint8_t joint_Id)
-  : SupportingAlgorithm(InputPosition, InputPowerPercent), systemStatus(sysStatus), jointId(joint_Id), torqueConverter(motor_type, Kt, motResistance_milliOhms, fdev)
+  : SupportingAlgorithm(InputPosition, InputPowerPercent), systemStatus(sysStatus), jointId(joint_Id), torqueConverter(motor_type, Kt, motResistance_milliOhms, fdev), scalar(1)
 {
+}
+
+void GravityCompensator::setScalar(float scale)
+{
+  scalar = scale;
 }
 

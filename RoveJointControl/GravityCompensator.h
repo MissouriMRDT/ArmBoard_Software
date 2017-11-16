@@ -22,6 +22,7 @@ class GravityCompensator: public SupportingAlgorithm
     uint8_t jointId;
     GravityInertiaSystemStatus* systemStatus;
     TtoPPOpenLConverter torqueConverter;
+    float scalar;
 
   public:
 
@@ -52,6 +53,8 @@ class GravityCompensator: public SupportingAlgorithm
     //        joint_id:  The ID of the joint in the system, starting from 1 and going up. What joint ID correlates to what role in reality
     //                   is defendant on GravInertSysStatus; see it for more details.
     GravityCompensator(GravityInertiaSystemStatus* sysStatus, TorqueConverterMotorTypes motor_type, float Kt, int motResistance_milliOhms, FeedbackDevice* fdev, uint8_t joint_Id);
+
+    void setScalar(float scale);
 };
 
 
