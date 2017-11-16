@@ -73,3 +73,8 @@ void Ma3Encoder12b::setOffsetAngle(float offset)
   offset = constrain(offset, -360.0, 360.0); //constrain offset to 0 - 360 degrees
   offsetAngle = sign*((abs(offset) * ((float)(POS_MAX - POS_MIN)) / 360.0) + POS_MIN); //offset in 0-360, so convert to framework positional values
 }
+
+void Ma3Encoder12b::setDeadband(uint16_t deadband_us)
+{
+  deadband = deadband_us;
+}

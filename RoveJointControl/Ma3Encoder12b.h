@@ -35,6 +35,11 @@ class Ma3Encoder12b: public FeedbackDevice
     
     //same as getFeedback, but returns 0-360 degrees
     float getFeedbackDegrees();
+
+    //sets the deadband for the encoder's pwm reading. If the class gets a reading that's less than this many microseconds away from
+    //its last reading, it discards it as noise.
+    //Default is 5.
+    void setDeadband(uint16_t deadBand_us);
 };
 
 #endif
