@@ -54,6 +54,7 @@ class GravityCompensator: public SupportingAlgorithm
     //                   is defendant on GravInertSysStatus; see it for more details.
     GravityCompensator(GravityInertiaSystemStatus* sysStatus, TorqueConverterMotorTypes motor_type, float Kt, int motResistance_milliOhms, FeedbackDevice* fdev, uint8_t joint_Id);
 
+    //sets a scalar to apply to the output of the class, so you can tune it. Default is 1.
     void setScalar(float scale);
 };
 
