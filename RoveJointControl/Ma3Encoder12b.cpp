@@ -6,7 +6,7 @@ static const int PWM_READ_MIN = 1;
 
 long Ma3Encoder12b::getFeedback()
 {
-  uint32_t readOnPeriod = getOnPeriod_us(PwmHandle);
+  int32_t readOnPeriod = getOnPeriod_us(PwmHandle); //signed for calculation below
 
   if(abs(lastReading - readOnPeriod) < deadband)
   {
