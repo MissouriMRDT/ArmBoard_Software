@@ -11,8 +11,10 @@
 
 long GravityCompensator::runAlgorithm(const long input, bool * ret_OutputFinished)
 {
+  //if runAlgorithm is called this might be the only alg called, so use the input as also being the output so this class doesn't just
+  //kill all movement
   *ret_OutputFinished = true;
-  return addToOutput(input, 0);
+  return addToOutput(input, input) + input;
 }
 
 long GravityCompensator::addToOutput(const long inputValue, const long calculatedOutput)
