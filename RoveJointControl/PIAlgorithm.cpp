@@ -18,7 +18,7 @@ void PIAlgorithm::verifyFdev()
 }
 
 PIAlgorithm::PIAlgorithm(int inKP, int inKI, float inDT, FeedbackDevice* fDev)
-: DrivingAlgorithm(InputPosition, InputPowerPercent), KI(inKI), KP(inKP), DT(inDT), power_minMag(DEFAULT_MINMAG),
+: IOConverter(InputPosition, InputPowerPercent), KI(inKI), KP(inKP), DT(inDT), power_minMag(DEFAULT_MINMAG),
   deg_deadBand(1), errorSummation(0), hardStopPos1(-1), hardStopPos2(-1), feedbackDev(fDev)
 {
   //if the feedback device's data type doesn't mesh with our data type, then
@@ -27,7 +27,7 @@ PIAlgorithm::PIAlgorithm(int inKP, int inKI, float inDT, FeedbackDevice* fDev)
 }
 
 PIAlgorithm::PIAlgorithm(int inKP, int inKI, float inDT, FeedbackDevice* fDev, int inpower_minMag)
-  : DrivingAlgorithm(InputPosition, InputPowerPercent), KI(inKI), KP(inKP), DT(inDT), power_minMag(inpower_minMag),
+  : IOConverter(InputPosition, InputPowerPercent), KI(inKI), KP(inKP), DT(inDT), power_minMag(inpower_minMag),
     deg_deadBand(1), errorSummation(0), hardStopPos1(-1), hardStopPos2(-1), feedbackDev(fDev)
 {
   //if the feedback device's data type doesn't mesh with our data type, then
@@ -169,15 +169,21 @@ void PIAlgorithm::setHardStopPositions(float hardStopPos1_deg, float hardStopPos
   }
 }
 
-long PIAlgorithm::runAlgorithm(const long input, bool * ret_OutputFinished)
+long PIAlgorithm::addToOutput(const long inputValue, const long calculatedOutput)
+{
+  bool dummy;
+  return runAlgorithm(inputValue, calculatedOutput, &dummy);
+}
+
+long PIAlgorithm::runAlgorithm(const long input, const long oldOutput, bool * ret_OutputFinished)
 {
   // Check if the Algorithm class has actually been initialized or not. If not, kill the function.
   if (validConstruction == false)
   {
-    *ret_OutputFinished = false;	
+    *ret_OutputFinished = false;
     return 0;
   }
-	
+
   // Create local variables for the function to work with, as well as convert values to degrees.
   long posDest = input;
   long posNow = feedbackDev->getFeedback();
@@ -201,7 +207,7 @@ long PIAlgorithm::runAlgorithm(const long input, bool * ret_OutputFinished)
 
     if(supportIsPersistant)
     {
-      return supportingAlgorithm->addToOutput(input, 0);
+      return supportingAlgorithm->addToOutput(input, oldOutput);
     }
     else
     {
@@ -215,7 +221,7 @@ long PIAlgorithm::runAlgorithm(const long input, bool * ret_OutputFinished)
   // if there's a supporting algorithm attached, run its output as well
   if(supportUsed)
   {
-    pwr_out += supportingAlgorithm->addToOutput(input, pwr_out);
+    pwr_out += supportingAlgorithm->addToOutput(input, pwr_out + oldOutput);
   }
 
   // Check for fringe cases if the power out value is outside of the acceptable range,
@@ -234,12 +240,17 @@ long PIAlgorithm::runAlgorithm(const long input, bool * ret_OutputFinished)
     // of how much of an error has been accumulated.
     errorSummation+=(deg_disToDest * DT);
   }
-	
+
   // Ensure that the output is not finished (since it has gotten this far) so that the function
   // should be run once again.
   *ret_OutputFinished = false;
-	
+
   return pwr_out;
+}
+
+long PIAlgorithm::runAlgorithm(const long input, bool * ret_OutputFinished)
+{
+  return runAlgorithm(input, 0, ret_OutputFinished);
 }
 
 void PIAlgorithm::setDeadband(float degrees)

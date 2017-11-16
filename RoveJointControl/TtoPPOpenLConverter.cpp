@@ -10,7 +10,7 @@
 #include "RoveBoard.h"
 
 TtoPPOpenLConverter::TtoPPOpenLConverter(TorqueConverterMotorTypes motor_type, float Kt, int motResistance_milliOhms, int staticMillivolts)
-    : DrivingAlgorithm(InputTorque, InputPowerPercent), motorType(motor_type), KT(Kt), staticMilliVolts(staticMillivolts),
+    : IOConverter(InputTorque, InputPowerPercent), motorType(motor_type), KT(Kt), staticMilliVolts(staticMillivolts),
       voltConverterUsed(false), VoltSensor(0), motorR_mOhm(motResistance_milliOhms)
 {
   if(abs(staticMillivolts) > VOLT_MAX)
@@ -20,7 +20,7 @@ TtoPPOpenLConverter::TtoPPOpenLConverter(TorqueConverterMotorTypes motor_type, f
 }
 
 TtoPPOpenLConverter::TtoPPOpenLConverter(TorqueConverterMotorTypes motor_type, float Kt, int motResistance_milliOhms, FeedbackDevice *voltSensor)
-    : DrivingAlgorithm(InputTorque, InputPowerPercent), motorType(motor_type), KT(Kt), VoltSensor(voltSensor),
+    : IOConverter(InputTorque, InputPowerPercent), motorType(motor_type), KT(Kt), VoltSensor(voltSensor),
       voltConverterUsed(true), staticMilliVolts(0), motorR_mOhm(motResistance_milliOhms)
 {
   if(voltSensor->getFeedbackType() != InputVoltage)
@@ -29,19 +29,39 @@ TtoPPOpenLConverter::TtoPPOpenLConverter(TorqueConverterMotorTypes motor_type, f
   }
 }
 
-long TtoPPOpenLConverter::runAlgorithm(const long input, bool * ret_OutputFinished)
+long TtoPPOpenLConverter::runAlgorithm(const long input, const long oldOutput, bool * ret_OutputFinished)
 {
   *ret_OutputFinished = true; //open loop, so output is always finished per se
+  long newOutput;
 
   if(motorType == TorqueConvert_BrushedDC)
   {
-    return runAlgorithmBrushedDC(input);
+    newOutput = runAlgorithmBrushedDC(input);
   }
   else
   {
     debugFault("TtoPPOpenLConverter: motor type not supported");
-    return 0;
+    newOutput = 0;
   }
+
+  if(supportUsed && ((supportIsPersistant && newOutput == 0) || newOutput != 0))
+  {
+    newOutput += supportingAlgorithm->addToOutput(input, newOutput + oldOutput);
+  }
+
+  return newOutput;
+}
+
+//function to be called when class is acting as a support algorithm to another IOConverter.
+long TtoPPOpenLConverter::addToOutput(const long inputValue, const long calculatedOutput)
+{
+  bool dummy;
+  return runAlgorithm(inputValue, calculatedOutput, &dummy);
+}
+
+long TtoPPOpenLConverter::runAlgorithm(const long input, bool * ret_OutputFinished)
+{
+  return runAlgorithm(input, 0, ret_OutputFinished);
 }
 
 long TtoPPOpenLConverter::runAlgorithmBrushedDC(const long torque_milliNewtons)

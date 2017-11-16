@@ -19,7 +19,7 @@ typedef enum TorqueConverterMotorTypes
 
 //Class for converting torque into power percent.
 //Open loop; it relies on mathematical equations to do its conversion
-class TtoPPOpenLConverter: public DrivingAlgorithm
+class TtoPPOpenLConverter: public IOConverter
 {
   private:
 
@@ -62,6 +62,11 @@ class TtoPPOpenLConverter: public DrivingAlgorithm
     //
     //notes:    Overrides DrivingAlgorithm's runAlgorithm virtual function.
     long runAlgorithm(const long input, bool * ret_OutputFinished);
+
+    long runAlgorithm(const long input, const long oldOutput, bool * ret_OutputFinished);
+
+    //function to be called when class is acting as a support algorithm to another IOConverter.
+    long addToOutput(const long inputValue, const long calculatedOutput);
 
   public:
 

@@ -9,6 +9,12 @@
 #include "RoveBoard.h"
 #include "RoveJointUtilities.h"
 
+long GravityCompensator::runAlgorithm(const long input, bool * ret_OutputFinished)
+{
+  *ret_OutputFinished = true;
+  return addToOutput(input, 0);
+}
+
 long GravityCompensator::addToOutput(const long inputValue, const long calculatedOutput)
 {
   double gravTorque;
@@ -19,7 +25,7 @@ long GravityCompensator::addToOutput(const long inputValue, const long calculate
 
   if(gravTorque != 0)
   {
-    gravPwm = ((DrivingAlgorithm*)(&torqueConverter))->runAlgorithm(gravTorque, &dummy);
+    gravPwm = ((IOConverter*)(&torqueConverter))->runAlgorithm(gravTorque, &dummy);
   }
   else
   {
@@ -35,12 +41,12 @@ long GravityCompensator::addToOutput(const long inputValue, const long calculate
 }
 
 GravityCompensator::GravityCompensator(GravityInertiaSystemStatus* sysStatus, TorqueConverterMotorTypes motor_type, float Kt, int motResistance_milliOhms, int staticMillivolts, uint8_t joint_Id)
-  : SupportingAlgorithm(InputPosition, InputPowerPercent), systemStatus(sysStatus), jointId(joint_Id), torqueConverter(motor_type, Kt, motResistance_milliOhms, staticMillivolts), scalar(1)
+  : IOConverter(InputPosition, InputPowerPercent), systemStatus(sysStatus), jointId(joint_Id), torqueConverter(motor_type, Kt, motResistance_milliOhms, staticMillivolts), scalar(1)
 {
 }
 
 GravityCompensator::GravityCompensator(GravityInertiaSystemStatus* sysStatus, TorqueConverterMotorTypes motor_type, float Kt, int motResistance_milliOhms, FeedbackDevice* fdev, uint8_t joint_Id)
-  : SupportingAlgorithm(InputPosition, InputPowerPercent), systemStatus(sysStatus), jointId(joint_Id), torqueConverter(motor_type, Kt, motResistance_milliOhms, fdev), scalar(1)
+  : IOConverter(InputPosition, InputPowerPercent), systemStatus(sysStatus), jointId(joint_Id), torqueConverter(motor_type, Kt, motResistance_milliOhms, fdev), scalar(1)
 {
 }
 

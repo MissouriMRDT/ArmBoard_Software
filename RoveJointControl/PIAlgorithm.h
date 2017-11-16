@@ -4,7 +4,7 @@
 #include "AbstractFramework.h"
 #include "RoveJointUtilities.h"
 
-class PIAlgorithm : public DrivingAlgorithm
+class PIAlgorithm : public IOConverter
 {
 
   private:
@@ -65,6 +65,11 @@ class PIAlgorithm : public DrivingAlgorithm
     //
     // returns: The calculated value to pass to the joint's output device, based on how far from the destination the joint is.
     long runAlgorithm(const long input, bool * ret_OutputFinished);
+
+    long runAlgorithm(const long input, const long oldOutput, bool * ret_OutputFinished);
+
+    //function to be called when class is acting as a support algorithm to another IOConverter.
+    long addToOutput(const long inputValue, const long calculatedOutput);
 
   public:
 

@@ -1,7 +1,7 @@
 #include "DifferentialJoint.h"
 #include "RoveJointUtilities.h"
 
-DifferentialJoint::DifferentialJoint(DifferentialType jointType, ValueType inputType, DrivingAlgorithm *alg, OutputDevice* cont1, OutputDevice* cont2)
+DifferentialJoint::DifferentialJoint(DifferentialType jointType, ValueType inputType, IOConverter *alg, OutputDevice* cont1, OutputDevice* cont2)
   : JointInterface(inputType, alg, cont1), controller2(cont2), coupled(false), thisJointType(jointType), motorOneVirtualPower(0), motorTwoVirtualPower(0)
 {
   //checks to make sure the passed arguments all work with each other, that is that the algorithm's input type
@@ -158,7 +158,7 @@ void DifferentialJoint::disableJoint()
   enabled = false;
 }
 
-bool DifferentialJoint::switchDifferentialModules(ValueType newInputType, DrivingAlgorithm* newAlgorithm, OutputDevice* newDevice1, OutputDevice* newDevice2)
+bool DifferentialJoint::switchDifferentialModules(ValueType newInputType, IOConverter* newAlgorithm, OutputDevice* newDevice1, OutputDevice* newDevice2)
 {
   if((newInputType == newAlgorithm->inType) && (newDevice1->inType == newAlgorithm->outType) && (newDevice2->inType == newDevice1->inType))
   {

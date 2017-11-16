@@ -20,7 +20,7 @@ bool JointInterface::verifyInput(long inputToVerify)
   }
 }
 
-bool JointInterface::switchModules(ValueType newInputType, DrivingAlgorithm* newAlgorithm)
+bool JointInterface::switchModules(ValueType newInputType, IOConverter* newAlgorithm)
 {
   if((newInputType == newAlgorithm->inType) && (controller1->inType == newAlgorithm->outType))
   {
@@ -37,7 +37,7 @@ bool JointInterface::switchModules(ValueType newInputType, DrivingAlgorithm* new
   }
 }
 
-bool JointInterface::switchModules(ValueType newInputType, DrivingAlgorithm* newAlgorithm, OutputDevice* newDevice)
+bool JointInterface::switchModules(ValueType newInputType, IOConverter* newAlgorithm, OutputDevice* newDevice)
 {
   if((newInputType == newAlgorithm->inType) && (newDevice->inType == newAlgorithm->outType))
    {
@@ -120,9 +120,9 @@ bool JointInterface::removeIOConverter(ValueType newInputType, OutputDevice* new
   }
 }
 
-bool IOConverter::addSupportingAlgorithm(SupportingAlgorithm* support)
+bool IOConverter::addSupportingAlgorithm(IOConverter* support)
 {
-  if(outType == ((IOConverter*)support)->outType && inType == ((IOConverter*)support)->inType)
+  if(outType == support->outType && inType == support->inType)
   {
     supportingAlgorithm = support;
     supportUsed = true;
@@ -134,7 +134,7 @@ bool IOConverter::addSupportingAlgorithm(SupportingAlgorithm* support)
   }
 }
 
-void DrivingAlgorithm::persistantSupport(bool persistant)
+void IOConverter::persistantSupport(bool persistant)
 {
   supportIsPersistant = persistant;
 }

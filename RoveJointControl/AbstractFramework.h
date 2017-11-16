@@ -8,7 +8,7 @@ class IOConverter;
 class OutputDevice;
 class FeedbackDevice;
 class SupportingAlgorithm;
-class DrivingAlgorithm;
+class IOConverter;
 
 class DifferentialJoint;
 class SingleMotorJoint;
@@ -16,6 +16,7 @@ class GravityCompensator;
 
 //Primary interface class for controlling the joint; manages the other classes and
 //computes any calculations that depend on the nature of the joint itself
+//see README.md for more info
 class JointInterface
 {
   protected:
@@ -24,7 +25,7 @@ class JointInterface
     ValueType inType;
 
     //If the output device doesn't naturally understand the user's input type, then this will convert the values
-    DrivingAlgorithm* manip;
+    IOConverter* manip;
 
     //pointer to the output device instance which is passed in when creating the framework interface
     //called in runOutputControl
@@ -44,7 +45,7 @@ class JointInterface
     //returns:  true if the input is in a valid range, false if it's not
     bool verifyInput(long inputToVerify);
 
-    JointInterface(ValueType in, DrivingAlgorithm* alg, OutputDevice* dev)
+    JointInterface(ValueType in, IOConverter* alg, OutputDevice* dev)
     : enabled(true), inType(in), algorithmUsed(true), manip(alg), controller1(dev) {};
 
     JointInterface(ValueType in, OutputDevice* dev)
@@ -68,7 +69,7 @@ class JointInterface
     //returns:  true if swap was successful, false if not and previous settings retained
     //
     //warning:  not thread safe
-    bool switchModules(ValueType newInputType, DrivingAlgorithm* newAlgorithm);
+    bool switchModules(ValueType newInputType, IOConverter* newAlgorithm);
 
     //Overview: replaces the current joint's algorithm component and outputDevice components with different ones
     //
@@ -79,7 +80,7 @@ class JointInterface
     //returns:  true if swap was successful, false if not and previous settings retained
     //
     //warning:  not thread safe
-    bool switchModules(ValueType newInputType, DrivingAlgorithm* newAlgorithm, OutputDevice* newDevice);
+    bool switchModules(ValueType newInputType, IOConverter* newAlgorithm, OutputDevice* newDevice);
 
     //Overview: replaces the current joint's outputDevice components with a different one
     //
@@ -122,6 +123,7 @@ class JointInterface
 };
 
 //Represents a device (or any general method) used for getting sensory information.
+//see README.md for more info
 class FeedbackDevice
 {
   protected:
@@ -142,7 +144,8 @@ class FeedbackDevice
 		ValueType getFeedbackType() { return fType; }
 };
 
-//represents the device (or any general method) used for physically causing movement
+//represents the device (or any general method) used for physically causing movement.
+//see README.md for more info
 class OutputDevice
 {
 	//Joint interface needs access to its functions
@@ -184,15 +187,19 @@ class OutputDevice
     virtual void setPower(bool powerOn) = 0;
 };
 
-//Represents any algorithm used for converting one type of data (such as position) to another (such as velocity)
+//Represents any algorithm used for converting one type of data (such as position) to another (such as velocity).
+//See the README.md for more info
 class IOConverter
 {
   friend class GravityCompensator;
+  friend class SingleMotorJoint;
+  friend class DifferentialJoint;
+  friend class JointInterface;
 
   public:
 
-    //Overview: Adds a supporting algorithm to be used in conjunction with this one; this IOConverter will calculate its own output,
-    //          then call the supporting algorithm and ask for its as well. In this way, multiple algorithms can be
+    //Overview: Adds a supporting IOConverter to be used in conjunction with this one; this IOConverter will calculate its own output,
+    //          then call the supporting IOConverter and ask for its as well. In this way, multiple algorithms can be
     //          made in parallel and add up with each other.
     //
     //Input:    The supporting algorithm to add.
@@ -200,54 +207,9 @@ class IOConverter
     //Returns:  True if successfully added, false if there was an issue.
     //
     //Warning:  Supporting algorithm must have the same Input type and Output type as this IOConverter.
-    //          Also this function doesn't stack; only one supporting algorithm attached at a time.
-    bool addSupportingAlgorithm(SupportingAlgorithm* support);
-
-    ValueType getInType() { return inType; }
-    ValueType getOutType() { return outType; }
-
-  protected:
-
-    SupportingAlgorithm* supportingAlgorithm;
-    bool supportUsed;
-
-    //the types of values that the algorithm takes in and gives out
-    ValueType inType;
-    ValueType outType;
-
-    IOConverter(ValueType in, ValueType out)
-    : supportUsed(false), supportingAlgorithm(0), inType(in), outType(out)
-    {};
-};
-
-//Represents an IOConverter that doesn't drive the motion on its own, but supports another IOConverter with a separate control
-//calculation. Usually compensates for some force or state for the driving algorithm.
-class SupportingAlgorithm: public IOConverter
-{
-  protected:
-    SupportingAlgorithm(ValueType in, ValueType out): IOConverter(in, out) {};
-
-  public:
-
-    //public due to being allowed to be called by all the different DrivingAlgorithm classes, but
-    //not meant to be called by the user directly. C++ needs an internal modifier.
-    virtual long addToOutput(const long inputValue, const long calculatedOutput) = 0;
-};
-
-//Represents an IOConverter that can cause motion all on its own, and is the driving
-//force behind the motion when used.
-class DrivingAlgorithm: public IOConverter
-{
-  friend class SingleMotorJoint;
-  friend class DifferentialJoint;
-  friend class JointInterface;
-  friend class GravityCompensator;
-
-  protected:
-
-    bool supportIsPersistant;
-
-    DrivingAlgorithm(ValueType in, ValueType out): IOConverter(in, out), supportIsPersistant(false)  {};
+    //          Also this function doesn't stack; only one supporting algorithm attached at a time. If you want to use multiple
+    //          supporting algorithms, string them to each other.
+    bool addSupportingAlgorithm(IOConverter* support);
 
     //overview: run whatever algorithm this implements, returns value that can be directly passed to an output device
     //
@@ -265,12 +227,31 @@ class DrivingAlgorithm: public IOConverter
     //Note:     If ret_OutputFinished returns false but input returns 0, it's an indication that an error has occured
     virtual long runAlgorithm(const long input, bool * ret_OutputFinished) = 0;
 
-  public:
+    //function to be called when class is acting as a support algorithm to another IOConverter.
+    //public due to being allowed to be called by all the different IOConverter classes, but
+    //not meant to be called by the user directly. C++ needs an internal modifier.
+    virtual long addToOutput(const long inputValue, const long calculatedOutput) = 0;
 
     //Sets whether or not the supporting algorithm coupled with this (if there's one) will continue to output data once the motion is completed.
     //If true, then the supporting algorithm will be allowed to keep compensating for whatever it's compensating for when the motion has stopped.
     void persistantSupport(bool persistant);
 
+    ValueType getInType() { return inType; }
+    ValueType getOutType() { return outType; }
+
+  protected:
+
+    IOConverter* supportingAlgorithm;
+    bool supportUsed;
+    bool supportIsPersistant;
+
+    //the types of values that the algorithm takes in and gives out
+    ValueType inType;
+    ValueType outType;
+
+    IOConverter(ValueType in, ValueType out)
+    : supportUsed(false), supportingAlgorithm(0), inType(in), outType(out), supportIsPersistant(false)
+    {};
 };
 
 #endif

@@ -14,11 +14,12 @@
 #include "TtoPPOpenLConverter.h"
 #include <stdint.h>
 
-class GravityCompensator: public SupportingAlgorithm
+class GravityCompensator: public IOConverter
 {
   private:
 
     long addToOutput(const long inputValue, const long calculatedOutput);
+    long runAlgorithm(const long input, bool * ret_OutputFinished);
     uint8_t jointId;
     GravityInertiaSystemStatus* systemStatus;
     TtoPPOpenLConverter torqueConverter;

@@ -8,7 +8,7 @@ static const char STARTING_CYCLES_LEFT = 1; //Default value is 1 to make sure th
 //If it was zero, then the arm would calculate the velocity without a position to go to.
 
 PIVConverter :: PIVConverter(uint32_t inKPP, uint32_t inKIP, uint32_t inKPV, uint32_t inKIV, float inDT, FeedbackDevice* posFeed, FeedbackDevice* velFeed)
-: DrivingAlgorithm(InputPosition, InputPowerPercent), KIP(inKIP), KPP(inKPP), KPV(inKPV), KIV(inKIV), DT(inDT), posReloadCycles(DEFAULT_RATIO),
+: IOConverter(InputPosition, InputPowerPercent), KIP(inKIP), KPP(inKPP), KPV(inKPV), KIV(inKIV), DT(inDT), posReloadCycles(DEFAULT_RATIO),
   posCyclesLeft(STARTING_CYCLES_LEFT), deg_deadBand(1), errorPosSummation(0), errorVelSummation(0), hardStopPos1(-1), hardStopPos2(-1),
   feedbackDevVelocity(velFeed), feedbackDevPosition(posFeed)
   {
@@ -226,6 +226,11 @@ int PIVConverter :: runVelAlgorithm(int speedDest, int *speedError)
  ***********************************/
 long PIVConverter :: runAlgorithm(const long input, bool * ret_OutputFinished)
 {
+  return runAlgorithm(input, 0, ret_OutputFinished);
+}
+
+long PIVConverter::runAlgorithm(const long input, const long oldOutput, bool * ret_OutputFinished)
+{
   float deg_disToDest;
   int speedError;
   static uint32_t desiredSpeed = 0;
@@ -272,7 +277,7 @@ long PIVConverter :: runAlgorithm(const long input, bool * ret_OutputFinished)
   {
     if(*ret_OutputFinished == false || supportIsPersistant)
     {
-      pwr_out += supportingAlgorithm->addToOutput(input, pwr_out);
+      pwr_out += supportingAlgorithm->addToOutput(input, pwr_out + oldOutput);
     }
   }
 
@@ -299,6 +304,13 @@ long PIVConverter :: runAlgorithm(const long input, bool * ret_OutputFinished)
   }
 
   return pwr_out;
+}
+
+//function to be called when class is acting as a support algorithm to another IOConverter.
+long PIVConverter::addToOutput(const long inputValue, const long calculatedOutput)
+{
+  bool dummy;
+  return runAlgorithm(inputValue, calculatedOutput, &dummy);
 }
 
 void PIVConverter :: setPosValLoopRatio(int ratio)

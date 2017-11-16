@@ -42,10 +42,10 @@ class DifferentialJoint : public JointInterface
     //
     //Inputs:   DifferentialType: Whether this differnetial joint has tilt motion or rotate motion
 		//          inputType: What kind of movement this joint should be controlled by, such as speed or position input.
-		//          alg: the Driving Algorithm used by this joint
+		//          alg: the IOConverter used by this joint
 		//          cont1: The first output device controlling the first motor on this joint
 		//          cont2: The second output device controlling the second motor on this joint
-		DifferentialJoint(DifferentialType jointType, ValueType inputType, DrivingAlgorithm *alg, OutputDevice* cont1, OutputDevice* cont2);
+		DifferentialJoint(DifferentialType jointType, ValueType inputType, IOConverter *alg, OutputDevice* cont1, OutputDevice* cont2);
 
 		//Overview: creates joint interface without an IO Converter, IE where output is passed straight to the output device
 		//
@@ -64,7 +64,16 @@ class DifferentialJoint : public JointInterface
     //returns:  The status of attempting to control this joint. Such as if the output is running, if it's complete, if there was an error, etc
 		JointControlStatus runOutputControl(const long movement);
 
-    bool switchDifferentialModules(ValueType newInputType, DrivingAlgorithm* newAlgorithm, OutputDevice* newDevice1, OutputDevice* newDevice2);
+		//Overview: replaces the current joint's algorithm and two output device components with different ones
+    //
+    //inputs:   the new type of input the joint is going to be given when runOutputControl is called.
+    //          the new algorithm module
+		//          the two new output devices
+    //
+    //returns:  true if swap was successful, false if not and previous settings retained
+    //
+    //warning:  not thread safe
+    bool switchDifferentialModules(ValueType newInputType, IOConverter* newAlgorithm, OutputDevice* newDevice1, OutputDevice* newDevice2);
     
     //Overview: couples this differential joint with another; differential joints
     //          are intertwined so need to interact with each other to properly gauge output power

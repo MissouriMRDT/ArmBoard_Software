@@ -1,7 +1,7 @@
 #include "SingleMotorJoint.h"
 #include "RoveJointUtilities.h"
 
-SingleMotorJoint::SingleMotorJoint(ValueType inputType, DrivingAlgorithm *alg, OutputDevice* cont) : JointInterface(inputType, alg, cont)
+SingleMotorJoint::SingleMotorJoint(ValueType inputType, IOConverter *alg, OutputDevice* cont) : JointInterface(inputType, alg, cont)
 {
   //checks to make sure the passed arguments all work with each other, that is that the algorithm's input type is the same as what the user is putting in, and
   //that the algorithm's output value type is what the output device expects to take in, etc

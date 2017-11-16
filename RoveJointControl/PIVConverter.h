@@ -10,7 +10,7 @@
 
 #include "AbstractFramework.h"
 
-class PIVConverter : public DrivingAlgorithm
+class PIVConverter : public IOConverter
 {
   private:
 
@@ -60,6 +60,11 @@ class PIVConverter : public DrivingAlgorithm
     //
     // returns: The calculated value to pass to the joint's output device, based on how far from the destination the joint is.
     long runAlgorithm(const long input, bool * ret_OutputFinished);
+
+    long runAlgorithm(const long input, const long oldOutput, bool * ret_OutputFinished);
+
+    //function to be called when class is acting as a support algorithm to another IOConverter.
+    long addToOutput(const long inputValue, const long calculatedOutput);
 
     // Overview: Full function that calculates the distance the arm is from its destination
     //
