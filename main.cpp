@@ -744,64 +744,277 @@ CommandResult getArmPositions(float positions[ArmJointCount])
   return Success;
 }
 
-//takes in a series of 4 coordinates (x,y,z, and gripper angle) and uses inverse kinematics to compute
-//what angle each individual joint of the arm needs to be at for the gripper's endpoint to be at that coordinate (wrist rotate aside,
-//it doesn't factor into the positional math).
-//input: the 4 coordinates, describing x,y,z coordiantes in inches, and gripper angle in degrees
-//output: 5 arm joint angles (for joints 1-5) in 0-360 degrees. Note that joint 4 is junk data, as it's not computed
-void computeIK(float coordinates[IKArgCount], float angles[ArmJointCount])
-{
- //This is the Position IK solution ripped straight from my Generalized IK matlab code with one modification to support J5(WRIST TILT).
-  
-  //THE ORIENTATION OF THE ARM WHEN ALL ANGLES ARE 0 IS STRAIGHT UP!!!!!!!!!!!
-  
-  //D-H Parameters of Arm Model
-  //float th1offset=PI/2; //should be 90 in order for origin frame to comply with "Rover Coordinate Standard"
-  float d1=2.7835; //height of bicep tilt axis from baseplate/origin
-  float a1=0; //forward offset of bicep tilt axis relative to base rotate axis
-  //float alpha1=PI/2; //anglular offset of J1 about X1 axis. (SHOULD BE 90 UNLESS ARM DESIGN IS SUPER FUNKY)
-  //float th2offset=PI/2;//should be 90 in order to comply with DH convention
-  float d2=0;//offset to the right of the bicep relative to the base rotation axis(should probably stay as 0 even if bicep is offset. this offset can also be accounted for using d3)
-  float a2=16;//bicep length(distance between bicep tilt axis and elbow tilt axis)
-  //float alpha2=0;//angular offset of elbow tilt axis about x2 axis.(SHOULD BE 90 UNLESS ARM DESIGN IS SUPER FUNKY)
-  //float th3offset=PI/2;//should be 90
-  float d3=.2075;//offset to the right of the forearm relative to the bicep(see d2 comment, if the bicep is offset from the base rotate axis but you have d2 as 0, then d3 must be the offset to the right of the forearm relative to the base rotate axis)
-  float a3=2.4745;//offset of forearm twist axis from the elbow tilt axis along the x2 axis. (this is the "vertical" offset of the forearm.  DONT USE THIS if you calculated the actual distance between the elbow axis and wrist center and calculated the th3 offset accordingly. in that case a3 should be 0
-  //float alpha3=PI/2;//angular offset of forearm about x3 axis. (SHOULD BE 90 UNLESS ARM DESIGN IS SUPER FUNKY)
-  //float th4offset=0; //angular offset of forearm twist. should be 0 for standard spherical wrist orientation. (phoenix, horison, zenith, and gryphon's wrist joints all complied with this)
-  float d4=14.0335;//Forearm Length. If a3 is zero but there is a "vertical" offset of the forearm, this value needs to be the center to center distance between the elbow tilt axis and the wrist center.
-  //float EEoffset=5.25;//Distance of wrist center to center of gripper fingers
-  float cX = coordinates[0];
-  float cY = coordinates[1];
-  float cZ = coordinates[2];
-  float gripperAngle = coordinates[3];
-  float joint1Angle;
-  float joint2Angle;
-  float joint3Angle;
-  float joint5Angle;
-  
-  float loffset=sin(gripperAngle*(PI)/180); //these will be used to adjust the commanded position so that IK is solved for at the gripper
-  float zoffset=-cos(gripperAngle*(PI)/180);
-  //here comes the actual IK trigonometry! Woo Hoo!!
-  float L=sqrt((cX*cX)+(cY*cY)-(d2+d3)*(d2+d3))-a1 + loffset; //this is the horizontal distance the bicep and forearm must reach
-  joint1Angle=atan2(cY,cX) - atan2(L,((L/(L+a1)*(d2+d3))));//THIS ONLY SOLVES FOR FORWARD REACH (arm cant reach over head)
-  float B=sqrt((a3*a3) + (d4*d4));//center to center distance from J3 to Wrist Center
-  float R=sqrt((L*L)+((cZ-d1+zoffset)*(cZ-d1+zoffset)));//Reaching distance of biceb and forearm
-  if(R>=(a2+B))//This checks to see if the desired point is within the working envelope of the arm
-  {    //Dont update the joint angles for joints 2 or 3 if out of range
-  }  
-  else
-  {
-    float D=((R*R)-(a2*a2) -(B*B))/(2*a2*B); //acos of angle between bicep and B
-    joint2Angle=(atan2(B*sqrt(1-(D*D)),(a2+B*D))+atan2((cZ-d1+zoffset),L)-(PI/2)); //Theta2
-    joint3Angle=(atan2(-sqrt(1-(D*D)),D)+ atan2(d4,a3)-(PI/2));//Theta3
+
+//BEGINNING OF NOVA IK
+//Still neeed to include matrixmath and math.h somewhere. im not a compsci
+
+//ANGLES ARE IN RADIANS!!!!!
+//DISTANCES ARE IN INCHES!!!
+
+//D-H Parameters of Arm Model
+float th1offset=1.57079632679; //should be 90 in order for origin frame to comply with "Rover
+// Coordinate Standard"
+float d1=2.8937; // height of bicep tilt axis from baseplate/origin
+float a1=0; //forward offset of bicep tilt axis relative to base rotate axis
+float alpha1=1.57079632679; //anglular offset of J1 about X1 axis. (SHOULD BE 90 UNLESS ARM 
+           // DESIGN IS SUPER FUNKY)
+float th2offset=1.57079632679;//should be 90 in order to comply with DH convention 
+float d2=0;//offset to the right of the bicep relative to the base rotation axis(
+     //should probably stay as 0 even if bicep is offset. this offset can 
+     //also be accounted for using d3)
+float a2=17;//bicep length(distance between bicep tilt axis and elbow tilt axis)
+float alpha2=0;//angular offset of elbow tilt axis about x2 axis.(SHOULD BE 90 
+         //UNLESS ARM DESIGN IS SUPER FUNKY)
+float th3offset=1.57079632679;//should be 90
+float d3=0;//offset to the right of the forearm relative to the bicep(see d2 
+     //comment, if the bicep is offset from the base rotate axis but you 
+     //have d2 as 0, then d3 must be the offset to the right of the forearm 
+     //relative to the base rotate axis)
+float a3=2.837;//offset of forearm twist axis from the elbow tilt axis along the x2 
+     //axis. (this is the "vertical" offset of the forearm.  DONT USE THIS 
+     //if you calculated the actual distance between the elbow axis and 
+     //wrist center and calculated the th3 offset accordingly. in that case 
+     //a3 should be 0
+float alpha3=1.57079632679;//angular offset of forearm about x3 axis. (SHOULD BE 90 UNLESS ARM 
+         //DESIGN IS SUPER FUNKY)
+float th4offset=0; //angular offset of forearm twist. should be 0 for standard 
+             //spherical wrist orientation. (phoenix, horison, zenith, and 
+             //gryphon's wrist joints all complied with this)
+float d4=17;//Forearm Length. If a3 is zero but there is a "vertical" offset of 
+      //the forearm, this value needs to be the center to center distance 
+      //between the elbow tilt axis and the wrist center.
+float a4=0; //needs to be 0 for spherical wrist
+float alpha4=-1.57079632679; //should be -90 for standard spherical wrist orientation. 
+            //(phoenix, horiZon, zenith, and gryphon's wrist joints all 
+            //complied with this)
+float th5offset=0; //wrist tilt angle offset. should be 0 unless there is a 
+             //"vertical" forearm offset and you chose to use the center to 
+             //center distances between the elbow tilt axis and the wrist 
+             //center. if this is the case, th4offset needs to be calculated
+             //as the angle between the line center line between the elbow 
+             //tilt axis and wrist center with the axis of gripper rotate(j6)
+float d5=0;//needs to be 0 for spherical wrist
+float a5=0;//needs to be 0 for spherical wrist
+float alpha5=1.57079632679;//angular offset of gripper rotate axis from gripper tilt axis 
+          //about x5 axis. needs to be 90 for spherical wrist 
+float th6offset=1.57079632679; //angular twist of gripper from normal orientation. should be 
+              //90 for standard spherical wrist orientation. (phoenix, 
+              //horiZon, zenith, and gryphon's wrist joints all complied with this)
+float d6=0;//keep as 0
+float a6=0;//keep as 0
+float alpha6=1.57079632679; //angular tilt of gripper from normal orientation. should be 90 
+           //for standard spherical wrist orientation. (phoenix, horiZon, 
+           //zenith, and gryphon's wrist joints all complied with this)
+
+//CENTER POINT OF GRIPPER
+float OpPointoffset[3][1]={{0},  
+                           {5.25},
+                           {0}};
+
+//important supporting functions
+
+void DHTrans(float th, float d, float a, float alpha, float A1[4][4]){  //Calculate the Homogenous transform from the DH convention
+   A1[0][0] = cos(th);
+   A1[0][1] =  -sin(th)*cos(alpha);
+   A1[0][2] = sin(th)*sin(alpha);
+   A1[0][3] = a*cos(th);
+   A1[1][0] =sin(th) ;
+   A1[1][1] = cos(th)*cos(alpha);
+   A1[1][2] = -cos(th)*sin(alpha);
+   A1[1][3] = a*sin(th);
+   A1[2][0] = 0;
+   A1[2][1] = sin(alpha);
+   A1[2][2] = cos(alpha);
+   A1[2][3] = d;
+   A1[3][0] = 0;
+   A1[3][1] = 0;
+   A1[3][2] = 0;
+   A1[3][3] = 1;
+}
+
+float angledist(float theta1,float theta2){
+   if (abs(theta1-theta2)>3.14159265359){
+    float a= (2*3.14159265359)-abs(theta1-theta2);
+    return a;
+   }
+   else{
+    float a=abs(theta1-theta2);
+    return a;
+   }      
+}
+
+void Rotx(float t,float Rx[3][3]){   //Calculate a rotation matrix of a rotation in about the X axis by theta
+  Rx[0][0]=1;
+  Rx[0][1]=0;
+  Rx[0][2]=0;
+  Rx[1][0]=0;
+  Rx[1][1]=cos(t);
+  Rx[1][2]=-sin(t);
+  Rx[2][0]=0;
+  Rx[2][1]=sin(t);
+  Rx[2][2]=cos(t);
   }
-  joint5Angle=gripperAngle-joint2Angle-joint3Angle;
-  
-  joint1Angle = negativeDegreeCorrection(joint1Angle);
-  joint2Angle = negativeDegreeCorrection(joint2Angle);
-  joint3Angle = negativeDegreeCorrection(joint3Angle);
-  joint5Angle = negativeDegreeCorrection(joint5Angle);
+
+void Roty(float t,float Ry[3][3]){   //Calculate a rotation matrix of a rotation in about the Y axis by theta
+  Ry[0][0]=cos(t);
+  Ry[0][1]=0;
+  Ry[0][2]=-sin(t);
+  Ry[1][0]=0;
+  Ry[1][1]=1;
+  Ry[1][2]=0;
+  Ry[2][0]=sin(t);
+  Ry[2][1]=0;
+  Ry[2][2]=cos(t);
+  }
+
+void Rotz(float t,float Rz[3][3]){   //Calculate a rotation matrix of a rotation in about the X axis by theta
+  Rz[0][0]=cos(t);
+  Rz[0][1]=-sin(t);
+  Rz[0][2]=0;
+  Rz[1][0]=sin(t);
+  Rz[1][1]=cos(t);
+  Rz[1][2]=0;
+  Rz[2][0]=0;
+  Rz[2][1]=0;
+  Rz[2][2]=1;
+  }
+
+void Calc_IK(float coordinates[IKArgCount], float angles[ArmJointCount]){//float x,float y,float z,float yaw,float pitch,float roll,float *Joints){
+  //HERE COMES THE IK MATH!!!
+//operating point location
+//x=0;// Desired X coordinate of gripper relative to the Rover (where the arm attaches)
+//y=17+5.25;// Desired Y coordinate of gripper relative to the Rover (where the arm attaches)
+//z=22.73;// Desired Z coordinate of gripper relative to the Rover (where the arm attaches)
+float old1=radians(angles[0]);  //Current Joint angles
+float old2=radians(angles[1]);
+float old3=radians(angles[2]);
+float old4=radians(angles[3]);
+float old5=radians(angles[4]);
+float old6=radians(angles[5]);
+
+//operating point orientation 
+//The Order of these rotations matters for the final orientation. I will 
+//choose to Yaw first, Then Pitch, and then//Roll.  this can be changed of 
+//course, this is just how i am going to do it
+//yaw=0; //Rotation of gripper about Gripper's Z axis
+//pitch=0; //Rotation of gripper about Gripper's X axis
+//roll=0;//Rotation of gripper about Gripper's Y axis
+//Calculate the final desired Rotation matris(Gripper Orientation)
+float Rotzyaw[3][3];
+float Rotxpitch[3][3];
+float Rotyroll[3][3];
+
+Rotz(coordinates[3],Rotzyaw);
+Rotx(coordinates[4],Rotxpitch);
+Roty(coordinates[5],Rotyroll);
+float OpRot[3][3];
+float OpRottemp[3][3];
+Matrix.Multiply((float*)Rotzyaw, (float*)Rotxpitch, 3, 3, 3, (float*)OpRottemp);
+Matrix.Multiply((float*)OpRottemp, (float*)Rotyroll, 3, 3, 3, (float*)OpRot);
+//IMPLEMENTED MATH IS EQUIVALENT TO:     OpRot=Rotz(yaw)*Rotx(pitch)*Roty(roll)
+//Can add other rotations here if so 
+//desired. would need to introduce new variables though.
+
+
+//Calculate the Wrist Center location from Gripper Location and Orientation
+float OpPoint[3][1] = {{coordinates[0]},{coordinates[1]},{coordinates[2]}};
+float OpPointtemp[3][1];
+Matrix.Multiply((float*)OpRot, (float*)OpPointoffset, 3, 3, 1, (float*)OpPointtemp);
+float WristCenter[3][1];
+Matrix.Subtract((float*)OpPoint, (float*)OpPointtemp, 3, 1, (float*)WristCenter);
+//IMPLEMENTED MATH IS EQUIVALENT TO:   WristCenter = OpPoint-OpRot*OpPointoffset;
+
+//Position IK Problem 
+//This you will have likely have to solve yourself.  I will attempt to work it 
+//in terms of the DH Model described in the documentation to this, but its not hard. 
+//the inverse position problem is just simple Trigonometry (SEE DOCUMENTATION)
+float L=(sqrt(pow((WristCenter[0][0]),2)+pow((WristCenter[1][0]),2)-(pow((d2+d3),2)))-a1); // this is the horizontal distance the bicep and forearm must reach 
+double th1=(atan2((WristCenter[1][0]),(WristCenter[0][0])) - atan2(L,((L/(L+a1)*(d2+d3)))));//THIS ONLY SOLVES FOR FORWARD REACH (arm cant reach over head)
+float B=sqrt((a3*a3) + (d4*d4));//center to center distance from J3 to Wrist Center
+float R=sqrt((L*L) +((pow((WristCenter[2][0]) - d1,2))));//Reaching distance of bicep and forearm
+float th2;
+float th3;
+if (R >(a2+B)){  //This checks to see if the desired point is within the working envelope of the arm
+   R=(a2+B)-0.01;
+   //Serial.println("POSITION OUT OF RANGE");
+}
+  float D=(((R*R) - (a2*a2) - (B*B))/(2*a2*B)); //acos of angle between bicep and B
+  //Serial.println(D);
+  th2=atan2(B*sqrt(1-(D*D)),(a2+B*D))+atan2((WristCenter[2][0]-d1),L)-1.57079632679; //Theta2
+  th3=(atan2(-sqrt(1-(D*D)),D)) + (atan2(d4,a3)) - 1.57079632679;//Theta3
+
+//WRIST ORIENTATION IK
+//Define Transformation Matricies of J1, J2, J3
+ float A1[4][4];
+DHTrans((th1+th1offset), d1, a1, alpha1,A1);
+ float A2[4][4];
+DHTrans((th2+th2offset), d2, a2, alpha2,A2);
+ float A3[4][4];
+DHTrans((th3+th3offset), d3, a3, alpha3,A3);
+//float T1[4][4] = A1;
+ float T2[4][4];
+Matrix.Multiply((float*)A1, (float*)A2, 4, 4, 4, (float*)T2);
+ float T3[4][4];
+Matrix.Multiply((float*)T2, (float*)A3, 4, 4, 4, (float*)T3);
+float T3temp [3][3];
+float T3sub[3][3];
+T3sub[0][0] = T3[0][0]; //might be able to simplify this code
+T3sub[0][1] = T3[0][1];
+T3sub[0][2] = T3[0][2];
+T3sub[1][0] = T3[1][0];
+T3sub[1][1] = T3[1][1];
+T3sub[1][2] = T3[1][2];
+T3sub[2][0] = T3[2][0];
+T3sub[2][1] = T3[2][1];
+T3sub[2][2] = T3[2][2];
+Matrix.Transpose((float*)T3sub, 3, 3, (float*)T3temp);
+float WR[3][3];
+Matrix.Multiply((float*)T3temp, (float*)OpRot, 3, 3, 3, (float*)WR);
+//Find required rotation matrix R3 to 6(combined rot matrix of J4, J5,J6)
+//IMPLEMENTED MATH IS EQUIVALENT TO:      WR=transpose(T3(1:3,1:3))*OpRot; 
+//See documentation for description of this
+
+
+//inorder to choose between wrist-up case and wrist-down case, we need to
+//compare the calcualted angles of the 2 solutions and choose the best one
+float th51=atan2(sqrt(1-pow(WR[2][1],2)),WR[2][1]);//calculate th5 wrist-up
+float th41=atan2(WR[1][1],WR[0][1]);//calculate th4 wrist-up
+float th61=atan2(WR[2][0],-(WR[2][2]));//calculate th6 wrist-up
+float th52=atan2(-sqrt(1-pow(WR[2][1],2)),WR[2][1]);//calculate th5 wrist-down
+float th42=atan2(-(WR[1][1]),-(WR[0][1]));//calculate th4 wrist-down
+float th62=atan2(-(WR[2][0]),WR[2][2]);//calculate th6 wrist-down
+
+//The expression below compares the total angular distance the wrist joints
+//would have to travel to reach each solution. it then chooses the solution
+//requiring the least movement
+float th4;
+float th5;
+float th6;
+if ((angledist(old5,th51)+angledist(old4,th41)+angledist(old6,th61))>(angledist(old5,th52)+angledist(old4,th42)+angledist(old6,th62))){
+  th5=th52;
+  th4=th42;
+  th6=th62;
+  //orient='D';
+}
+else{
+  th5=th51;
+  th4=th41;
+  th6=th61;
+  //orient='U';
+}
+ 
+ //This handles the case if the wrist is at its singularity
+ if (abs(th5)<0.005){
+  th4=old4;
+  th6=(atan2(WR[1][2],WR[0][2])-old4);
+ }
+
+  th1 = negativeDegreeCorrection(th1);
+  th2 = negativeDegreeCorrection(th2);
+  th3 = negativeDegreeCorrection(th3);
+  th4 = negativeDegreeCorrection(th4);
+  th5 = negativeDegreeCorrection(th5);
+  th6 = negativeDegreeCorrection(th6);
   
   angles[0] = degrees(joint1Angle);
   angles[1] = degrees(joint2Angle);
@@ -809,6 +1022,15 @@ void computeIK(float coordinates[IKArgCount], float angles[ArmJointCount])
   angles[3] = 0;
   angles[4] = degrees(joint5Angle);
 }
+
+
+
+
+
+
+
+
+//END OF NEW IK
 
 //converts 0 to -2pi, to 0 to 2pi
 float negativeDegreeCorrection(float correctThis)
