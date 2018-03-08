@@ -1016,21 +1016,198 @@ else{
   th5 = negativeDegreeCorrection(th5);
   th6 = negativeDegreeCorrection(th6);
   
-  angles[0] = degrees(joint1Angle);
-  angles[1] = degrees(joint2Angle);
-  angles[2] = degrees(joint3Angle);
-  angles[3] = 0;
-  angles[4] = degrees(joint5Angle);
+  angles[0] = degrees(th1);
+  angles[1] = degrees(th2);
+  angles[2] = degrees(th3);
+  angles[3] = degrees(th4);
+  angles[4] = degrees(th5);
+  angles[5] = degrees(th6);
 }
 
 
-
-
-
-
-
-
 //END OF NEW IK
+
+
+/*
+//Gravity Compensation stuff
+void GravityTorqueCalc(float angles[ArmJointCount], float gravtorques[ArmJointCount]){
+    fcgx=0; //x coordinate of forearm cg (following RCS when forearm is horizontal)
+    fcgy=10;
+    fcgz=0;
+
+float AforearmCG[4][4]; 
+   AforearmCG[0][0] =1;
+   AforearmCG[0][1] = 0;
+   AforearmCG[0][2] = 0;
+   AforearmCG[0][3] = fcgz-a3;
+   AforearmCG[1][0] =0 ;
+   AforearmCG[1][1] = 1;
+   AforearmCG[1][2] = 0;
+   AforearmCG[1][3] = fcgx;
+   AforearmCG[2][0] = 0;
+   AforearmCG[2][1] = 0;
+   AforearmCG[2][2] = 1;
+   AforearmCG[2][3] = fcgy;
+   AforearmCG[3][0] = 0;
+   AforearmCG[3][1] = 0;
+   AforearmCG[3][2] = 0;
+   AforearmCG[3][3] = 1;
+    
+ float A1[4][4];
+DHTrans((th1+th1offset), d1, a1, alpha1,A1);
+ float A2[4][4];
+DHTrans((th2+th2offset), d2, a2, alpha2,A2);
+ float A3[4][4];
+DHTrans((th3+th3offset), d3, a3, alpha3,A3);
+//float T1[4][4] = A1;
+ float T2[4][4];
+Matrix.Multiply((float*)A1, (float*)A2, 4, 4, 4, (float*)T2);
+ float T3[4][4];
+Matrix.Multiply((float*)T2, (float*)A3, 4, 4, 4, (float*)T3);
+ 
+ float TforearmCG[4][4];
+Matrix.Multiply((float*)T3, (float*)AforearmCG, 4, 4, 4, (float*)TforearmCG);
+
+float o0[3];
+o0[0] = 0;
+o0[1] = 0;
+o0[2] = 0;
+
+float o1[3];
+o1[0] = A1[0][3];
+o1[1] = A1[1][3];
+o1[2] = A1[2][3];
+
+float o2[3];
+o2[0] = T2[0][3];
+o2[1] = T2[1][3];
+o2[2] = T2[2][3];
+
+float o3[3];
+o3[0] = T3[0][3];
+o3[1] = T3[1][3];
+o3[2] = T3[2][3];
+
+float z0[3];
+z1[0] = 0;
+z1[1] = 0;
+z1[2] = 1;
+
+float z1[3];
+z1[0] = A1[0][2];
+z1[1] = A1[1][2];
+z1[2] = A1[2][2];
+
+float z2[3];
+z2[0] = T2[0][2];
+z2[1] = T2[1][2];
+z2[2] = T2[2][2];
+
+float z3[3];
+z3[0] = T3[0][2];
+z3[1] = T3[1][2];
+z3[2] = T3[2][2];
+
+float oforearmCG [3];
+oforearmCG[0] = TforearmCG[0][3];
+oforearmCG[1] = TforearmCG[1][3];
+oforearmCG[2] = TforearmCG[2][3];
+
+float J2[6][3];
+J2[0][0] = (z0[1] * (oforearmCG[2] - o0[2])) - (z0[2] * (oforearmCG[1] - o0[1])) ;
+J2[0][1] = (z1[1] * (oforearmCG[2] - o1[2])) - (z1[2] * (oforearmCG[1] - o1[1])) ;   
+J2[0][2] = (z2[1] * (oforearmCG[2] - o2[2])) - (z2[2] * (oforearmCG[1] - o2[1])) ;
+J2[1][0] = (z0[2] * (oforearmCG[0] - o0[0])) - (z0[0] * (oforearmCG[2] - o0[2])) ;  
+J2[1][1] = (z1[2] * (oforearmCG[0] - o1[0])) - (z1[0] * (oforearmCG[2] - o1[2])) ;
+J2[1][2] = (z2[2] * (oforearmCG[0] - o2[0])) - (z2[0] * (oforearmCG[2] - o2[2])) ;
+J2[2][0] = (z0[0] * (oforearmCG[1] - o0[1])) - (z0[1] * (oforearmCG[0] - o0[0])) ; 
+J2[2][1] = (z1[0] * (oforearmCG[1] - o1[1])) - (z1[1] * (oforearmCG[0] - o1[0])) ;    
+J2[2][2] = (z2[0] * (oforearmCG[1] - o2[1])) - (z2[1] * (oforearmCG[0] - o2[0])) ;  
+J2[3][0] =  z0[0];
+J2[3][1] =  z1[0];
+J2[3][2] =  z2[0];
+J2[4][0] =  z0[1];
+J2[4][1] =  z1[1];
+J2[4][2] =  z2[1];
+J2[5][0] =  z0[2];
+J2[5][1] =  z1[2];
+J2[5][2] =  z2[2];    
+
+float weightforearm = 1;
+
+float Fforearm[6] = {0,0,weightforearm,0,0,0};
+
+float J2Transpose[6][3];
+float Torque2[3];
+Matrix.Transpose((float*)J2,6,3,(float*)J2Transpose);
+Matrix.Multiply((float*)J2Transpose, (float*)Fforearm, 3, 3, 3, (float*)Torque2);
+
+
+
+   bcgx=0; //x coordinate of forearm cg (following RCS when forearm is horizontal)
+   bcgy=10;
+   bcgz=0;
+
+float AbicepCG[4][4]; 
+   AbicepCG[0][0] =1;
+   AbicepCG[0][1] = 0;
+   AbicepCG[0][2] = 0;
+   AbicepCG[0][3] = bcgz-a2;
+   AbicepCG[1][0] =0 ;
+   AbicepCG[1][1] = 1;
+   AbicepCG[1][2] = 0;
+   AbicepCG[1][3] = -bcgy;
+   AbicepCG[2][0] = 0;
+   AbicepCG[2][1] = 0;
+   AbicepCG[2][2] = 1;
+   AbicepCG[2][3] = bcgy;
+   AbicepCG[3][0] = 0;
+   AbicepCG[3][1] = 0;
+   AbicepCG[3][2] = 0;
+   AbicepCG[3][3] = 1;
+
+float TbicepCG[4][4];
+Matrix.Multiply((float*)T2, (float*)AbicepCG, 4, 4, 4, (float*)TbicepCG);  
+
+float obicepCG [3];
+obicepCG[0] = TbicepCG[0][3];
+obicepCG[1] = TbicepCG[1][3];
+obicepCG[2] = TbicepCG[2][3];
+
+float J1[6][2];
+J2[0][0] = (z0[1] * (oforearmCG[2] - o0[2])) - (z0[2] * (oforearmCG[1] - o0[1])) ;
+J2[0][1] = (z1[1] * (oforearmCG[2] - o1[2])) - (z1[2] * (oforearmCG[1] - o1[1])) ;   
+J2[1][0] = (z0[2] * (oforearmCG[0] - o0[0])) - (z0[0] * (oforearmCG[2] - o0[2])) ;  
+J2[1][1] = (z1[2] * (oforearmCG[0] - o1[0])) - (z1[0] * (oforearmCG[2] - o1[2])) ;
+J2[2][0] = (z0[0] * (oforearmCG[1] - o0[1])) - (z0[1] * (oforearmCG[0] - o0[0])) ; 
+J2[2][1] = (z1[0] * (oforearmCG[1] - o1[1])) - (z1[1] * (oforearmCG[0] - o1[0])) ;    
+J2[3][0] =  z0[0];
+J2[3][1] =  z1[0];
+J2[4][0] =  z0[1];
+J2[4][1] =  z1[1];
+J2[5][0] =  z0[2];
+J2[5][1] =  z1[2]; 
+
+float weightbicep = 1;
+
+float Fbicep[6] = {0,0,weightbicep,0,0,0};
+
+float J1Transpose[6][3];
+float Torque1[2];
+Matrix.Transpose((float*)J1,6,2,(float*)J1Transpose);
+Matrix.Multiply((float*)J1Transpose, (float*)Fbicep, 3, 3, 3, (float*)Torque1);
+
+gravtorques[0]= Torque1[0] + Torque2[0];
+gravtorques[1]= Torque1[1] + Torque2[1];
+gravtorques[2]= Torque2[2];
+gravtorques[3]=0;
+gravtorques[4]=0;
+gravtorques[5]=0;
+}
+//end grav comp stuff
+*/ 
+
+
 
 //converts 0 to -2pi, to 0 to 2pi
 float negativeDegreeCorrection(float correctThis)
