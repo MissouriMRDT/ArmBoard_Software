@@ -5,13 +5,18 @@
 #include "AbstractFramework.h"
 #include "RoveBoard.h"
 
+//represents the MA3 encoder, 12 bit version. This encoder is used to get the current position of an arm shaft. Note that this class expects the
+//encoder to be mechanically set up to track the absolute angle of the arm's shaft.
+//see the readme.md for more info
 class Ma3Encoder12b: public FeedbackDevice
 {
   private:
-    const rovePwmRead_Handle PwmHandle;
+    const RovePwmRead_Handle PwmHandle;
     long offsetAngle;
     short deadband;
     short lastReading;
+    uint32_t pwmMax;
+    bool reversed;
 
   public:
 
@@ -40,6 +45,13 @@ class Ma3Encoder12b: public FeedbackDevice
     //its last reading, it discards it as noise.
     //Default is 5.
     void setDeadband(uint16_t deadBand_us);
+
+    //calibrate this ma3Encoder by manually setting what the highest value of pwm pulse is that corresponds to 360 degrees, in micros.
+    //Default is 4095 but there's always manufacturer variation.
+    void setMaxPwm(uint32_t maxPwm_us);
+
+    //assigns whether or not to reverse which way the encoder considers positive or negative movement
+    void reverseDirection(bool reverse);
 };
 
 #endif

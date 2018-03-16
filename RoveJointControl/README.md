@@ -49,7 +49,7 @@ primary class used historically so the one with the most development. For more d
 * `VNH5019` VNH5019 H-bridge IC
 
 ### Feedback Devices
-Feedback devices are used to help determine where the arm is and what steps need to be taken. Used by the `IOAlgorithm` class to perform looping.
+Feedback devices are used to help determine sensory information about the joints. For example, some are used by the `IOAlgorithm` class to perform looping.
 * `Ma3Encoder12b` MA3 magnetic encoder, 12 bit pwm version. Communicates via PWM, 12-bit resolution of degrees over 360 degrees.
 
 ## Examples

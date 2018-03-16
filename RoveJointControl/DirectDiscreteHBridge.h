@@ -4,11 +4,15 @@
 #include "AbstractFramework.h"
 #include "RoveBoard.h"
 
+//represents an H bridge that is made up of 4 transistors that we manually control with pwm. They're set up in nature so that we only have to
+//send signals to the bottom two while the top two follow suit; you can replicate this behavior by making the bottom two N type while the top
+//two P type.
+//see the README.md for more info
 class DirectDiscreteHBridge : public OutputDevice
 {
   private:
 
-    //FPWM_PIN the forward PWM and RPWM is the reverse PWM
+    //fpwm_handle the forward PWM pin handler and rpwm_handle is the reverse PWM pin handler
     int currentPower;
     const rovePwmWrite_Handle fpwm_handle, rpwm_handle;
 

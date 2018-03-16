@@ -313,7 +313,7 @@ long PIVConverter::addToOutput(const long inputValue, const long calculatedOutpu
   return runAlgorithm(inputValue, calculatedOutput, &dummy);
 }
 
-void PIVConverter :: setPosValLoopRatio(int ratio)
+void PIVConverter :: setPosVelLoopRatio(int ratio)
 {
   posReloadCycles = ratio;
 }

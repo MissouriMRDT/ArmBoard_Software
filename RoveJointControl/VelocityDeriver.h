@@ -13,6 +13,7 @@
 //Feedback device who estimates a joint's velocity, by reading the joint's position from a
 //position feedback device and taking the derivative and then passing the output through a low pass filter
 //to ensure that the derivative doesn't amplify noisy signals.
+//see the readme.md for more info
 class VelocityDeriver: public FeedbackDevice
 {
   private:

@@ -4,6 +4,8 @@
 #include "AbstractFramework.h"
 #include "RoveJointUtilities.h"
 
+//represents an arm joint that just has one motor controlling its motion.
+//see the readme.md for more info.
 class SingleMotorJoint : public JointInterface
 {
 	public:

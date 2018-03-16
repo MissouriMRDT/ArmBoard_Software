@@ -4,6 +4,8 @@
 #include "AbstractFramework.h"
 #include "RoveJointUtilities.h"
 
+//this enum represents the different degrees of motion that a differential joint can provide. Each class instance will service
+//one degree of movement.
 enum DifferentialType
 {
   //This describes moving the differential joint so that the shaft moves up and down
@@ -13,6 +15,10 @@ enum DifferentialType
   DifferentialRotate
 };
 
+//Represents joints that are differential in set up (ask a mechanical if you don't know). These kinds of joints have at least two separate degrees
+//of motion that can be used at the same time. In software, each degree of motion gets its own class instance so that they can be operated
+//independantly or at the same time as desired.
+//See README.md for more information.
 class DifferentialJoint : public JointInterface
 {
 	protected:

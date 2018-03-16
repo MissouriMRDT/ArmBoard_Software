@@ -4,6 +4,8 @@
 #include "AbstractFramework.h"
 #include "RoveBoard.h"
 
+//represents the sdc2130 motor controller.
+//see the readme.md for more info.
 class Sdc2130: public OutputDevice
 {
   private:

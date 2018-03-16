@@ -10,6 +10,10 @@
 
 #include "AbstractFramework.h"
 
+//represents an PIV loop algorithm, IE two cascaded PI loops with the outer loop being a position PI loop that generates a desired velocity
+//for the inner velocity PI loop to use, which converts velocity to power percent. The inner loop will run some x amount of loops faster than
+//the outer loop.
+//see the readme.MD for more info.
 class PIVConverter : public IOConverter
 {
   private:
@@ -101,8 +105,9 @@ class PIVConverter : public IOConverter
     //sets the deadband for the PI algorithm, in degrees. When it gets within this many degrees of its destination it stops.
     void setPositionDeadband(float degrees);
 
-    //PENDING DANK COMMENT
-    void setPosValLoopRatio(int ratio);
+    //sets how many times the inner velocity loop will run for each time the outer loop runs.
+    //default value is 5, IE the inner loop will run 5 times for each time the outer loop runs.
+    void setPosVelLoopRatio(int ratio);
 
 };
 

@@ -12,7 +12,6 @@ class IOConverter;
 
 class DifferentialJoint;
 class SingleMotorJoint;
-class GravityCompensator;
 
 //Primary interface class for controlling the joint; manages the other classes and
 //computes any calculations that depend on the nature of the joint itself
@@ -144,7 +143,7 @@ class FeedbackDevice
 		ValueType getFeedbackType() { return fType; }
 };
 
-//represents the device (or any general method) used for physically causing movement.
+//represents the device (or any general method) used for physically causing movement, such as a motor controller.
 //see README.md for more info
 class OutputDevice
 {
@@ -191,7 +190,6 @@ class OutputDevice
 //See the README.md for more info
 class IOConverter
 {
-  friend class GravityCompensator;
   friend class SingleMotorJoint;
   friend class DifferentialJoint;
   friend class JointInterface;
@@ -228,8 +226,14 @@ class IOConverter
     virtual long runAlgorithm(const long input, bool * ret_OutputFinished) = 0;
 
     //function to be called when class is acting as a support algorithm to another IOConverter.
+    //Rather than being the driving force behind the movement, as it is when runAlgorithm is called, this signals to the class that it's
+    //acting as a support to another IOConverter and should behave as such.
     //public due to being allowed to be called by all the different IOConverter classes, but
     //not meant to be called by the user directly. C++ needs an internal modifier.
+    //
+    //inputValue: The input that was passed to the IOConverter chain to act upon
+    //calculatedOutput: The output calculated so far in the IOConverter chain, being added with each class's output when passed up the chain.
+    //returns: The calculated value to add upon the output that the first IOConverter calculated.
     virtual long addToOutput(const long inputValue, const long calculatedOutput) = 0;
 
     //Sets whether or not the supporting algorithm coupled with this (if there's one) will continue to output data once the motion is completed.

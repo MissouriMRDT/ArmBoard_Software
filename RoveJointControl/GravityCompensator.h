@@ -14,16 +14,29 @@
 #include "TtoPPOpenLConverter.h"
 #include <stdint.h>
 
+//class that tries to account for gravity during joint motion. Designed to act as a supporting IOConverter to another IOConverter rather than
+//usually directly controlling a joint itself.
+//see the README.md for more info
 class GravityCompensator: public IOConverter
 {
   private:
 
     long addToOutput(const long inputValue, const long calculatedOutput);
     long runAlgorithm(const long input, bool * ret_OutputFinished);
+
     uint8_t jointId;
     GravityInertiaSystemStatus* systemStatus;
     TtoPPOpenLConverter torqueConverter;
     float scalar;
+
+    FeedbackDevice *errorTorqueSensor;
+    bool useErrorComp;
+    uint32_t loopsTillErrorComp;
+    uint32_t acceptableError;
+    uint32_t loopsLeftTillErrorComp;
+    uint32_t lastError;
+    uint32_t errorReadingDeadband;
+    int64_t  compensationValue;
 
   public:
 
@@ -41,6 +54,7 @@ class GravityCompensator: public IOConverter
     //                   is defendant on GravInertSysStatus; see it for more details.
     GravityCompensator(GravityInertiaSystemStatus* sysStatus, TorqueConverterMotorTypes motor_type, float Kt, int motResistance_milliOhms, int staticMillivolts, uint8_t joint_Id);
 
+
     //public constructor, when the motor's voltage line varies in voltage level so needs a sensor to detect the voltage level.
     //Inputs:
     //        sysStatus: A pointer to the gravity inertia system status that will support this class. GravInertSysStatus will handle
@@ -57,6 +71,11 @@ class GravityCompensator: public IOConverter
 
     //sets a scalar to apply to the output of the class, so you can tune it. Default is 1.
     void setScalar(float scale);
+
+    void useErrorCompensation(FeedbackDevice *torqueDev);
+    void setLoopsTillErrorCompensation(uint32_t loopsTillErrorCompensation);
+    void setAcceptableErrorRange(uint32_t errorRange_milliNewtonMeters);
+    void setErrorReadingDeadband(uint32_t deadband);
 };
 
 

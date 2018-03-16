@@ -5,6 +5,7 @@
 #include "Roveboard.h"
 
 //generic wrapper for any brushed DC motor H bridge that takes two pins; a pwm pin and a direction pin
+//see the readme.md for more info
 class GenPwmPhaseHBridge: public OutputDevice
 {
   private:

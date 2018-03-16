@@ -1,12 +1,12 @@
 #include "Ma3Encoder12b.h"
 #include "RoveJointUtilities.h"
 
-static const int PWM_READ_MAX = 4097;
+static const int PWM_READ_MAX = 4095;
 static const int PWM_READ_MIN = 1;
 
 long Ma3Encoder12b::getFeedback()
 {
-  int32_t readOnPeriod = getOnPeriod_us(PwmHandle); //signed for calculation below
+  int32_t readOnPeriod = getOnPeriod(PwmHandle, PWM_MICRO); //signed for calculation below
 
   if(abs(lastReading - readOnPeriod) < deadband)
   {
@@ -20,9 +20,9 @@ long Ma3Encoder12b::getFeedback()
 
   //values will be between PWM_READ_MIN and PWM_READ_MAX, that is 1 and 4097. 
   //Or at least they should be; if it's above there was slight comm error and it can be scaled down to the max val.
-  if(readOnPeriod > PWM_READ_MAX)
+  if(readOnPeriod > pwmMax)
   {
-    readOnPeriod = PWM_READ_MAX;
+    readOnPeriod = pwmMax;
   }
 
   //Alternatively, if the value read is 0 then it means the duty cycle is either at 0 or 100%, 
@@ -36,12 +36,17 @@ long Ma3Encoder12b::getFeedback()
     }
     else
     {
-      readOnPeriod = PWM_READ_MAX;
+      readOnPeriod = pwmMax;
     }
   }
   
-  //scale the values from the pwm values to the common position values, IE 1-4097 to POS_MIN-POS_MAX, giving the absolute read angle
-  long absoluteAngle = map(readOnPeriod, PWM_READ_MIN, PWM_READ_MAX, POS_MIN, POS_MAX);
+  if(reversed)
+  {
+    readOnPeriod = pwmMax - readOnPeriod + PWM_READ_MIN;
+  }
+
+  //scale the values from the pwm values to the common position values, IE 1-4095 to POS_MIN-POS_MAX, giving the absolute read angle
+  long absoluteAngle = map(readOnPeriod, PWM_READ_MIN, pwmMax, POS_MIN, POS_MAX);
   
   //set the relative angle, and account for any overflow due to the calculations
   long relativeAngle = absoluteAngle+offsetAngle;
@@ -58,7 +63,8 @@ long Ma3Encoder12b::getFeedback()
 }
 
 Ma3Encoder12b::Ma3Encoder12b(uint16_t pwmReadModule, uint16_t mappedPinNumber)
-  : FeedbackDevice(InputPosition), offsetAngle(0), PwmHandle(initPwmRead(pwmReadModule, mappedPinNumber)), deadband(5), lastReading(0)
+  : FeedbackDevice(InputPosition), offsetAngle(0), PwmHandle(initPwmRead(pwmReadModule, mappedPinNumber)), deadband(5), lastReading(0),
+    pwmMax(PWM_READ_MAX), reversed(false)
 {}
 
 float Ma3Encoder12b::getFeedbackDegrees()
@@ -77,4 +83,14 @@ void Ma3Encoder12b::setOffsetAngle(float offset)
 void Ma3Encoder12b::setDeadband(uint16_t deadband_us)
 {
   deadband = deadband_us;
+}
+
+void Ma3Encoder12b::setMaxPwm(uint32_t maxPwm_us)
+{
+  pwmMax = maxPwm_us;
+}
+
+void Ma3Encoder12b::reverseDirection(bool reverse)
+{
+  reversed = reverse;
 }

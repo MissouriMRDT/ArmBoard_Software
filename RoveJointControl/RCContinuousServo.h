@@ -4,6 +4,8 @@
 #include "AbstractFramework.h"
 #include "RoveBoard.h"
 
+//represents a continuous RC servo.
+//see the readme.md for more info.
 class RCContinuousServo : public OutputDevice
 {
   private:

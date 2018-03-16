@@ -4,6 +4,8 @@
 #include "AbstractFramework.h"
 #include "RoveBoard.h"
 
+//represents the physical vnh5019 motor driver chip.
+//see the readme.md for more info
 class VNH5019 : public OutputDevice
 {
   private:
