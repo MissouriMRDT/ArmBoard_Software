@@ -40,8 +40,6 @@ BTM7752GwithPCA9685::BTM7752GwithPCA9685(uint8_t chipAdd, uint8_t motorInd, uint
     digitalPinWrite(i2cNenablePin, LOW);
     initialized = true;
   }
-
-
 }
 
 BTM7752GwithPCA9685::~BTM7752GwithPCA9685()
@@ -64,7 +62,17 @@ void BTM7752GwithPCA9685::move(const long movement)
       mov *= -1;
     }
 
-    offRegNum = (mov * PWM_MAX) / POWERPERCENT_MAX;
+    if(abs(mov) == POWERPERCENT_MAX) //special value used for 100%
+    {
+      onRegNum = 4096;
+      offRegNum = 0;
+    }
+    else
+    {
+      offRegNum = (abs(mov) * PWM_MAX) / POWERPERCENT_MAX;
+      onRegNum = 0;
+    }
+
     channelRegisterBaseOffset = 6 + 8*motorIndex;
 
     //figure out which channel to send to, and set the opposite channel to 0
