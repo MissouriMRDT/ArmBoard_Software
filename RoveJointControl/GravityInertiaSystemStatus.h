@@ -125,7 +125,7 @@ class GravityInertiaSystemStatus
     double j6Gravity;
     double j6Inertia;
 
-    void DHTrans(float th, float d, float a, float alpha, float A1[4][4]);
+    void DHTrans(float th, float d, float a, float alpha, double A1[4][4]);
 
 protected:
 
