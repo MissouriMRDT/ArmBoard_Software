@@ -17,6 +17,7 @@ class Ma3Encoder12b: public FeedbackDevice
     short lastReading;
     uint32_t pwmMax;
     bool reversed;
+    float filterConstant;
 
   public:
 
@@ -52,6 +53,8 @@ class Ma3Encoder12b: public FeedbackDevice
 
     //assigns whether or not to reverse which way the encoder considers positive or negative movement
     void reverseDirection(bool reverse);
+
+    void setFilterConstant(float filter);
 };
 
 #endif

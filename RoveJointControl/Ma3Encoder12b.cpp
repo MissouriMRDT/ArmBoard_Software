@@ -8,36 +8,14 @@ long Ma3Encoder12b::getFeedback()
 {
   int32_t readOnPeriod = getOnPeriod(PwmHandle, PWM_MICRO); //signed for calculation below
 
-  if(abs(lastReading - readOnPeriod) < deadband)
+  if(abs(lastReading - readOnPeriod) < deadband || readOnPeriod == 0 || readOnPeriod > pwmMax)
   {
     readOnPeriod = lastReading;
   }
   else
   {
     lastReading = readOnPeriod;
-  }
-  
-
-  //values will be between PWM_READ_MIN and PWM_READ_MAX, that is 1 and 4097. 
-  //Or at least they should be; if it's above there was slight comm error and it can be scaled down to the max val.
-  if(readOnPeriod > pwmMax)
-  {
-    readOnPeriod = pwmMax;
-  }
-
-  //Alternatively, if the value read is 0 then it means the duty cycle is either at 0 or 100%, 
-  //so if we get a 0 then we need to check the duty cycle to see which it is.
-  //If it's 0%, then use min value. If it's 100%, use max value.
-  if(readOnPeriod == 0)
-  {
-    if(getDuty(PwmHandle) == 0)
-    {
-      readOnPeriod = PWM_READ_MIN;
-    }
-    else
-    {
-      readOnPeriod = pwmMax;
-    }
+    readOnPeriod = filterConstant * lastReading + (1.0 - filterConstant) * readOnPeriod;
   }
   
   if(reversed)
@@ -63,8 +41,8 @@ long Ma3Encoder12b::getFeedback()
 }
 
 Ma3Encoder12b::Ma3Encoder12b(uint16_t pwmReadModule, uint16_t mappedPinNumber)
-  : FeedbackDevice(InputPosition), offsetAngle(0), PwmHandle(initPwmRead(pwmReadModule, mappedPinNumber)), deadband(5), lastReading(0),
-    pwmMax(PWM_READ_MAX), reversed(false)
+  : FeedbackDevice(InputPosition), offsetAngle(0), PwmHandle(initPwmRead(pwmReadModule, mappedPinNumber)), deadband(5), lastReading(PWM_READ_MIN),
+    pwmMax(PWM_READ_MAX), reversed(false), filterConstant(0)
 {}
 
 float Ma3Encoder12b::getFeedbackDegrees()
@@ -93,4 +71,9 @@ void Ma3Encoder12b::setMaxPwm(uint32_t maxPwm_us)
 void Ma3Encoder12b::reverseDirection(bool reverse)
 {
   reversed = reverse;
+}
+
+void Ma3Encoder12b::setFilterConstant(float filter)
+{
+  filterConstant = filter;
 }
