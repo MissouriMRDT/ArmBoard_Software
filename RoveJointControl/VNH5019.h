@@ -10,7 +10,7 @@ class VNH5019 : public OutputDevice
 {
   private:
     const int INA_PIN, INB_PIN;
-    const rovePwmWrite_Handle PwmHandle;
+    const RovePwmWrite_Handle PwmHandle;
     int currentPower;
 
   protected:

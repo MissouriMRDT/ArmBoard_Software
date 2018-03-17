@@ -9,7 +9,7 @@
 class Sdc2130: public OutputDevice
 {
   private:
-    const rovePwmWrite_Handle PwmHandle;
+    const RovePwmWrite_Handle PwmHandle;
     int pwmVal;
     int currentPower;
     long currentPosition;

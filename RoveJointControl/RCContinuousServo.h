@@ -9,7 +9,7 @@
 class RCContinuousServo : public OutputDevice
 {
   private:
-    const rovePwmWrite_Handle PwmHandle;
+    const RovePwmWrite_Handle PwmHandle;
     int pwm_stop_us;  //some devices stop at values a little bit different from others, so it's modifiable
     int currentPower;
 

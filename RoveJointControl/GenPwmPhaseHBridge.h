@@ -22,7 +22,7 @@ class GenPwmPhaseHBridge: public OutputDevice
     const int PHASE_PIN;
     const int ENABLE_PIN; //not all general devices have an enable pin, so this pin defaults to -1
     
-    const rovePwmWrite_Handle PwmHandle;
+    const RovePwmWrite_Handle PwmHandle;
 
     //move function which passes in power percent ( which is converted to phase and PWM) to move device
     void move(const long movement); 

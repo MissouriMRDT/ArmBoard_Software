@@ -14,7 +14,7 @@ class DirectDiscreteHBridge : public OutputDevice
 
     //fpwm_handle the forward PWM pin handler and rpwm_handle is the reverse PWM pin handler
     int currentPower;
-    const rovePwmWrite_Handle fpwm_handle, rpwm_handle;
+    const RovePwmWrite_Handle fpwm_handle, rpwm_handle;
 
   protected:
     //moves by passing a pwm signal to the H bridge.
