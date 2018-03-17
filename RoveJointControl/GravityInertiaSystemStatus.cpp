@@ -59,12 +59,19 @@ void GravityInertiaSystemStatus::update()
 	{
 	  AtlasArmConstants *consts = ((AtlasArmConstants*)ArmModelConstants);
 
-	  double th1 = consts->JOINT1ANGLE->getFeedback(); //todo:get to rads
+	  double th1 = consts->JOINT1ANGLE->getFeedback();
 	  double th2 = consts->JOINT2ANGLE->getFeedback();
 	  double th3 = consts->JOINT3ANGLE->getFeedback();
     double th4 = consts->JOINT4ANGLE->getFeedback();
     double th5 = consts->JOINT5ANGLE->getFeedback();
     double th6 = consts->JOINT6ANGLE->getFeedback();
+
+    th1 = radians((th1 * 360.0) / ((float)(POS_MAX-POS_MIN)) + POS_MIN); //convert to radians
+    th2 = radians((th2 * 360.0) / ((float)(POS_MAX-POS_MIN)) + POS_MIN);
+    th3 = radians((th3 * 360.0) / ((float)(POS_MAX-POS_MIN)) + POS_MIN);
+    th4 = radians((th4 * 360.0) / ((float)(POS_MAX-POS_MIN)) + POS_MIN);
+    th5 = radians((th5 * 360.0) / ((float)(POS_MAX-POS_MIN)) + POS_MIN);
+    th6 = radians((th6 * 360.0) / ((float)(POS_MAX-POS_MIN)) + POS_MIN);
 
     double AforearmCG[4][4];
     AforearmCG[0][0] =1;
@@ -210,6 +217,13 @@ void GravityInertiaSystemStatus::update()
     j4Gravity = 0;
     j5Gravity = 0;
     j6Gravity = 0;
+
+    j1Gravity *= FootPoundToNewtonMeter * 1000;
+    j2Gravity *= FootPoundToNewtonMeter * 1000;
+    j3Gravity *= FootPoundToNewtonMeter * 1000;
+    j4Gravity *= FootPoundToNewtonMeter * 1000;
+    j5Gravity *= FootPoundToNewtonMeter * 1000;
+    j6Gravity *= FootPoundToNewtonMeter * 1000;
 	}
 }
 
