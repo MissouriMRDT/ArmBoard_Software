@@ -126,10 +126,11 @@ void init()
   joint2Encoder.setMaxPwm(4020);
   joint3Encoder.setMaxPwm(4030);
   joint4Encoder.setMaxPwm(4040);
-  joint5Encoder.setMaxPwm(4045);
-  joint6Encoder.setMaxPwm(4285);
+  joint5Encoder.setMaxPwm(4285);
+  joint6Encoder.setMaxPwm(4045);
 
   joint2Encoder.setFilterConstant(.2);
+  joint6Encoder.setFilterConstant(.2);
   joint4Encoder.reverseDirection(true);
   j3Grav.setScalar(ScalarJ3);
   //joint1Alg.addSupportingAlgorithm(&j1Grav);

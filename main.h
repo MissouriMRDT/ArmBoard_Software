@@ -137,7 +137,7 @@ const int ElbowRotateHardStopDown = 180;
 const int BaseTiltKp = 120;//175;
 const int BaseTiltKi = 20; //100 - 15;
 const int BaseTiltDeadband = 1;//1.5;
-const int BaseTiltOffsetAngle = -115;
+const int BaseTiltOffsetAngle = -263;
 const int BaseTiltHardStopUp = 40;
 const int BaseTiltHardStopDown = 260;
 
@@ -149,14 +149,14 @@ const int BaseRotateHardStopUp = 270;
 const int BaseRotateHardStopDown = 90;
 
 const int WristRotateKp = 80;
-const int WristRotateKi = 10;
+const int WristRotateKi = 0;
 const float WristRotateDeadband = 1;
-const int WristRotateOffsetAngle = -220;
+const int WristRotateOffsetAngle = -230;
 
 const int WristTiltKp = 45;
 const int WristTiltKi = 4;
 const float WristTiltDeadband = 1;
-const int WristTiltOffsetAngle = -125;
+const int WristTiltOffsetAngle = -113;
 const int WristTiltHardStopUp = 300;
 const int WristTiltHardStopDown = 350;
 
