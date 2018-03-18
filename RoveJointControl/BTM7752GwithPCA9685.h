@@ -33,6 +33,14 @@ class BTM7752GwithPCA9685: public OutputDevice
 
     uint8_t motorEnPin;
 
+    uint8_t ClockPin;
+
+    uint8_t DataPin;
+
+    uint8_t I2cModule;
+
+    uint8_t ChipAddress;
+
     long currentMove;
 
   public:
