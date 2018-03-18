@@ -14,8 +14,21 @@ long Ma3Encoder12b::getFeedback()
   }
   else
   {
+    uint16_t approx45Deg = pwmMax / 8;
+    if(lastReading > (pwmMax - approx45Deg) && readOnPeriod < approx45Deg) //likely just rolled over in these boundaries
+    {
+      readOnPeriod = (uint32_t)(filterConstant * (float)lastReading + (1.0 - filterConstant) * ((float)readOnPeriod + pwmMax)) % pwmMax;
+    }
+    else if(readOnPeriod > (pwmMax - approx45Deg) && lastReading < approx45Deg)
+    {
+      readOnPeriod = (uint32_t)(filterConstant * ((float)lastReading + pwmMax) + (1.0 - filterConstant) * (float)readOnPeriod) % pwmMax;
+    }
+    else
+    {
+      readOnPeriod = filterConstant * (float)lastReading + (1.0 - filterConstant) * (float)readOnPeriod;
+    }
+
     lastReading = readOnPeriod;
-    readOnPeriod = filterConstant * lastReading + (1.0 - filterConstant) * readOnPeriod;
   }
   
   if(reversed)
