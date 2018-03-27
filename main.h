@@ -110,7 +110,7 @@ typedef enum ControlSystems
 const uint32_t WATCHDOG_TIMEOUT_US = 1000000; //the amount of microseconds that should pass without getting a transmission from base station before the arm ceases moving for safety
 const uint8_t IP_ADDRESS [4] = {192, 168, 1, 131};
 const uint8_t ArmJointCount = 6;
-const uint8_t IKArgCount = 6;
+const uint8_t IKArgCount = 8;
 
 const int BaseMaxSpeed = 1000;
 
