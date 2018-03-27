@@ -1015,6 +1015,65 @@ void Calc_IK(float coordinates[IKArgCount], float angles[ArmJointCount]){//float
   angles[5] = degrees(th6);
 }
 
+//Forward Kinematics
+void Calc_FK(float angles[ArmJointCount],float coordinates[IKArgCount]){
+ 
+ float th1 = radians(angles(0));
+ float th2 = radians(angles(1));
+ float th3 = radians(angles(2));
+ float th4 = radians(angles(3));
+ float th5 = radians(angles(4));
+ float th6 = radians(angles(5));
+  
+ float A1[4][4];
+ DHTrans((th1+th1offset), d1, a1, alpha1,A1);
+ float A2[4][4];
+ DHTrans((th2+th2offset), d2, a2, alpha2,A2);
+ float A3[4][4];
+ DHTrans((th3+th3offset), d3, a3, alpha3,A3);
+ float A4[4][4];
+ DHTrans((th3+th3offset), d3, a3, alpha3,A3);
+ float A5[4][4];
+ DHTrans((th3+th3offset), d3, a3, alpha3,A3);
+ float A6[4][4];
+ DHTrans((th3+th3offset), d3, a3, alpha3,A3);
+ float EE[4][4];
+ EE[0][0] = 1;
+ EE[0][1] = 0;
+ EE[0][2] = 0; 
+ EE[0][3] = OpPointoffset(0);  
+ EE[1][0] = 0;
+ EE[1][1] = 1;
+ EE[1][2] = 0;
+ EE[1][3] = OpPointoffset(1);
+ EE[2][0] = 0;
+ EE[2][1] = 0;
+ EE[2][2] = 1;
+ EE[2][3] = OpPointoffset(2);
+ EE[3][0] = 0;
+ EE[3][1] = 0;
+ EE[3][2] = 0; 
+ EE[3][3] = 1; 
+ 
+  float T6[4][4];
+  Matrix.Multiply((float*)A1, (float*)A2, 4, 4, 4, (float*)T6);
+  Matrix.Multiply((float*)T6, (float*)A3, 4, 4, 4, (float*)T6);
+  Matrix.Multiply((float*)T6, (float*)A4, 4, 4, 4, (float*)T6);
+  Matrix.Multiply((float*)T6, (float*)A5, 4, 4, 4, (float*)T6);
+  Matrix.Multiply((float*)T6, (float*)A6, 4, 4, 4, (float*)T6);
+  Matrix.Multiply((float*)T6, (float*)EE, 4, 4, 4, (float*)T6);
+  
+  coordinates(0) = T6[0][3];
+  coordinates(1) = T6[1][3];
+  coordinates(2) = T6[2][3];
+  coordinates(3) = atan2(-T6[0][1],T6[1][1]);
+  coordinates(4) = atan2(T6[2][1],sqrt(1-pow(T6[2][1],2)));
+  coordinates(5) = atan2(T6[2][0],T6[2][2]);
+  
+}
+
+
+
 //converts 0 to -2pi, to 0 to 2pi
 float negativeDegreeCorrection(float correctThis)
 {
