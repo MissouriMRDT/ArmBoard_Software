@@ -892,12 +892,20 @@ void Calc_IK(float coordinates[IKArgCount], float angles[ArmJointCount]){//float
   float Rotzyaw[3][3];
   float Rotxpitch[3][3];
   float Rotyroll[3][3];
+  
+  float Rotzyaw2[3][3];
+  float Rotxpitch2[3][3];
+  
   float t = coordinates[3]; //crashes if you pass it directly in for some reason
   Rotz(t,Rotzyaw);
   t = coordinates[4];
   Rotx(t,Rotxpitch);
   t = coordinates[5];
   Roty(t,Rotyroll);
+  t = coordinates[6];
+  Rotx(t,Rotxpitch2);
+  t = coordinates[7];
+  Rotz(t,Rotzyaw2);
   float OpRot[3][3];
   float OpRottemp[3][3];
   Matrix.Multiply((float*)Rotzyaw, (float*)Rotxpitch, 3, 3, 3, (float*)OpRottemp);
@@ -1016,7 +1024,7 @@ void Calc_IK(float coordinates[IKArgCount], float angles[ArmJointCount]){//float
 }
 
 //Forward Kinematics
-void Calc_FK(float angles[ArmJointCount],float coordinates[IKArgCount]){
+void Calc_FK(float angles[ArmJointCount],float coordinates[IKArgCount],float T6[4][4]){
  
  float th1 = radians(angles(0));
  float th2 = radians(angles(1));
@@ -1055,7 +1063,7 @@ void Calc_FK(float angles[ArmJointCount],float coordinates[IKArgCount]){
  EE[3][2] = 0; 
  EE[3][3] = 1; 
  
-  float T6[4][4];
+  //float T6[4][4];
   Matrix.Multiply((float*)A1, (float*)A2, 4, 4, 4, (float*)T6);
   Matrix.Multiply((float*)T6, (float*)A3, 4, 4, 4, (float*)T6);
   Matrix.Multiply((float*)T6, (float*)A4, 4, 4, 4, (float*)T6);
@@ -1066,11 +1074,19 @@ void Calc_FK(float angles[ArmJointCount],float coordinates[IKArgCount]){
   coordinates(0) = T6[0][3];
   coordinates(1) = T6[1][3];
   coordinates(2) = T6[2][3];
-  coordinates(3) = atan2(-T6[0][1],T6[1][1]);
-  coordinates(4) = atan2(T6[2][1],sqrt(1-pow(T6[2][1],2)));
-  coordinates(5) = atan2(T6[2][0],T6[2][2]);
+  coordinates(3) = degrees(negativeDegreeCorrection(atan2(-T6[0][1],T6[1][1])));
+  coordinates(4) = degrees(negativeDegreeCorrection(atan2(T6[2][1],sqrt(1-pow(T6[2][1],2)))));
+  coordinates(5) = degrees(negativeDegreeCorrection(atan2(T6[2][0],T6[2][2])));
   
 }
+
+//FOR RELATIVE IK
+//run Calc_FK code to get T6 matrix and position/orientation
+// multiply first 3x3 matrix from T6 by desired new gripper incremental position vector
+//take the result(3X1) and add to current x, y, z position
+// use current orientation values in Calc_IK, but add incremental desired Roll to roll argument
+//the 2 new input arguments are relative gripper incremental pitch and yaw respectively
+
 
 
 
