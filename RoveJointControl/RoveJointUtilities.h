@@ -49,5 +49,7 @@ const int32_t TORQUE_MIN = -100000, TORQUE_MAX = 100000; // 1 value = 1 milliNew
 const int32_t VOLT_MIN = -1000000, VOLT_MAX = 1000000; //1 value = 1 milliVolt
 
 const char PERCENT_TO_POWERPERCENT = POWERPERCENT_MAX / 100;
+const float POS_TO_DEGREES = 360.0 / (float)(POS_MAX - POS_MIN);
+const float DEGREES_TO_POS = (float)((float)(POS_MAX - POS_MIN) / 360.0);
 
 #endif
