@@ -116,8 +116,8 @@ void VNH5019WithPCA9685::setPower(bool power)
   enabled = power;
   if(power == false)
   {
-    digitalPinWrite(InaPin, LOW); //setting both pins to either low or high both brakes the motor
-    digitalPinWrite(InbPin, LOW);
+    digitalPinWrite(InaPin, HIGH); //setting both pins high to brakes the motor
+    digitalPinWrite(InbPin, HIGH);
   }
 }
 
