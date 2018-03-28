@@ -11,6 +11,8 @@
 #include <stdint.h>
 #include "main.h"
 
+const uint8_t IKArgCount = 6;
+
 const uint16_t IKPauseBoundary_J1 = 10;
 const uint16_t IKPauseBoundary_J2 = 10;
 const uint16_t IKPauseBoundary_J3 = 10;

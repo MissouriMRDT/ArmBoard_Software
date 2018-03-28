@@ -12,18 +12,7 @@
 #include "RoveBoard_TivaTM4C1294NCPDT.h"
 #include "RoveComm.h"
 #include "Kinematics.h"
-
-#include "GenPwmPhaseHBridge.h"
-#include "Ma3Encoder12b.h"
-#include "PIAlgorithm.h"
-#include "RCContinuousServo.h"
-#include "RoveJointControl.h"
-#include "VelocityDeriver.h"
-#include "PIVConverter.h"
-#include "GravityInertiaSystemStatus.h"
-#include "GravityCompensator.h"
-#include "VNH5019.h"
-#include "VNH5019WithPCA9685.h"
+#include "RJCInstances.h"
 
 #include "tm4c1294ncpdt_API/tivaware/inc/hw_ints.h"
 #include "tm4c1294ncpdt_API/tivaware/driverlib/interrupt.h"
@@ -121,8 +110,6 @@ const float MasterSensorVoltPerAmp = .0396;
 const float MasterSensorVoltOffset = 3.3/10.0;
 const float MotorMaxCurrent = 35; //amps. Shut it down after that. Huge cause the sensors aren't actually that good so give it some leeway
 const float MasterMaxCurrent = 50;
-
-const int BaseMaxSpeed = 1000;
 
 const int ElbowKpp = 10;
 const int ElbowKip = 1;
@@ -266,28 +253,20 @@ CommandResult getArmPositions(float positions[ArmJointCount]);
 CommandResult switchToOpenLoop();
 CommandResult switchToClosedLoop();
 
-void setupTimer7(float timeout_micros);
 void closedLoopUpdateHandler();
 void sysStatusUpdater();
 void initWatchdog(uint32_t timeout_us);
 void restartWatchdog(uint32_t timeout_us);
 
 //variables used to control joints during closed loop control
-extern unsigned long baseRotateJointDestination;
-extern unsigned long baseTiltJointDestination;
-extern unsigned long elbowTiltJointDestination;
-extern unsigned long elbowRotateJointDestination;
-extern unsigned long wristTiltJointDestination;
-extern unsigned long wristRotateJointDestination;
+unsigned long baseRotateJointDestination;
+unsigned long baseTiltJointDestination;
+unsigned long elbowTiltJointDestination;
+unsigned long elbowRotateJointDestination;
+unsigned long wristTiltJointDestination;
+unsigned long wristRotateJointDestination;
 
-extern ControlSystems currentControlSystem; //tracks what control system arm is currently using
-
-extern Ma3Encoder12b baseRotateJointEncoder;
-extern Ma3Encoder12b baseTiltJointEncoder;
-extern Ma3Encoder12b elbowTiltJointEncoder;
-extern Ma3Encoder12b elbowRotateJointEncoder;
-extern Ma3Encoder12b wristTiltJointEncoder;
-extern Ma3Encoder12b wristRotateJointEncoder;
+ControlSystems currentControlSystem; //tracks what control system arm is currently using
 
 #endif /* MAIN_H_ */
 

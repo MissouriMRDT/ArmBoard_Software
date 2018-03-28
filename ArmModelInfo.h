@@ -10,7 +10,6 @@
 
 #include "stdint.h"
 
-const uint8_t IKArgCount = 6;
 const uint8_t ArmJointCount = 6;
 
 //D-H Parameters of Arm Model
