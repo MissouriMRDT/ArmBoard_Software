@@ -1,7 +1,6 @@
 #include <GravityInertiaSystemStatus.h>
 #include "RoveBoard.h"
 #include "RoveJointUtilities.h"
-#include "MatrixMath.h"
 #include <stdint.h>
 
 const float FootPoundToNewtonMeter = 1.36;
@@ -12,7 +11,7 @@ GravityInertiaSystemStatus::GravityInertiaSystemStatus(ArmModel model, void* arm
 
 }
 
-// Empty because there are no pointers.
+// Empty because there is no dynamic memory
 GravityInertiaSystemStatus::~GravityInertiaSystemStatus()
 {
 }
@@ -99,12 +98,12 @@ void GravityInertiaSystemStatus::update()
     DHTrans((th3+consts->th3offset), consts->d3, consts->a3, consts->alpha3,A3);
     //double T1[4][4] = A1;
     double T2[4][4];
-    Matrix.Multiply((float*)A1, (float*)A2, 4, 4, 4, (float*)T2);
+    matrixMathMultiply((float*)A1, (float*)A2, 4, 4, 4, (float*)T2);
     double T3[4][4];
-    Matrix.Multiply((float*)T2, (float*)A3, 4, 4, 4, (float*)T3);
+    matrixMathMultiply((float*)T2, (float*)A3, 4, 4, 4, (float*)T3);
 
     double TforearmCG[4][4];
-    Matrix.Multiply((float*)T3, (float*)AforearmCG, 4, 4, 4, (float*)TforearmCG);
+    matrixMathMultiply((float*)T3, (float*)AforearmCG, 4, 4, 4, (float*)TforearmCG);
     double o0[3];
     o0[0] = 0;
     o0[1] = 0;
@@ -164,8 +163,8 @@ void GravityInertiaSystemStatus::update()
     double Fforearm[6] = {0,0,weightforearm,0,0,0};
     double J2Transpose[6][3];
     double Torque2[3];
-    Matrix.Transpose((float*)J2,6,3,(float*)J2Transpose);
-    Matrix.Multiply((float*)J2Transpose, (float*)Fforearm, 3, 3, 3, (float*)Torque2);
+    matrixMathTranspose((float*)J2,6,3,(float*)J2Transpose);
+    matrixMathMultiply((float*)J2Transpose, (float*)Fforearm, 3, 3, 3, (float*)Torque2);
 
     double AbicepCG[4][4];
     double temp = consts->bcgz;
@@ -186,7 +185,7 @@ void GravityInertiaSystemStatus::update()
     AbicepCG[3][2] = 0;
     AbicepCG[3][3] = 1;
     double TbicepCG[4][4];
-    Matrix.Multiply((float*)T2, (float*)AbicepCG, 4, 4, 4, (float*)TbicepCG);
+    matrixMathMultiply((float*)T2, (float*)AbicepCG, 4, 4, 4, (float*)TbicepCG);
     //double obicepCG [3];
     //obicepCG[0] = TbicepCG[0][3];
     //obicepCG[1] = TbicepCG[1][3];
@@ -204,12 +203,12 @@ void GravityInertiaSystemStatus::update()
     J2[4][1] =  z1[1];
     J2[5][0] =  z0[2];
     J2[5][1] =  z1[2];
-    double weightbicep = 1;
+    double weightbicep = 9.7;
     double Fbicep[6] = {0,0,weightbicep,0,0,0};
     double J1Transpose[6][3];
     double Torque1[2];
-    Matrix.Transpose((float*)J1,6,2,(float*)J1Transpose);
-    Matrix.Multiply((float*)J1Transpose, (float*)Fbicep, 3, 3, 3, (float*)Torque1);
+    matrixMathTranspose((float*)J1,6,2,(float*)J1Transpose);
+    matrixMathMultiply((float*)J1Transpose, (float*)Fbicep, 3, 3, 3, (float*)Torque1);
 
     j1Gravity = Torque1[0] + Torque2[0];
     j2Gravity = Torque1[1] + Torque2[1];
