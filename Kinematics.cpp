@@ -9,6 +9,8 @@
 #include "Kinematics.h"
 #include "RoveBoard.h"
 
+
+
 //BEGINNING OF NOVA IK
 
 //ANGLES ARE IN RADIANS!!!!!
@@ -133,8 +135,11 @@ void calc_IK(float coordinates[IKArgCount+2], float angles[ArmJointCount]){
 
   float OpRot[3][3];
   float OpRottemp[3][3];
+  float OpRottemp2[3][3];
   matrixMathMultiply((float*)Rotzyaw, (float*)Rotxpitch, 3, 3, 3, (float*)OpRottemp);
   matrixMathMultiply((float*)OpRottemp, (float*)Rotyroll, 3, 3, 3, (float*)OpRot);
+  //matrixMathMultiply((float*)OpRottemp2, (float*)Rotxpitch2, 3, 3, 3, (float*)OpRottemp);
+  //matrixMathMultiply((float*)OpRottemp, (float*)Rotzyaw2, 3, 3, 3, (float*)OpRot);
   //IMPLEMENTED MATH IS EQUIVALENT TO:     OpRot=Rotz(yaw)*Rotx(pitch)*Roty(roll)
   //Can add other rotations here if so
   //desired. would need to introduce new variables though.
@@ -153,12 +158,12 @@ void calc_IK(float coordinates[IKArgCount+2], float angles[ArmJointCount]){
   //in terms of the DH Model described in the documentation to this, but its not hard.
   //the inverse position problem is just simple Trigonometry (SEE DOCUMENTATION)
   float F = sqrt(pow((WristCenter[0]),2)+pow((WristCenter[1]),2));
-  if((pow(F,2)+ (a1*a1) + pow(d2+d3,2)) <= (2*a1*F)){
-    F=(2*a1*F)+0.01;
-  }
-
-  float L=sqrt(((F*F) + (a1*a1) + ((d2+d3)*(d2+d3)))-(2*a1*F)); // this is the horizontal distance the bicep and forearm must reach
-  double th1=(atan2((WristCenter[1]),(WristCenter[0])) - atan2(L,((L/(L+a1)*(d2+d3)))));//THIS ONLY SOLVES FOR FORWARD REACH (arm cant reach over head)
+  float L=sqrt(((F*F) - ((d2+d3)*(d2+d3)))) -(a1); // this is the horizontal distance the bicep and forearm must reach
+  if(L <= a1){
+      F=a1 + 0.1;
+    }
+  float p = ((a1*(d2+d3))/(a1+L));
+  float th1=(atan2((-WristCenter[0]),(WristCenter[1]))) + atan2(p,a1);//THIS ONLY SOLVES FOR FORWARD REACH (arm cant reach over head)
   float B=sqrt((a3*a3) + (d4*d4));//center to center distance from J3 to Wrist Center
   float R=sqrt((L*L) +((pow((WristCenter[2]) - d1,2))));//Reaching distance of bicep and forearm
   float th2;
@@ -284,13 +289,13 @@ bool isWithinIKPauseBoundary()
   //note these two are in POS units, but boundaries is in degrees.
   float currentAngles[ArmJointCount] =
   {
-    baseRotateJointEncoder.getFeedback(), baseTiltJointEncoder.getFeedback(), elbowTiltJointEncoder.getFeedback(),
-    elbowRotateJointEncoder.getFeedback(), wristTiltJointEncoder.getFeedback(), wristRotateJointEncoder.getFeedback()
+    (float)baseRotateJointEncoder.getFeedback(), (float)baseTiltJointEncoder.getFeedback(), (float)elbowTiltJointEncoder.getFeedback(),
+    (float)elbowRotateJointEncoder.getFeedback(), (float)wristTiltJointEncoder.getFeedback(), (float)wristRotateJointEncoder.getFeedback()
   };
 
   float destAngles[ArmJointCount] =
   {
-    baseRotateJointDestination, baseTiltJointDestination, elbowTiltJointDestination, elbowRotateJointDestination, wristTiltJointDestination, wristRotateJointDestination
+   (float)baseRotateJointDestination, (float)baseTiltJointDestination, (float)elbowTiltJointDestination, (float)elbowRotateJointDestination, (float)wristTiltJointDestination, (float)wristRotateJointDestination
   };
 
   float boundaries[ArmJointCount] =
@@ -340,43 +345,60 @@ float calculateIKIncrement(int moveValue)
    }
 }
 
+
+float outputAngles[ArmJointCount];
+float destPositions[IKArgCount];
+float presentCoordinates[IKArgCount];
 //move the arm by incrementing its coordinates with IK.
 //moveValues: How much each coordinate should be incremented, -1000 to 1000.
 //Array goes x, y, z, yaw, pitch, roll
 void incrementRoverIK(int16_t moveValues[IKArgCount])
 {
+
   if(currentControlSystem != ClosedLoop)
   {
     switchToClosedLoop();
+    calcPresentCoordinates(presentCoordinates);
   }
 
-  float xInc = calculateIKIncrement(moveValues[0]);
-  float yInc = calculateIKIncrement(moveValues[1]);
-  float zInc = calculateIKIncrement(moveValues[2]);
-  float yaInc = calculateIKIncrement(moveValues[3]);
-  float piInc = calculateIKIncrement(moveValues[4]);
-  float roInc = calculateIKIncrement(moveValues[5]);
 
-  float outputAngles[ArmJointCount];
-  float presentCoordinates[IKArgCount];
-  float destPositions[IKArgCount];
+  if(isWithinIKPauseBoundary()==true)
+      {
+        float xInc = calculateIKIncrement(moveValues[0]);
+        float yInc = calculateIKIncrement(moveValues[1]);
+        float zInc = calculateIKIncrement(moveValues[2]);
+        float yaInc = calculateIKIncrement(moveValues[3]);
+        float piInc = calculateIKIncrement(moveValues[4]);
+        float roInc = calculateIKIncrement(moveValues[5]);
+        //float outputAngles[ArmJointCount]; This was moved outside the function so it could be "remembered" between updates
+        //float presentCoordinates[IKArgCount];
+        //float destPositions[IKArgCount];
 
-  calcPresentCoordinates(presentCoordinates);
 
-  destPositions[0] = xInc + presentCoordinates[0];
-  destPositions[1] = yInc + presentCoordinates[1];
-  destPositions[2] = zInc + presentCoordinates[2];
-  destPositions[3] = yaInc + presentCoordinates[3];
-  destPositions[4] = piInc + presentCoordinates[4];
-  destPositions[5] = roInc + presentCoordinates[5];
 
-  calc_roverIK(destPositions, outputAngles);
+        destPositions[0] = 0.5*xInc + presentCoordinates[0];
+        destPositions[1] = 0.5*yInc + presentCoordinates[1];
+        destPositions[2] = 0.5*zInc + presentCoordinates[2];
+        destPositions[3] = -yaInc + presentCoordinates[3];
+        destPositions[4] = -piInc + presentCoordinates[4];
+        destPositions[5] = roInc + presentCoordinates[5];
 
+        calc_roverIK(destPositions, outputAngles);
+
+        //setArmDestinationAngles(outputAngles);
+      }
   setArmDestinationAngles(outputAngles);
+  for(int i=0; i<6; i++){
+  presentCoordinates[i] = destPositions[i];
+  }
+
 }
 
 void incrementWristIK(int16_t moveValues[IKArgCount])
 {
+
+
+
   float xInc = calculateIKIncrement(moveValues[0]);
   float yInc = calculateIKIncrement(moveValues[1]);
   float zInc = calculateIKIncrement(moveValues[2]);
@@ -384,9 +406,9 @@ void incrementWristIK(int16_t moveValues[IKArgCount])
   float piInc = calculateIKIncrement(moveValues[4]);
   float roInc = calculateIKIncrement(moveValues[5]);
 
-  float outputAngles[ArmJointCount];
-  float presentCoordinates[IKArgCount];
-  float destPositions[IKArgCount];
+  //float outputAngles[ArmJointCount];
+  //float presentCoordinates[IKArgCount];
+  //float destPositions[IKArgCount];
   float relOutput[2];
   float T6[4][4];
   float relPositions[3] = {xInc, yInc, zInc};
@@ -435,19 +457,29 @@ float negativeRadianCorrection(float correctThis)
 
 T6MatrixContainer calcPresentCoordinates(float coordinates[IKArgCount])
 {
-  /*float th1 = radians(baseRotateJointEncoder.getFeedbackDegrees());
+
+  for(int i=0; i<5; i++){
+  float th1 = radians(baseRotateJointEncoder.getFeedbackDegrees());
   float th2 = radians(baseTiltJointEncoder.getFeedbackDegrees());
   float th3 = radians(elbowTiltJointEncoder.getFeedbackDegrees());
   float th4 = radians(elbowRotateJointEncoder.getFeedbackDegrees());
   float th5 = radians(wristTiltJointEncoder.getFeedbackDegrees());
-  float th6 = radians(wristRotateJointEncoder.getFeedbackDegrees());*/
+  float th6 = radians(wristRotateJointEncoder.getFeedbackDegrees());
+  }
+  float th1 = radians(baseRotateJointEncoder.getFeedbackDegrees());
+    float th2 = radians(baseTiltJointEncoder.getFeedbackDegrees());
+    float th3 = radians(elbowTiltJointEncoder.getFeedbackDegrees());
+    float th4 = radians(elbowRotateJointEncoder.getFeedbackDegrees());
+    float th5 = radians(wristTiltJointEncoder.getFeedbackDegrees());
+    float th6 = radians(wristRotateJointEncoder.getFeedbackDegrees());
 
+  /*
   float th1 = 0;
   float th2 = 0;
   float th3 = radians(270);
   float th4 = 0;
   float th5 = 0;
-  float th6 = 0;
+  float th6 = 0;*/
 
   float A1[4][4];
   float A2[4][4];
