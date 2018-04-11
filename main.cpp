@@ -11,7 +11,7 @@ static float masterCurrent = 0;
 bool initialized = false;  //tracks if program setup is finished. Needed as some closed loop interrupts will fail if parts of their code is run before initialize is finished, so this flag
                            //prevents fragile hardware calls from firing before then
 bool limitsEnabled = true; //tracks if hardware limit switches are being used or if they're being overridden
-bool watchdogUsed = false;
+bool watchdogUsed = true;//false; //make true to enable watchdog
 
 RoveTimer_Handle timer7Handle;
 RoveTimer_Handle timer6Handle;
@@ -23,8 +23,11 @@ RoveAdc_Handle wristTiltCurrentRead;
 RoveAdc_Handle wristRotateCurrentRead;
 RoveAdc_Handle masterCurrentRead;
 
+
+
 void init()
 {
+
   roveComm_Begin(192, 168, 1, 131);
   wristRotateJoint.pairDifferentialJoint(&wristTiltJoint);
 
@@ -170,6 +173,7 @@ void processBaseStationCommands()
 
       case IKWristIncrement:
         incrementWristIK((int16_t*)(commandData));
+        break;//i added this. not sure if correct
 
       case ArmEnableAll:
         masterPowerSet((*(bool*)(commandData)));
