@@ -367,12 +367,18 @@ void incrementRoverIK(int16_t moveValues[IKArgCount])
 
   if(isWithinIKPauseBoundary()==true)
       {
-        float xInc = calculateIKIncrement(moveValues[0]);
-        float yInc = calculateIKIncrement(moveValues[1]);
-        float zInc = calculateIKIncrement(moveValues[2]);
-        float yaInc = calculateIKIncrement(moveValues[3]);
-        float piInc = calculateIKIncrement(moveValues[4]);
-        float roInc = calculateIKIncrement(moveValues[5]);
+        float temp = moveValues[0]; //sometimes crashes if you use it directly for some reason
+        float xInc = calculateIKIncrement(temp);
+        float temp = moveValues[1];
+        float yInc = calculateIKIncrement(temp);
+        float temp = moveValues[2];
+        float zInc = calculateIKIncrement(temp);
+        float temp = moveValues[3];
+        float yaInc = calculateIKIncrement(temp);
+        float temp = moveValues[4];
+        float piInc = calculateIKIncrement(temp);
+        float temp = moveValues[5];
+        float roInc = calculateIKIncrement(temp);
         //float outputAngles[ArmJointCount]; This was moved outside the function so it could be "remembered" between updates
         //float presentCoordinates[IKArgCount];
         //float destPositions[IKArgCount];
@@ -410,12 +416,18 @@ void incrementWristIK(int16_t moveValues[IKArgCount])  //this isnt working right
 
     if(isWithinIKPauseBoundary()==true)
           {
-        float xInc = 0.3*calculateIKIncrement(moveValues[0]);
-          float yInc = 0.3*calculateIKIncrement(moveValues[1]);
-          float zInc = 0.3*calculateIKIncrement(moveValues[2]);
-          float yaInc = -calculateIKIncrement(moveValues[3]);
-          float piInc = -calculateIKIncrement(moveValues[4]);
-          float roInc = calculateIKIncrement(moveValues[5]);
+       float temp = moveValues[0];//sometimes crashes if you use it directly for some reason
+        float xInc = 0.3*calculateIKIncrement(temp);
+       temp = moveValues[1];
+          float yInc = 0.3*calculateIKIncrement(temp);
+       temp = moveValues[2];
+          float zInc = 0.3*calculateIKIncrement(temp);
+       temp = moveValues[3];
+          float yaInc = -calculateIKIncrement(temp);
+       temp = moveValues[4];
+          float piInc = -calculateIKIncrement(temp);
+       temp = moveValues[5];
+          float roInc = calculateIKIncrement(temp);
 
           //float outputAngles[ArmJointCount];
           //float presentCoordinates[IKArgCount];
