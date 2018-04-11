@@ -13,7 +13,7 @@
 const uint8_t ArmJointCount = 6;
 
 //D-H Parameters of Arm Model
-const float th1offset=1.57; //1.57079632679; //should be 90 in order for origin frame to comply with "Rover
+const float th1offset=1.57079632679; //should be 90 in order for origin frame to comply with "Rover
 // Coordinate Standard"
 const float d1=2.8937; // height of bicep tilt axis from baseplate/origin
 const float a1=0; //forward offset of bicep tilt axis relative to base rotate axis
@@ -68,7 +68,7 @@ const float alpha6=1.57079632679; //angular tilt of gripper from normal orientat
            //zenith, and gryphon's wrist joints all complied with this)
 
 //CENTER POINT OF GRIPPER
-const float OpPointoffset[3]={0, 5.25, 0};
+const float OpPointoffset[3]={0, 6.5, 0};
 
 //motor information constants
 const float J12Kt = (0.014 * 672) * 2; //newton-meters per amp
