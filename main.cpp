@@ -173,7 +173,7 @@ void processBaseStationCommands()
 
       case IKWristIncrement:
         incrementWristIK((int16_t*)(commandData));
-        break;//i added this. not sure if correct
+        break;
 
       case ArmEnableAll:
         masterPowerSet((*(bool*)(commandData)));
