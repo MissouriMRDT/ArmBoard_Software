@@ -9,8 +9,6 @@
 #include "Kinematics.h"
 #include "RoveBoard.h"
 
-
-
 //BEGINNING OF NOVA IK
 
 //ANGLES ARE IN RADIANS!!!!!
@@ -214,7 +212,7 @@ void calc_IK(float coordinates[IKArgCount+2], float angles[ArmJointCount]){
 
   if(WR[2][1]>=1.0){//added this in an attempt to avoid imaginary numbers hoping to stop crashes, but this statement never executed. but the crashes stopped anyway..
     WR[2][1] = 0.9;
-}
+  }
 
   //inorder to choose between wrist-up case and wrist-down case, we need to
   //compare the calcualted angles of the 2 solutions and choose the best one
@@ -357,46 +355,42 @@ float presentCoordinates[IKArgCount];
 //Array goes x, y, z, yaw, pitch, roll
 void incrementRoverIK(int16_t moveValues[IKArgCount])
 {
-
   if(currentControlSystem != ClosedLoop)
   {
     switchToClosedLoop();
     calcPresentCoordinates(presentCoordinates);
   }
 
-
   if(isWithinIKPauseBoundary()==true)
-      {
-        float temp = moveValues[0]; //sometimes crashes if you use it directly for some reason
-        float xInc = calculateIKIncrement(temp);
-        float temp = moveValues[1];
-        float yInc = calculateIKIncrement(temp);
-        float temp = moveValues[2];
-        float zInc = calculateIKIncrement(temp);
-        float temp = moveValues[3];
-        float yaInc = calculateIKIncrement(temp);
-        float temp = moveValues[4];
-        float piInc = calculateIKIncrement(temp);
-        float temp = moveValues[5];
-        float roInc = calculateIKIncrement(temp);
-        //float outputAngles[ArmJointCount]; This was moved outside the function so it could be "remembered" between updates
-        //float presentCoordinates[IKArgCount];
-        //float destPositions[IKArgCount];
+  {
+    float temp = moveValues[0]; //sometimes crashes if you use it directly for some reason
+    float xInc = calculateIKIncrement(temp);
+    temp = moveValues[1];
+    float yInc = calculateIKIncrement(temp);
+    temp = moveValues[2];
+    float zInc = calculateIKIncrement(temp);
+    temp = moveValues[3];
+    float yaInc = calculateIKIncrement(temp);
+    temp = moveValues[4];
+    float piInc = calculateIKIncrement(temp);
+    temp = moveValues[5];
+    float roInc = calculateIKIncrement(temp);
 
-        destPositions[0] = 0.3*xInc + presentCoordinates[0]; //adjusted the step sizes here to make motion much smoother
-        destPositions[1] = 0.3*yInc + presentCoordinates[1];
-        destPositions[2] = 0.3*zInc + presentCoordinates[2];
-        destPositions[3] = -yaInc + presentCoordinates[3];
-        destPositions[4] = -piInc + presentCoordinates[4];
-        destPositions[5] = roInc + presentCoordinates[5];
+    destPositions[0] = 0.3*xInc + presentCoordinates[0]; //adjusted the step sizes here to make motion much smoother
+    destPositions[1] = 0.3*yInc + presentCoordinates[1];
+    destPositions[2] = 0.3*zInc + presentCoordinates[2];
+    destPositions[3] = -yaInc + presentCoordinates[3];
+    destPositions[4] = -piInc + presentCoordinates[4];
+    destPositions[5] = roInc + presentCoordinates[5];
 
-        calc_roverIK(destPositions, outputAngles);
+    calc_roverIK(destPositions, outputAngles);
+  }
 
-        //setArmDestinationAngles(outputAngles);
-      }
   setArmDestinationAngles(outputAngles);
-  for(int i=0; i<6; i++){
-  presentCoordinates[i] = destPositions[i];
+
+  for(int i=0; i<6; i++)
+  {
+    presentCoordinates[i] = destPositions[i];
   }
 
 }
@@ -406,76 +400,72 @@ float T6[4][4];//moved this outside to "remember" it between function calls
 void incrementWristIK(int16_t moveValues[IKArgCount])  //this isnt working right, it calculates the wrong movements?
 {
 
-    if(currentControlSystem != ClosedLoop)
+  if(currentControlSystem != ClosedLoop)
+  {
+    switchToClosedLoop();
+    //calcPresentCoordinates(presentCoordinates);
+  }
+
+
+  if(isWithinIKPauseBoundary()==true)
+  {
+    float temp = moveValues[0];//sometimes crashes if you use it directly for some reason
+    float xInc = 0.3*calculateIKIncrement(temp);
+    temp = moveValues[1];
+    float yInc = 0.3*calculateIKIncrement(temp);
+    temp = moveValues[2];
+    float zInc = 0.3*calculateIKIncrement(temp);
+    temp = moveValues[3];
+    float yaInc = -calculateIKIncrement(temp);
+    temp = moveValues[4];
+    float piInc = -calculateIKIncrement(temp);
+    temp = moveValues[5];
+    float roInc = calculateIKIncrement(temp);
+
+    float relOutput[2];
+    //float T6[4][4];
+    float relPositions[3] = {xInc, yInc, zInc};
+    float absPositions[3];
+
+    T6MatrixContainer container; //i think i need to move this into the "switch to closed loop" section
+    //of this function, but before i can do that i need to create a new calc current position using outputangles
+
+    container = calcPresentCoordinates(presentCoordinates);
+
+    int i, j;
+    for(i = 0; i < 4; i++)
+    {
+      for(j = 0; j < 4; j++)
       {
-        switchToClosedLoop();
-        //calcPresentCoordinates(presentCoordinates);
-
+        T6[i][j] = container.T6[i][j];
       }
+    }
 
+    matrixMathMultiply((float*)T6, (float*)relPositions, 3, 3, 1, (float*)absPositions);
 
-    if(isWithinIKPauseBoundary()==true)
-          {
-       float temp = moveValues[0];//sometimes crashes if you use it directly for some reason
-        float xInc = 0.3*calculateIKIncrement(temp);
-       temp = moveValues[1];
-          float yInc = 0.3*calculateIKIncrement(temp);
-       temp = moveValues[2];
-          float zInc = 0.3*calculateIKIncrement(temp);
-       temp = moveValues[3];
-          float yaInc = -calculateIKIncrement(temp);
-       temp = moveValues[4];
-          float piInc = -calculateIKIncrement(temp);
-       temp = moveValues[5];
-          float roInc = calculateIKIncrement(temp);
+    destPositions[0] = absPositions[0] + presentCoordinates[0];
+    destPositions[1] = absPositions[1] + presentCoordinates[1];
+    destPositions[2] = absPositions[2] + presentCoordinates[2];
+    destPositions[3] = presentCoordinates[3];
+    destPositions[4] = presentCoordinates[4];
+    destPositions[5] = roInc + presentCoordinates[5];
+    relOutput[0] = piInc;
+    relOutput[1] = yaInc;
 
-          //float outputAngles[ArmJointCount];
-          //float presentCoordinates[IKArgCount];
-          //float destPositions[IKArgCount];
-          float relOutput[2];
-          //float T6[4][4];
-          float relPositions[3] = {xInc, yInc, zInc};
-          float absPositions[3];
+    //gripper ik isnt working right. i know i need to probably make another calc present position using
+    //the commanded outputangles, but even so, it doesnt behave correctly. I cant get it to stop to read the
+    //calculations of abspositions, so i dont know exactly whats going on. i might need to play around in
+    //matlab to figure it out. I will look at this again soon. -chris
 
-          T6MatrixContainer container; //i think i need to move this into the "switch to closed loop" section
-          //of this function, but before i can do that i need to create a new calc current position using outputangles
+    calc_gripperRelativeIK(destPositions, relOutput, outputAngles);
+  }
 
-                           container = calcPresentCoordinates(presentCoordinates);
+  setArmDestinationAngles(outputAngles);
 
-                           int i, j;
-                           for(i = 0; i < 4; i++)
-                           {
-                             for(j = 0; j < 4; j++)
-                             {
-                               T6[i][j] = container.T6[i][j];
-                             }
-                           }
-
-
-          matrixMathMultiply((float*)T6, (float*)relPositions, 3, 3, 1, (float*)absPositions);
-
-          destPositions[0] = absPositions[0] + presentCoordinates[0];
-          destPositions[1] = absPositions[1] + presentCoordinates[1];
-          destPositions[2] = absPositions[2] + presentCoordinates[2];
-          destPositions[3] = presentCoordinates[3];
-          destPositions[4] = presentCoordinates[4];
-          destPositions[5] = roInc + presentCoordinates[5];
-          relOutput[0] = piInc;
-          relOutput[1] = yaInc;
-
-          //gripper ik isnt working right. i know i need to probably make another calc present position using
-          //the commanded outputangles, but even so, it doesnt behave correctly. I cant get it to stop to read the
-          //calculations of abspositions, so i dont know exactly whats going on. i might need to play around in
-          //matlab to figure it out. I will look at this again soon. -chris 
-
-          calc_gripperRelativeIK(destPositions, relOutput, outputAngles);
-
-          //setArmDestinationAngles(outputAngles);
-          }
-    setArmDestinationAngles(outputAngles);
-      for(int i=0; i<6; i++){
-      presentCoordinates[i] = destPositions[i];
-      }
+  for(int i=0; i<6; i++)
+  {
+    presentCoordinates[i] = destPositions[i];
+  }
 
 }
 
@@ -492,7 +482,6 @@ float negativeRadianCorrection(float correctThis)
 
 T6MatrixContainer calcPresentCoordinates(float coordinates[IKArgCount])
 {
-
   for(int i=0; i<5; i++){ //i noticed when requesting encoder feedback on RED, you had to push the button multiple times
   // before the angles converged to their proper values, probably because of filtering. this simulates doing that.
   float th1 = radians(baseRotateJointEncoder.getFeedbackDegrees());
@@ -503,19 +492,11 @@ T6MatrixContainer calcPresentCoordinates(float coordinates[IKArgCount])
   float th6 = radians(wristRotateJointEncoder.getFeedbackDegrees());
   }
   float th1 = radians(baseRotateJointEncoder.getFeedbackDegrees());
-    float th2 = radians(baseTiltJointEncoder.getFeedbackDegrees());
-    float th3 = radians(elbowTiltJointEncoder.getFeedbackDegrees());
-    float th4 = radians(elbowRotateJointEncoder.getFeedbackDegrees());
-    float th5 = radians(wristTiltJointEncoder.getFeedbackDegrees());
-    float th6 = radians(wristRotateJointEncoder.getFeedbackDegrees());
-
-  /*
-  float th1 = 0;
-  float th2 = 0;
-  float th3 = radians(270);
-  float th4 = 0;
-  float th5 = 0;
-  float th6 = 0;*/
+  float th2 = radians(baseTiltJointEncoder.getFeedbackDegrees());
+  float th3 = radians(elbowTiltJointEncoder.getFeedbackDegrees());
+  float th4 = radians(elbowRotateJointEncoder.getFeedbackDegrees());
+  float th5 = radians(wristTiltJointEncoder.getFeedbackDegrees());
+  float th6 = radians(wristRotateJointEncoder.getFeedbackDegrees());
 
   float A1[4][4];
   float A2[4][4];
