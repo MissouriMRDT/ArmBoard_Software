@@ -1,4 +1,5 @@
 #include "main.h"
+#include <stdio.h>
 
 static float baseRotateCurrent = 0;
 static float baseTiltCurrent = 0;
@@ -11,7 +12,7 @@ static float masterCurrent = 0;
 bool initialized = false;  //tracks if program setup is finished. Needed as some closed loop interrupts will fail if parts of their code is run before initialize is finished, so this flag
                            //prevents fragile hardware calls from firing before then
 bool limitsEnabled = true; //tracks if hardware limit switches are being used or if they're being overridden
-bool watchdogUsed = true;//false; //make true to enable watchdog
+bool watchdogUsed = false;
 
 RoveTimer_Handle timer7Handle;
 RoveTimer_Handle timer6Handle;
@@ -23,11 +24,8 @@ RoveAdc_Handle wristTiltCurrentRead;
 RoveAdc_Handle wristRotateCurrentRead;
 RoveAdc_Handle masterCurrentRead;
 
-
-
 void init()
 {
-
   roveComm_Begin(192, 168, 1, 131);
   wristRotateJoint.pairDifferentialJoint(&wristTiltJoint);
 
@@ -148,14 +146,16 @@ void processBaseStationCommands()
   if(commandId != 0) //returns commandId == 0 if it didn't get any message
   {
     restartWatchdog(WATCHDOG_TIMEOUT_US); //reset watchdog timer since we received a command
-
     switch(commandId)
     {
       case ArmStop:
+      {
         result = stopArm();
         break;
+      }
 
       case ArmValues:
+      {
         int16_t* values = ((int16_t*)(commandData));
         moveBaseRotate(values[0]);
         moveBaseTilt(values[1]);
@@ -166,83 +166,127 @@ void processBaseStationCommands()
         moveGripper(values[6]);
         movePoker(values[7]);
         break;
+      }
 
       case IKRoverIncrement:
+      {
         incrementRoverIK((int16_t*)(commandData));
         break;
+      }
 
       case IKWristIncrement:
+      {
         incrementWristIK((int16_t*)(commandData));
         break;
+      }
 
       case ArmEnableAll:
+      {
         masterPowerSet((*(bool*)(commandData)));
         allMotorsPowerSet(*(bool*)(commandData));
         break;
+      }
 
       case ArmEnableMain:
+      {
         masterPowerSet(*(bool*)(commandData));
         break;
+      }
 
       case ArmAbsoluteAngle:
+      {
         setArmDestinationAngles((float*)(commandData));
         break;
+      }
 
       case ArmAbsoluteXYZ:
+      {
         float absoluteAngles[ArmJointCount];
         calc_roverIK((float*)(commandData), absoluteAngles);
         setArmDestinationAngles(absoluteAngles);
         break;
+      }
 
       case ArmGetPosition:
+      {
         float currentPositions[6];
         getArmPositions(currentPositions);
         roveComm_SendMsg(ArmCurrentPosition, sizeof(float) * 6, currentPositions);
         break;
+      }
+
+      case ArmGetXYZ:
+      {
+        float currentXYZ[IKArgCount];
+        calcPresentCoordinates(currentXYZ);
+        roveComm_SendMsg(ArmCurrentXYZ, sizeof(float) * 6, currentXYZ);
+      }
 
       case ArmEnableJ1:
+      {
         baseRotatePowerSet(*(bool*)commandData);
         break;
+      }
 
       case ArmEnableJ2:
+      {
         baseTiltPowerSet(*(bool*)commandData);
         break;
+      }
 
       case ArmEnableJ3:
+      {
         elbowTiltPowerSet(*(bool*)commandData);
         break;
+      }
 
       case ArmEnableJ4:
+      {
         elbowRotatePowerSet(*(bool*)commandData);
         break;
+      }
 
       case ArmEnableJ5:
+      {
         wristPowerSet(*(bool*)commandData);
         break;
+      }
 
       case ArmEnableJ6:
+      {
         wristPowerSet(*(bool*)commandData);
         break;
+      }
 
       case ArmEnableEndeff1:
+      {
         pokerPowerSet(*(bool*)commandData);
         break;
+      }
 
       case ArmEnableEndeff2:
+      {
         gripperPowerSet(*(bool*)commandData);
         break;
+      }
 
       case ArmCurrentMain:
+      {
         roveComm_SendMsg(ArmCurrentMain, sizeof(float), (void*)(&masterCurrent));
         break;
+      }
 
       case EnableLimits:
+      {
         limitsEnabled = true;
         break;
+      }
 
       case DisableLimits:
+      {
         limitsEnabled = false;
         break;
+      }
 
       default:
         break; //do nothing if it's not a known ID

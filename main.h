@@ -50,6 +50,7 @@ typedef enum ArmCommandIds
   IKRoverIncrement = 0x312,
   IKWristIncrement = 0x313,
   ArmGetPosition = 0x319,
+  ArmGetXYZ = 0x328,
   ArmCurrentMain = 0x370,
   DisableLimits = 896,
   EnableLimits = 897
@@ -59,7 +60,8 @@ typedef enum ArmCommandIds
 typedef enum ArmTelemetryIds
 {
   ArmCurrentPosition = 0x318,
-  ArmFault = 0x340 //armFault is paired with a specific fault message payload to indicate the specific nature of the fault
+  ArmFault = 0x340, //armFault is paired with a specific fault message payload to indicate the specific nature of the fault
+  ArmCurrentXYZ = 0x31A
 } ArmTelemetryIds;
 
 //enum representing the different payloads that couple with arm telemetry ID's that are sent back to base station
