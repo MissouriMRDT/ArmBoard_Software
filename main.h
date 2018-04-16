@@ -119,10 +119,10 @@ const int ElbowKip = 1;
 const int ElbowKpv = 10;
 const int ElbowKiv = 1;
 
-const int ElbowTiltKp = 75;
+const int ElbowTiltKp = 85;
 const int ElbowTiltKi = 5;
 const float ElbowTiltDeadband = 1;
-const int ElbowTiltOffsetAngle = -35;
+const int ElbowTiltOffsetAngle = -59;
 const int ElbowTiltHardStopUp = 180;
 const int ElbowTiltHardStopDown = 0;
 const float ScalarJ3 = .4;
@@ -137,13 +137,13 @@ const int ElbowRotateHardStopDown = 180;
 const int BaseTiltKp = 100;//175;
 const int BaseTiltKi = 20; //100 - 15;
 const int BaseTiltDeadband = 1.2;//1.5;
-const int BaseTiltOffsetAngle = -263;
+const int BaseTiltOffsetAngle = -35;
 const int BaseTiltHardStopUp = 40;
 const int BaseTiltHardStopDown = 260;
 
 const int BaseRotateKp = 45;
 const int BaseRotateKi = 0;
-const int BaseRotateDeadband = 1;
+const int BaseRotateDeadband = 0.3;
 const int BaseRotateOffsetAngle = -108;
 const int BaseRotateHardStopUp = 270;
 const int BaseRotateHardStopDown = 90;
@@ -151,12 +151,12 @@ const int BaseRotateHardStopDown = 90;
 const int WristRotateKp = 80;
 const int WristRotateKi = 0;
 const float WristRotateDeadband = 1;
-const int WristRotateOffsetAngle = -94;
+const int WristRotateOffsetAngle = -272;
 
 const int WristTiltKp = 45;
 const int WristTiltKi = 0;
 const float WristTiltDeadband = 1;
-const int WristTiltOffsetAngle = -210;
+const int WristTiltOffsetAngle = -7;
 const int WristTiltHardStopUp = 300;
 const int WristTiltHardStopDown = 350;
 
@@ -237,7 +237,6 @@ void elbowRotatePowerSet(bool powerOn);
 void wristPowerSet(bool powerOn);
 void pokerPowerSet(bool powerOn);
 void gripperPowerSet(bool powerOn);
-
 bool checkLimSwitch(uint32_t switchPin);
 
 CommandResult stopArm();
