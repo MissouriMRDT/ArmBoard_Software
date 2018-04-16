@@ -333,11 +333,11 @@ float calculateIKIncrement(int moveValue)
 
      if(moveValue > 0)
      {
-       return map((float)(abs(moveValue)), 0.0, 1000.0, 0.0, 2.0);
+       return map((float)(abs(moveValue)), 0.0, 1000.0, 0.0, IKIncrementMax);
      }
      else
      {
-       return -map((float)(abs(moveValue)), 0.0, 1000.0, 0.0, 2.0);
+       return -map((float)(abs(moveValue)), 0.0, 1000.0, 0.0, IKIncrementMax);
      }
    }
    else

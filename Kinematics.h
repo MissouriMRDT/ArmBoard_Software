@@ -19,7 +19,7 @@ const uint16_t IKPauseBoundary_J3 = 6;
 const uint16_t IKPauseBoundary_J4 = 8;
 const uint16_t IKPauseBoundary_J5 = 5;
 const uint16_t IKPauseBoundary_J6 = 5;
-
+const uint8_t IKIncrementMax = 1.5;
 
 typedef struct T6MatrixContainer
 {
