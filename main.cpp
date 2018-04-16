@@ -32,10 +32,6 @@ void init()
   //Initialize to open loop control format
   switchToOpenLoop();
 
-  masterPowerSet(true);
-
-  allMotorsPowerSet(true);
-
   //set timer 7 to fire at a rate where the different PI algorithms will all be updated at their expected timeslice in seconds.
   //There are 6 controls to update independently. They update one at a time, one being serviced every time the timer fires. So it takes 6 timer
   //firings for any individual control to get updated again. Meaning the timeslice of the timer itself must be one sixth of the PI algorithms overall timeslice so that
@@ -96,12 +92,23 @@ void init()
   wristRotateJoint.stop();
   gripper.stop();
 
-  delay(2000); //let background processes finish before turning on the watchdog. Experimentation found that 2 seconds worked while values such as 1.5 resulted in program failure
+  //let background processes finish before turning on the watchdog. Experimentation found that 2 seconds worked while values such as 1.5 resulted in program failure
+  //also take some initial arm readings so that the sensors will converge onto their initial positions through their filters
+  for(int i = 0; i < 200; i++)
+  {
+    float currentPositions[6];
+    getArmPositions(currentPositions);
+    delay(10);
+  }
 
   if(watchdogUsed)
   {
     initWatchdog(WATCHDOG_TIMEOUT_US);
   }
+
+  masterPowerSet(true);
+
+  allMotorsPowerSet(true);
 
   initialized = true;
 }
@@ -770,9 +777,7 @@ void initWatchdog(uint32_t timeout_us)
   //
   // Wait for the Watchdog 0 module to be ready.
   //
-  while(!SysCtlPeripheralReady(SYSCTL_PERIPH_WDOG0))
-  {
-  }
+  while(!SysCtlPeripheralReady(SYSCTL_PERIPH_WDOG0));
 
   //
   // Initialize the watchdog timer.
@@ -869,7 +874,6 @@ void closedLoopUpdateHandler()
   if(jointUpdated > 6)
   {
     jointUpdated = 1;
-
   }
 }
 

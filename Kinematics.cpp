@@ -483,15 +483,6 @@ float negativeRadianCorrection(float correctThis)
 
 T6MatrixContainer calcPresentCoordinates(float coordinates[IKArgCount])
 {
-  for(int i=0; i<5; i++){ //i noticed when requesting encoder feedback on RED, you had to push the button multiple times
-  // before the angles converged to their proper values, probably because of filtering. this simulates doing that.
-  float th1 = radians(baseRotateJointEncoder.getFeedbackDegrees());
-  float th2 = radians(baseTiltJointEncoder.getFeedbackDegrees());
-  float th3 = radians(elbowTiltJointEncoder.getFeedbackDegrees());
-  float th4 = radians(elbowRotateJointEncoder.getFeedbackDegrees());
-  float th5 = radians(wristTiltJointEncoder.getFeedbackDegrees());
-  float th6 = radians(wristRotateJointEncoder.getFeedbackDegrees());
-  }
   float th1 = radians(baseRotateJointEncoder.getFeedbackDegrees());
   float th2 = radians(baseTiltJointEncoder.getFeedbackDegrees());
   float th3 = radians(elbowTiltJointEncoder.getFeedbackDegrees());
