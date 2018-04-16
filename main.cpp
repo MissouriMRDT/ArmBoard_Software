@@ -702,6 +702,21 @@ CommandResult switchToOpenLoop()
   return Success;
 }
 
+CommandResult switchToIKIncrement()
+{
+  if(initialized)
+  {
+    if(currentControlSystem != ClosedLoop)
+    {
+      switchToClosedLoop();
+    }
+
+    initPresentCoordinates();
+  }
+
+  return Success;
+}
+
 //switches the arm over to closed loop control method; this will enable closed loop functions and functionality
 //while disabling open loop functions and functionality
 CommandResult switchToClosedLoop()

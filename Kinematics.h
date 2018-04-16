@@ -36,7 +36,6 @@ void incrementRoverIK(int16_t moveValues[IKArgCount]);
 void incrementWristIK(int16_t moveValues[IKArgCount]);
 T6MatrixContainer calcPresentCoordinates(float coordinates[IKArgCount]);
 float negativeRadianCorrection(float correctThis);
-
-
+void initPresentCoordinates();
 
 #endif /* KINEMATICS_H_ */

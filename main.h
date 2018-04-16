@@ -100,7 +100,8 @@ typedef enum CommandResult
 typedef enum ControlSystems
 {
   OpenLoop,
-  ClosedLoop
+  ClosedLoop,
+  IKIncrement
 } ControlSystems;
 
 const uint32_t WATCHDOG_TIMEOUT_US = 1000000; //the amount of microseconds that should pass without getting a transmission from base station before the arm ceases moving for safety
@@ -254,6 +255,7 @@ CommandResult getArmPositions(float positions[ArmJointCount]);
 
 CommandResult switchToOpenLoop();
 CommandResult switchToClosedLoop();
+CommandResult switchToIKIncrement();
 
 void closedLoopUpdateHandler();
 void sysStatusUpdater();

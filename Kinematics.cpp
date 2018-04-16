@@ -9,6 +9,15 @@
 #include "Kinematics.h"
 #include "RoveBoard.h"
 
+float outputAngles[ArmJointCount] = {0};
+float destPositions[IKArgCount] = {0};
+float presentCoordinates[IKArgCount] = {0};
+
+void initPresentCoordinates()
+{
+  calcPresentCoordinates(presentCoordinates);
+}
+
 //BEGINNING OF NOVA IK
 
 //ANGLES ARE IN RADIANS!!!!!
@@ -346,19 +355,14 @@ float calculateIKIncrement(int moveValue)
    }
 }
 
-
-float outputAngles[ArmJointCount];
-float destPositions[IKArgCount];
-float presentCoordinates[IKArgCount];
 //move the arm by incrementing its coordinates with IK.
 //moveValues: How much each coordinate should be incremented, -1000 to 1000.
 //Array goes x, y, z, yaw, pitch, roll
 void incrementRoverIK(int16_t moveValues[IKArgCount])
 {
-  if(currentControlSystem != ClosedLoop)
+  if(currentControlSystem != IKIncrement)
   {
-    switchToClosedLoop();
-    calcPresentCoordinates(presentCoordinates);
+    switchToIKIncrement();
   }
 
   if(isWithinIKPauseBoundary()==true)
@@ -399,13 +403,10 @@ float T6[4][4];//moved this outside to "remember" it between function calls
 
 void incrementWristIK(int16_t moveValues[IKArgCount])  //this isnt working right, it calculates the wrong movements?
 {
-
-  if(currentControlSystem != ClosedLoop)
+  if(currentControlSystem != IKIncrement)
   {
-    switchToClosedLoop();
-    //calcPresentCoordinates(presentCoordinates);
+    switchToIKIncrement();
   }
-
 
   if(isWithinIKPauseBoundary()==true)
   {
