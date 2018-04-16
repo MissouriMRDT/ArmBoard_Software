@@ -260,6 +260,7 @@ void closedLoopUpdateHandler();
 void sysStatusUpdater();
 void initWatchdog(uint32_t timeout_us);
 void restartWatchdog(uint32_t timeout_us);
+void watchdogISR();
 
 //variables used to control joints during closed loop control
 unsigned long baseRotateJointDestination;

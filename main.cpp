@@ -780,6 +780,7 @@ void initWatchdog(uint32_t timeout_us)
   WatchdogReloadSet(WATCHDOG0_BASE, load);
 
   //enable watchdog interrupts
+  WatchdogIntRegister(WATCHDOG0_BASE, watchdogISR);
   WatchdogIntEnable(WATCHDOG0_BASE);
   IntEnable(INT_WATCHDOG);
 
@@ -808,6 +809,11 @@ void restartWatchdog(uint32_t timeout_us)
 
     WatchdogReloadSet(WATCHDOG0_BASE, load);
   }
+}
+
+void watchdogISR()
+{
+  masterPowerSet(false);
 }
 
 //fills a float array with the current positions of the joints.
