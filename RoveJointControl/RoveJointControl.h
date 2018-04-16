@@ -7,8 +7,8 @@
 #define JOINTCONTROLFRAMEWORK_H_
 
 #include "AbstractFramework.h"
-#include "RoveJointUtilities.h"
-#include "SingleMotorJoint.h"
 #include "DifferentialJoint.h"
+#include "RoveJointControl/RoveJointUtilities.h"
+#include "RoveJointControl/SingleMotorJoint.h"
 
 #endif

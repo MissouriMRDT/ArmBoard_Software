@@ -1,5 +1,5 @@
-#ifndef VNH5019_H_
-#define VNH5019_H_
+#ifndef ROVEJOINTCONTROL_VNH5019_H_
+#define ROVEJOINTCONTROL_VNH5019_H_
 
 #include "AbstractFramework.h"
 #include "RoveBoard.h"

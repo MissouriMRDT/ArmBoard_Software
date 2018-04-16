@@ -1,8 +1,8 @@
-#ifndef GENPWMPHASEHBRIDGE_H_
-#define GENPWMPHASEHBRIDGE_H_
+#ifndef ROVEJOINTCONTROL_GENPWMPHASEHBRIDGE_H_
+#define ROVEJOINTCONTROL_GENPWMPHASEHBRIDGE_H_
 
-#include "AbstractFramework.h"
 #include "Roveboard.h"
+#include "RoveJointControl/AbstractFramework.h"
 
 //generic wrapper for any brushed DC motor H bridge that takes two pins; a pwm pin and a direction pin
 //see the readme.md for more info

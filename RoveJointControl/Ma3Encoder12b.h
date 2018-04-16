@@ -1,5 +1,5 @@
-#ifndef MA3ENCODER12B_H_
-#define MA3ENCODER12B_H_
+#ifndef ROVEJOINTCONTROL_MA3ENCODER12B_H_
+#define ROVEJOINTCONTROL_MA3ENCODER12B_H_
 
 #include <stdint.h>
 #include "AbstractFramework.h"

@@ -1,7 +1,7 @@
 #ifndef TILTJOINT_H_
 #define TILTJOINT_H_
 
-#include "AbstractFramework.h"
+#include "RoveJointControl/AbstractFramework.h"
 #include "RoveJointUtilities.h"
 
 //this enum represents the different degrees of motion that a differential joint can provide. Each class instance will service

@@ -1,8 +1,8 @@
-#ifndef PIALGORITHM_H_
-#define PIALGORITHM_H_
+#ifndef ROVEJOINTCONTROL_PIALGORITHM_H_
+#define ROVEJOINTCONTROL_PIALGORITHM_H_
 
 #include "AbstractFramework.h"
-#include "RoveJointUtilities.h"
+#include "RoveJointControl/RoveJointUtilities.h"
 
 //represents a PI loop algorithm, used to convert position to power percent.
 //see the readme.md for more info.

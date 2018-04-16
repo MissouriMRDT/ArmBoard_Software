@@ -1,8 +1,8 @@
-#ifndef SINGLEMOTORJOINT_H_
-#define SINGLEMOTORJOINT_H_
+#ifndef ROVEJOINTCONTROL_SINGLEMOTORJOINT_H_
+#define ROVEJOINTCONTROL_SINGLEMOTORJOINT_H_
 
 #include "AbstractFramework.h"
-#include "RoveJointUtilities.h"
+#include "RoveJointControl/RoveJointUtilities.h"
 
 //represents an arm joint that just has one motor controlling its motion.
 //see the readme.md for more info.

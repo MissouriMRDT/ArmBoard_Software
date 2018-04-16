@@ -7,8 +7,8 @@
 #ifndef ROVEJOINTCONTROL_ARMBOARDSOFTWARE_ROVEJOINTCONTROL_SYSTEMSTATUS_H_
 #define ROVEJOINTCONTROL_ARMBOARDSOFTWARE_ROVEJOINTCONTROL_SYSTEMSTATUS_H_
 
-#include "AbstractFramework.h"
 #include "Roveboard.h"
+#include "RoveJointControl/AbstractFramework.h"
 #include "RoveJointUtilities.h"
 
 //enum representing the different models of arms that are capable of being computed in this class.

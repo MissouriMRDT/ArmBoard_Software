@@ -1,5 +1,5 @@
-#ifndef DYNAMIXELCONTROLLER_H_
-#define DYNAMIXELCONTROLLER_H_
+#ifndef ROVEJOINTCONTROL_DYNAMIXELCONTROLLER_H_
+#define ROVEJOINTCONTROL_DYNAMIXELCONTROLLER_H_
 
 //module unimplemented for now due to bugs, and for RoveDynamixel being untested on roveboard
 

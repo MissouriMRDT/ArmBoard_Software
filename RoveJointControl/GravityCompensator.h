@@ -8,11 +8,11 @@
 #ifndef ROVEJOINTCONTROL_GRAVITYCOMPENSATOR_H_
 #define ROVEJOINTCONTROL_GRAVITYCOMPENSATOR_H_
 
-#include "abstractFramework.h"
 #include "RoveJointUtilities.h"
-#include "GravityInertiaSystemStatus.h"
 #include "TtoPPOpenLConverter.h"
 #include <stdint.h>
+#include "RoveJointControl/AbstractFramework.h"
+#include "RoveJointControl/GravityInertiaSystemStatus.h"
 
 //class that tries to account for gravity during joint motion. Designed to act as a supporting IOConverter to another IOConverter rather than
 //usually directly controlling a joint itself.

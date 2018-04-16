@@ -1,5 +1,5 @@
-#ifndef SDC2130_H_
-#define SDC2130_H_
+#ifndef ROVEJOINTCONTROL_SDC2130_H_
+#define ROVEJOINTCONTROL_SDC2130_H_
 
 #include "AbstractFramework.h"
 #include "RoveBoard.h"

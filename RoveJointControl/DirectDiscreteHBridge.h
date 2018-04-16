@@ -1,8 +1,8 @@
-#ifndef DIRECTDISCRETEHBRIDGE_H_
-#define DIRECTDISCRETEHBRIDGE_H_
+#ifndef ROVEJOINTCONTROL_DIRECTDISCRETEHBRIDGE_H_
+#define ROVEJOINTCONTROL_DIRECTDISCRETEHBRIDGE_H_
 
-#include "AbstractFramework.h"
 #include "RoveBoard.h"
+#include "RoveJointControl/AbstractFramework.h"
 
 //represents an H bridge that is made up of 4 transistors that we manually control with pwm. They're set up in nature so that we only have to
 //send signals to the bottom two while the top two follow suit; you can replicate this behavior by making the bottom two N type while the top

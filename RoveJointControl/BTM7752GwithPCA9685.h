@@ -8,8 +8,8 @@
 #ifndef ROVEJOINTCONTROL_ARMBOARDSOFTWARE_ROVEJOINTCONTROL_BTM7752GWITHPCA9685_H_
 #define ROVEJOINTCONTROL_ARMBOARDSOFTWARE_ROVEJOINTCONTROL_BTM7752GWITHPCA9685_H_
 
-#include "AbstractFramework.h"
 #include "RoveBoard.h"
+#include "RoveJointControl/AbstractFramework.h"
 
 //class for moving multiple BTM7752G motor controllers with the PCA9685 pwm driver; the latter sends the pwm to the former for us.
 class BTM7752GwithPCA9685: public OutputDevice
