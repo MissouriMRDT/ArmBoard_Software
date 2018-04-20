@@ -542,10 +542,10 @@ void gripperPowerSet(bool powerOn)
 
 //Sets the angles for the joints of the arm to travel to
 //Input: an angle array. angles[0] = baseRotateJoint destination, etc. Joints are described in floats from 0 to 360 degrees
-//Note that this will cause the arm to enter closed loop mode
+//Note that this will cause the arm to enter closed loop mode unless it's in IK increment mode
 CommandResult setArmDestinationAngles(float* angles)
 {
-  if(currentControlSystem != ClosedLoop)
+  if(currentControlSystem != ClosedLoop && currentControlSystem != IKIncrement)
   {
     switchToClosedLoop();
   }
@@ -719,6 +719,8 @@ CommandResult switchToIKIncrement()
     }
 
     initPresentCoordinates();
+
+    currentControlSystem = IKIncrement;
   }
 
   return Success;

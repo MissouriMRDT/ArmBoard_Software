@@ -135,7 +135,7 @@ const int ElbowRotateHardStopUp = 355;
 const int ElbowRotateHardStopDown = 180;
 
 const int BaseTiltKp = 100;//175;
-const int BaseTiltKi = 20; //100 - 15;
+const int BaseTiltKi = 10; //100 - 15;
 const int BaseTiltDeadband = 1.2;//1.5;
 const int BaseTiltOffsetAngle = -35;
 const int BaseTiltHardStopUp = 40;
