@@ -6,7 +6,7 @@
  */
 
 #include <stdint.h>
-#include <BTM7752GwithPCA9685.h>
+#include "BTM7752GwithPCA9685.h"
 #include "RoveJointUtilities.h"
 
 static bool initialized = false;

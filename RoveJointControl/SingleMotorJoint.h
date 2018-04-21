@@ -25,7 +25,7 @@ class SingleMotorJoint : public JointInterface
 
 		~SingleMotorJoint();
 
-		//Overview: runs control algorithm for a singlular motor so that it moves.
+		//Overview: runs control algorithm for a joint so that it moves.
 		//
 		//Inputs: input: a long that represents the desired movement. Value constraints and meaning depend on the inputType.
     //               For example, if this joint runs off of speed input then the values are constrained between

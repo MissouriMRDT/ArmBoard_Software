@@ -26,7 +26,7 @@ class VNH5019 : public OutputDevice
     
   public:
   
-    //Inputs: pwm generator reference to output a pwm wave on the pwm pin,
+    //Inputs: pwm generator: reference to output a pwm wave on the pwm pin,
     //        pin assignments for hardware pins,
     //        a bool to determine the orientation of the motor.
     //Pin numbers based on the roveboard standard
