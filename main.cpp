@@ -540,36 +540,6 @@ void gripperPowerSet(bool powerOn)
   }
 }
 
-//Sets the angles for the joints of the arm to travel to
-//Input: an angle array. angles[0] = baseRotateJoint destination, etc. Joints are described in floats from 0 to 360 degrees
-//Note that this will cause the arm to enter closed loop mode unless it's in IK increment mode
-CommandResult setArmDestinationAngles(float* angles)
-{
-  if(currentControlSystem != ClosedLoop && currentControlSystem != IKIncrement)
-  {
-    switchToClosedLoop();
-  }
-
-  float temp;
-
-  //for some stupid reason the program crashes if we don't save it to a temp variable before storing it
-  //into joint destinations
-  temp = angles[0];
-  baseRotateJointDestination = temp * DEGREES_TO_POS;
-  temp = angles[1];
-  baseTiltJointDestination = temp * DEGREES_TO_POS;
-  temp = angles[2];
-  elbowTiltJointDestination = temp * DEGREES_TO_POS;
-  temp = angles[3];
-  elbowRotateJointDestination = temp * DEGREES_TO_POS;
-  temp = angles[4];
-  wristTiltJointDestination = temp * DEGREES_TO_POS;
-  temp = angles[5];
-  wristRotateJointDestination = temp * DEGREES_TO_POS;
-
-  return Success;
-}
-
 //moves the first joint
 //note that using this function will automatically put the arm into open loop mode
 //movevalue: Between 1000 and -1000
@@ -762,6 +732,37 @@ CommandResult switchToClosedLoop()
 
   return Success;
 }
+
+//Sets the angles for the joints of the arm to travel to
+//Input: an angle array. angles[0] = baseRotateJoint destination, etc. Joints are described in floats from 0 to 360 degrees
+//Note that this will cause the arm to enter closed loop mode unless it's in IK increment mode
+CommandResult setArmDestinationAngles(float* angles)
+{
+  if(currentControlSystem != ClosedLoop && currentControlSystem != IKIncrement)
+  {
+    switchToClosedLoop();
+  }
+
+  float temp;
+
+  //for some stupid reason the program crashes if we don't save it to a temp variable before storing it
+  //into joint destinations
+  temp = angles[0];
+  baseRotateJointDestination = temp * DEGREES_TO_POS;
+  temp = angles[1];
+  baseTiltJointDestination = temp * DEGREES_TO_POS;
+  temp = angles[2];
+  elbowTiltJointDestination = temp * DEGREES_TO_POS;
+  temp = angles[3];
+  elbowRotateJointDestination = temp * DEGREES_TO_POS;
+  temp = angles[4];
+  wristTiltJointDestination = temp * DEGREES_TO_POS;
+  temp = angles[5];
+  wristRotateJointDestination = temp * DEGREES_TO_POS;
+
+  return Success;
+}
+
 
 //sets up the watchdog timer. Watchdog timer will restart the processor and the program when it times out
 //input: timeout value in microseconds
