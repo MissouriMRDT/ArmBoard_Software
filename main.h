@@ -73,6 +73,7 @@ typedef enum ArmTelemetryPayloadIds
   ArmFault_m4 = 4,
   ArmFault_m5 = 5,
   ArmFault_m6 = 6,
+  ArmFault_Encoder = 7,
   ArmFault_overcurrent = 9
 }ArmTelemetryPayloadIds;
 

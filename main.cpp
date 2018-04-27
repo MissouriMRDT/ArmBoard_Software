@@ -847,36 +847,44 @@ void closedLoopUpdateHandler()
 {
   static int jointUpdated = 1;
   restartWatchdog(WATCHDOG_TIMEOUT_US);
+  JointControlStatus status;
 
   if(jointUpdated == 1)
   {
-    baseRotateJoint.runOutputControl(baseRotateJointDestination);
+    status = baseRotateJoint.runOutputControl(baseRotateJointDestination);
   }
   else if(jointUpdated == 2)
   {
-    baseTiltJoint.runOutputControl(baseTiltJointDestination);
+    status = baseTiltJoint.runOutputControl(baseTiltJointDestination);
   }
   else if(jointUpdated == 3)
   {
-    elbowTiltJoint.runOutputControl(elbowTiltJointDestination);
+    status = elbowTiltJoint.runOutputControl(elbowTiltJointDestination);
   }
   else if(jointUpdated == 4)
   {
-    elbowRotateJoint.runOutputControl(elbowRotateJointDestination);
+    status = elbowRotateJoint.runOutputControl(elbowRotateJointDestination);
   }
   else if(jointUpdated == 5)
   {
-    wristTiltJoint.runOutputControl(wristTiltJointDestination);
+    status = wristTiltJoint.runOutputControl(wristTiltJointDestination);
   }
   else if(jointUpdated == 6)
   {
-    wristRotateJoint.runOutputControl(wristRotateJointDestination);
+    status = wristRotateJoint.runOutputControl(wristRotateJointDestination);
   }
 
   jointUpdated += 1;
   if(jointUpdated > 6)
   {
     jointUpdated = 1;
+  }
+
+  if(status == AlgorithmError)
+  {
+    switchToOpenLoop();
+    int faultMessage = ArmFault_Encoder;
+    roveComm_SendMsg(ArmFault, sizeof(faultMessage), (void*)&faultMessage);
   }
 }
 
