@@ -10,7 +10,7 @@
 
 #include "ArmModelInfo.h"
 #include "RoveBoard_TivaTM4C1294NCPDT.h"
-#include "RoveComm.h"
+#include "RoveWare/RoveComm.h"
 #include "Kinematics.h"
 #include "RJCInstances.h"
 

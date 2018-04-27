@@ -55,13 +55,13 @@ VNH5019WithPCA9685 wristRotateDriver(PcaChipAddress, 5, HBRIDGE6_INA, HBRIDGE6_I
 VNH5019WithPCA9685 gripperDriver(PcaChipAddress, 6, HBRIDGE7_INA, HBRIDGE7_INB, PcaI2cModule, PWM_DRIVER_SCL, PWM_DRIVER_SDA, true);
 VNH5019WithPCA9685 pokerDriver(PcaChipAddress, 7, HBRIDGE8_INA, HBRIDGE8_INB, PcaI2cModule, PWM_DRIVER_SCL, PWM_DRIVER_SDA, true);
 
-SingleMotorJoint gripper(InputPowerPercent, &gripperDriver);
-SingleMotorJoint poker(InputPowerPercent, &pokerDriver);
+SingleMotorAxis gripper(InputPowerPercent, &gripperDriver);
+SingleMotorAxis poker(InputPowerPercent, &pokerDriver);
 
-SingleMotorJoint baseRotateJoint(InputPowerPercent, &baseRotateDriver); //joints initialized to open loop state
-SingleMotorJoint baseTiltJoint(InputPowerPercent, &baseTiltDriver);
-SingleMotorJoint elbowTiltJoint(InputPowerPercent, &elbowTiltDriver);
-SingleMotorJoint elbowRotateJoint(InputPowerPercent, &elbowRotateDriver);
-DifferentialJoint wristTiltJoint(DifferentialTilt, InputPowerPercent, &wristTiltDriver, &wristRotateDriver);
-DifferentialJoint wristRotateJoint(DifferentialRotate, InputPowerPercent, &wristTiltDriver, &wristRotateDriver);
+SingleMotorAxis baseRotateJoint(InputPowerPercent, &baseRotateDriver); //joints initialized to open loop state
+SingleMotorAxis baseTiltJoint(InputPowerPercent, &baseTiltDriver);
+SingleMotorAxis elbowTiltJoint(InputPowerPercent, &elbowTiltDriver);
+SingleMotorAxis elbowRotateJoint(InputPowerPercent, &elbowRotateDriver);
+DifferentialAxis wristTiltJoint(DifferentialTilt, InputPowerPercent, &wristTiltDriver, &wristRotateDriver);
+DifferentialAxis wristRotateJoint(DifferentialRotate, InputPowerPercent, &wristTiltDriver, &wristRotateDriver);
 

@@ -27,7 +27,7 @@ RoveAdc_Handle masterCurrentRead;
 void init()
 {
   roveComm_Begin(192, 168, 1, 131);
-  wristRotateJoint.pairDifferentialJoint(&wristTiltJoint);
+  wristRotateJoint.pairDifferentialAxis(&wristTiltJoint);
 
   //Initialize to open loop control format
   switchToOpenLoop();
@@ -452,11 +452,11 @@ void baseRotatePowerSet(bool powerOn)
 {
   if(powerOn)
   {
-    baseRotateJoint.enableJoint();
+    baseRotateJoint.enableAxis();
   }
   else
   {
-    baseRotateJoint.disableJoint();
+    baseRotateJoint.disableAxis();
   }
 }
 
@@ -465,11 +465,11 @@ void baseTiltPowerSet(bool powerOn)
 {
   if(powerOn)
   {
-    baseTiltJoint.enableJoint();
+    baseTiltJoint.enableAxis();
   }
   else
   {
-    baseTiltJoint.disableJoint();
+    baseTiltJoint.disableAxis();
   }
 }
 
@@ -478,11 +478,11 @@ void elbowTiltPowerSet(bool powerOn)
 {
   if(powerOn)
   {
-    elbowTiltJoint.enableJoint();
+    elbowTiltJoint.enableAxis();
   }
   else
   {
-    elbowTiltJoint.disableJoint();
+    elbowTiltJoint.disableAxis();
   }
 }
 
@@ -491,11 +491,11 @@ void elbowRotatePowerSet(bool powerOn)
 {
   if(powerOn)
   {
-    elbowRotateJoint.enableJoint();
+    elbowRotateJoint.enableAxis();
   }
   else
   {
-    elbowRotateJoint.disableJoint();
+    elbowRotateJoint.disableAxis();
   }
 }
 
@@ -504,13 +504,13 @@ void wristPowerSet(bool powerOn)
 {
   if(powerOn)
   {
-    wristTiltJoint.enableJoint();
-    wristRotateJoint.enableJoint();
+    wristTiltJoint.enableAxis();
+    wristRotateJoint.enableAxis();
   }
   else
   {
-    wristTiltJoint.disableJoint();
-    wristRotateJoint.disableJoint();
+    wristTiltJoint.disableAxis();
+    wristRotateJoint.disableAxis();
   }
 }
 
@@ -519,11 +519,11 @@ void pokerPowerSet(bool powerOn)
 {
   if(powerOn)
   {
-    poker.enableJoint();
+    poker.enableAxis();
   }
   else
   {
-    poker.disableJoint();
+    poker.disableAxis();
   }
 }
 
@@ -532,11 +532,11 @@ void gripperPowerSet(bool powerOn)
 {
   if(powerOn)
   {
-    gripper.enableJoint();
+    gripper.enableAxis();
   }
   else
   {
-    gripper.disableJoint();
+    gripper.disableAxis();
   }
 }
 
@@ -847,7 +847,7 @@ void closedLoopUpdateHandler()
 {
   static int jointUpdated = 1;
   restartWatchdog(WATCHDOG_TIMEOUT_US);
-  JointControlStatus status;
+  AxisControlStatus status;
 
   if(jointUpdated == 1)
   {

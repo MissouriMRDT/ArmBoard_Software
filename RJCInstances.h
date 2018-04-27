@@ -9,18 +9,18 @@
 #define RJCINSTANCES_H_
 
 #include <stdint.h>
-#include "RoveJointControl.h"
-#include "GenPwmPhaseHBridge.h"
-#include "Ma3Encoder12b.h"
-#include "PIAlgorithm.h"
-#include "RCContinuousServo.h"
-#include "RoveJointControl.h"
-#include "VelocityDeriver.h"
-#include "PIVConverter.h"
-#include "GravityInertiaSystemStatus.h"
-#include "GravityCompensator.h"
-#include "VNH5019.h"
-#include "VNH5019WithPCA9685.h"
+#include "RoveWare/RoveMotionControl/RoveMotionControl.h"
+#include "RoveWare/RoveMotionControl/MotionAxises/SingleMotorAxis.h"
+#include "RoveWare/RoveMotionControl/FeedbackDevices/Ma3Encoder12b.h"
+#include "RoveWare/RoveMotionControl/IOConverters/PIAlgorithm.h"
+#include "RoveWare/RoveMotionControl/OutputDevices/RCContinuousServo.h"
+#include "RoveWare/RoveMotionControl/Experimental/VelocityDeriver.h"
+#include "RoveWare/RoveMotionControl/Experimental/PIVConverter.h"
+#include "RoveWare/RoveMotionControl/Experimental/GravityInertiaSystemStatus.h"
+#include "RoveWare/RoveMotionControl/Experimental/GravityCompensator.h"
+#include "RoveWare/RoveMotionControl/MotionAxises/DifferentialAxis.h"
+#include "RoveWare/RoveMotionControl/OutputDevices/VNH5019.h"
+#include "RoveWare/RoveMotionControl/OutputDevices/VNH5019WithPCA9685.h"
 
 extern Ma3Encoder12b baseRotateJointEncoder;
 extern Ma3Encoder12b baseTiltJointEncoder;
@@ -67,13 +67,13 @@ extern VNH5019WithPCA9685 wristRotateDriver;
 extern VNH5019WithPCA9685 gripperDriver;
 extern VNH5019WithPCA9685 pokerDriver;
 
-extern SingleMotorJoint gripper;
-extern SingleMotorJoint poker;
+extern SingleMotorAxis gripper;
+extern SingleMotorAxis poker;
 
-extern SingleMotorJoint baseRotateJoint; //joints initialized to open loop state
-extern SingleMotorJoint baseTiltJoint;
-extern SingleMotorJoint elbowTiltJoint;
-extern SingleMotorJoint elbowRotateJoint;
-extern DifferentialJoint wristTiltJoint;
-extern DifferentialJoint wristRotateJoint;
+extern SingleMotorAxis baseRotateJoint; //joints initialized to open loop state
+extern SingleMotorAxis baseTiltJoint;
+extern SingleMotorAxis elbowTiltJoint;
+extern SingleMotorAxis elbowRotateJoint;
+extern DifferentialAxis wristTiltJoint;
+extern DifferentialAxis wristRotateJoint;
 #endif /* RJCINSTANCES_H_ */
