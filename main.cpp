@@ -13,6 +13,7 @@ bool initialized = false;  //tracks if program setup is finished. Needed as some
                            //prevents fragile hardware calls from firing before then
 bool limitsEnabled = true; //tracks if hardware limit switches are being used or if they're being overridden
 bool watchdogUsed = false;
+bool gripperSwapped = false; //tracks if the gripper is inverted or not
 
 RoveTimer_Handle timer7Handle;
 RoveTimer_Handle timer6Handle;
@@ -176,6 +177,12 @@ void processBaseStationCommands()
         moveWristRotate(values[5]);
         moveGripper(values[6]);
         movePoker(values[7]);
+        break;
+      }
+
+      case GripperSwap:
+      {
+        gripperSwap();
         break;
       }
 
@@ -898,6 +905,29 @@ void closedLoopUpdateHandler()
     switchToOpenLoop();
     roveComm_SendMsg(ArmFault, sizeof(faultMessage), (void*)&faultMessage);
   }
+}
+
+void gripperSwap()
+{
+  float newOffset;
+
+  if(!gripperSwapped)
+  {
+    newOffset = WristTiltOffsetAngle + 180;
+    if(abs(newOffset) > 360)
+    {
+      newOffset -= (360 * sign(newOffset));
+    }
+
+    gripperSwapped = true;
+  }
+  else
+  {
+    newOffset = WristTiltOffsetAngle;
+    gripperSwapped = false;
+  }
+
+  wristTiltJointEncoder.setOffsetAngle(newOffset);
 }
 
 void sysStatusUpdater()

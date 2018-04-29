@@ -33,6 +33,7 @@ typedef enum ArmCommandIds
   ArmJ6 = 0x326,
   MoveEndeff1 = 0x360,
   MoveEndeff2 = 0x364,
+  GripperSwap = 0x365,
   ArmValues = 0x327,
   ArmEnableAll = 0x330,
   ArmEnableMain = 0x331,
@@ -266,6 +267,7 @@ void sysStatusUpdater();
 void initWatchdog(uint32_t timeout_us);
 void restartWatchdog(uint32_t timeout_us);
 void watchdogISR();
+void gripperSwap();
 
 //variables used to control joints during closed loop control
 unsigned long baseRotateJointDestination;
