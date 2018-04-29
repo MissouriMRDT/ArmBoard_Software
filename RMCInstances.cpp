@@ -5,7 +5,7 @@
  *      Author: drue
  */
 
-#include "RJCInstances.h"
+#include "RMCInstances.h"
 #include "main.h"
 
 Ma3Encoder12b baseRotateJointEncoder(ReadModule0, ENCODER1_READING_PIN);
@@ -21,6 +21,10 @@ PIAlgorithm elbowTiltJointAlg(ElbowTiltKp,ElbowTiltKi,PI_TIMESLICE_SECONDS, &elb
 PIAlgorithm elbowRotateJointAlg(ElbowRotateKp,ElbowRotateKi,PI_TIMESLICE_SECONDS, &elbowRotateJointEncoder);
 PIAlgorithm wristTiltJointAlg(WristTiltKp,WristTiltKi,PI_TIMESLICE_SECONDS, &wristTiltJointEncoder);
 PIAlgorithm wristRotateJointAlg(WristRotateKp,WristRotateKi,PI_TIMESLICE_SECONDS, &wristRotateJointEncoder);
+
+DualLimitSwitch baseTiltSwitches(BASE_LOW_LIMIT_PIN, BASE_HIGH_LIMIT_PIN, false);
+DualLimitSwitch baseRotateSwitches(BASE_LEFT_LIMIT_PIN, BASE_RIGHT_LIMIT_PIN, false);
+DualLimitSwitch elbowTiltSwitches(ELBOW_LOW_LIMIT_PIN, ELBOW_HIGH_LIMIT_PIN, false);
 
 /*
 PIVConverter baseRotateJointPIV(BaseRotateKp, BaseRotateKi, BaseRotateKp, BaseRotateKi, PIV_TIMESLICE_SECONDS, &baseRotateJointEncoder, &baseRotateJointVel);

@@ -5,8 +5,8 @@
  *      Author: drue
  */
 
-#ifndef RJCINSTANCES_H_
-#define RJCINSTANCES_H_
+#ifndef RMCINSTANCES_H_
+#define RMCINSTANCES_H_
 
 #include <stdint.h>
 #include "RoveWare/RoveMotionControl/RoveMotionControl.h"
@@ -21,6 +21,7 @@
 #include "RoveWare/RoveMotionControl/MotionAxises/DifferentialAxis.h"
 #include "RoveWare/RoveMotionControl/OutputDevices/VNH5019.h"
 #include "RoveWare/RoveMotionControl/OutputDevices/VNH5019WithPCA9685.h"
+#include "RoveWare/RoveMotionControl/StopcapMechanisms/DualLimitSwitch.h"
 
 extern Ma3Encoder12b baseRotateJointEncoder;
 extern Ma3Encoder12b baseTiltJointEncoder;
@@ -28,6 +29,10 @@ extern Ma3Encoder12b elbowTiltJointEncoder;
 extern Ma3Encoder12b elbowRotateJointEncoder;
 extern Ma3Encoder12b wristTiltJointEncoder;
 extern Ma3Encoder12b wristRotateJointEncoder;
+
+extern DualLimitSwitch baseTiltSwitches;
+extern DualLimitSwitch baseRotateSwitches;
+extern DualLimitSwitch elbowTiltSwitches;
 
 extern PIAlgorithm baseRotateJointAlg;
 extern PIAlgorithm baseTiltJointAlg;
@@ -76,4 +81,4 @@ extern SingleMotorAxis elbowTiltJoint;
 extern SingleMotorAxis elbowRotateJoint;
 extern DifferentialAxis wristTiltJoint;
 extern DifferentialAxis wristRotateJoint;
-#endif /* RJCINSTANCES_H_ */
+#endif /* RMCINSTANCES_H_ */
