@@ -670,6 +670,7 @@ CommandResult switchToOpenLoop()
     //disable closed loop interrupts before doing any operation to preserve thread safety
     stopTimer(timer7Handle);
     stopTimer(timer6Handle);
+    stopArm();
     baseRotateJoint.removeIOConverter(InputPowerPercent);
     baseTiltJoint.removeIOConverter(InputPowerPercent);
     elbowTiltJoint.removeIOConverter(InputPowerPercent);
@@ -717,6 +718,7 @@ CommandResult switchToClosedLoop()
 
   if(initialized)
   {
+    stopArm();
     baseRotateJoint.switchModules(InputPosition, &baseRotateJointAlg);
     baseTiltJoint.switchModules(InputPosition, &baseTiltJointAlg);
     elbowTiltJoint.switchModules(InputPosition, &elbowTiltJointAlg);
