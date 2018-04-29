@@ -84,6 +84,10 @@ void init()
   //elbowTiltJointAlg.addSupportingAlgorithm(&j3Grav);
   //wristTiltJointAlg.addSupportingAlgorithm(&j5Grav);
 
+  //baseRotateJoint.useStopcap(&baseRotateSwitches);
+  //baseTiltJoint.useStopcap(&baseTiltSwitches);
+  //elbowTiltJoint.useStopcap(&elbowTiltSwitches);
+
   baseRotateJoint.stop();
   baseTiltJoint.stop();
   elbowTiltJoint.stop();
@@ -847,31 +851,38 @@ void closedLoopUpdateHandler()
 {
   static int jointUpdated = 1;
   restartWatchdog(WATCHDOG_TIMEOUT_US);
-  AxisControlStatus status;
+  AxisControlStatus status = OutputRunning;
+  int faultMessage;
 
   if(jointUpdated == 1)
   {
     status = baseRotateJoint.runOutputControl(baseRotateJointDestination);
+    faultMessage = ArmFault_encoderBaseRotate;
   }
   else if(jointUpdated == 2)
   {
     status = baseTiltJoint.runOutputControl(baseTiltJointDestination);
+    faultMessage = ArmFault_encoderBaseTilt;
   }
   else if(jointUpdated == 3)
   {
     status = elbowTiltJoint.runOutputControl(elbowTiltJointDestination);
+    faultMessage = ArmFault_encoderElbowTilt;
   }
   else if(jointUpdated == 4)
   {
     status = elbowRotateJoint.runOutputControl(elbowRotateJointDestination);
+    faultMessage = ArmFault_encoderElbowRotate;
   }
   else if(jointUpdated == 5)
   {
     status = wristTiltJoint.runOutputControl(wristTiltJointDestination);
+    faultMessage = ArmFault_encoderWristTilt;
   }
   else if(jointUpdated == 6)
   {
     status = wristRotateJoint.runOutputControl(wristRotateJointDestination);
+    faultMessage = ArmFault_encoderWristRotate;
   }
 
   jointUpdated += 1;
@@ -883,7 +894,6 @@ void closedLoopUpdateHandler()
   if(status == AlgorithmError)
   {
     switchToOpenLoop();
-    int faultMessage = ArmFault_Encoder;
     roveComm_SendMsg(ArmFault, sizeof(faultMessage), (void*)&faultMessage);
   }
 }
