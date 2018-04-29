@@ -12,8 +12,7 @@
 #include "RoveBoard_TivaTM4C1294NCPDT.h"
 #include "RoveWare/RoveComm.h"
 #include "Kinematics.h"
-#include "RJCInstances.h"
-
+#include "RMCInstances.h"
 #include "tm4c1294ncpdt_API/tivaware/inc/hw_ints.h"
 #include "tm4c1294ncpdt_API/tivaware/driverlib/interrupt.h"
 #include "tm4c1294ncpdt_API/tivaware/driverlib/sysctl.h"
@@ -73,8 +72,13 @@ typedef enum ArmTelemetryPayloadIds
   ArmFault_m4 = 4,
   ArmFault_m5 = 5,
   ArmFault_m6 = 6,
-  ArmFault_Encoder = 7,
-  ArmFault_overcurrent = 9
+  ArmFault_overcurrent = 7,
+  ArmFault_encoderBaseRotate = 8,
+  ArmFault_encoderBaseTilt = 9,
+  ArmFault_encoderElbowTilt = 10,
+  ArmFault_encoderElbowRotate = 11,
+  ArmFault_encoderWristTilt = 12,
+  ArmFault_encoderWristRotate = 13
 }ArmTelemetryPayloadIds;
 
 //enum representing arm commands that are outdated, but kept around in case the user is using
@@ -137,14 +141,14 @@ const int ElbowRotateHardStopDown = 180;
 
 const int BaseTiltKp = 100;//175;
 const int BaseTiltKi = 10; //100 - 15;
-const int BaseTiltDeadband = 1.2;//1.5;
+const float BaseTiltDeadband = 1.2;//1.5;
 const int BaseTiltOffsetAngle = -35;
 const int BaseTiltHardStopUp = 40;
 const int BaseTiltHardStopDown = 260;
 
 const int BaseRotateKp = 45;
 const int BaseRotateKi = 0;
-const int BaseRotateDeadband = 0.3;
+const float BaseRotateDeadband = 0.3;
 const int BaseRotateOffsetAngle = -108;
 const int BaseRotateHardStopUp = 270;
 const int BaseRotateHardStopDown = 90;
@@ -213,10 +217,10 @@ const uint32_t POWER_LINE_CONTROL_PIN = PQ_1;
 
 const uint32_t BASE_HIGH_LIMIT_PIN = PB_3;
 const uint32_t BASE_LOW_LIMIT_PIN = PC_7;
-const uint32_t ELBOW_HIGH_LIMIT_PIN = PD_3;
-const uint32_t ELBOW_LOW_LIMIT_PIN = PL_1;
-const uint32_t WRIST_HIGH_LIMIT_PIN = PL_2;
-const uint32_t WRIST_LOW_LIMIT_PIN = PL_3;
+const uint32_t BASE_LEFT_LIMIT_PIN = PD_3;
+const uint32_t BASE_RIGHT_LIMIT_PIN = PL_1;
+const uint32_t ELBOW_HIGH_LIMIT_PIN = PL_2;
+const uint32_t ELBOW_LOW_LIMIT_PIN = PL_3;
 
 const float PI_TIMESLICE_SECONDS = .04;
 const float PIV_TIMESLICE_SECONDS = .004;
