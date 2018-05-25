@@ -37,5 +37,6 @@ void incrementWristIK(int16_t moveValues[IKArgCount]);
 T6MatrixContainer calcPresentCoordinates(float coordinates[IKArgCount]);
 float negativeRadianCorrection(float correctThis);
 void initPresentCoordinates();
+void setOpPointOffset(float x, float y, float z);
 
 #endif /* KINEMATICS_H_ */

@@ -13,6 +13,8 @@ float outputAngles[ArmJointCount] = {0};
 float destPositions[IKArgCount] = {0};
 float presentCoordinates[IKArgCount] = {0};
 
+float opPointOffset[3] = {opPointOffset[0], opPointOffset[1], opPointOffset[2]};
+
 void initPresentCoordinates()
 {
   calcPresentCoordinates(presentCoordinates);
@@ -155,10 +157,10 @@ void calc_IK(float coordinates[IKArgCount+2], float angles[ArmJointCount]){
   //Calculate the Wrist Center location from Gripper Location and Orientation
   float OpPoint[3] = {coordinates[0],coordinates[1],coordinates[2]};
   float OpPointtemp[3];
-  matrixMathMultiply((float*)OpRot, (float*)OpPointoffset, 3, 3, 1, (float*)OpPointtemp);
+  matrixMathMultiply((float*)OpRot, (float*)opPointOffset, 3, 3, 1, (float*)OpPointtemp);
   float WristCenter[3];
   matrixMathSubtract((float*)OpPoint, (float*)OpPointtemp, 3, 1, (float*)WristCenter);
-  //IMPLEMENTED MATH IS EQUIVALENT TO:   WristCenter = OpPoint-OpRot*OpPointoffset;
+  //IMPLEMENTED MATH IS EQUIVALENT TO:   WristCenter = OpPoint-OpRot*opPointOffset;
 
   //Position IK Problem
   //This you will have likely have to solve yourself.  I will attempt to work it
@@ -508,15 +510,15 @@ T6MatrixContainer calcPresentCoordinates(float coordinates[IKArgCount])
   EE[0][0] = 1;
   EE[0][1] = 0;
   EE[0][2] = 0;
-  EE[0][3] = OpPointoffset[0];
+  EE[0][3] = opPointOffset[0];
   EE[1][0] = 0;
   EE[1][1] = 1;
   EE[1][2] = 0;
-  EE[1][3] = OpPointoffset[1];
+  EE[1][3] = opPointOffset[1];
   EE[2][0] = 0;
   EE[2][1] = 0;
   EE[2][2] = 1;
-  EE[2][3] = OpPointoffset[2];
+  EE[2][3] = opPointOffset[2];
   EE[3][0] = 0;
   EE[3][1] = 0;
   EE[3][2] = 0;
@@ -551,4 +553,11 @@ T6MatrixContainer calcPresentCoordinates(float coordinates[IKArgCount])
   }
 
   return container;
+}
+
+void setOpPointOffset(float x, float y, float z)
+{
+  opPointOffset[0] = OpPointOffset[0] + x;
+  opPointOffset[1] = OpPointOffset[1] + y;
+  opPointOffset[2] = OpPointOffset[2] + z;
 }

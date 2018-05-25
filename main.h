@@ -53,7 +53,8 @@ typedef enum ArmCommandIds
   ArmGetXYZ = 0x328,
   ArmCurrentMain = 0x370,
   DisableLimits = 896,
-  EnableLimits = 897
+  EnableLimits = 897,
+  OpPoint = 0x366
 } ArmCommandIds;
 
 //enum representing the different arm commands we can send to base station
@@ -119,6 +120,7 @@ const float MasterSensorVoltPerAmp = .0396;
 const float MasterSensorVoltOffset = 3.3/10.0;
 const float MotorMaxCurrent = 35; //amps. Shut it down after that. Huge cause the sensors aren't actually that good so give it some leeway
 const float MasterMaxCurrent = 50;
+const int   MaxGripperPower = 500;
 
 const int ElbowKpp = 10;
 const int ElbowKip = 1;
@@ -268,6 +270,7 @@ void initWatchdog(uint32_t timeout_us);
 void restartWatchdog(uint32_t timeout_us);
 void watchdogISR();
 void gripperSwap();
+void handleLimits(uint8_t jointNumber, bool enable);
 
 //variables used to control joints during closed loop control
 unsigned long baseRotateJointDestination;

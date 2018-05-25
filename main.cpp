@@ -11,7 +11,6 @@ static float masterCurrent = 0;
 
 bool initialized = false;  //tracks if program setup is finished. Needed as some closed loop interrupts will fail if parts of their code is run before initialize is finished, so this flag
                            //prevents fragile hardware calls from firing before then
-bool limitsEnabled = true; //tracks if hardware limit switches are being used or if they're being overridden
 bool watchdogUsed = false;
 bool gripperSwapped = false; //tracks if the gripper is inverted or not
 
@@ -86,7 +85,7 @@ void init()
   //wristTiltJointAlg.addSupportingAlgorithm(&j5Grav);
 
   //baseRotateJoint.useStopcap(&baseRotateSwitches);
-  //baseTiltJoint.useStopcap(&baseTiltSwitches);
+  baseTiltJoint.useStopcap(&baseTiltSwitches);
   //elbowTiltJoint.useStopcap(&elbowTiltSwitches);
 
   baseRotateJoint.stop();
@@ -296,13 +295,24 @@ void processBaseStationCommands()
 
       case EnableLimits:
       {
-        limitsEnabled = true;
+        handleLimits(*(uint8_t*)(commandData), true);
         break;
       }
 
       case DisableLimits:
       {
-        limitsEnabled = false;
+        handleLimits(*(uint8_t*)(commandData), false);
+        break;
+      }
+
+      case OpPoint:
+      {
+        float *offsets = ((float*)(commandData));
+        float offsetX = offsets[0];
+        float offsetY = offsets[1];
+        float offsetZ = offsets[2];
+
+        setOpPointOffset(offsetX, offsetY, offsetZ);
         break;
       }
 
@@ -640,9 +650,9 @@ CommandResult moveWristRotate(int16_t moveValue)
 CommandResult moveGripper(int16_t moveValue)
 {
   if(moveValue > 0)
-    moveValue = 1000;
+    moveValue = MaxGripperPower;
   else if(moveValue < 0)
-    moveValue = -1000;
+    moveValue = -MaxGripperPower;
 
   gripper.runOutputControl(moveValue);
   return Success;
@@ -933,4 +943,42 @@ void gripperSwap()
 void sysStatusUpdater()
 {
   //sysStatus.update();
+}
+
+void handleLimits(uint8_t jointNumber, bool enable)
+{
+  if(enable)
+  {
+    switch(jointNumber)
+    {
+      case 1:
+        //baseRotateJoint.useStopcap(&baseRotateSwitches);
+        break;
+
+      case 2:
+        baseTiltJoint.useStopcap(&baseTiltSwitches);
+        break;
+
+      case 3:
+        //elbowTiltJoint.useStopcap(&elbowTiltSwitches);
+        break;
+    }
+  }
+  else
+  {
+    switch(jointNumber)
+    {
+      case 1:
+        baseRotateJoint.removeStopcap();
+        break;
+
+      case 2:
+        baseTiltJoint.removeStopcap();
+        break;
+
+      case 3:
+        elbowTiltJoint.removeStopcap();
+        break;
+    }
+  }
 }

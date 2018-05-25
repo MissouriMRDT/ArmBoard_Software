@@ -68,7 +68,8 @@ const float alpha6=1.57079632679; //angular tilt of gripper from normal orientat
            //zenith, and gryphon's wrist joints all complied with this)
 
 //CENTER POINT OF GRIPPER
-const float OpPointoffset[3]={0, 6.5, 0};
+const float OpPointOffset[3]={0, 6.5, 0};
+extern float opPointOffset[3];
 
 //motor information constants
 const float J12Kt = (0.014 * 672) * 2; //newton-meters per amp
