@@ -13,12 +13,12 @@
 
 const uint8_t IKArgCount = 6;
 
-const uint16_t IKPauseBoundary_J1 = 5;
-const uint16_t IKPauseBoundary_J2 = 5;
-const uint16_t IKPauseBoundary_J3 = 6;
+const uint16_t IKPauseBoundary_J1 = 8;
+const uint16_t IKPauseBoundary_J2 = 8;
+const uint16_t IKPauseBoundary_J3 = 8;
 const uint16_t IKPauseBoundary_J4 = 8;
-const uint16_t IKPauseBoundary_J5 = 5;
-const uint16_t IKPauseBoundary_J6 = 5;
+const uint16_t IKPauseBoundary_J5 = 8;
+const uint16_t IKPauseBoundary_J6 = 8;
 const uint8_t IKIncrementMax = 2;
 
 typedef struct T6MatrixContainer
