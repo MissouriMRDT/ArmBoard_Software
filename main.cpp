@@ -72,7 +72,8 @@ void init()
   wristTiltJointEncoder.setMaxPwm(4285);
   wristRotateJointEncoder.setMaxPwm(4045);
 
-  //elbowTiltJointEncoder.setMaxDisconnectCount(20);
+  elbowTiltJointEncoder.setMaxDisconnectCount(20);
+  baseTiltJointEncoder.setMaxDisconnectCount(20);
 
   baseRotateJointEncoder.setFilterConstant(.2); //value that just worked.
   baseTiltJointEncoder.setFilterConstant(.2);
@@ -103,9 +104,9 @@ void init()
 
   //let background processes finish before turning on the watchdog. Experimentation found that 2 seconds worked while values such as 1.5 resulted in program failure
   //also take some initial arm readings so that the sensors will converge onto their initial positions through their filters
+  float currentPositions[6];
   for(int i = 0; i < (1000/4); i++)
   {
-    float currentPositions[6];
     getArmPositions(currentPositions);
     delay(4);
   }

@@ -160,12 +160,12 @@ const int BaseRotateHardStopDown = 90;
 const int WristRotateKp = 80;
 const int WristRotateKi = 0;
 const float WristRotateDeadband = 1;
-const int WristRotateOffsetAngle = -198;
+const int WristRotateOffsetAngle = -203;
 
 const int WristTiltKp = 45;
 const int WristTiltKi = 0;
 const float WristTiltDeadband = 1;
-const int WristTiltOffsetAngle = -232;
+const int WristTiltOffsetAngle = -132;
 const int WristTiltHardStopUp = 300;
 const int WristTiltHardStopDown = 350;
 
