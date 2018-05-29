@@ -13,6 +13,7 @@ bool initialized = false;  //tracks if program setup is finished. Needed as some
                            //prevents fragile hardware calls from firing before then
 bool watchdogUsed = false;
 bool gripperSwapped = false; //tracks if the gripper is inverted or not
+bool sendPeriodicPositions = false;
 
 RoveTimer_Handle timer7Handle;
 RoveTimer_Handle timer6Handle;
@@ -71,6 +72,8 @@ void init()
   wristTiltJointEncoder.setMaxPwm(4285);
   wristRotateJointEncoder.setMaxPwm(4045);
 
+  //elbowTiltJointEncoder.setMaxDisconnectCount(20);
+
   baseRotateJointEncoder.setFilterConstant(.2); //value that just worked.
   baseTiltJointEncoder.setFilterConstant(.2);
   elbowTiltJointEncoder.setFilterConstant(.2);
@@ -84,9 +87,9 @@ void init()
   //elbowTiltJointAlg.addSupportingAlgorithm(&j3Grav);
   //wristTiltJointAlg.addSupportingAlgorithm(&j5Grav);
 
-  //baseRotateJoint.useStopcap(&baseRotateSwitches);
+  baseRotateJoint.useStopcap(&baseRotateSwitch);
   baseTiltJoint.useStopcap(&baseTiltSwitches);
-  //elbowTiltJoint.useStopcap(&elbowTiltSwitches);
+  elbowTiltJoint.useStopcap(&elbowTiltSwitches);
 
   baseRotateJoint.stop();
   baseTiltJoint.stop();
@@ -96,13 +99,15 @@ void init()
   wristRotateJoint.stop();
   gripper.stop();
 
+  delay(1000);
+
   //let background processes finish before turning on the watchdog. Experimentation found that 2 seconds worked while values such as 1.5 resulted in program failure
   //also take some initial arm readings so that the sensors will converge onto their initial positions through their filters
-  for(int i = 0; i < 200; i++)
+  for(int i = 0; i < (1000/4); i++)
   {
     float currentPositions[6];
     getArmPositions(currentPositions);
-    delay(10);
+    delay(4);
   }
 
   if(watchdogUsed)
@@ -142,6 +147,12 @@ void sendPeriodicTelemetry()
   if(millis() - mills > 100)
   {
     roveComm_SendMsg(ArmCurrentMain, sizeof(float), (void*)(&masterCurrent));
+
+    if(sendPeriodicPositions)
+    {
+      sendArmPositions();
+    }
+
     mills = millis();
   }
 }
@@ -226,9 +237,7 @@ void processBaseStationCommands()
 
       case ArmGetPosition:
       {
-        float currentPositions[6];
-        getArmPositions(currentPositions);
-        roveComm_SendMsg(ArmCurrentPosition, sizeof(float) * 6, currentPositions);
+        sendArmPositions();
         break;
       }
 
@@ -293,13 +302,13 @@ void processBaseStationCommands()
         break;
       }
 
-      case EnableLimits:
+      case LimitSwitchUnoveride:
       {
         handleLimits(*(uint8_t*)(commandData), true);
         break;
       }
 
-      case DisableLimits:
+      case LimitSwitchOveride:
       {
         handleLimits(*(uint8_t*)(commandData), false);
         break;
@@ -314,6 +323,11 @@ void processBaseStationCommands()
 
         setOpPointOffset(offsetX, offsetY, offsetZ);
         break;
+      }
+
+      case ToggleAutoPositionTelem:
+      {
+        sendPeriodicPositions = !sendPeriodicPositions;
       }
 
       default:
@@ -786,6 +800,12 @@ CommandResult setArmDestinationAngles(float* angles)
   return Success;
 }
 
+void sendArmPositions()
+{
+  float currentPositions[6];
+  getArmPositions(currentPositions);
+  roveComm_SendMsg(ArmCurrentPosition, sizeof(float) * 6, currentPositions);
+}
 
 //sets up the watchdog timer. Watchdog timer will restart the processor and the program when it times out
 //input: timeout value in microseconds
@@ -885,6 +905,7 @@ void closedLoopUpdateHandler()
   }
   else if(jointUpdated == 3)
   {
+    //elbowTiltJoint.runOutputControl(elbowTiltJointDestination);
     status = elbowTiltJoint.runOutputControl(elbowTiltJointDestination);
     faultMessage = ArmFault_encoderElbowTilt;
   }
@@ -952,7 +973,7 @@ void handleLimits(uint8_t jointNumber, bool enable)
     switch(jointNumber)
     {
       case 1:
-        //baseRotateJoint.useStopcap(&baseRotateSwitches);
+        baseRotateJoint.useStopcap(&baseRotateSwitch);
         break;
 
       case 2:
@@ -960,7 +981,7 @@ void handleLimits(uint8_t jointNumber, bool enable)
         break;
 
       case 3:
-        //elbowTiltJoint.useStopcap(&elbowTiltSwitches);
+        elbowTiltJoint.useStopcap(&elbowTiltSwitches);
         break;
     }
   }

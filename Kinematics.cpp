@@ -13,7 +13,7 @@ float outputAngles[ArmJointCount] = {0};
 float destPositions[IKArgCount] = {0};
 float presentCoordinates[IKArgCount] = {0};
 
-float opPointOffset[3] = {opPointOffset[0], opPointOffset[1], opPointOffset[2]};
+float opPointOffset[3] = {OpPointOffset[0], OpPointOffset[1], OpPointOffset[2]};
 
 void initPresentCoordinates()
 {

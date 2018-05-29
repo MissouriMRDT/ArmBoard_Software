@@ -52,9 +52,10 @@ typedef enum ArmCommandIds
   ArmGetPosition = 0x319,
   ArmGetXYZ = 0x328,
   ArmCurrentMain = 0x370,
-  DisableLimits = 896,
-  EnableLimits = 897,
-  OpPoint = 0x366
+  LimitSwitchOveride = 897,
+  LimitSwitchUnoveride = 896,
+  OpPoint = 0x366,
+  ToggleAutoPositionTelem = 871
 } ArmCommandIds;
 
 //enum representing the different arm commands we can send to base station
@@ -130,7 +131,7 @@ const int ElbowKiv = 1;
 const int ElbowTiltKp = 85;
 const int ElbowTiltKi = 5;
 const float ElbowTiltDeadband = 1;
-const int ElbowTiltOffsetAngle = -59;
+const int ElbowTiltOffsetAngle = -52;
 const int ElbowTiltHardStopUp = 180;
 const int ElbowTiltHardStopDown = 0;
 const float ScalarJ3 = .4;
@@ -138,33 +139,33 @@ const float ScalarJ3 = .4;
 const int ElbowRotateKp = 20;
 const int ElbowRotateKi = 0;
 const float ElbowRotateDeadband = 1;
-const int ElbowRotateOffsetAngle = -36;
+const int ElbowRotateOffsetAngle = -14;
 const int ElbowRotateHardStopUp = 355;
 const int ElbowRotateHardStopDown = 180;
 
 const int BaseTiltKp = 100;//175;
 const int BaseTiltKi = 10; //100 - 15;
 const float BaseTiltDeadband = 1.2;//1.5;
-const int BaseTiltOffsetAngle = -35;
+const int BaseTiltOffsetAngle = -335;
 const int BaseTiltHardStopUp = 40;
 const int BaseTiltHardStopDown = 260;
 
 const int BaseRotateKp = 45;
 const int BaseRotateKi = 0;
 const float BaseRotateDeadband = 0.3;
-const int BaseRotateOffsetAngle = -108;
+const int BaseRotateOffsetAngle = -226;
 const int BaseRotateHardStopUp = 270;
 const int BaseRotateHardStopDown = 90;
 
 const int WristRotateKp = 80;
 const int WristRotateKi = 0;
 const float WristRotateDeadband = 1;
-const int WristRotateOffsetAngle = -272;
+const int WristRotateOffsetAngle = -198;
 
 const int WristTiltKp = 45;
 const int WristTiltKi = 0;
 const float WristTiltDeadband = 1;
-const int WristTiltOffsetAngle = -7;
+const int WristTiltOffsetAngle = -232;
 const int WristTiltHardStopUp = 300;
 const int WristTiltHardStopDown = 350;
 
@@ -218,12 +219,11 @@ const uint32_t ENCODER6_READING_PIN = PB_2;
 
 const uint32_t POWER_LINE_CONTROL_PIN = PQ_1;
 
-const uint32_t BASE_HIGH_LIMIT_PIN = PB_3;
-const uint32_t BASE_LOW_LIMIT_PIN = PC_7;
-const uint32_t BASE_LEFT_LIMIT_PIN = PD_3;
-const uint32_t BASE_RIGHT_LIMIT_PIN = PL_1;
-const uint32_t ELBOW_HIGH_LIMIT_PIN = PL_2;
-const uint32_t ELBOW_LOW_LIMIT_PIN = PL_3;
+const uint32_t BASE_ROTATE_LIMIT_PIN = PB_3;
+const uint32_t BASE_HIGH_LIMIT_PIN = PC_7;
+const uint32_t BASE_LOW_LIMIT_PIN = PD_3;
+const uint32_t ELBOW_HIGH_LIMIT_PIN = PL_1;
+const uint32_t ELBOW_LOW_LIMIT_PIN = PL_2;
 
 const float PI_TIMESLICE_SECONDS = .04;
 const float PIV_TIMESLICE_SECONDS = .004;
@@ -259,6 +259,7 @@ CommandResult movePoker(int16_t moveValue);
 
 CommandResult setArmDestinationAngles(float* angles);
 CommandResult getArmPositions(float positions[ArmJointCount]);
+void sendArmPositions();
 
 CommandResult switchToOpenLoop();
 CommandResult switchToClosedLoop();
