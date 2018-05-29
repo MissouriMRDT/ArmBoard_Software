@@ -199,7 +199,10 @@ void processBaseStationCommands()
 
       case IKRoverIncrement:
       {
-        incrementRoverIK((int16_t*)(commandData));
+        int16_t *data = (int16_t*)(commandData);
+        incrementRoverIK(data);
+        moveGripper(data[6]);
+        movePoker(data[7]);
         break;
       }
 
