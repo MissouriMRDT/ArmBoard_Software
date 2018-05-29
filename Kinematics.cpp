@@ -392,13 +392,16 @@ void incrementRoverIK(int16_t moveValues[IKArgCount])
     calc_roverIK(destPositions, outputAngles);
   }
 
-  setArmDestinationAngles(outputAngles);
 
-  for(int i=0; i<6; i++)
+  if(currentControlSystem == IKIncrement) //make sure control system error wasn't detected in another thread
   {
-    presentCoordinates[i] = destPositions[i];
-  }
+    setArmDestinationAngles(outputAngles);
 
+    for(int i=0; i<6; i++)
+    {
+      presentCoordinates[i] = destPositions[i];
+    }
+  }
 }
 
 float T6[4][4];//moved this outside to "remember" it between function calls

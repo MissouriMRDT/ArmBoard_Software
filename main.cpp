@@ -11,7 +11,7 @@ static float masterCurrent = 0;
 
 bool initialized = false;  //tracks if program setup is finished. Needed as some closed loop interrupts will fail if parts of their code is run before initialize is finished, so this flag
                            //prevents fragile hardware calls from firing before then
-bool watchdogUsed = false;
+bool watchdogUsed = true;
 bool gripperSwapped = false; //tracks if the gripper is inverted or not
 bool sendPeriodicPositions = false;
 
@@ -40,6 +40,23 @@ void init()
   //Timer 6 meanwhile will handle updating all the system's more complex math in parallel.
   timer7Handle = setupTimer(Timer7, TimerPeriodicInterrupt, (PI_TIMESLICE_SECONDS/ArmJointCount) * 1000000.0, &closedLoopUpdateHandler);
   timer6Handle = setupTimer(Timer6, TimerPeriodicInterrupt, (PI_TIMESLICE_SECONDS) * 1000000, &sysStatusUpdater);
+
+  //janky ass solution to changing out pwm reads work in the encoders.
+  //todo: just add in constructor to ma3Encoder to allow you to pass in a
+  //pwmReadHandle instance that's already modified for it so we don't have to
+  //modify it from the outside
+  /*RovePwmRead_Handle handle = initPwmRead(0, ENCODER1_READING_PIN);
+  setDisconnectCheckTimeout(handle, 20000);
+  handle = initPwmRead(1, ENCODER2_READING_PIN);
+  setDisconnectCheckTimeout(handle, 20000);
+  handle = initPwmRead(2, ENCODER3_READING_PIN);
+  setDisconnectCheckTimeout(handle, 20000);
+  handle = initPwmRead(3, ENCODER4_READING_PIN);
+  setDisconnectCheckTimeout(handle, 20000);
+  handle = initPwmRead(4, ENCODER5_READING_PIN);
+  setDisconnectCheckTimeout(handle, 20000);
+  handle = initPwmRead(5, ENCODER6_READING_PIN);
+  setDisconnectCheckTimeout(handle, 20000);*/
 
   baseRotateCurrentRead  = roveAdc_init(Adc0_Seq0_0, MOTOR1_CURRENT_INPUT);
   baseTiltCurrentRead    = roveAdc_init(Adc0_Seq0_1, MOTOR2_CURRENT_INPUT);
@@ -726,6 +743,12 @@ CommandResult switchToIKIncrement()
     if(currentControlSystem != ClosedLoop)
     {
       switchToClosedLoop();
+    }
+
+    delay(100);
+    if(currentControlSystem != ClosedLoop)
+    {
+      return; //means a closed loop error was detected in its interrupt, don't go ahead with it
     }
 
     initPresentCoordinates();
