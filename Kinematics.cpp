@@ -387,7 +387,7 @@ void incrementRoverIK(int16_t moveValues[IKArgCount])
     destPositions[2] = 0.3*zInc + presentCoordinates[2];
     destPositions[3] = -yaInc + presentCoordinates[3];
     destPositions[4] = -piInc + presentCoordinates[4];
-    destPositions[5] = roInc + presentCoordinates[5];
+    destPositions[5] = 2*roInc + presentCoordinates[5];
 
     calc_roverIK(destPositions, outputAngles);
   }
@@ -404,8 +404,8 @@ void incrementRoverIK(int16_t moveValues[IKArgCount])
   }
 }
 
-float T6[4][4];//moved this outside to "remember" it between function calls
-
+//float T6[4][4];//moved this outside to "remember" it between function calls
+float relOutput[2];
 void incrementWristIK(int16_t moveValues[IKArgCount])  //this isnt working right, it calculates the wrong movements?
 {
   if(currentControlSystem != IKIncrement)
@@ -428,26 +428,39 @@ void incrementWristIK(int16_t moveValues[IKArgCount])  //this isnt working right
     temp = moveValues[5];
     float roInc = calculateIKIncrement(temp);
 
-    float relOutput[2];
+    //float relOutput[2];
     //float T6[4][4];
     float relPositions[3] = {xInc, yInc, zInc};
     float absPositions[3];
+    relOutput[0] = relOutput[0]+piInc;
+    relOutput[1] = relOutput[1]+yaInc;
 
-    T6MatrixContainer container; //i think i need to move this into the "switch to closed loop" section
-    //of this function, but before i can do that i need to create a new calc current position using outputangles
+    float Rotzyaw[3][3];
+    float Rotxpitch[3][3];
+    float Rotyroll[3][3];
+    float Rotzyaw2[3][3];
+    float Rotxpitch2[3][3];
 
-    container = calcPresentCoordinates(presentCoordinates);
+    float t = radians(moveValues[3]); //crashes if you pass it directly in for some reason
+      Rotz(t,Rotzyaw);
+      t = radians(moveValues[4]);
+      Rotx(t,Rotxpitch);
+      t = radians(moveValues[5]);
+      Roty(t,Rotyroll);
+      t = radians(moveValues[6]);
+      Rotx(t,Rotxpitch2);
+      t = radians(moveValues[7]);
+      Rotz(t,Rotzyaw2);
 
-    int i, j;
-    for(i = 0; i < 4; i++)
-    {
-      for(j = 0; j < 4; j++)
-      {
-        T6[i][j] = container.T6[i][j];
-      }
-    }
+      float OpRot[3][3];
+      float OpRottemp[3][3];
+      float OpRottemp2[3][3];
+      matrixMathMultiply((float*)Rotzyaw, (float*)Rotxpitch, 3, 3, 3, (float*)OpRottemp);
+      matrixMathMultiply((float*)OpRottemp, (float*)Rotyroll, 3, 3, 3, (float*)OpRottemp2);
+      matrixMathMultiply((float*)OpRottemp2, (float*)Rotxpitch2, 3, 3, 3, (float*)OpRottemp);
+      matrixMathMultiply((float*)OpRottemp, (float*)Rotzyaw2, 3, 3, 3, (float*)OpRot);
 
-    matrixMathMultiply((float*)T6, (float*)relPositions, 3, 3, 1, (float*)absPositions);
+    matrixMathMultiply((float*)OpRot, (float*)relPositions, 3, 3, 1, (float*)absPositions);
 
     destPositions[0] = absPositions[0] + presentCoordinates[0];
     destPositions[1] = absPositions[1] + presentCoordinates[1];
@@ -455,8 +468,8 @@ void incrementWristIK(int16_t moveValues[IKArgCount])  //this isnt working right
     destPositions[3] = presentCoordinates[3];
     destPositions[4] = presentCoordinates[4];
     destPositions[5] = roInc + presentCoordinates[5];
-    relOutput[0] = piInc;
-    relOutput[1] = yaInc;
+   // relOutput[0] = piInc;
+   // relOutput[1] = yaInc;
 
     //gripper ik isnt working right. i know i need to probably make another calc present position using
     //the commanded outputangles, but even so, it doesnt behave correctly. I cant get it to stop to read the
