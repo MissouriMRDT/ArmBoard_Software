@@ -89,8 +89,8 @@ void init()
   wristTiltJointEncoder.setMaxPwm(4285);
   wristRotateJointEncoder.setMaxPwm(4045);
 
-  elbowTiltJointEncoder.setMaxDisconnectCount(20);
-  baseTiltJointEncoder.setMaxDisconnectCount(20);
+  elbowTiltJointEncoder.setMaxDisconnectCount(70);
+  baseTiltJointEncoder.setMaxDisconnectCount(70);
 
   baseRotateJointEncoder.setFilterConstant(.2); //value that just worked.
   baseTiltJointEncoder.setFilterConstant(.2);
@@ -162,7 +162,7 @@ void sendPeriodicTelemetry()
     mills = millis();
   }
 
-  if(millis() - mills > 100)
+  if(millis() - mills > 750)
   {
     roveComm_SendMsg(ArmCurrentMain, sizeof(float), (void*)(&masterCurrent));
 
