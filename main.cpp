@@ -45,9 +45,9 @@ void init()
   //todo: just add in constructor to ma3Encoder to allow you to pass in a
   //pwmReadHandle instance that's already modified for it so we don't have to
   //modify it from the outside
-  /*RovePwmRead_Handle handle = initPwmRead(0, ENCODER1_READING_PIN);
+  RovePwmRead_Handle handle = initPwmRead(0, ENCODER1_READING_PIN);
   setDisconnectCheckTimeout(handle, 20000);
-  handle = initPwmRead(1, ENCODER2_READING_PIN);
+  /*handle = initPwmRead(1, ENCODER2_READING_PIN);
   setDisconnectCheckTimeout(handle, 20000);
   handle = initPwmRead(2, ENCODER3_READING_PIN);
   setDisconnectCheckTimeout(handle, 20000);
@@ -89,8 +89,6 @@ void init()
   wristTiltJointEncoder.setMaxPwm(4285);
   wristRotateJointEncoder.setMaxPwm(4045);
 
-  elbowTiltJointEncoder.setMaxDisconnectCount(70);
-  baseTiltJointEncoder.setMaxDisconnectCount(70);
 
   baseRotateJointEncoder.setFilterConstant(.2); //value that just worked.
   baseTiltJointEncoder.setFilterConstant(.2);
@@ -958,7 +956,7 @@ void closedLoopUpdateHandler()
     jointUpdated = 1;
   }
 
-  if(status == AlgorithmError)
+  if(status == FeedbackError)
   {
     switchToOpenLoop();
     roveComm_SendMsg(ArmFault, sizeof(faultMessage), (void*)&faultMessage);
