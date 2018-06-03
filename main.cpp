@@ -1,3 +1,35 @@
+/*
+ * main.cpp
+ *
+ *  Created on: Sep 3, 2017
+ *      Author: drue (drscp5@mst.edu), RMC by Drue, David, Timur, Eli, Chris Dutcher. Kinematics by Chris Novatny.
+ *
+ *  Project: Arm Board Software
+ *
+ *  Libraries used: Roveware (RoveComm and RMC), Roveboard for the tiva.
+ *
+ *  Description: This is the program used for all processing, controls and telemetry regarding the robotic arm.
+ *  Meant to be ran off of one tiva and used on 2018's arm board.
+ *  The program is split into multiple files; main.cpp is the front end, where all general operational logic and communications
+ *  occur. RMCInstances h and cpp contain the global instances of the RMC objects used to execute the arm logic (RMC
+ *  is the source for the motion controls itself, main.cpp just tells RMC what to do. In this way main.cpp is the front end
+ *  that deals with operation while RMC is the backend that deals with execution). Kinematics contains all the math
+ *  and functions needed for performing IK operations. ArmModelInfo.h finally just contains any info related to the arm
+ *  itself physically.
+ *
+ *  Everything is fairly standard to the rover template after that; a main switch case for processing commands,
+ *  a loop to check for faults in the arm, a loop for reading current sensors, and a loop for sending telemetry. The main
+ *  things of note are that the arm can switch between three different control states. Open loop is as described above, but
+ *  Closed loop and IKIncrement loop both start a thread on timer 6 and 7 to periodically update the closed loop control
+ *  system independent of the main loop.
+ *
+ *  Hardware used; Timers 6 and 7 are used for threading, a pwm module is used to control the motors, several adc channels
+ *  are used for reading currents. An internal watchdog is used that restarts the entire program after about a second
+ *  without receiving any base station commands, in open loop mode at least. For a full list of all the pins used,
+ *  see main.h
+ */
+
+
 #include "main.h"
 #include <stdio.h>
 

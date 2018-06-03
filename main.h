@@ -2,7 +2,9 @@
  * main.h
  *
  *  Created on: Sep 3, 2017
- *      Author: drue
+ *      Author: drue (drscp5@mst.edu), RMC by Drue, David, Timur, Eli, Chris Dutcher. Kinematics by Chris Novatny.
+ *
+ *
  */
 
 #ifndef MAIN_H_
