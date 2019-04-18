@@ -25,8 +25,28 @@ void setup()
 void loop()
 {
   rovecomm_packet = RoveComm.read();
-  if(rovecomm_packet.data_id == RC_ARMBOARD_FOREARM_DATAID)
+  switch(rovecomm_packet.data_id)
   {
+    case RC_ARMBOARD_FOREARM_DATAID:
+      doOpenLoop();
+      break;
+    default:
+      break;
+  }
+}
+
+void readAngles()
+{
+  int jointAngles[2];
+
+  jointAngles[0] = Wrist.TwistEncoder.readMillidegrees();
+  jointAngles[1] = Wrist.TiltEncoder.readMillidegrees();
+
+  RoveComm.writeTo(RC_ARMBOARD_FOREARM_MOTORANGLES_DATAID, 4, jointAngles, 192, 168, 1, RC_ARMBOARD_FOURTHOCTET, 11000);
+}
+
+void doOpenLoop()
+{
     if(abs(rovecomm_packet.data[0]) < 50 && abs(rovecomm_packet.data[1]) < 50 && abs(rovecomm_packet.data[3]) < 50 && abs(rovecomm_packet.data[4]) < 50)
     {
         estop();
@@ -43,12 +63,6 @@ void loop()
     Serial.println(rovecomm_packet.data[2]);
     Gripper.drive(rovecomm_packet.data[2]);
     Watchdog.clear();
-
-  }
-  //Serial.println("Tilt:");
-  //Serial.println(Wrist.TiltEncoder.readDegrees());
-  //Serial.println("Twist:");
-  //Serial.println(Wrist.TwistEncoder.readDegrees());
 }
 
 void estop()

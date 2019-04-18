@@ -10,7 +10,11 @@ RoveStmVnhPwm Gripper;
 
 RoveCommEthernetUdp RoveComm;
 RoveWatchdog Watchdog;
+RoveTimerInterrupt TelemetryTimer;
 
+void readAngles();
+
+void doOpenLoop();
 
 struct rovecomm_packet rovecomm_packet;
 

@@ -8,9 +8,9 @@
 RoveCommEthernetUdp RoveComm;
 struct rovecomm_packet rovecomm_packet;
 
-RoveTimerInterrupt TelemetryTimer;
+int currentPositions[6];
 
-const uint8_t SOLENOID_PIN      = PN_3;
+const uint8_t SOLENOID_PIN      = PN_3; //does not work currently
 
 
 

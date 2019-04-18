@@ -47,14 +47,6 @@ void loop()
    forearmVals[1] = rovecomm_packet.data[5]; //J6
    forearmVals[2] = rovecomm_packet.data[6]; //J6
 
-   //if(rovecomm_packet.data[7]>0)
-   //{
-     //digitalWrite(SOLENOID_PIN, HIGH);
-  // }
-   //else if(rovecomm_packet.data[7]<0)
-   //{
-     //digitalWrite(SOLENOID_PIN, LOW);
-   //}
    //sending the motor commands to their specific boards
    RoveComm.writeTo(RC_ARMBOARD_BICEP_DATAID, 4, bicepVals, 192, 168, 1, RC_BICEP_FOURTHOCTET, 11000);
    RoveComm.writeTo(RC_ARMBOARD_FOREARM_DATAID, 3, forearmVals, 192, 168, 1, RC_FOREARM_FOURTHOCTET, 11000);
