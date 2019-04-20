@@ -13,14 +13,18 @@ void setup()
   //set motor speeds to 0, to be safe
   Wrist.LeftMotor.drive(0);
   Wrist.RightMotor.drive(0);
-  Watchdog.attach(estop);
-  Watchdog.start(1000);
+
   Wrist.TiltEncoder.attach(WRIST_TILT_ENCODER);
   Wrist.TiltEncoder.start();
   Wrist.TwistEncoder.attach(WRIST_TWIST_ENCODER);
   Wrist.TwistEncoder.start();
 
+  Watchdog.attach(estop);
+  Watchdog.start(1000);
+
 }
+
+uint32_t timer = millis();
 
 void loop()
 {
@@ -33,16 +37,27 @@ void loop()
     default:
       break;
   }
+  jointAngles[0] = Wrist.TwistEncoder.readMillidegrees();
+  jointAngles[1] = Wrist.TiltEncoder.readMillidegrees();
+
+  if (timer > millis())
+  {
+    timer = millis();
+  }//end if
+
+  if (millis() - timer > 100) 
+  {
+    timer = millis(); 
+    readAngles();
+  }
 }
 
 void readAngles()
 {
-  int jointAngles[2];
-
-  jointAngles[0] = Wrist.TwistEncoder.readMillidegrees();
-  jointAngles[1] = Wrist.TiltEncoder.readMillidegrees();
-
-  RoveComm.writeTo(RC_ARMBOARD_FOREARM_MOTORANGLES_DATAID, 4, jointAngles, 192, 168, 1, RC_ARMBOARD_FOURTHOCTET, 11000);
+  Serial.println("Joints");
+  Serial.println(jointAngles[0]);
+  Serial.println(jointAngles[1]);
+  RoveComm.writeTo(RC_ARMBOARD_FOREARM_MOTORANGLES_DATAID, 2, jointAngles, 192, 168, 1, RC_ARMBOARD_FOURTHOCTET, 11000);
 }
 
 void doOpenLoop()

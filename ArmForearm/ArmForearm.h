@@ -12,6 +12,8 @@ RoveCommEthernetUdp RoveComm;
 RoveWatchdog Watchdog;
 RoveTimerInterrupt TelemetryTimer;
 
+uint32_t jointAngles[2];
+
 void readAngles();
 
 void doOpenLoop();

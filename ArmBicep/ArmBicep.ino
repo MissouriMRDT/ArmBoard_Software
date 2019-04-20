@@ -9,14 +9,29 @@ void setup()
   Shoulder.RightMotor.attach(SHOULDER_RIGHT_INA, SHOULDER_RIGHT_INB, SHOULDER_RIGHT_PWM);
   Elbow.LeftMotor.attach(ELBOW_LEFT_INA, ELBOW_LEFT_INB, ELBOW_LEFT_PWM);
   Elbow.RightMotor.attach(ELBOW_RIGHT_INA, ELBOW_RIGHT_INB, ELBOW_RIGHT_PWM);
+
+  Shoulder.TiltEncoder.attach(SHOULDER_TILT_ENCODER);
+  Shoulder.TwistEncoder.attach(SHOULDER_TWIST_ENCODER);
+
+  Elbow.TiltEncoder.attach(ELBOW_TILT_ENCODER);
+  Elbow.TwistEncoder.attach(ELBOW_TWIST_ENCODER);
+
   Shoulder.LeftMotor.drive(0);
   Shoulder.RightMotor.drive(0);
+  Shoulder.TiltEncoder.start();
+  Shoulder.TwistEncoder.start();
+
   Elbow.LeftMotor.drive(0);
   Elbow.RightMotor.drive(0);
+  Elbow.TiltEncoder.start();
+  Elbow.TwistEncoder.start();
 
   Watchdog.attach(estop);
   Watchdog.start(1000);
+
 }
+
+uint32_t timer = millis();
 
 void loop()
 {
@@ -28,6 +43,21 @@ void loop()
       break;
     default:
       break;
+  }
+  jointAngles[0] = Shoulder.TwistEncoder.readMillidegrees();
+  jointAngles[1] = Shoulder.TiltEncoder.readMillidegrees();
+  jointAngles[2] = Elbow.TiltEncoder.readMillidegrees();
+  jointAngles[3] = Elbow.TwistEncoder.readMillidegrees();
+
+  if (timer > millis())
+  {
+    timer = millis();
+  }//end if
+
+  if (millis() - timer > 100) 
+  {
+    timer = millis(); 
+    readAngles();
   }
 }
 
@@ -45,14 +75,13 @@ void estop()
 
 void readAngles()
 {
-  int jointAngles[4];
-
-  jointAngles[0] = Shoulder.TwistEncoder.readMillidegrees();
-  jointAngles[1] = Shoulder.TiltEncoder.readMillidegrees();
-  jointAngles[2] = Elbow.TiltEncoder.readMillidegrees();
-  jointAngles[3] = Elbow.TwistEncoder.readMillidegrees();
-
+  Serial.println("Joints");
+  Serial.println(jointAngles[0]);
+  Serial.println(jointAngles[1]);
+  Serial.println(jointAngles[2]);
+  Serial.println(jointAngles[3]);
   RoveComm.writeTo(RC_ARMBOARD_BICEP_MOTORANGLES_DATAID, 4, jointAngles, 192, 168, 1, RC_ARMBOARD_FOURTHOCTET, 11000);
+  Watchdog.clear();
 }
 
 void doOpenLoop()
