@@ -5,18 +5,22 @@
 #include "RoveComm.h"
 
 RoveDifferentialJoint Wrist;
-
 RoveStmVnhPwm Gripper;
 
 RoveCommEthernetUdp RoveComm;
 RoveWatchdog Watchdog;
-RoveTimerInterrupt TelemetryTimer;
+RoveTimerInterrupt TelemetryTimer; //currently not being used as the timer interrupt causes issues when reading encoder values
 
 uint32_t jointAngles[2];
 
-void readAngles();
+void updatePositon();
+//this will update encoder values and send angles to driveboard intermittently. It also handles reading in commands and doing things with them.
+//returns the data id of the latest rovecomm packet
+int parsePackets();
 
 void doOpenLoop();
+void doClosedLoop();
+
 
 struct rovecomm_packet rovecomm_packet;
 

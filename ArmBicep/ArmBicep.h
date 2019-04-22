@@ -3,6 +3,7 @@
 
 #include "RoveDifferentialJoint.h"
 #include "RoveComm.h"
+#include "RovePid.h"
 
 RoveDifferentialJoint Shoulder;
 RoveDifferentialJoint Elbow;
@@ -11,9 +12,12 @@ RoveCommEthernetUdp RoveComm;
 RoveWatchdog Watchdog;
 RoveTimerInterrupt TelemetryTimer;
 
+RovePidInts Pid;
+
 uint32_t jointAngles[4];
 
 void doOpenLoop();
+void doClosedLoop();
 void readAngles();
 
 struct rovecomm_packet rovecomm_packet;

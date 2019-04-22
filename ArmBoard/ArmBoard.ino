@@ -21,9 +21,8 @@ void setup()
 void loop()
 {
  rovecomm_packet = RoveComm.read();
- //Serial.println("Current id: ");
  if(rovecomm_packet.data_id!=0)
-  Serial.println(rovecomm_packet.data_id);
+  //Serial.println(rovecomm_packet.data_id);
 
  switch(rovecomm_packet.data_id)
  {
@@ -39,6 +38,9 @@ void loop()
    case RC_ARMBOARD_BICEP_MOTORANGLES_DATAID:
    case RC_ARMBOARD_FOREARM_MOTORANGLES_DATAID:
     updatePosition();
+    break;
+  case RC_ARMBOARD_MOVETOANGLE_DATAID:
+    doClosedLoop();
     break;
    default:
     break;
@@ -63,7 +65,7 @@ void doOpenLoop()
    bicepVals[3] = rovecomm_packet.data[3]; //J4
    forearmVals[0] = rovecomm_packet.data[4]; //J5
    forearmVals[1] = rovecomm_packet.data[5]; //J6
-   forearmVals[2] = rovecomm_packet.data[6]; //J6
+   forearmVals[2] = rovecomm_packet.data[6]; //Gripper
 
   if(rovecomm_packet.data[7] > 0)
   {
@@ -73,6 +75,12 @@ void doOpenLoop()
     digitalWrite(SOLENOID_CRTL_PIN, LOW); //Solenoid actuates
     digitalWrite(SW1_IND_PIN, LOW);
   }
+  else
+  {
+    digitalWrite(SOLENOID_CRTL_PIN, LOW); //Solenoid actuates
+    Serial.println("LOW");
+  }
+  
 
    //sending the motor commands to their specific boards
    RoveComm.writeTo(RC_ARMBOARD_BICEP_DATAID, 4, bicepVals, 192, 168, 1, RC_BICEP_FOURTHOCTET, 11000);
@@ -81,7 +89,29 @@ void doOpenLoop()
 
 void doClosedLoop()
 {
-  //insert closed loop
+   Serial.println("Angles to go to: ");
+   uint32_t bicepVals[4];
+   uint32_t forearmVals[2];
+   Serial.println("Joint 1 Angle:");
+   Serial.println(rovecomm_packet.data[0]);
+   Serial.println("Joint 2 Angle:");
+   Serial.println(rovecomm_packet.data[1]);
+   Serial.println("Joint 3 Angle:");
+   Serial.println(rovecomm_packet.data[2]);
+   Serial.println("Joint 4 Angle:");
+   Serial.println(rovecomm_packet.data[3]);
+   Serial.println("Joint 5 Angle:");
+   Serial.println(rovecomm_packet.data[4]);
+   Serial.println("Joint 6 Angle:");
+   Serial.println(rovecomm_packet.data[5]);
+   bicepVals[0] = rovecomm_packet.data[0]; //J1
+   bicepVals[1] = rovecomm_packet.data[1]; //J2
+   bicepVals[2] = rovecomm_packet.data[2]; //J3
+   bicepVals[3] = rovecomm_packet.data[3]; //J4
+   forearmVals[0] = rovecomm_packet.data[4]; //J5
+   forearmVals[1] = rovecomm_packet.data[5]; //J6
+   RoveComm.writeTo(RC_ARMBOARD_BICEP_ANGLE_DATAID, 4, bicepVals, 192, 168, 1, RC_BICEP_FOURTHOCTET, 11000);
+   RoveComm.writeTo(RC_ARMBOARD_FOREARM_ANGLE_DATAID, 2, forearmVals, 192, 168, 1, RC_FOREARM_FOURTHOCTET, 11000);
 }
 
 void toolSelection()

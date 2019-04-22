@@ -10,6 +10,7 @@ RoveCommEthernetUdp RoveComm;
 struct rovecomm_packet rovecomm_packet;
 
 void doOpenLoop();
+void doClosedLoop();
 void toolSelection();
 void parseCommand();
 void updatePosition();

@@ -26,6 +26,8 @@ void setup()
   Elbow.TiltEncoder.start();
   Elbow.TwistEncoder.start();
 
+  Pid.attach( -1000.0, 1000.0, 1.0, 2.0, 1.0 );
+
   Watchdog.attach(estop);
   Watchdog.start(1000);
 
@@ -41,11 +43,14 @@ void loop()
     case RC_ARMBOARD_BICEP_DATAID:
       doOpenLoop();
       break;
+    case RC_ARMBOARD_BICEP_ANGLE_DATAID:
+      doClosedLoop();
+      break;
     default:
       break;
   }
-  jointAngles[0] = Shoulder.TwistEncoder.readMillidegrees();
-  jointAngles[1] = Shoulder.TiltEncoder.readMillidegrees();
+  jointAngles[0] = Shoulder.TiltEncoder.readMillidegrees();
+  jointAngles[1] = Shoulder.TwistEncoder.readMillidegrees();
   jointAngles[2] = Elbow.TiltEncoder.readMillidegrees();
   jointAngles[3] = Elbow.TwistEncoder.readMillidegrees();
 
@@ -71,6 +76,14 @@ void estop()
   Shoulder.RightMotor.drive(0);
   Watchdog.clear();
 
+}
+
+void doClosedLoop()
+{
+  Serial.println(Pid.incrementPid(rovecomm_packet.data[0], jointAngles[0]));
+  Serial.println(Pid.incrementPid(rovecomm_packet.data[1], jointAngles[1]));
+  Serial.println(Pid.incrementPid(rovecomm_packet.data[2], jointAngles[2]));
+  Serial.println(Pid.incrementPid(rovecomm_packet.data[3], jointAngles[3]));
 }
 
 void readAngles()

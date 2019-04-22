@@ -19,8 +19,11 @@ void setup()
   Wrist.TwistEncoder.attach(WRIST_TWIST_ENCODER);
   Wrist.TwistEncoder.start();
 
-  Watchdog.attach(estop);
-  Watchdog.start(1000);
+  Watchdog.attach(stop);
+  Watchdog.start(4000);
+
+  Wrist.TiltPid.attach( -1000.0, 1000.0, 80, 10, 20 ); //very much subject to change
+  Wrist.TwistPid.attach( -1000.0, 1000.0, 80, 5, 0 ); //very much subject to change
 
 }
 
@@ -28,61 +31,105 @@ uint32_t timer = millis();
 
 void loop()
 {
-  rovecomm_packet = RoveComm.read();
-  switch(rovecomm_packet.data_id)
-  {
-    case RC_ARMBOARD_FOREARM_DATAID:
-      doOpenLoop();
-      break;
-    default:
-      break;
-  }
-  jointAngles[0] = Wrist.TwistEncoder.readMillidegrees();
-  jointAngles[1] = Wrist.TiltEncoder.readMillidegrees();
-
-  if (timer > millis())
-  {
-    timer = millis();
-  }//end if
-
-  if (millis() - timer > 100) 
-  {
-    timer = millis(); 
-    readAngles();
-  }
-}
-
-void readAngles()
-{
-  Serial.println("Joints");
-  Serial.println(jointAngles[0]);
-  Serial.println(jointAngles[1]);
-  RoveComm.writeTo(RC_ARMBOARD_FOREARM_MOTORANGLES_DATAID, 2, jointAngles, 192, 168, 1, RC_ARMBOARD_FOURTHOCTET, 11000);
+  parsePackets();
+  updatePosition();
 }
 
 void doOpenLoop()
 {
-    if(abs(rovecomm_packet.data[0]) < 50 && abs(rovecomm_packet.data[1]) < 50 && abs(rovecomm_packet.data[3]) < 50 && abs(rovecomm_packet.data[4]) < 50)
+    if(abs(rovecomm_packet.data[0]) < 50 && abs(rovecomm_packet.data[1]) < 50 && abs(rovecomm_packet.data[3]) < 50)
     {
-        estop();
+        //if we are getting zeros for everything we stop
+        stop();
     }
-    //print telemetry
-    Serial.print("Wrist tilt: ");
-    Serial.println(rovecomm_packet.data[0]);
-    Serial.print("Wrist twist: ");
-    Serial.println(rovecomm_packet.data[1]);
     if(abs(rovecomm_packet.data[0]) >= 70 || abs(rovecomm_packet.data[1]) >= 70)
-      Wrist.tiltTwistDecipercent((rovecomm_packet.data[0]*2), (rovecomm_packet.data[1]*2));
+      Wrist.tiltTwistDecipercent((rovecomm_packet.data[0]), (rovecomm_packet.data[1]));
 
-    Serial.print("Gripper value: ");
-    Serial.println(rovecomm_packet.data[2]);
     Gripper.drive(rovecomm_packet.data[2]);
     Watchdog.clear();
 }
 
-void estop()
+int parsePackets()
 {
-  Serial.println("WE ESTOPPED");
+   rovecomm_packet = RoveComm.read();
+   switch(rovecomm_packet.data_id)
+   {
+    case RC_ARMBOARD_FOREARM_DATAID:
+      doOpenLoop();
+      break;
+    case RC_ARMBOARD_FOREARM_ANGLE_DATAID:
+      doClosedLoop();
+      break;
+    default:
+      break;
+   }
+}
+
+void updatePosition()
+{
+   jointAngles[0] = Wrist.TiltEncoder.readMillidegrees();
+   jointAngles[1] = Wrist.TwistEncoder.readMillidegrees();
+   
+   if (timer > millis())
+   {
+    timer = millis();
+   }
+
+   if (millis() - timer > 100) 
+   {
+    timer = millis(); 
+    RoveComm.writeTo(RC_ARMBOARD_FOREARM_MOTORANGLES_DATAID, 2, jointAngles, 192, 168, 1, RC_ARMBOARD_FOURTHOCTET, 11000);
+   }
+}
+void doClosedLoop()
+{
+  int tilt;
+  int twist;
+  Serial.println("Target:");
+  Serial.print(rovecomm_packet.data[0]);
+  Serial.print(" ");
+  Serial.println(rovecomm_packet.data[1]);
+  Serial.println("Current:");
+  Serial.print(jointAngles[0]);
+  Serial.print(" ");
+  Serial.print(jointAngles[1]);
+  jointAngles[0] = Wrist.TiltEncoder.readMillidegrees();
+  jointAngles[1] = Wrist.TwistEncoder.readMillidegrees();
+  tilt  = -J5Pid.incrementPid(rovecomm_packet.data[0], jointAngles[0],250);
+  twist = -J6Pid.incrementPid(rovecomm_packet.data[1], jointAngles[1],250);
+  int last_command = parsePackets(); //<- Make sure this is not run to early? I assume not
+
+  //if we still need to increment our pid loop and we haven't received a new command, continue
+
+  while((tilt != 0 || twist != 0) && last_command != (RC_ARMBOARD_FOREARM_ANGLE_DATAID || RC_ARMBOARD_FOREARM_DATAID))
+  {
+    Wrist.tiltTwistDecipercent(tilt, twist);
+
+    jointAngles[0] = Wrist.TiltEncoder.readMillidegrees();
+    jointAngles[1] = Wrist.TwistEncoder.readMillidegrees();
+    tilt  = -Wrist.TiltPid.incrementPid(rovecomm_packet.data[0], jointAngles[0],250);  //TODO: Have the PID loop understand the 0->360 transition
+    twist = -Wrist.TwistPid.incrementPid(rovecomm_packet.data[1], jointAngles[1],250);
+
+    last_command = parsePackets();
+    updatePosition();
+    Watchdog.clear();
+  }
+
+  Wrist.LeftMotor.drive(0);
+  Wrist.RightMotor.drive(0);  
+  Serial.println("Target:");
+  Serial.print(rovecomm_packet.data[0]);
+  Serial.print(" ");
+  Serial.println(rovecomm_packet.data[1]);
+  Serial.println("Final:");
+  Serial.print(jointAngles[0]);
+  Serial.print(" ");
+  Serial.println(jointAngles[1]);
+}
+
+void stop()
+{
+  Serial.println("WE STOPPED");
   Wrist.LeftMotor.drive(0);
   Wrist.RightMotor.drive(0);
   Gripper.drive(0);
