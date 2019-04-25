@@ -15,7 +15,7 @@ void toolSelection();
 void parseCommand();
 void updatePosition();
 
-uint32_t currentPositions[6];
+uint32_t currentPositions[6] = {-1};
 
 const uint8_t SOLENOID_CRTL_PIN   =	PP_2;
 const uint8_t SW1_IND_PIN	      = PH_0;

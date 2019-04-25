@@ -26,7 +26,11 @@ void setup()
   Elbow.TiltEncoder.start();
   Elbow.TwistEncoder.start();
 
-  Pid.attach( -1000.0, 1000.0, 1.0, 2.0, 1.0 );
+  Elbow.TiltPid.attach( -1000.0, 1000.0, 1.0, 2.0, 1.0 );
+  Elbow.TwistPid.attach( -1000.0, 1000.0, 1.0, 2.0, 1.0 );
+
+  Shoulder.TiltPid.attach( -1000.0, 1000.0, 1.0, 2.0, 1.0 );
+  Shoulder.TwistPid.attach( -1000.0, 1000.0, 1.0, 2.0, 1.0 );
 
   Watchdog.attach(estop);
   Watchdog.start(1000);
@@ -80,10 +84,10 @@ void estop()
 
 void doClosedLoop()
 {
-  Serial.println(Pid.incrementPid(rovecomm_packet.data[0], jointAngles[0]));
-  Serial.println(Pid.incrementPid(rovecomm_packet.data[1], jointAngles[1]));
-  Serial.println(Pid.incrementPid(rovecomm_packet.data[2], jointAngles[2]));
-  Serial.println(Pid.incrementPid(rovecomm_packet.data[3], jointAngles[3]));
+  //Serial.println(Pid.incrementPid(rovecomm_packet.data[0], jointAngles[0]));
+  //Serial.println(Pid.incrementPid(rovecomm_packet.data[1], jointAngles[1]));
+  //Serial.println(Pid.incrementPid(rovecomm_packet.data[2], jointAngles[2]));
+  //Serial.println(Pid.incrementPid(rovecomm_packet.data[3], jointAngles[3]));
 }
 
 void readAngles()
@@ -107,26 +111,26 @@ void doOpenLoop()
 
   if(abs(rovecomm_packet.data[0]) < 50 && abs(rovecomm_packet.data[1]) < 50 && abs(rovecomm_packet.data[3]) < 50 && abs(rovecomm_packet.data[4]) < 50)
   {
-      estop();
+    estop();
   }
   if(rovecomm_packet.data[0] >= 70)
   {
-      Shoulder.tiltTwistDecipercent((rovecomm_packet.data[1])*2/3, (rovecomm_packet.data[0])*2/3);
+    Shoulder.tiltTwistDecipercent((rovecomm_packet.data[1])*2/3, (rovecomm_packet.data[0])*2/3);
   }
   else if(rovecomm_packet.data[0] <= -70)
   {
-      Shoulder.tiltTwistDecipercent((rovecomm_packet.data[1])/3, (rovecomm_packet.data[0])/3);
+    Shoulder.tiltTwistDecipercent((rovecomm_packet.data[1])/3, (rovecomm_packet.data[0])/3);
   }
   else if(rovecomm_packet.data[1] >= 70)
   {
-    Shoulder.tiltTwistDecipercent((rovecomm_packet.data[1])/2, (rovecomm_packet.data[0])/2, true);
+    Shoulder.tiltTwistDecipercent((rovecomm_packet.data[1])/2, (rovecomm_packet.data[0])/2, Shoulder.comp_side.right);
   }
   else if(rovecomm_packet.data[1] <= -70)
   {
-    Shoulder.tiltTwistDecipercent((rovecomm_packet.data[1])/2, (rovecomm_packet.data[0])/2,false,true);
+    Shoulder.tiltTwistDecipercent((rovecomm_packet.data[1])/2, (rovecomm_packet.data[0])/2, Shoulder.comp_side.left);
   }
   if(abs(rovecomm_packet.data[2]) >= 70 || abs(rovecomm_packet.data[3]) >= 70)
-      Elbow.tiltTwistDecipercent((rovecomm_packet.data[2])/2, (rovecomm_packet.data[3])/2);
+    Elbow.tiltTwistDecipercent((rovecomm_packet.data[2])*2/3, (rovecomm_packet.data[3])*2/3);
 
   Watchdog.clear();
 }

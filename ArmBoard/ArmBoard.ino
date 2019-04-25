@@ -21,9 +21,6 @@ void setup()
 void loop()
 {
  rovecomm_packet = RoveComm.read();
- if(rovecomm_packet.data_id!=0)
-  //Serial.println(rovecomm_packet.data_id);
-
  switch(rovecomm_packet.data_id)
  {
    case RC_ARMBOARD_MOVEOPENLOOP_DATAID:
@@ -159,6 +156,7 @@ void parseCommand()
     Serial.println(currentPositions[4]);
     Serial.println("Joint 6 Angle:");
     Serial.println(currentPositions[5]);
+    Serial.println("sending");
     RoveComm.write(RC_ARMBOARD_MOTORANGLES_DATAID, 6, currentPositions);
   }
   else if(rovecomm_packet.data[RC_ARMBOARD_ARMCOMMANDS_SWAPP_GRIPPERENTRY] == 1)
