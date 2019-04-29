@@ -123,11 +123,11 @@ void doOpenLoop()
   }
   else if(rovecomm_packet.data[1] >= 70)
   {
-    Shoulder.tiltTwistDecipercent((rovecomm_packet.data[1])/2, (rovecomm_packet.data[0])/2, Shoulder.comp_side.right);
+    Shoulder.tiltTwistDecipercent((rovecomm_packet.data[1])/2, (rovecomm_packet.data[0])/2, Shoulder.Right);
   }
   else if(rovecomm_packet.data[1] <= -70)
   {
-    Shoulder.tiltTwistDecipercent((rovecomm_packet.data[1])/2, (rovecomm_packet.data[0])/2, Shoulder.comp_side.left);
+    Shoulder.tiltTwistDecipercent((rovecomm_packet.data[1])/2, (rovecomm_packet.data[0])/2, Shoulder.Left);
   }
   if(abs(rovecomm_packet.data[2]) >= 70 || abs(rovecomm_packet.data[3]) >= 70)
     Elbow.tiltTwistDecipercent((rovecomm_packet.data[2])*2/3, (rovecomm_packet.data[3])*2/3);
