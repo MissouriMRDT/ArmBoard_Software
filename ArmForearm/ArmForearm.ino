@@ -25,7 +25,6 @@ void setup()
   //TODO: For testing maybe have some way of RED tweaking these constants?
   Wrist.TiltPid.attach( -1000.0, 1000.0, 48, 2, 0.5 ); //very much subject to change
   Wrist.TwistPid.attach( -1000.0, 1000.0, 48, 1, 0.1375 ); //very much subject to change
-  //Wrist.TwistPid.attach( -1000.0, 1000.0, 10, 5, 0 ); //very much subject to change
 
 }
 
@@ -35,9 +34,10 @@ void loop()
 {
   parsePackets();
   updatePosition();
+  ClosedLoop();
 }
 
-void doOpenLoop()
+void OpenLoop()
 {
     if(abs(rovecomm_packet.data[0]) < 50 && abs(rovecomm_packet.data[1]) < 50 && abs(rovecomm_packet.data[3]) < 50)
     {
@@ -51,22 +51,23 @@ void doOpenLoop()
     Watchdog.clear();
 }
 
-int parsePackets()
+void parsePackets()
 {
    rovecomm_packet = RoveComm.read();
    switch(rovecomm_packet.data_id)
    {
     case RC_ARMBOARD_FOREARM_DATAID:
-      doOpenLoop();
+      DO_CLOSED_LOOP = false;
+      OpenLoop();
       break;
     case RC_ARMBOARD_FOREARM_ANGLE_DATAID:
-      
-      doClosedLoop();
+      DO_CLOSED_LOOP == true;
+      tiltTarget = rovecomm_packet.data[0];
+      twistTarget = rovecomm_packet.data[1];
       break;
     default:
       break;
    }
-   return rovecomm_packet.data_id;
 }
 
 void updatePosition()
@@ -86,111 +87,97 @@ void updatePosition()
    }
 }
 
-void doClosedLoop()
+void ClosedLoop()
 {
-  float tilt;
-  float twist;
-  int smaller = 0;
-  int larger =  0;
-  int fakeTilt = 0;
-  int fakeTiltAngle = 0;
-  int fakeTwist = 0;
-  int fakeTwistAngle = 0;
-  float tiltTarget = rovecomm_packet.data[0];
-  float twistTarget = rovecomm_packet.data[1];
-
-  Serial.println("Target:");
-  Serial.print(tiltTarget);
-  Serial.print(" ");
-  Serial.println(twistTarget);
-  Serial.println("Current:");
-  Serial.print(jointAngles[0]);
-  Serial.print(" ");
-  Serial.print(jointAngles[1]);
-
-  jointAngles[0] = Wrist.TiltEncoder.readMillidegrees();
-  jointAngles[1] = Wrist.TwistEncoder.readMillidegrees();
-
-  tilt  = -Wrist.TiltPid.incrementPid(tiltTarget, jointAngles[0],250.00);
-  twist = -Wrist.TwistPid.incrementPid(twistTarget, jointAngles[1],250.00);
-
-  int last_command = parsePackets(); //<- Make sure this is not run to early? I assume not
-  while((tilt != 0) && last_command != RC_ARMBOARD_FOREARM_ANGLE_DATAID && last_command != RC_ARMBOARD_FOREARM_DATAID)
+  if(DO_CLOSED_LOOP)
   {
-    Wrist.tiltTwistDecipercent(tilt, twist);
-
-    jointAngles[0] = Wrist.TiltEncoder.readMillidegrees();
-    jointAngles[1] = Wrist.TwistEncoder.readMillidegrees();
-    ///MATH FOR J0
-    //check if it's faster to go from 360->0 or 0->360 then the normal way
-    smaller = min(tiltTarget, jointAngles[0]);
-    larger =  max(tiltTarget, jointAngles[0]);
-    //if wrapping around 360 is faster than going normally
-    if((smaller+(360000-larger)) < abs(jointAngles[0]-tiltTarget))
-    {
-      if(jointAngles[0]-(smaller+(360000-larger))<0)
-      {
-        fakeTilt  = tiltTarget+(smaller+(360000-larger));
-        fakeTiltAngle = fakeTilt+(tiltTarget - jointAngles[0]);
-      }
-      else if(jointAngles[0]-(smaller+(360000-larger))>0)
-      {
-        fakeTilt  = tiltTarget-(smaller+(360000-larger));
-        fakeTiltAngle = fakeTilt-(tiltTarget - jointAngles[0]);
-      }
-      tilt  = Wrist.TiltPid.incrementPid(fakeTilt, fakeTiltAngle,250.00);
-    }
-    //if the normal way is faster, or equal we want less of a headache
-    else if((smaller+(360000-larger)) >= abs(jointAngles[0]-tiltTarget))
-    {
-       tilt  = -Wrist.TiltPid.incrementPid(tiltTarget, jointAngles[0],250.00);
-    }
-    Watchdog.clear();
-    ///MATH FOR J1
-    //check if it's faster to go from 360->0 or 0->360 then the normal way
-    smaller = min(twistTarget, jointAngles[1]);
-    larger =  max(twistTarget, jointAngles[1]);
-    //if wrapping around 360 is faster than going normally
-    if((smaller+(360000-larger)) < abs(jointAngles[1]-twistTarget))
-    {
-      if(jointAngles[1]-(smaller+(360000-larger))<0)
-      {
-        fakeTwist  = twistTarget+(smaller+(360000-larger));
-        fakeTwistAngle = fakeTwist+(twistTarget - jointAngles[1]);
-      }
-      else if(jointAngles[0]-(smaller+(360000-larger))>0)
-      {
-        fakeTwist  = twistTarget-(smaller+(360000-larger));
-        fakeTwistAngle = fakeTwist-(twistTarget - jointAngles[1]);
-      }
-      twist  = Wrist.TwistPid.incrementPid(fakeTwist, fakeTwistAngle,250.00);
-    }
-    //if the normal way is faster, or equal we want less of a headache
-    else if((smaller+(360000-larger)) >= abs(jointAngles[1]-twistTarget))
-    {
-       twist  = -Wrist.TwistPid.incrementPid(twistTarget, jointAngles[1],250.00);
-    }
-    last_command = parsePackets();
+    float outputs[2];
     updatePosition();
+    moveToAngle(Wrist, tiltTarget, twistTarget, jointAngles, outputs);
+    float tilt = outputs[0];
+    float twist = outputs[1];
+
+    if((tilt != 0 && twist!=0))
+    { 
+      Wrist.tiltTwistDecipercent(tilt, twist);
+    }
+    else if(tilt == 0 && twist == 0)
+    {
+      DO_CLOSED_LOOP = false;
+      Wrist.LeftMotor.drive(0);
+      Wrist.RightMotor.drive(0);
+    }  
+
     Watchdog.clear();
   }
-  Serial.println(last_command);
 
-  Wrist.LeftMotor.drive(0);
-  Wrist.RightMotor.drive(0);  
-  Serial.println("Target:");
-  Serial.print(tiltTarget);
-  Serial.print(" ");
-  Serial.println(twistTarget);
-  Serial.println("Final:");
-  Serial.print(jointAngles[0]);
-  Serial.print(" ");
-  Serial.println(jointAngles[1]);
+}
+
+void moveToAngle(RoveDifferentialJoint &Joint, float tiltTo, float twistTo, uint32_t Angles[2], float outputs[2])
+{
+    float tilt;
+    float twist;
+    int smaller = 0;
+    int larger =  0;
+    int fakeTilt = 0;
+    int fakeTiltAngle = 0;
+    int fakeTwist = 0;
+    int fakeTwistAngle = 0;
+    ///MATH FOR J0
+    //check if it's faster to go from 360->0 or 0->360 then the normal way
+    smaller = min(tiltTo, Angles[0]);
+    larger =  max(tiltTo, Angles[0]);
+    //if wrapping around 360 is faster than going normally
+    if((smaller+(360000-larger)) < abs(Angles[0]-tiltTo))
+    {
+      if(Angles[0]-(smaller+(360000-larger))<0)
+      {
+        fakeTilt  = tiltTo+(smaller+(360000-larger));
+        fakeTiltAngle = fakeTilt+(tiltTo - Angles[0]);
+      }
+      else if(Angles[0]-(smaller+(360000-larger))>0)
+      {
+        fakeTilt  = tiltTo-(smaller+(360000-larger));
+        fakeTiltAngle = fakeTilt-(tiltTo - Angles[0]);
+      }
+      tilt  = Joint.TiltPid.incrementPid(fakeTilt, fakeTiltAngle,250.00);
+    }
+    //if the normal way is faster, or equal we want less of a headache
+    else if((smaller+(360000-larger)) >= abs(Angles[0]-tiltTo))
+    {
+       tilt  = -Joint.TiltPid.incrementPid(tiltTo, Angles[0],250.00);
+    }
+
+    ///MATH FOR J1
+    //check if it's faster to go from 360->0 or 0->360 then the normal way
+    smaller = min(twistTo, Angles[1]);
+    larger =  max(twistTo, Angles[1]);
+    //if wrapping around 360 is faster than going normally
+    if((smaller+(360000-larger)) < abs(Angles[1]-twistTo))
+    {
+      if(Angles[1]-(smaller+(360000-larger))<0)
+      {
+        fakeTwist  = twistTo+(smaller+(360000-larger));
+        fakeTwistAngle = fakeTwist+(twistTo - Angles[1]);
+      }
+      else if(Angles[0]-(smaller+(360000-larger))>0)
+      {
+        fakeTwist  = twistTo-(smaller+(360000-larger));
+        fakeTwistAngle = fakeTwist-(twistTo - Angles[1]);
+      }
+      twist  = Joint.TwistPid.incrementPid(fakeTwist, fakeTwistAngle,250.00);
+    }
+    //if the normal way is faster, or equal we want less of a headache
+    else if((smaller+(360000-larger)) >= abs(Angles[1]-twistTo))
+    {
+       twist  = -Joint.TwistPid.incrementPid(twistTo, Angles[1],250.00);
+    }
+    outputs[0] = tilt;
+    outputs[1] = twist;
 }
 
 void stop()
 {
-  Serial.println("WE STOPPED");
   Wrist.LeftMotor.drive(0);
   Wrist.RightMotor.drive(0);
   Gripper.drive(0);
