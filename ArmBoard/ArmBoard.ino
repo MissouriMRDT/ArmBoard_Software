@@ -1,5 +1,9 @@
 #include "ArmBoard.h"
-Servo Servos[3];
+Servo Servo4;
+Servo Servo1;
+Servo Servo2;
+Servo Servo3;
+
 
 void setup()
 {
@@ -8,19 +12,26 @@ void setup()
 
   pinMode(SOLENOID_CRTL_PIN, OUTPUT);
 
-  Servos[0].attach(SERVO_1_CRTL_PIN);
-  Servos[1].attach(SERVO_2_CRTL_PIN);
-  Servos[2].attach(SERVO_3_CRTL_PIN);
+  //This servo (4) is attached to a random pin, as this is the only way to get the actual
+  //servos to work
+  //yaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaayyyyyyyyyyyyy
+  Servo4.attach(PM_0);
+  Servo1.attach(SERVO_1_CRTL_PIN);
+  Servo2.attach(SERVO_2_CRTL_PIN);
+  Servo3.attach(SERVO_3_CRTL_PIN);
 
-  Servos[0].write(SERVO_1_RETRACTED); //tried Servos[0].writeMicroseconds(1500); and still knothing on PM_7 pin.
-  Servos[1].write(SERVO_2_RETRACTED);
-  Servos[2].write(SERVO_3_RETRACTED);
+  //Servo4.write(SERVO_1_RETRACTED);
+  Servo1.write(SERVO_1_RETRACTED); //tried Servos[0].writeMicroseconds(1500); and still knothing on PM_7 pin.
+  Servo2.write(SERVO_2_RETRACTED);
+  Servo3.write(SERVO_3_RETRACTED);
 }
 
 
 void loop()
 {
  rovecomm_packet = RoveComm.read();
+ if(rovecomm_packet.data_id != 0) 
+  Serial.println(rovecomm_packet.data_id);
  switch(rovecomm_packet.data_id)
  {
    case RC_ARMBOARD_MOVEOPENLOOP_DATAID:
@@ -117,25 +128,25 @@ void toolSelection()
  {
       //Typing tool selected
       Serial.println("Select servo1 tool");
-      Servos[0].write(SERVO_1_SELECTED);
-      Servos[1].write(SERVO_2_RETRACTED);
-      Servos[2].write(SERVO_3_RETRACTED);
+      Servo1.write(SERVO_1_SELECTED);
+      Servo2.write(SERVO_2_RETRACTED);
+      Servo3.write(SERVO_3_RETRACTED);
  }
  else if(rovecomm_packet.data[0] == 1)
  {
       //Hex tool selected
       Serial.println("Select servo2 tool");
-      Servos[0].write(SERVO_1_RETRACTED);
-      Servos[1].write(SERVO_2_SELECTED);
-      Servos[2].write(SERVO_3_RETRACTED);
+      Servo1.write(SERVO_1_RETRACTED);
+      Servo2.write(SERVO_2_SELECTED);
+      Servo3.write(SERVO_3_RETRACTED);
  }
  else if(rovecomm_packet.data[0] == 2)
  {
       //Screwdriver tool selected
       Serial.println("Select servo3 tool");
-      Servos[0].write(SERVO_1_RETRACTED);
-      Servos[1].write(SERVO_2_RETRACTED);
-      Servos[2].write(SERVO_3_SELECTED);
+      Servo1.write(SERVO_1_RETRACTED);
+      Servo2.write(SERVO_2_RETRACTED);
+      Servo3.write(SERVO_3_SELECTED);
  }
 }
 

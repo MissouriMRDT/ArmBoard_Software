@@ -1,7 +1,8 @@
 #ifndef BICEP_H
 #define BICEP_H
 
-#include "RoveDifferentialJoint.h"
+//#include "RoveDifferentialJoint.h"
+#include "RovePwmWrite.h"
 #include "RoveComm.h"
 #include "Servo.h"
 
@@ -20,9 +21,9 @@ uint32_t currentPositions[6] = {-1};
 const uint8_t SOLENOID_CRTL_PIN   =	PP_2;
 const uint8_t SW1_IND_PIN	      = PH_0;
 
-const uint8_t SERVO_1_CRTL_PIN   = PM_7;
-const uint8_t SERVO_2_CRTL_PIN   = PA_7;
-const uint8_t SERVO_3_CRTL_PIN   = PM_6;
+const uint8_t SERVO_1_CRTL_PIN   = PK_5;
+const uint8_t SERVO_2_CRTL_PIN   = PK_4;
+const uint8_t SERVO_3_CRTL_PIN   = PG_1;
 
 const uint8_t SERVO_1_RETRACTED  = 155;
 const uint8_t SERVO_2_RETRACTED  = 175;
