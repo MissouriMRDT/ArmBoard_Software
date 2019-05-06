@@ -12,9 +12,15 @@ void setup()
 
   Shoulder.TiltEncoder.attach(SHOULDER_TILT_ENCODER);
   Shoulder.TwistEncoder.attach(SHOULDER_TWIST_ENCODER);
+  pinMode(LS_1, INPUT);
+  pinMode(LS_2, INPUT);
+  pinMode(LS_3, INPUT);
+  pinMode(LS_4, INPUT);
+  Shoulder.attachLimitSwitches(LS_2, LS_1);
 
   Elbow.TiltEncoder.attach(ELBOW_TILT_ENCODER);
   Elbow.TwistEncoder.attach(ELBOW_TWIST_ENCODER);
+  Elbow.attachLimitSwitches(LS_4, LS_3);
 
   Shoulder.LeftMotor.drive(0);
   Shoulder.RightMotor.drive(0);
@@ -26,14 +32,16 @@ void setup()
   Elbow.TiltEncoder.start();
   Elbow.TwistEncoder.start();
 
-  Elbow.TiltPid.attach( -1000.0, 1000.0, 1.0, 2.0, 1.0 );
-  Elbow.TwistPid.attach( -1000.0, 1000.0, 1.0, 2.0, 1.0 );
+  Elbow.TiltPid.attach( -200.0, 200.0, 15.0, 0,  0);
+  Elbow.TwistPid.attach( -200.0, 200.0, 15.0, 0, 0 );
 
-  Shoulder.TiltPid.attach( -1000.0, 1000.0, 1.0, 2.0, 1.0 );
-  Shoulder.TwistPid.attach( -1000.0, 1000.0, 1.0, 2.0, 1.0 );
+  Shoulder.TiltPid.attach( -400.0, 400.0, 30.0, 2.0, 1.0 );
+  Shoulder.TwistPid.attach( -400.0, 400.0, 30.0, 2.0, 1.0 );
 
-  Watchdog.attach(estop);
+  Watchdog.attach(stop);
   Watchdog.start(1000);
+
+
 
 }
 
@@ -41,98 +49,212 @@ uint32_t timer = millis();
 
 void loop()
 {
-  rovecomm_packet = RoveComm.read();
-  switch(rovecomm_packet.data_id)
-  {
-    case RC_ARMBOARD_BICEP_DATAID:
-      doOpenLoop();
-      break;
-    case RC_ARMBOARD_BICEP_ANGLE_DATAID:
-      doClosedLoop();
-      break;
-    default:
-      break;
-  }
-  jointAngles[0] = Shoulder.TiltEncoder.readMillidegrees();
-  jointAngles[1] = Shoulder.TwistEncoder.readMillidegrees();
-  jointAngles[2] = Elbow.TiltEncoder.readMillidegrees();
-  jointAngles[3] = Elbow.TwistEncoder.readMillidegrees();
-
-  if (timer > millis())
-  {
-    timer = millis();
-  }//end if
-
-  if (millis() - timer > 100) 
-  {
-    timer = millis(); 
-    readAngles();
-  }
+  parsePackets();
+  updatePosition();
+  ClosedLoop();  
 }
 
-void estop()
+void stop()
 {
-
-  Serial.println("WE ESTOPPED");
   Elbow.LeftMotor.drive(0);
   Elbow.RightMotor.drive(0);
   Shoulder.LeftMotor.drive(0);
   Shoulder.RightMotor.drive(0);
   Watchdog.clear();
-
 }
 
-void doClosedLoop()
+
+void updatePosition()
 {
-  //Serial.println(Pid.incrementPid(rovecomm_packet.data[0], jointAngles[0]));
-  //Serial.println(Pid.incrementPid(rovecomm_packet.data[1], jointAngles[1]));
-  //Serial.println(Pid.incrementPid(rovecomm_packet.data[2], jointAngles[2]));
-  //Serial.println(Pid.incrementPid(rovecomm_packet.data[3], jointAngles[3]));
+   jointAngles[0] = Shoulder.TiltEncoder.readMillidegrees();
+   jointAngles[1] = Shoulder.TwistEncoder.readMillidegrees();
+   jointAngles[2] = Elbow.TiltEncoder.readMillidegrees();
+   jointAngles[3] = Elbow.TwistEncoder.readMillidegrees();
+   if (timer > millis())
+   {
+    timer = millis();
+   }
+
+   if (millis() - timer > 100) 
+   {
+    timer = millis(); 
+    RoveComm.writeTo(RC_ARMBOARD_BICEP_MOTORANGLES_DATAID, 4, jointAngles, 192, 168, 1, RC_ARMBOARD_FOURTHOCTET, 11000);
+   }
 }
 
-void readAngles()
+void parsePackets()
 {
-  Serial.println("Joints");
-  Serial.println(jointAngles[0]);
-  Serial.println(jointAngles[1]);
-  Serial.println(jointAngles[2]);
-  Serial.println(jointAngles[3]);
-  RoveComm.writeTo(RC_ARMBOARD_BICEP_MOTORANGLES_DATAID, 4, jointAngles, 192, 168, 1, RC_ARMBOARD_FOURTHOCTET, 11000);
-  Watchdog.clear();
+   rovecomm_packet = RoveComm.read();
+   switch(rovecomm_packet.data_id)
+   {
+    case RC_ARMBOARD_BICEP_DATAID:
+      DO_CLOSED_LOOP = false;
+      OpenLoop();
+      break;
+    case RC_ARMBOARD_BICEP_ANGLE_DATAID:
+      DO_CLOSED_LOOP = true;
+      shoulderTiltTarget = rovecomm_packet.data[0];
+      shoulderTwistTarget = rovecomm_packet.data[1];
+      elbowTiltTarget = rovecomm_packet.data[2];
+      elbowTwistTarget = rovecomm_packet.data[3];
+      break;
+    default:
+      break;
+   }
 }
 
-void doOpenLoop()
+void OpenLoop()
 {
-  Serial.println(rovecomm_packet.data_id);
-  Serial.println(rovecomm_packet.data[0]);
-  Serial.println(rovecomm_packet.data[1]);
-  Serial.println(rovecomm_packet.data[2]);
-  Serial.println(rovecomm_packet.data[3]);
-
+  //we will tell the motors to stop if our commands are too small (sometimes the joystick inout is a little noisy)
   if(abs(rovecomm_packet.data[0]) < 50 && abs(rovecomm_packet.data[1]) < 50 && abs(rovecomm_packet.data[3]) < 50 && abs(rovecomm_packet.data[4]) < 50)
   {
-    estop();
+    stop();
   }
-  if(rovecomm_packet.data[0] >= 70)
+
+  Serial.println(Shoulder.UpperLSPressed());
+  Serial.println(Shoulder.LowerLSPressed());
+  if(rovecomm_packet.data[1] >= 70)
   {
-    Shoulder.tiltTwistDecipercent((rovecomm_packet.data[1])*2/3, (rovecomm_packet.data[0])*2/3);
-  }
-  else if(rovecomm_packet.data[0] <= -70)
-  {
-    Shoulder.tiltTwistDecipercent((rovecomm_packet.data[1])/3, (rovecomm_packet.data[0])/3);
-  }
-  else if(rovecomm_packet.data[1] >= 70)
-  {
-    Shoulder.tiltTwistDecipercent((rovecomm_packet.data[1])/2, (rovecomm_packet.data[0])/2, Shoulder.Right);
+    Shoulder.tiltTwistDecipercent((rovecomm_packet.data[1])*4/5, (rovecomm_packet.data[0])*4/5);
   }
   else if(rovecomm_packet.data[1] <= -70)
   {
-    Shoulder.tiltTwistDecipercent((rovecomm_packet.data[1])/2, (rovecomm_packet.data[0])/2, Shoulder.Left);
+    Shoulder.tiltTwistDecipercent((rovecomm_packet.data[1]*4/5), (rovecomm_packet.data[0])*4/5);
   }
-  if(abs(rovecomm_packet.data[2]) >= 70 || abs(rovecomm_packet.data[3]) >= 70)
-    Elbow.tiltTwistDecipercent((rovecomm_packet.data[2])*2/3, (rovecomm_packet.data[3])*2/3);
+  //depending on the direction of twist ([1]) we will add compensation to avoid downwards drift
+  else if(rovecomm_packet.data[0] >= 70)
+  {
+    Shoulder.tiltTwistDecipercent((rovecomm_packet.data[1]*4/5), (rovecomm_packet.data[0]*4/5));
+  }
+  else if(rovecomm_packet.data[0] <= -70)
+  {
+    Shoulder.tiltTwistDecipercent((rovecomm_packet.data[1]*4/5), (rovecomm_packet.data[0]*4/5));
+  }
 
+  //we slightly scale the elbow to make it smoother,
+  //TODO: add compensation for twist
+  Serial.println(rovecomm_packet.data[2]);
+  if((abs(rovecomm_packet.data[2]) >= 70 || abs(rovecomm_packet.data[3]) >= 70) && !Elbow.atTiltLimit(rovecomm_packet.data[2]))
+    Elbow.tiltTwistDecipercent((rovecomm_packet.data[2])*2/3, (rovecomm_packet.data[3])*2/3, Elbow.Right, 1.2);
+  else
+  {
+    Elbow.tiltTwistDecipercent(0,0);
+  }
+  
   Watchdog.clear();
 }
 
+void ClosedLoop()
+{
+  //TODO: When I am more lucid, get rid of these nasty floats where they are not needed
+  if(DO_CLOSED_LOOP)
+  {
+    /*
+    float outputs[2];
+    float angles[2];
+    angles[0] = jointAngles[0];
+    angles[1] = jointAngles[1];
+    updatePosition();
+    moveToAngle(Shoulder, shoulderTiltTarget, shoulderTwistTarget, angles, outputs);
+    float shoulderTilt = outputs[0];
+    float shoulderTwist = outputs[1];
 
+    if((shoulderTilt != 0 && shoulderTwist!=0))
+    { 
+      Shoulder.tiltTwistDecipercent(shoulderTilt, shoulderTwist);
+    }
+    */
+    Serial.println("Doing closed loop");
+    float outputs[2];
+    float angles[2];
+    angles[0] = jointAngles[2];
+    angles[1] = jointAngles[3];
+    updatePosition();
+    moveToAngle(Elbow, elbowTiltTarget, elbowTwistTarget, angles, outputs);
+    float elbowTilt = outputs[0];
+    float elbowTwist = outputs[1];
+    Serial.println(elbowTilt);
+    Serial.println(elbowTwist);
+    if((elbowTilt != 0 || elbowTwist!=0))
+    { 
+      Elbow.tiltTwistDecipercent(elbowTilt, elbowTwist);
+    }
+
+    if(elbowTilt == 0 && elbowTwist == 0)
+    {
+      DO_CLOSED_LOOP = false;
+      Shoulder.LeftMotor.drive(0);
+      Shoulder.RightMotor.drive(0);
+      Elbow.LeftMotor.drive(0);
+      Elbow.RightMotor.drive(0);
+    }  
+
+    Watchdog.clear();
+  }
+
+  
+}
+
+void moveToAngle(RoveDifferentialJoint &Joint, float tiltTo, float twistTo, float Angles[2], float outputs[2])
+{
+    float tilt = 0;
+    float twist = 0;
+    int smaller = 0;
+    int larger =  0;
+    int fakeTilt = 0;
+    int fakeTiltAngle = 0;
+    int fakeTwist = 0;
+    int fakeTwistAngle = 0;
+    ///MATH FOR J1
+    //check if it's faster to go from 360->0 or 0->360 then the normal way
+    smaller = min(twistTo, Angles[1]);
+    larger =  max(twistTo, Angles[1]);
+    //if wrapping around 360 is faster than going normally
+    if((smaller+(360000-larger)) < abs(Angles[1]-twistTo))
+    {
+      if(Angles[1]-(smaller+(360000-larger))<0)
+      {
+        fakeTwist  = twistTo+(smaller+(360000-larger));
+        fakeTwistAngle = fakeTwist+(twistTo - Angles[1]);
+      }
+      else if(Angles[0]-(smaller+(360000-larger))>0)
+      {
+        fakeTwist  = twistTo-(smaller+(360000-larger));
+        fakeTwistAngle = fakeTwist-(twistTo - Angles[1]);
+      }
+      twist  = -Joint.TwistPid.incrementPid(fakeTwist, fakeTwistAngle,0.5);
+    }
+    //if the normal way is faster, or equal we want less of a headache
+    else if((smaller+(360000-larger)) >= abs(Angles[1]-twistTo))
+    {
+       twist  = Joint.TwistPid.incrementPid(twistTo, Angles[1],0.5);
+    }
+
+    ///MATH FOR J0
+    //check if it's faster to go from 360->0 or 0->360 then the normal way
+    smaller = min(tiltTo, Angles[0]);
+    larger =  max(tiltTo, Angles[0]);
+    //if wrapping around 360 is faster than going normally
+    if((smaller+(360000-larger)) < abs(Angles[0]-tiltTo))
+    {
+      if(Angles[0]-(smaller+(360000-larger))<0)
+      {
+        fakeTilt  = tiltTo+(smaller+(360000-larger));
+        fakeTiltAngle = fakeTilt+(tiltTo - Angles[0]);
+      }
+      else if(Angles[0]-(smaller+(360000-larger))>0)
+      {
+        fakeTilt  = tiltTo-(smaller+(360000-larger));
+        fakeTiltAngle = fakeTilt-(tiltTo - Angles[0]);
+      }
+      tilt  = -Joint.TiltPid.incrementPid(fakeTilt, fakeTiltAngle,0.5);
+    }
+    //if the normal way is faster, or equal we want less of a headache
+    else if((smaller+(360000-larger)) >= abs(Angles[0]-tiltTo))
+    {
+       tilt  = Joint.TiltPid.incrementPid(tiltTo, ((float)Angles[0]),0.5);
+    }
+
+    outputs[0] = tilt;
+    outputs[1] = twist;
+}

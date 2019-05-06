@@ -15,7 +15,7 @@ void doClosedLoop();
 void toolSelection();
 void parseCommand();
 void updatePosition();
-
+void sendPosition();
 uint32_t currentPositions[6] = {-1};
 
 const uint8_t SOLENOID_CRTL_PIN   =	PP_2;

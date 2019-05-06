@@ -21,11 +21,17 @@ void setup()
 
   Watchdog.attach(stop);
   Watchdog.start(4000);
+  
+  pinMode(M1_SW, INPUT);
+  pinMode(M2_SW, INPUT);
+  pinMode(M3_SW, INPUT);
+  pinMode(M4_SW, INPUT);
+
+  pinMode(DIR_SW, INPUT);
 
   //TODO: For testing maybe have some way of RED tweaking these constants?
-  Wrist.TiltPid.attach( -1000.0, 1000.0, 48, 2, 0.5 ); //very much subject to change
-  Wrist.TwistPid.attach( -1000.0, 1000.0, 48, 1, 0.1375 ); //very much subject to change
-
+  Wrist.TiltPid.attach( -800.0, 800.0, 120, 0, 0 ); //very much subject to change
+  Wrist.TwistPid.attach( -800.0, 800.0, 120, 2, 0 ); //very much subject to change
 }
 
 uint32_t timer = millis();
@@ -35,6 +41,7 @@ void loop()
   parsePackets();
   updatePosition();
   ClosedLoop();
+  checkButtons();
 }
 
 void OpenLoop()
@@ -61,9 +68,11 @@ void parsePackets()
       OpenLoop();
       break;
     case RC_ARMBOARD_FOREARM_ANGLE_DATAID:
-      DO_CLOSED_LOOP == true;
+      DO_CLOSED_LOOP = true;
       tiltTarget = rovecomm_packet.data[0];
       twistTarget = rovecomm_packet.data[1];
+      //Wrist.TiltPid.clear();
+      //Wrist.TwistPid.clear();
       break;
     default:
       break;
@@ -91,32 +100,52 @@ void ClosedLoop()
 {
   if(DO_CLOSED_LOOP)
   {
-    float outputs[2];
+    float outputs[2] = {0};
     updatePosition();
     moveToAngle(Wrist, tiltTarget, twistTarget, jointAngles, outputs);
-    float tilt = outputs[0];
-    float twist = outputs[1];
-
-    if((tilt != 0 && twist!=0))
+    int tilt = outputs[0];
+    int twist = outputs[1];
+    if(tilt != 0 || twist != 0)
     { 
+      Serial.println("Tilting");
       Wrist.tiltTwistDecipercent(tilt, twist);
     }
     else if(tilt == 0 && twist == 0)
     {
-      DO_CLOSED_LOOP = false;
-      Wrist.LeftMotor.drive(0);
-      Wrist.RightMotor.drive(0);
-    }  
+      stop();
+    } 
 
     Watchdog.clear();
   }
 
 }
 
+void checkButtons()
+{
+  int speed = 1000;
+  if(debounce(DIR_SW))
+  {
+    speed *=-1;
+  }
+  //MAKE SWITCH
+  if(debounce(M1_SW))
+  {
+    Wrist.tiltTwistDecipercent(speed,0);
+  }
+  else if(debounce(M2_SW))
+  {
+    Wrist.tiltTwistDecipercent(0,speed);
+  }
+  else if(DO_CLOSED_LOOP == false)
+  {
+    Wrist.tiltTwistDecipercent(0,0);
+  }
+}
+
 void moveToAngle(RoveDifferentialJoint &Joint, float tiltTo, float twistTo, uint32_t Angles[2], float outputs[2])
 {
-    float tilt;
-    float twist;
+    float tilt = 0;
+    float twist = 0;
     int smaller = 0;
     int larger =  0;
     int fakeTilt = 0;
@@ -140,14 +169,13 @@ void moveToAngle(RoveDifferentialJoint &Joint, float tiltTo, float twistTo, uint
         fakeTilt  = tiltTo-(smaller+(360000-larger));
         fakeTiltAngle = fakeTilt-(tiltTo - Angles[0]);
       }
-      tilt  = Joint.TiltPid.incrementPid(fakeTilt, fakeTiltAngle,250.00);
+      tilt  = Joint.TiltPid.incrementPid(fakeTilt, fakeTiltAngle,1.5);
     }
     //if the normal way is faster, or equal we want less of a headache
     else if((smaller+(360000-larger)) >= abs(Angles[0]-tiltTo))
     {
-       tilt  = -Joint.TiltPid.incrementPid(tiltTo, Angles[0],250.00);
+       tilt  = -Joint.TiltPid.incrementPid(tiltTo, ((float)Angles[0]),1.5);
     }
-
     ///MATH FOR J1
     //check if it's faster to go from 360->0 or 0->360 then the normal way
     smaller = min(twistTo, Angles[1]);
@@ -165,21 +193,38 @@ void moveToAngle(RoveDifferentialJoint &Joint, float tiltTo, float twistTo, uint
         fakeTwist  = twistTo-(smaller+(360000-larger));
         fakeTwistAngle = fakeTwist-(twistTo - Angles[1]);
       }
-      twist  = Joint.TwistPid.incrementPid(fakeTwist, fakeTwistAngle,250.00);
+      twist  = Joint.TwistPid.incrementPid(fakeTwist, fakeTwistAngle,1.5);
     }
     //if the normal way is faster, or equal we want less of a headache
     else if((smaller+(360000-larger)) >= abs(Angles[1]-twistTo))
     {
-       twist  = -Joint.TwistPid.incrementPid(twistTo, Angles[1],250.00);
+       twist  = -Joint.TwistPid.incrementPid(twistTo, Angles[1],1.5);
     }
+
     outputs[0] = tilt;
     outputs[1] = twist;
 }
 
+bool debounce(const uint8_t buttonPin)
+{
+  int state = digitalRead(buttonPin);
+  if(state != lastButtonState)
+  {
+    delay(20);
+    state = digitalRead(buttonPin);
+  }
+  if(lastButtonState != state)
+  {
+    lastButtonState = state;
+    return state;
+  }
+}
+
 void stop()
 {
-  Wrist.LeftMotor.drive(0);
-  Wrist.RightMotor.drive(0);
+  Serial.println("Stopped");
+  Wrist.tiltTwistDecipercent(0,0);
+  DO_CLOSED_LOOP = false;
   Gripper.drive(0);
   Watchdog.clear();
 }

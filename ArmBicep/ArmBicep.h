@@ -16,9 +16,16 @@ RovePidInts Pid;
 
 uint32_t jointAngles[4];
 
-void doOpenLoop();
-void doClosedLoop();
-void readAngles();
+float shoulderTiltTarget;
+float shoulderTwistTarget;
+float elbowTiltTarget;
+float elbowTwistTarget;
+
+bool DO_CLOSED_LOOP = false;
+
+void OpenLoop();
+void ClosedLoop();
+void updatePosition();
 
 struct rovecomm_packet rovecomm_packet;
 
@@ -43,5 +50,10 @@ const uint8_t SHOULDER_TWIST_ENCODER   = PM_1;
 
 const uint8_t ELBOW_TILT_ENCODER       = PD_4;
 const uint8_t ELBOW_TWIST_ENCODER      = PD_5;
+
+const uint8_t LS_1 = PM_5;
+const uint8_t LS_2 = PM_4;
+const uint8_t LS_3 = PA_6;
+const uint8_t LS_4 = PD_7;
 
 #endif

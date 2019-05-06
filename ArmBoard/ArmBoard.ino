@@ -53,6 +53,7 @@ void loop()
    default:
     break;
  }
+ //sendPosition();
 }
 
 void doOpenLoop()
@@ -74,7 +75,7 @@ void doOpenLoop()
    forearmVals[0] = rovecomm_packet.data[4]; //J5
    forearmVals[1] = rovecomm_packet.data[5]; //J6
    forearmVals[2] = rovecomm_packet.data[6]; //Gripper
-
+  /*
   if(rovecomm_packet.data[7] > 0)
   {
     digitalWrite(SOLENOID_CRTL_PIN, HIGH); //Solenoid actuates
@@ -87,7 +88,7 @@ void doOpenLoop()
   {
     digitalWrite(SOLENOID_CRTL_PIN, LOW); //Solenoid actuates
     Serial.println("LOW");
-  }
+  }*/
   
 
    //sending the motor commands to their specific boards
@@ -97,20 +98,8 @@ void doOpenLoop()
 
 void doClosedLoop()
 {
-   Serial.println("Angles to go to: ");
    uint32_t bicepVals[4];
    uint32_t forearmVals[2];
-   Serial.println("Joint 1 Angle:");
-   Serial.println(rovecomm_packet.data[0]);
-   Serial.println("Joint 2 Angle:");
-   Serial.println(rovecomm_packet.data[1]);
-   Serial.println("Joint 3 Angle:");
-   Serial.println(rovecomm_packet.data[2]);
-   Serial.println("Joint 4 Angle:");
-   Serial.println(rovecomm_packet.data[3]);
-   Serial.println("Joint 5 Angle:");
-   Serial.println(rovecomm_packet.data[4]);
-   Serial.println("Joint 6 Angle:");
    Serial.println(rovecomm_packet.data[5]);
    bicepVals[0] = rovecomm_packet.data[0]; //J1
    bicepVals[1] = rovecomm_packet.data[1]; //J2
@@ -148,6 +137,20 @@ void toolSelection()
       Servo2.write(SERVO_2_RETRACTED);
       Servo3.write(SERVO_3_SELECTED);
  }
+}
+uint32_t timer;
+void sendPosition()
+{
+  if (timer > millis())
+   {
+    timer = millis();
+   }
+
+   if (millis() - timer > 500) 
+   {
+    timer = millis(); 
+    RoveComm.write(RC_ARMBOARD_MOTORANGLES_DATAID, 6, currentPositions);  
+   }
 }
 
 void parseCommand()
