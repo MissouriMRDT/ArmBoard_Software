@@ -10,6 +10,8 @@ void setup()
   Wrist.LeftMotor.attach(WRIST_LEFT_INA, WRIST_LEFT_INB, WRIST_LEFT_PWM);
   Wrist.RightMotor.attach(WRIST_RIGHT_INA, WRIST_RIGHT_INB, WRIST_RIGHT_PWM);
   Gripper.attach(GRIPPER_INA, GRIPPER_INB, GRIPPER_PWM);
+  //Nipper.attach(NIPPER_INA, NIPPER_INB, NIPPER_PWM);
+
   //set motor speeds to 0, to be safe
   Wrist.LeftMotor.drive(0);
   Wrist.RightMotor.drive(0);
@@ -20,8 +22,8 @@ void setup()
   Wrist.TwistEncoder.start();
 
   Watchdog.attach(stop);
-  Watchdog.start(4000);
-  
+  Watchdog.start(9000);
+
   pinMode(M1_SW, INPUT);
   pinMode(M2_SW, INPUT);
   pinMode(M3_SW, INPUT);
@@ -49,18 +51,33 @@ void OpenLoop()
     if(abs(rovecomm_packet.data[0]) < 50 && abs(rovecomm_packet.data[1]) < 50 && abs(rovecomm_packet.data[3]) < 50)
     {
         //if we are getting zeros for everything we stop
+        Serial.println("Open loop");
         stop();
     }
     if(abs(rovecomm_packet.data[0]) >= 70 || abs(rovecomm_packet.data[1]) >= 70)
       Wrist.tiltTwistDecipercent((rovecomm_packet.data[0]), (rovecomm_packet.data[1]));
-
+    
     Gripper.drive(rovecomm_packet.data[2]);
+    /*
+    if(rovecomm_packet.data[3] == 1 && toolSelected == 0)
+    {
+      Serial.println("Nipped");
+      Serial.println("Selected: ");
+      Serial.println(toolSelected);
+      digitalWrite(NIPPER_INA, HIGH);
+      digitalWrite(NIPPER_INB, LOW);
+      delay(1000);
+      digitalWrite(NIPPER_INA, LOW);
+      digitalWrite(NIPPER_INB, LOW);    
+    }
+    */
     Watchdog.clear();
 }
 
 void parsePackets()
 {
    rovecomm_packet = RoveComm.read();
+   Serial.println(rovecomm_packet.data_id);
    switch(rovecomm_packet.data_id)
    {
     case RC_ARMBOARD_FOREARM_DATAID:
@@ -73,6 +90,9 @@ void parsePackets()
       twistTarget = rovecomm_packet.data[1];
       //Wrist.TiltPid.clear();
       //Wrist.TwistPid.clear();
+      break;
+    //case RC_ARMBOARD_TOOLSELECTION_DATAID:
+    //  toolSelected = rovecomm_packet.data[0];
       break;
     default:
       break;
@@ -130,16 +150,19 @@ void checkButtons()
   //MAKE SWITCH
   if(debounce(M1_SW))
   {
+    Serial.println("Debounce");
     Wrist.tiltTwistDecipercent(speed,0);
+    delay(250);
+    Wrist.tiltTwistDecipercent(0,0);
+
   }
   else if(debounce(M2_SW))
   {
     Wrist.tiltTwistDecipercent(0,speed);
-  }
-  else if(DO_CLOSED_LOOP == false)
-  {
+    delay(250);
     Wrist.tiltTwistDecipercent(0,0);
   }
+  Watchdog.clear();
 }
 
 void moveToAngle(RoveDifferentialJoint &Joint, float tiltTo, float twistTo, uint32_t Angles[2], float outputs[2])

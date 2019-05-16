@@ -6,6 +6,7 @@
 
 RoveDifferentialJoint Wrist;
 RoveStmVnhPwm Gripper;
+RoveStmVnhPwm Nipper;
 
 RoveCommEthernetUdp RoveComm;
 RoveWatchdog Watchdog;
@@ -18,6 +19,7 @@ int buttonState = LOW;             // the current reading from the input pin
 int lastButtonState = LOW;   // the previous reading from the input pin
 unsigned long lastDebounceTime = 0;  // the last time the output pin was toggled
 
+int toolSelected = 0;
 bool DO_CLOSED_LOOP = false;
 
 void updatePositon();
@@ -44,6 +46,10 @@ const uint8_t WRIST_RIGHT_PWM     = PF_2;
 const uint8_t GRIPPER_INA        = PQ_2;
 const uint8_t GRIPPER_INB        = PQ_3;
 const uint8_t GRIPPER_PWM        = PK_4;
+
+const uint8_t NIPPER_INA        = PP_3;
+const uint8_t NIPPER_INB        = PQ_1;
+const uint8_t NIPPER_PWM        = PF_3;
 
 const uint8_t WRIST_TILT_ENCODER    = PM_0;
 const uint8_t WRIST_TWIST_ENCODER   = PM_1;

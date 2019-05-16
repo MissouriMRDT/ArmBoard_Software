@@ -75,25 +75,13 @@ void doOpenLoop()
    forearmVals[0] = rovecomm_packet.data[4]; //J5
    forearmVals[1] = rovecomm_packet.data[5]; //J6
    forearmVals[2] = rovecomm_packet.data[6]; //Gripper
-  /*
-  if(rovecomm_packet.data[7] > 0)
-  {
-    digitalWrite(SOLENOID_CRTL_PIN, HIGH); //Solenoid actuates
-    digitalWrite(SW1_IND_PIN, HIGH);
-    delay(250);
-    digitalWrite(SOLENOID_CRTL_PIN, LOW); //Solenoid actuates
-    digitalWrite(SW1_IND_PIN, LOW);
-  }
-  else
-  {
-    digitalWrite(SOLENOID_CRTL_PIN, LOW); //Solenoid actuates
-    Serial.println("LOW");
-  }*/
+   forearmVals[3] = rovecomm_packet.data[7]; //Nipper
+
   
 
    //sending the motor commands to their specific boards
    RoveComm.writeTo(RC_ARMBOARD_BICEP_DATAID, 4, bicepVals, 192, 168, 1, RC_BICEP_FOURTHOCTET, 11000);
-   RoveComm.writeTo(RC_ARMBOARD_FOREARM_DATAID, 3, forearmVals, 192, 168, 1, RC_FOREARM_FOURTHOCTET, 11000);
+   RoveComm.writeTo(RC_ARMBOARD_FOREARM_DATAID, 4, forearmVals, 192, 168, 1, RC_FOREARM_FOURTHOCTET, 11000);
 }
 
 void doClosedLoop()
@@ -113,6 +101,7 @@ void doClosedLoop()
 
 void toolSelection()
 {
+ RoveComm.writeTo(RC_ARMBOARD_TOOLSELECTION_DATAID, 1, rovecomm_packet.data[0], 192, 168, 1, RC_FOREARM_FOURTHOCTET, 11000);
  if(rovecomm_packet.data[0] == 0)
  {
       //Typing tool selected
