@@ -23,8 +23,8 @@ float elbowTwistTarget;
 
 bool DO_CLOSED_LOOP = false;
 
-void OpenLoop();
-void ClosedLoop();
+void openLoop();
+void closedLoop();
 void updatePosition();
 
 struct rovecomm_packet rovecomm_packet;
