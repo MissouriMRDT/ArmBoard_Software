@@ -11,6 +11,11 @@ float presentCoordinates[IKArgCount] = {0};
 
 float opPointOffset[3] = {OpPointOffset[0], OpPointOffset[1], OpPointOffset[2]};
 
+float mapfloat(long x, long in_min, long in_max, long out_min, long out_max)
+{
+ return (float)(x - in_min) * (out_max - out_min) / (float)(in_max - in_min) + out_min;
+}
+
 void initPresentCoordinates()
 {
   calcPresentCoordinates(presentCoordinates);
@@ -148,7 +153,7 @@ void calc_IK(float coordinates[IKArgCount+2], float angles[ArmJointCount]){
   //IMPLEMENTED MATH IS EQUIVALENT TO:     OpRot=Rotz(yaw)*Rotx(pitch)*Roty(roll)*Rotx(pitch2)*Rotz(yaw2)
   //Can add other rotations here if so
   //desired. would need to introduce new variables though. (DONE)
-
+  /*
   float Cw[3] = {coordinates[0], coordinates[1], coordinates[2]};
   float Cb[3];
   matrixMathMultiply((float*)OpRot, (float*)Cw, 3, 3, 1, (float*)Cb);
@@ -157,6 +162,7 @@ void calc_IK(float coordinates[IKArgCount+2], float angles[ArmJointCount]){
   {
       coordinates[i] = Cb[i];
   }
+  */
   //Calculate the Wrist Center location from Gripper Location and Orientation
   float OpPoint[3] = {coordinates[0],coordinates[1],coordinates[2]};
   float OpPointtemp[3];
@@ -273,8 +279,8 @@ void calc_IK(float coordinates[IKArgCount+2], float angles[ArmJointCount]){
   bicepAngleVals[1] = degrees(th2)*1000;
   bicepAngleVals[2] = degrees(th3)*1000;
   bicepAngleVals[3] = degrees(th4)*1000;
-  forearmAngleVals[0] = degrees(th5);
-  forearmAngleVals[1] = degrees(th6);
+  forearmAngleVals[0] = degrees(th5)*1000;
+  forearmAngleVals[1] = degrees(th6)*1000;
 }
 
 //calculates the shortest distance between two points on a 360 degree plane
@@ -347,11 +353,11 @@ float calculateIKIncrement(int moveValue)
 
      if(moveValue > 0)
      {
-       return map((float)(abs(moveValue)), 0.0, 1000.0, 0.0, IKIncrementMax);
+       return mapfloat((float)(abs(moveValue)), 0.0, 1000.0, 0.0, IKIncrementMax);
      }
      else
      {
-       return -map((float)(abs(moveValue)), 0.0, 1000.0, 0.0, IKIncrementMax);
+       return -mapfloat((float)(abs(moveValue)), 0.0, 1000.0, 0.0, IKIncrementMax);
      }
    }
    else
@@ -367,11 +373,6 @@ void incrementRoverIK(int16_t moveValues[IKArgCount])
 {
   if(isWithinIKPauseBoundary()==true)
   {
-    Serial.println("Inside IK");
-    for(int i = 0; i<6;i++)
-    {
-      Serial.println(moveValues[i]);
-    }
     float temp = moveValues[0]; //sometimes crashes if you use it directly for some reason
     float xInc = calculateIKIncrement(temp);
     temp = moveValues[1];
@@ -384,13 +385,23 @@ void incrementRoverIK(int16_t moveValues[IKArgCount])
     float piInc = calculateIKIncrement(temp);
     temp = moveValues[5];
     float roInc = calculateIKIncrement(temp);
+    Serial.println(xInc);
+    Serial.println(yInc);
+    Serial.println(zInc);
+    Serial.println(yaInc);
+    Serial.println(piInc);
+    Serial.println(roInc);
+
     destPositions[0] = 0.3*xInc + presentCoordinates[0]; //adjusted the step sizes here to make motion much smoother
     destPositions[1] = 0.3*yInc + presentCoordinates[1];
     destPositions[2] = 0.3*zInc + presentCoordinates[2];
     destPositions[3] = -yaInc + presentCoordinates[3];
     destPositions[4] = -piInc + presentCoordinates[4];
     destPositions[5] = 2*roInc + presentCoordinates[5];
-
+    for(int i=0; i<6; i++)
+    {
+      presentCoordinates[i] = destPositions[i];
+    }
     calc_roverIK(destPositions, outputAngles);
     for(int i=0; i<6; i++)
     {

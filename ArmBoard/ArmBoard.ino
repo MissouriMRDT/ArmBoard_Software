@@ -58,7 +58,6 @@ void loop()
     for(int i = 0; i<6;i++)
     {
       moveCommands[i] = (int16_t)rovecomm_packet.data[i];
-      Serial.println(moveCommands[i]);
     }
     incrementRoverIK(moveCommands);
     for(int i = 0; i<4;i++)
