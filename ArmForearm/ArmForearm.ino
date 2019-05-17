@@ -88,8 +88,6 @@ void parsePackets()
       DO_CLOSED_LOOP = true;
       tiltTarget = rovecomm_packet.data[0];
       twistTarget = rovecomm_packet.data[1];
-      //Wrist.TiltPid.clear();
-      //Wrist.TwistPid.clear();
       break;
     //case RC_ARMBOARD_TOOLSELECTION_DATAID:
     //  toolSelected = rovecomm_packet.data[0];
@@ -147,7 +145,7 @@ void checkButtons()
   {
     speed *=-1;
   }
-  //MAKE SWITCH
+
   if(debounce(M1_SW))
   {
     Serial.println("Debounce");
@@ -228,6 +226,7 @@ void moveToAngle(RoveDifferentialJoint &Joint, float tiltTo, float twistTo, uint
     outputs[1] = twist;
 }
 
+//returns true if the button has been pressed for longer than 20 milliseconds
 bool debounce(const uint8_t buttonPin)
 {
   int state = digitalRead(buttonPin);

@@ -64,16 +64,9 @@ const float alpha6=1.57079632679; //angular tilt of gripper from normal orientat
 const float OpPointOffset[3]={0, 7.0, 0};
 extern float opPointOffset[3];
 
-//motor information constants
-const float J12Kt = (0.014 * 672) * 2; //newton-meters per amp
-const float J3Kt = 0.014 * 672;
-const float J45Kt = (0.353 * 131) * 2;
-const int MotorVoltage = 12000;
-const int J1Resistance = 800;
-const int J2Resistance = 800;
-const int J3Resistance = 800;
-const int J4Resistance = 2400;
-const int J5Resistance = 2400;
+extern uint32_t currentPositions[6];
+extern uint32_t bicepAngleVals[4];
+extern uint32_t forearmAngleVals[2];
 
 
 #endif /* ARMMODELINFO_H_ */

@@ -1,11 +1,12 @@
-#ifndef BICEP_H
-#define BICEP_H
+#ifndef BOARD_H
+#define BOARD_H
 
 //#include "RoveDifferentialJoint.h"
 #include "RovePwmWrite.h"
 #include "RoveComm.h"
 #include "Servo.h"
-
+#include "IK.h"
+#include "ArmModel.h"
 
 RoveCommEthernetUdp RoveComm;
 struct rovecomm_packet rovecomm_packet;
@@ -16,7 +17,6 @@ void toolSelection();
 void parseCommand();
 void updatePosition();
 void sendPosition();
-uint32_t currentPositions[6] = {-1};
 
 const uint8_t SOLENOID_CRTL_PIN   =	PP_2;
 const uint8_t SW1_IND_PIN	      = PH_0;

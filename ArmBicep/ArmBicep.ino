@@ -44,8 +44,6 @@ void setup()
   Watchdog.attach(stop);
   Watchdog.start(1000);
 
-
-
 }
 
 uint32_t timer = millis();
@@ -209,8 +207,8 @@ void closedLoop()
     {
       shoulderTwist = map(shoulderTwist, -600, 0, -600, -400);
     }
-
-    if((shoulderTilt != 0 && !Shoulder.atTiltLimit(shoulderTilt)) || shoulderTwist != 0)
+    Serial.println(Shoulder.atTwistLimit(shoulderTwist, jointAngles[0]));
+    if((shoulderTilt != 0 && !Shoulder.atTiltLimit(shoulderTilt)) || (shoulderTwist != 0 && !Shoulder.atTwistLimit(shoulderTwist, jointAngles[0])))
     { 
       Shoulder.tiltTwistDecipercent(shoulderTilt, shoulderTwist);
     }
@@ -230,7 +228,7 @@ void closedLoop()
       elbowTilt = map(elbowTilt, 0, 300, 250, 300);
     }
 
-    if((elbowTilt != 0  && !Elbow.atTiltLimit(elbowTilt))|| elbowTwist!=0)
+    if((elbowTilt != 0  && !Elbow.atTiltLimit(elbowTilt)) || elbowTwist!=0)
     { 
       Elbow.tiltTwistDecipercent(elbowTilt, elbowTwist);
     }

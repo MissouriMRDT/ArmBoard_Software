@@ -6,7 +6,8 @@
  *  NUMERICAL RECIPES: The Art of Scientific Computing.
  */
 
-#include "MatrixMath.h"
+#include "Matrix.h"
+#include <cmath>
 
 #define NR_END 1
 
@@ -114,9 +115,9 @@ int matrixMathInvert(float* A, int n)
 		tmp = 0;
 		for (i = k; i < n; i++)
 		{
-			if (abs(A[i * n + k]) >= tmp)	// 'Avoid using other functions inside abs()?'
+			if (std::abs(A[i * n + k]) >= tmp)	// 'Avoid using other functions inside abs()?'
 			{
-				tmp = abs(A[i * n + k]);
+				tmp = std::abs(A[i * n + k]);
 				pivrow = i;
 			}
 		}

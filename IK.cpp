@@ -3,7 +3,6 @@
 #include "RoveUsDigiMa3Pwm.h"
 #include "RoveBoardMap.h"
 #include "Energia.h"
-#include "ArmBoard.h"
 #include <stdint.h>
 
 float outputAngles[ArmJointCount] = {0};
@@ -12,7 +11,12 @@ float presentCoordinates[IKArgCount] = {0};
 
 float opPointOffset[3] = {OpPointOffset[0], OpPointOffset[1], OpPointOffset[2]};
 
-//BEGINNING OF NOVA IK
+void initPresentCoordinates()
+{
+  calcPresentCoordinates(presentCoordinates);
+}
+
+//BEGINNING OF NOVATNY's IK
 
 //ANGLES ARE IN RADIANS!!!!!
 //DISTANCES ARE IN INCHES!!!
@@ -265,12 +269,12 @@ void calc_IK(float coordinates[IKArgCount+2], float angles[ArmJointCount]){
   th5 = negativeRadianCorrection(th5);
   th6 = negativeRadianCorrection(th6);
 
-  angles[0] = degrees(th1);
-  angles[1] = degrees(th2);
-  angles[2] = degrees(th3);
-  angles[3] = degrees(th4);
-  angles[4] = degrees(th5);
-  angles[5] = degrees(th6);
+  bicepAngleVals[0] = degrees(th1);
+  bicepAngleVals[1] = degrees(th2);
+  bicepAngleVals[2] = degrees(th3);
+  bicepAngleVals[3] = degrees(th4);
+  forearmAngleVals[0] = degrees(th5);
+  forearmAngleVals[1] = degrees(th6);
 }
 
 //calculates the shortest distance between two points on a 360 degree plane
@@ -306,7 +310,7 @@ bool isWithinIKPauseBoundary()
 
   float destAngles[ArmJointCount] =
   {
-   (float)baseRotateJointDestination, (float)baseTiltJointDestination, (float)elbowTiltJointDestination, (float)elbowRotateJointDestination, (float)wristTiltJointDestination, (float)wristRotateJointDestination
+   (float)bicepAngleVals[0], (float)bicepAngleVals[1], (float)bicepAngleVals[2], (float)bicepAngleVals[3], (float)forearmAngleVals[0], (float)forearmAngleVals[1]
   };
 
   float boundaries[ArmJointCount] =
