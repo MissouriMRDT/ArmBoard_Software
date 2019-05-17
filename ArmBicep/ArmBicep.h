@@ -45,8 +45,8 @@ const uint8_t ELBOW_LEFT_INA          = PP_3;
 const uint8_t ELBOW_LEFT_INB          = PQ_1;
 const uint8_t ELBOW_LEFT_PWM          = PG_1;
 
-const uint8_t SHOULDER_TILT_ENCODER    = PM_0;
-const uint8_t SHOULDER_TWIST_ENCODER   = PM_1;
+const uint8_t SHOULDER_TILT_ENCODER    = PM_1;
+const uint8_t SHOULDER_TWIST_ENCODER   = PM_0;
 
 const uint8_t ELBOW_TILT_ENCODER       = PD_4;
 const uint8_t ELBOW_TWIST_ENCODER      = PD_5;

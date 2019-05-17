@@ -32,7 +32,7 @@ void loop()
 {
  rovecomm_packet = RoveComm.read();
  if(rovecomm_packet.data_id != 0) 
-  Serial.println(rovecomm_packet.data_id);
+  //Serial.println(rovecomm_packet.data_id);
  switch(rovecomm_packet.data_id)
  {
   case RC_ARMBOARD_MOVEOPENLOOP_DATAID:
@@ -51,8 +51,25 @@ void loop()
   case RC_ARMBOARD_MOVETOANGLE_DATAID:
     doClosedLoop();
     break;
-  case RC_ARMBOARD_IKABSPOS_DATAID:
+  case RC_ARMBOARD_IKINCROV_DATAID:
+    Serial.println("IK INCREMENT");
     initPresentCoordinates();
+    int16_t moveCommands[6];
+    for(int i = 0; i<6;i++)
+    {
+      moveCommands[i] = (int16_t)rovecomm_packet.data[i];
+      Serial.println(moveCommands[i]);
+    }
+    incrementRoverIK(moveCommands);
+    for(int i = 0; i<4;i++)
+    {
+      Serial.println(bicepAngleVals[i]);
+    }
+    for(int i = 0; i<2;i++)
+    {
+      Serial.println(forearmAngleVals[i]);
+    }
+    
     break;
   default:
     break;

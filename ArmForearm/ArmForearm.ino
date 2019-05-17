@@ -16,9 +16,9 @@ void setup()
   Wrist.LeftMotor.drive(0);
   Wrist.RightMotor.drive(0);
 
-  Wrist.TiltEncoder.attach(WRIST_TILT_ENCODER);
+  Wrist.TiltEncoder.attach(WRIST_TILT_ENCODER,false,7,0);
+  Wrist.TwistEncoder.attach(WRIST_TWIST_ENCODER,false,7,-324360);
   Wrist.TiltEncoder.start();
-  Wrist.TwistEncoder.attach(WRIST_TWIST_ENCODER);
   Wrist.TwistEncoder.start();
 
   Watchdog.attach(stop);

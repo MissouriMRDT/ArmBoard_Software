@@ -269,10 +269,10 @@ void calc_IK(float coordinates[IKArgCount+2], float angles[ArmJointCount]){
   th5 = negativeRadianCorrection(th5);
   th6 = negativeRadianCorrection(th6);
 
-  bicepAngleVals[0] = degrees(th1);
-  bicepAngleVals[1] = degrees(th2);
-  bicepAngleVals[2] = degrees(th3);
-  bicepAngleVals[3] = degrees(th4);
+  bicepAngleVals[0] = degrees(th1)*1000;
+  bicepAngleVals[1] = degrees(th2)*1000;
+  bicepAngleVals[2] = degrees(th3)*1000;
+  bicepAngleVals[3] = degrees(th4)*1000;
   forearmAngleVals[0] = degrees(th5);
   forearmAngleVals[1] = degrees(th6);
 }
@@ -310,7 +310,7 @@ bool isWithinIKPauseBoundary()
 
   float destAngles[ArmJointCount] =
   {
-   (float)bicepAngleVals[0], (float)bicepAngleVals[1], (float)bicepAngleVals[2], (float)bicepAngleVals[3], (float)forearmAngleVals[0], (float)forearmAngleVals[1]
+   (float)bicepAngleVals[0]/1000, (float)bicepAngleVals[1]/1000, (float)bicepAngleVals[2]/1000, (float)bicepAngleVals[3]/1000, (float)forearmAngleVals[0]/1000, (float)forearmAngleVals[1]/1000
   };
 
   float boundaries[ArmJointCount] =
@@ -319,7 +319,7 @@ bool isWithinIKPauseBoundary()
   };
   for(int i = 0; i < ArmJointCount; i++)
   {
-    float diff = calc360Dist(destAngles[i] * POS_TO_DEGREES, currentAngles[i] * POS_TO_DEGREES);
+    float diff = calc360Dist(destAngles[i], currentAngles[i]);
     if(abs(diff) > boundaries[i])
     {
       return false;
@@ -367,6 +367,11 @@ void incrementRoverIK(int16_t moveValues[IKArgCount])
 {
   if(isWithinIKPauseBoundary()==true)
   {
+    Serial.println("Inside IK");
+    for(int i = 0; i<6;i++)
+    {
+      Serial.println(moveValues[i]);
+    }
     float temp = moveValues[0]; //sometimes crashes if you use it directly for some reason
     float xInc = calculateIKIncrement(temp);
     temp = moveValues[1];
@@ -379,7 +384,6 @@ void incrementRoverIK(int16_t moveValues[IKArgCount])
     float piInc = calculateIKIncrement(temp);
     temp = moveValues[5];
     float roInc = calculateIKIncrement(temp);
-
     destPositions[0] = 0.3*xInc + presentCoordinates[0]; //adjusted the step sizes here to make motion much smoother
     destPositions[1] = 0.3*yInc + presentCoordinates[1];
     destPositions[2] = 0.3*zInc + presentCoordinates[2];
@@ -388,6 +392,10 @@ void incrementRoverIK(int16_t moveValues[IKArgCount])
     destPositions[5] = 2*roInc + presentCoordinates[5];
 
     calc_roverIK(destPositions, outputAngles);
+    for(int i=0; i<6; i++)
+    {
+      presentCoordinates[i] = destPositions[i];
+    }
   }
 }
 
@@ -425,23 +433,23 @@ void incrementWristIK(int16_t moveValues[IKArgCount])  //this isnt working right
     float Rotxpitch2[3][3];
 
     float t = radians(moveValues[3]); //crashes if you pass it directly in for some reason
-      Rotz(t,Rotzyaw);
-      t = radians(moveValues[4]);
-      Rotx(t,Rotxpitch);
-      t = radians(moveValues[5]);
-      Roty(t,Rotyroll);
-      t = radians(moveValues[6]);
-      Rotx(t,Rotxpitch2);
-      t = radians(moveValues[7]);
-      Rotz(t,Rotzyaw2);
+    Rotz(t,Rotzyaw);
+    t = radians(moveValues[4]);
+    Rotx(t,Rotxpitch);
+    t = radians(moveValues[5]);
+    Roty(t,Rotyroll);
+    t = radians(moveValues[6]);
+    Rotx(t,Rotxpitch2);
+    t = radians(moveValues[7]);
+    Rotz(t,Rotzyaw2);
 
-      float OpRot[3][3];
-      float OpRottemp[3][3];
-      float OpRottemp2[3][3];
-      matrixMathMultiply((float*)Rotzyaw, (float*)Rotxpitch, 3, 3, 3, (float*)OpRottemp);
-      matrixMathMultiply((float*)OpRottemp, (float*)Rotyroll, 3, 3, 3, (float*)OpRottemp2);
-      matrixMathMultiply((float*)OpRottemp2, (float*)Rotxpitch2, 3, 3, 3, (float*)OpRottemp);
-      matrixMathMultiply((float*)OpRottemp, (float*)Rotzyaw2, 3, 3, 3, (float*)OpRot);
+    float OpRot[3][3];
+    float OpRottemp[3][3];
+    float OpRottemp2[3][3];
+    matrixMathMultiply((float*)Rotzyaw, (float*)Rotxpitch, 3, 3, 3, (float*)OpRottemp);
+    matrixMathMultiply((float*)OpRottemp, (float*)Rotyroll, 3, 3, 3, (float*)OpRottemp2);
+    matrixMathMultiply((float*)OpRottemp2, (float*)Rotxpitch2, 3, 3, 3, (float*)OpRottemp);
+    matrixMathMultiply((float*)OpRottemp, (float*)Rotzyaw2, 3, 3, 3, (float*)OpRot);
 
     matrixMathMultiply((float*)OpRot, (float*)relPositions, 3, 3, 1, (float*)absPositions);
 
@@ -460,6 +468,10 @@ void incrementWristIK(int16_t moveValues[IKArgCount])  //this isnt working right
     //matlab to figure it out. I will look at this again soon. -chris
 
     calc_gripperRelativeIK(destPositions, relOutput, outputAngles);
+    for(int i=0; i<6; i++)
+    {
+      presentCoordinates[i] = destPositions[i];
+    }
   }
 }
 
@@ -531,6 +543,13 @@ T6MatrixContainer calcPresentCoordinates(float coordinates[IKArgCount])
   coordinates[3] = degrees(negativeRadianCorrection(atan2(-T6[0][1],T6[1][1])));
   coordinates[4] = degrees(negativeRadianCorrection(atan2(T6[2][1],sqrt(1-pow(T6[2][1],2)))));
   coordinates[5] = degrees(negativeRadianCorrection(atan2(T6[2][0],T6[2][2])));
+
+  bicepAngleVals[0] = currentPositions[0];
+  bicepAngleVals[1] = currentPositions[1];
+  bicepAngleVals[2] = currentPositions[2];
+  bicepAngleVals[3] = currentPositions[3];
+  forearmAngleVals[0] = currentPositions[4];
+  forearmAngleVals[1] = currentPositions[5];
 
   T6MatrixContainer container;
 
