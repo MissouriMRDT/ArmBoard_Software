@@ -27,6 +27,7 @@ void initPresentCoordinates()
 //DISTANCES ARE IN INCHES!!!
 //important supporting functions
 void DHTrans(float th, float d, float a, float alpha, float A1[4][4]){  //Calculate the Homogenous transform from the DH convention
+   
    A1[0][0] = cos(th);
    A1[0][1] = -sin(th)*cos(alpha);
    A1[0][2] = sin(th)*sin(alpha);
@@ -109,6 +110,11 @@ void calc_roverIK(float coordinates[IKArgCount], float angles[ArmJointCount])
 }
 
 void calc_IK(float coordinates[IKArgCount+2], float angles[ArmJointCount]){
+
+  for(int i = 0; i<6; i++)
+  {
+    Serial.println(coordinates[i]);
+  }
   //HERE COMES THE IK MATH!!!
   //operating point location
   //x=0;// Desired X coordinate of gripper relative to the Rover (where the arm attaches)
@@ -385,6 +391,8 @@ void incrementRoverIK(int16_t moveValues[IKArgCount])
     float piInc = calculateIKIncrement(temp);
     temp = moveValues[5];
     float roInc = calculateIKIncrement(temp);
+
+    Serial.println("Increments:");
     Serial.println(xInc);
     Serial.println(yInc);
     Serial.println(zInc);

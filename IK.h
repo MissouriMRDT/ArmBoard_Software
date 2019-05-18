@@ -15,7 +15,7 @@ const uint16_t IKPauseBoundary_J3 = 8;
 const uint16_t IKPauseBoundary_J4 = 8;
 const uint16_t IKPauseBoundary_J5 = 8;
 const uint16_t IKPauseBoundary_J6 = 8;
-const uint8_t  IKIncrementMax = 2;
+const uint8_t  IKIncrementMax = 5;
 
 const uint64_t POS_MIN = 0, POS_MAX = 360000; 
 const float POS_TO_DEGREES = 360.0 / (float)(360000- 0);

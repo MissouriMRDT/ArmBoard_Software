@@ -49,7 +49,7 @@ const uint8_t GRIPPER_PWM        = PK_4;
 
 const uint8_t NIPPER_INA        = PP_3;
 const uint8_t NIPPER_INB        = PQ_1;
-const uint8_t NIPPER_PWM        = PF_3;
+const uint8_t NIPPER_PWM        = PG_1;
 
 const uint8_t WRIST_TILT_ENCODER    = PD_4;
 const uint8_t WRIST_TWIST_ENCODER   = PM_1;

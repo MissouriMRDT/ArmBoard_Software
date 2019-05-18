@@ -17,7 +17,7 @@ const float d2=0;//offset to the right of the bicep relative to the base rotatio
      //should probably stay as 0 even if bicep is offset. this offset can
      //also be accounted for using d3)
 const float a2=17;//bicep length(distance between bicep tilt axis and elbow tilt axis)
-const float alpha2=1.57079632679;//angular offset of elbow tilt axis about x2 axis.(SHOULD BE 90
+const float alpha2=0;//angular offset of elbow tilt axis about x2 axis.(SHOULD BE 90
          //UNLESS ARM DESIGN IS SUPER FUNKY)
 const float th3offset=1.57079632679;//should be 90
 const float d3=0;//offset to the right of the forearm relative to the bicep(see d2

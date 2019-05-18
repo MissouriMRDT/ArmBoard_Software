@@ -5,18 +5,18 @@ void setup()
   Serial.begin(9600);
   RoveComm.begin(RC_BICEP_FOURTHOCTET);
 
-  Shoulder.LeftMotor.attach(SHOULDER_LEFT_INA, SHOULDER_LEFT_INB, SHOULDER_LEFT_PWM,true);
-  Shoulder.RightMotor.attach(SHOULDER_RIGHT_INA, SHOULDER_RIGHT_INB, SHOULDER_RIGHT_PWM,true);
+  Shoulder.LeftMotor.attach(SHOULDER_LEFT_INA, SHOULDER_LEFT_INB, SHOULDER_LEFT_PWM);
+  Shoulder.RightMotor.attach(SHOULDER_RIGHT_INA, SHOULDER_RIGHT_INB, SHOULDER_RIGHT_PWM);
   Elbow.LeftMotor.attach(ELBOW_LEFT_INA, ELBOW_LEFT_INB, ELBOW_LEFT_PWM);
   Elbow.RightMotor.attach(ELBOW_RIGHT_INA, ELBOW_RIGHT_INB, ELBOW_RIGHT_PWM);
 
-  Shoulder.TiltEncoder.attach(SHOULDER_TILT_ENCODER,7,false,-246520,true); //offsets to have arm pointing straight up
-  Shoulder.TwistEncoder.attach(SHOULDER_TWIST_ENCODER,7,false,-256040,true);
-  Shoulder.attachLimitSwitches(LS_1, LS_2);
+  Shoulder.TiltEncoder.attach(SHOULDER_TILT_ENCODER,false,7,250200); //offsets to have arm pointing straight up
+  Shoulder.TwistEncoder.attach(SHOULDER_TWIST_ENCODER,false,7,247680);
+  Shoulder.attachLimitSwitches(LS_2, LS_1);
   Shoulder.setTwistLimits(295000,57000);
 
-  Elbow.TiltEncoder.attach(ELBOW_TILT_ENCODER,7,false,79920);
-  Elbow.TwistEncoder.attach(ELBOW_TWIST_ENCODER,7,false,62280);
+  Elbow.TiltEncoder.attach(ELBOW_TILT_ENCODER,false,7,82800);
+  Elbow.TwistEncoder.attach(ELBOW_TWIST_ENCODER,false,7,244800);
   Elbow.attachLimitSwitches(LS_4, LS_7);
 
   pinMode(LS_1, INPUT);
@@ -117,8 +117,8 @@ void openLoop()
      && abs(rovecomm_packet.data[2]) < 50 
      && abs(rovecomm_packet.data[3]) < 50)
      || Shoulder.atTiltLimit(rovecomm_packet.data[1])
-     || Elbow.atTiltLimit(-rovecomm_packet.data[2])  //different direction to trigger limits
-     || Shoulder.atTwistLimit(rovecomm_packet.data[0],jointAngles[0]))
+     || Elbow.atTiltLimit(-rovecomm_packet.data[2]))  //different direction to trigger limits
+     //|| Shoulder.atTwistLimit(rovecomm_packet.data[0],jointAngles[0]))
   {
     Serial.println("stopping");
     stop();
@@ -130,7 +130,7 @@ void openLoop()
   //additionally we scale down the speed a little when we are going down (with gravity)
   //this is done to ensure more smooth control and have everything seem the same 'speed'
   ///////////////////////////////////////////////////////////////////////////////////
-  Serial.println(rovecomm_packet.data[0]);
+  Serial.println(rovecomm_packet.data[2]);
   if(rovecomm_packet.data[1] >= 70)
   {
     Shoulder.tiltTwistDecipercent((rovecomm_packet.data[1]), (rovecomm_packet.data[0]));
@@ -142,11 +142,11 @@ void openLoop()
   //depending on the direction of twist ([0]) we will add compensation to avoid downwards drift
   else if(rovecomm_packet.data[0] >= 70)
   {
-    Shoulder.tiltTwistDecipercent((rovecomm_packet.data[1]), (rovecomm_packet.data[0]), Elbow.Right, 1.45);
+    Shoulder.tiltTwistDecipercent((rovecomm_packet.data[1]), (rovecomm_packet.data[0]), Elbow.Left, 1.45);
   }
   else if(rovecomm_packet.data[0] <= -70)
   {
-    Shoulder.tiltTwistDecipercent((rovecomm_packet.data[1]), (rovecomm_packet.data[0]), Elbow.Left, 1.45);
+    Shoulder.tiltTwistDecipercent((rovecomm_packet.data[1]), (rovecomm_packet.data[0]), Elbow.Right, 1.45);
   }
 
   ///////////////////////////////////////////////////////////////////////////////////
@@ -186,30 +186,48 @@ void closedLoop()
     moveToAngle(Shoulder, shoulderTiltTarget, shoulderTwistTarget, angles, outputs);
     float shoulderTilt = outputs[0];
     float shoulderTwist = outputs[1];
-
     ////////////////////////////////////////////////////////////////////////////
     //We map the PID output for the direction we are moving as well
     //this is done because there is a threshhold to get the arm actually moving
     ////////////////////////////////////////////////////////////////////////////
     if(shoulderTilt < 0)
     {
-      shoulderTilt = map(shoulderTilt, -700, 0, -700, -400);
+      shoulderTilt = map(shoulderTilt, -700, 0, -900, -600);
     }
     else if(shoulderTilt > 0)
     {
       shoulderTilt = map(shoulderTilt, 0, 400, 250, 400);
     }
+
     if(shoulderTwist > 0)
     {
-      shoulderTwist = map(shoulderTwist, 0, 600, 400, 600);
+      shoulderTwist = map(shoulderTwist, 0, 600, 500, 700);
     }
     else if(shoulderTwist < 0)
     {
-      shoulderTwist = map(shoulderTwist, -600, 0, -600, -400);
+      shoulderTwist = map(shoulderTwist, -600, 0, -700, -500);
     }
-    if((shoulderTilt != 0 && !Shoulder.atTiltLimit(shoulderTilt)) || (shoulderTwist != 0 && !Shoulder.atTwistLimit(shoulderTwist, jointAngles[0])))
+    Serial.println("Shoulder tilt:");
+    Serial.println(shoulderTilt);
+    Serial.println("Shoulder twist:");
+    Serial.println(shoulderTwist);
+    ////////////////////////////////////////////////////////////////////////////
+    //We always check if we are moving past limits and compensate for twists
+    ///////////////////////////////////////////////////////////////////////////
+    if((shoulderTilt != 0 && !Shoulder.atTiltLimit(shoulderTilt)) || (shoulderTwist != 0)) //&&!Shoulder.atTwistLimit(shoulderTwist, jointAngles[0])))
     { 
-      Shoulder.tiltTwistDecipercent(shoulderTilt, shoulderTwist);
+      if(shoulderTwist > 0)
+      {
+        Shoulder.tiltTwistDecipercent(shoulderTilt, shoulderTwist, Elbow.Left, 1.45);
+      }
+      else if(shoulderTwist < 0)
+      {
+        Shoulder.tiltTwistDecipercent(shoulderTilt, shoulderTwist, Elbow.Right, 1.45);
+      }
+      else
+      {
+        Shoulder.tiltTwistDecipercent(shoulderTilt, shoulderTwist);
+      }
     }
     
     angles[0] = jointAngles[2];
@@ -220,7 +238,7 @@ void closedLoop()
     float elbowTwist = outputs[1];
     if(elbowTilt < 0)
     {
-      elbowTilt = map(elbowTilt, -300, 0, -250, -100);
+      elbowTilt = map(elbowTilt, -300, 0, -150, -90);
     }
     else if(elbowTilt > 0)
     {
@@ -266,17 +284,19 @@ void moveToAngle(RoveDifferentialJoint &Joint, float tiltTo, float twistTo, floa
     {
       if(Angles[1]-(smaller+(360000-larger))<0)
       {
-        fakeTwist  = twistTo+(smaller+(360000-larger));
-        fakeTwistAngle = fakeTwist+(twistTo - Angles[1]);
+        fakeTwist  = Angles[1]+(smaller+(360000-larger));
+        fakeTwistAngle = fakeTwist-((360000-twistTo) + (Angles[1]-0));
+       
       }
-      else if(Angles[0]-(smaller+(360000-larger))>0)
+      else if(Angles[1]-(smaller+(360000-larger))>0)
       {
-        fakeTwist  = twistTo-(smaller+(360000-larger));
-        fakeTwistAngle = fakeTwist-(twistTo - Angles[1]);
+        fakeTwist  = Angles[1]-(smaller+(360000-larger));
+        fakeTwistAngle = fakeTwist+((twistTo-0) + (360000-Angles[1]));
+       
       }
       twist  = -Joint.TwistPid.incrementPid(fakeTwist, fakeTwistAngle,2.5);
+  
     }
-    //if the normal way is faster, or equal we want less of a headache
     else if((smaller+(360000-larger)) >= abs(Angles[1]-twistTo))
     {
        twist  = Joint.TwistPid.incrementPid(twistTo, Angles[1],2.5);
@@ -289,15 +309,17 @@ void moveToAngle(RoveDifferentialJoint &Joint, float tiltTo, float twistTo, floa
     //if wrapping around 360 is faster than going normally
     if((smaller+(360000-larger)) < abs(Angles[0]-tiltTo))
     {
-      if(Angles[0]-(smaller+(360000-larger))<0)
+       if(Angles[0]-(smaller+(360000-larger))<0)
       {
-        fakeTilt  = tiltTo+(smaller+(360000-larger));
-        fakeTiltAngle = fakeTilt+(tiltTo - Angles[0]);
+        fakeTilt  = Angles[1]+(smaller+(360000-larger));
+        fakeTiltAngle = fakeTilt-((360000-tiltTo) + (Angles[0]-0));
+       
       }
       else if(Angles[0]-(smaller+(360000-larger))>0)
       {
-        fakeTilt  = tiltTo-(smaller+(360000-larger));
-        fakeTiltAngle = fakeTilt-(tiltTo - Angles[0]);
+        fakeTilt  = Angles[0]-(smaller+(360000-larger));
+        fakeTiltAngle = fakeTilt+((tiltTo-0) + (360000-Angles[0]));
+       
       }
       tilt  = -Joint.TiltPid.incrementPid(fakeTilt, fakeTiltAngle,2.5);
     }

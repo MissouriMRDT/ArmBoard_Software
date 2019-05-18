@@ -10,14 +10,14 @@ void setup()
   Wrist.LeftMotor.attach(WRIST_LEFT_INA, WRIST_LEFT_INB, WRIST_LEFT_PWM);
   Wrist.RightMotor.attach(WRIST_RIGHT_INA, WRIST_RIGHT_INB, WRIST_RIGHT_PWM);
   Gripper.attach(GRIPPER_INA, GRIPPER_INB, GRIPPER_PWM);
-  //Nipper.attach(NIPPER_INA, NIPPER_INB, NIPPER_PWM);
+  Nipper.attach(NIPPER_INA, NIPPER_INB, NIPPER_PWM);
 
   //set motor speeds to 0, to be safe
   Wrist.LeftMotor.drive(0);
   Wrist.RightMotor.drive(0);
 
-  Wrist.TiltEncoder.attach(WRIST_TILT_ENCODER,false,7,0);
-  Wrist.TwistEncoder.attach(WRIST_TWIST_ENCODER,false,7,-324360);
+  Wrist.TiltEncoder.attach(WRIST_TILT_ENCODER,false,7,8280);
+  Wrist.TwistEncoder.attach(WRIST_TWIST_ENCODER,false,7,123480);
   Wrist.TiltEncoder.start();
   Wrist.TwistEncoder.start();
 
@@ -32,8 +32,8 @@ void setup()
   pinMode(DIR_SW, INPUT);
 
   //TODO: For testing maybe have some way of RED tweaking these constants?
-  Wrist.TiltPid.attach( -800.0, 800.0, 120, 0, 0 ); //very much subject to change
-  Wrist.TwistPid.attach( -800.0, 800.0, 120, 2, 0 ); //very much subject to change
+  Wrist.TiltPid.attach( -800.0, 800.0, 50, 0, 0 ); //very much subject to change
+  Wrist.TwistPid.attach( -800.0, 800.0, 50, 2, 0 ); //very much subject to change
 }
 
 uint32_t timer = millis();
@@ -58,26 +58,13 @@ void OpenLoop()
       Wrist.tiltTwistDecipercent((rovecomm_packet.data[0]), (rovecomm_packet.data[1]));
     
     Gripper.drive(rovecomm_packet.data[2]);
-    /*
-    if(rovecomm_packet.data[3] == 1 && toolSelected == 0)
-    {
-      Serial.println("Nipped");
-      Serial.println("Selected: ");
-      Serial.println(toolSelected);
-      digitalWrite(NIPPER_INA, HIGH);
-      digitalWrite(NIPPER_INB, LOW);
-      delay(1000);
-      digitalWrite(NIPPER_INA, LOW);
-      digitalWrite(NIPPER_INB, LOW);    
-    }
-    */
+    actuateSolenoid(rovecomm_packet.data[3]);
     Watchdog.clear();
 }
 
 void parsePackets()
 {
    rovecomm_packet = RoveComm.read();
-   Serial.println(rovecomm_packet.data_id);
    switch(rovecomm_packet.data_id)
    {
     case RC_ARMBOARD_FOREARM_DATAID:
@@ -89,8 +76,11 @@ void parsePackets()
       tiltTarget = rovecomm_packet.data[0];
       twistTarget = rovecomm_packet.data[1];
       break;
-    //case RC_ARMBOARD_TOOLSELECTION_DATAID:
-    //  toolSelected = rovecomm_packet.data[0];
+    case RC_ARMBOARD_GRIPPER_DATAID:
+      Gripper.drive(rovecomm_packet.data[0]);
+      break;
+    case RC_ARMBOARD_SOLENOID_DATAID:
+      actuateSolenoid(rovecomm_packet.data[0]);
       break;
     default:
       break;
@@ -136,6 +126,22 @@ void ClosedLoop()
     Watchdog.clear();
   }
 
+}
+
+void actuateSolenoid(int value)
+{
+   if(value == 1)
+    {
+        digitalWrite(NIPPER_INA, HIGH);
+        digitalWrite(NIPPER_INB, LOW);
+        digitalWrite(NIPPER_PWM, HIGH);
+    }
+    else if(value == 0)
+    {
+        digitalWrite(NIPPER_INA, LOW);
+        digitalWrite(NIPPER_INB, LOW);
+        digitalWrite(NIPPER_PWM, LOW);
+    }      
 }
 
 void checkButtons()
@@ -190,12 +196,12 @@ void moveToAngle(RoveDifferentialJoint &Joint, float tiltTo, float twistTo, uint
         fakeTilt  = tiltTo-(smaller+(360000-larger));
         fakeTiltAngle = fakeTilt-(tiltTo - Angles[0]);
       }
-      tilt  = Joint.TiltPid.incrementPid(fakeTilt, fakeTiltAngle,1.5);
+      tilt  = Joint.TiltPid.incrementPid(fakeTilt, fakeTiltAngle,2.5);
     }
     //if the normal way is faster, or equal we want less of a headache
     else if((smaller+(360000-larger)) >= abs(Angles[0]-tiltTo))
     {
-       tilt  = -Joint.TiltPid.incrementPid(tiltTo, ((float)Angles[0]),1.5);
+       tilt  = -Joint.TiltPid.incrementPid(tiltTo, ((float)Angles[0]),2.5);
     }
     ///MATH FOR J1
     //check if it's faster to go from 360->0 or 0->360 then the normal way
@@ -214,12 +220,12 @@ void moveToAngle(RoveDifferentialJoint &Joint, float tiltTo, float twistTo, uint
         fakeTwist  = twistTo-(smaller+(360000-larger));
         fakeTwistAngle = fakeTwist-(twistTo - Angles[1]);
       }
-      twist  = Joint.TwistPid.incrementPid(fakeTwist, fakeTwistAngle,1.5);
+      twist  = Joint.TwistPid.incrementPid(fakeTwist, fakeTwistAngle,2.5);
     }
     //if the normal way is faster, or equal we want less of a headache
     else if((smaller+(360000-larger)) >= abs(Angles[1]-twistTo))
     {
-       twist  = -Joint.TwistPid.incrementPid(twistTo, Angles[1],1.5);
+       twist  = -Joint.TwistPid.incrementPid(twistTo, Angles[1],2.5);
     }
 
     outputs[0] = tilt;

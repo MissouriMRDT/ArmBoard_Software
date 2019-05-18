@@ -17,8 +17,10 @@ void toolSelection();
 void parseCommand();
 void updatePosition();
 void sendPosition();
+uint32_t invertAngle(uint32_t angle, bool invert);
 
-const uint8_t SOLENOID_CRTL_PIN   =	PP_2;
+
+const uint8_t LASER_CNTRL_PIN   =	PN_3;
 const uint8_t SW1_IND_PIN	      = PH_0;
 
 const uint8_t SERVO_1_CRTL_PIN   = PK_5;

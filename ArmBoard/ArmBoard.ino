@@ -13,7 +13,7 @@ void setup()
   Serial.begin(115200);
   RoveComm.begin(RC_ARMBOARD_FOURTHOCTET);
 
-  pinMode(SOLENOID_CRTL_PIN, OUTPUT);
+  pinMode(LASER_CNTRL_PIN, OUTPUT);
 
   //This servo (4) is attached to a random pin, as this is the only way to get the actual
   //servos to work
@@ -41,6 +41,13 @@ void loop()
   case RC_ARMBOARD_TOOLSELECTION_DATAID:
     toolSelection();
     break;
+  case RC_ARMBOARD_LASER_DATAID:
+    Serial.println("Laser");
+    if(rovecomm_packet.data[0] == 1)
+      digitalWrite(LASER_CNTRL_PIN, HIGH);
+    else
+      digitalWrite(LASER_CNTRL_PIN, LOW);
+    break;
   case RC_ARMBOARD_ARMCOMMANDS_DATAID:
     parseCommand();
     break;
@@ -60,15 +67,22 @@ void loop()
       moveCommands[i] = (int16_t)rovecomm_packet.data[i];
     }
     incrementRoverIK(moveCommands);
-    for(int i = 0; i<4;i++)
-    {
-      Serial.println(bicepAngleVals[i]);
-    }
-    for(int i = 0; i<2;i++)
-    {
-      Serial.println(forearmAngleVals[i]);
-    }
-    
+    uint32_t bicepMove[4];
+    bicepMove[0] = bicepAngleVals[0]; //J1
+    bicepMove[1] = invertAngle(bicepAngleVals[1],true); //J2
+    bicepMove[2] = bicepAngleVals[2]; //J3
+    bicepMove[3] = invertAngle(bicepAngleVals[3],true); //J4
+    RoveComm.writeTo(RC_ARMBOARD_BICEP_ANGLE_DATAID, 4, bicepMove, 192, 168, 1, RC_BICEP_FOURTHOCTET, 11000);
+    uint32_t forearmMove[4];
+    forearmMove[0] = forearmAngleVals[0]; //J5
+    forearmMove[1] = forearmAngleVals[1]; //J6
+    if(rovecomm_packet.data[7] == 1)
+      digitalWrite(LASER_CNTRL_PIN, HIGH);
+    else
+      digitalWrite(LASER_CNTRL_PIN, LOW);
+    RoveComm.writeTo(RC_ARMBOARD_FOREARM_ANGLE_DATAID, 2, forearmMove, 192, 168, 1, RC_FOREARM_FOURTHOCTET, 11000);
+    RoveComm.writeTo(RC_ARMBOARD_GRIPPER_DATAID, 1, rovecomm_packet.data[6], 192, 168, 1, RC_FOREARM_FOURTHOCTET, 11000);
+    RoveComm.writeTo(RC_ARMBOARD_SOLENOID_DATAID, 1, rovecomm_packet.data[7], 192, 168, 1, RC_FOREARM_FOURTHOCTET, 11000);
     break;
   default:
     break;
@@ -96,7 +110,10 @@ void doOpenLoop()
    forearmVals[1] = rovecomm_packet.data[5]; //J6
    forearmVals[2] = rovecomm_packet.data[6]; //Gripper
    forearmVals[3] = rovecomm_packet.data[7]; //Nipper
-
+    if(rovecomm_packet.data[7] == 1)
+      digitalWrite(LASER_CNTRL_PIN, HIGH);
+    else
+      digitalWrite(LASER_CNTRL_PIN, LOW);
    //sending the motor commands to their specific boards
    RoveComm.writeTo(RC_ARMBOARD_BICEP_DATAID, 4, bicepVals, 192, 168, 1, RC_BICEP_FOURTHOCTET, 11000);
    RoveComm.writeTo(RC_ARMBOARD_FOREARM_DATAID, 4, forearmVals, 192, 168, 1, RC_FOREARM_FOURTHOCTET, 11000);
@@ -104,15 +121,14 @@ void doOpenLoop()
 
 void doClosedLoop()
 {
-   uint32_t bicepVals[4];
-   uint32_t forearmVals[2];
    Serial.println(rovecomm_packet.data[5]);
    bicepAngleVals[0] = rovecomm_packet.data[0]; //J1
-   bicepAngleVals[1] = rovecomm_packet.data[1]; //J2
+   bicepAngleVals[1] = invertAngle(rovecomm_packet.data[1],true); //J2
    bicepAngleVals[2] = rovecomm_packet.data[2]; //J3
-   bicepAngleVals[3] = rovecomm_packet.data[3]; //J4
+   bicepAngleVals[3] = invertAngle(rovecomm_packet.data[3],true); //J4
    forearmAngleVals[0] = rovecomm_packet.data[4]; //J5
    forearmAngleVals[1] = rovecomm_packet.data[5]; //J6
+
    RoveComm.writeTo(RC_ARMBOARD_BICEP_ANGLE_DATAID, 4, bicepAngleVals, 192, 168, 1, RC_BICEP_FOURTHOCTET, 11000);
    RoveComm.writeTo(RC_ARMBOARD_FOREARM_ANGLE_DATAID, 2, forearmAngleVals, 192, 168, 1, RC_FOREARM_FOURTHOCTET, 11000);
 }
@@ -189,13 +205,24 @@ void updatePosition()
   if(rovecomm_packet.data_id == RC_ARMBOARD_BICEP_MOTORANGLES_DATAID)
   {
     currentPositions[0] = rovecomm_packet.data[0];
-    currentPositions[1] = rovecomm_packet.data[1];
+    currentPositions[1] = invertAngle(rovecomm_packet.data[1],true);
     currentPositions[2] = rovecomm_packet.data[2];
-    currentPositions[3] = rovecomm_packet.data[3];
+    currentPositions[3] = invertAngle(rovecomm_packet.data[3],true);
   }
   else if(rovecomm_packet.data_id == RC_ARMBOARD_FOREARM_MOTORANGLES_DATAID)
   {
     currentPositions[4] = rovecomm_packet.data[0];
     currentPositions[5] = rovecomm_packet.data[1];
   }
+}
+
+uint32_t invertAngle(uint32_t angle, bool invert)
+{
+  if      (invert)  
+  {
+     angle = 360000 - angle;
+  }
+
+  return angle;
+
 }
