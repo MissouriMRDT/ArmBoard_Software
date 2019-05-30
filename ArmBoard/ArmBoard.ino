@@ -76,10 +76,6 @@ void loop()
     uint32_t forearmMove[4];
     forearmMove[0] = forearmAngleVals[0]; //J5
     forearmMove[1] = forearmAngleVals[1]; //J6
-    if(rovecomm_packet.data[7] == 1)
-      digitalWrite(LASER_CNTRL_PIN, HIGH);
-    else
-      digitalWrite(LASER_CNTRL_PIN, LOW);
     RoveComm.writeTo(RC_ARMBOARD_FOREARM_ANGLE_DATAID, 2, forearmMove, 192, 168, 1, RC_FOREARM_FOURTHOCTET, 11000);
     RoveComm.writeTo(RC_ARMBOARD_GRIPPER_DATAID, 1, rovecomm_packet.data[6], 192, 168, 1, RC_FOREARM_FOURTHOCTET, 11000);
     RoveComm.writeTo(RC_ARMBOARD_SOLENOID_DATAID, 1, rovecomm_packet.data[7], 192, 168, 1, RC_FOREARM_FOURTHOCTET, 11000);
@@ -94,13 +90,14 @@ void doOpenLoop()
 {
    int16_t bicepVals[4];
    int16_t forearmVals[3];
+   Serial.println("Open Loop");
    Serial.println(rovecomm_packet.data_id);
-   Serial.println(rovecomm_packet.data[0]);
-   Serial.println(rovecomm_packet.data[1]);
-   Serial.println(rovecomm_packet.data[2]);
-   Serial.println(rovecomm_packet.data[3]);
-   Serial.println(rovecomm_packet.data[4]);
-   Serial.println(rovecomm_packet.data[5]);
+   Serial.print("1:");Serial.println(rovecomm_packet.data[0]);
+   Serial.print("2:");Serial.println(rovecomm_packet.data[1]);
+   Serial.print("3:");Serial.println(rovecomm_packet.data[2]);
+   Serial.print("4:");Serial.println(rovecomm_packet.data[3]);
+   Serial.print("5:");Serial.println(rovecomm_packet.data[4]);
+   Serial.print("6:");Serial.println(rovecomm_packet.data[5]);
 
    bicepVals[0] = rovecomm_packet.data[0]; //J1
    bicepVals[1] = rovecomm_packet.data[1]; //J2
@@ -110,10 +107,6 @@ void doOpenLoop()
    forearmVals[1] = rovecomm_packet.data[5]; //J6
    forearmVals[2] = rovecomm_packet.data[6]; //Gripper
    forearmVals[3] = rovecomm_packet.data[7]; //Nipper
-    if(rovecomm_packet.data[7] == 1)
-      digitalWrite(LASER_CNTRL_PIN, HIGH);
-    else
-      digitalWrite(LASER_CNTRL_PIN, LOW);
    //sending the motor commands to their specific boards
    RoveComm.writeTo(RC_ARMBOARD_BICEP_DATAID, 4, bicepVals, 192, 168, 1, RC_BICEP_FOURTHOCTET, 11000);
    RoveComm.writeTo(RC_ARMBOARD_FOREARM_DATAID, 4, forearmVals, 192, 168, 1, RC_FOREARM_FOURTHOCTET, 11000);

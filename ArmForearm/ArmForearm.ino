@@ -3,7 +3,7 @@
 void setup()
 {
   //start our communications
-  Serial.begin(9600);
+  Serial.begin(115200);
   RoveComm.begin(RC_FOREARM_FOURTHOCTET);
 
   //initialize motors
@@ -48,13 +48,18 @@ void loop()
 
 void OpenLoop()
 {
-    if(abs(rovecomm_packet.data[0]) < 50 && abs(rovecomm_packet.data[1]) < 50 && abs(rovecomm_packet.data[3]) < 50)
+    Serial.print("1:");Serial.println(rovecomm_packet.data[0]);
+    Serial.print("2:");Serial.println(rovecomm_packet.data[1]);
+    Serial.print("3:");Serial.println(rovecomm_packet.data[2]);
+    Serial.print("4:");Serial.println(rovecomm_packet.data[3]);
+  
+    if(abs(rovecomm_packet.data[0]) < JOYSTICK_DEADBAND && abs(rovecomm_packet.data[1]) < JOYSTICK_DEADBAND && abs(rovecomm_packet.data[3]) < JOYSTICK_DEADBAND)
     {
         //if we are getting zeros for everything we stop
         Serial.println("Open loop");
         stop();
     }
-    if(abs(rovecomm_packet.data[0]) >= 70 || abs(rovecomm_packet.data[1]) >= 70)
+    if(abs(rovecomm_packet.data[0]) >= JOYSTICK_DEADBAND || abs(rovecomm_packet.data[1]) >= JOYSTICK_DEADBAND)
       Wrist.tiltTwistDecipercent((rovecomm_packet.data[0]), (rovecomm_packet.data[1]));
     
     Gripper.drive(rovecomm_packet.data[2]);
@@ -68,10 +73,12 @@ void parsePackets()
    switch(rovecomm_packet.data_id)
    {
     case RC_ARMBOARD_FOREARM_DATAID:
+      Serial.println("OL");
       DO_CLOSED_LOOP = false;
       OpenLoop();
       break;
     case RC_ARMBOARD_FOREARM_ANGLE_DATAID:
+      Serial.println("ANGLE");
       DO_CLOSED_LOOP = true;
       tiltTarget = rovecomm_packet.data[0];
       twistTarget = rovecomm_packet.data[1];

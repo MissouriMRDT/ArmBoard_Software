@@ -2,7 +2,9 @@
 
 void setup()
 {
-  Serial.begin(9600);
+  Serial.begin(115200);
+  delay(10);
+  Serial.println("Begun");
   RoveComm.begin(RC_BICEP_FOURTHOCTET);
 
   Shoulder.LeftMotor.attach(SHOULDER_LEFT_INA, SHOULDER_LEFT_INB, SHOULDER_LEFT_PWM);
@@ -12,7 +14,7 @@ void setup()
 
   Shoulder.TiltEncoder.attach(SHOULDER_TILT_ENCODER,false,7,250200); //offsets to have arm pointing straight up
   Shoulder.TwistEncoder.attach(SHOULDER_TWIST_ENCODER,false,7,247680);
-  Shoulder.attachLimitSwitches(LS_2, LS_1);
+  Shoulder.attachLimitSwitches(LS_1, LS_2);
   Shoulder.setTwistLimits(295000,57000);
 
   Elbow.TiltEncoder.attach(ELBOW_TILT_ENCODER,false,7,82800);
@@ -94,10 +96,13 @@ void parsePackets()
    switch(rovecomm_packet.data_id)
    {
     case RC_ARMBOARD_BICEP_DATAID:
+      Serial.println("Open Loop");
+      Serial.println(rovecomm_packet.data_id);
       DO_CLOSED_LOOP = false;
       openLoop();
       break;
     case RC_ARMBOARD_BICEP_ANGLE_DATAID:
+      Serial.println("Angle");
       DO_CLOSED_LOOP = true;
       shoulderTiltTarget = rovecomm_packet.data[1];
       shoulderTwistTarget = rovecomm_packet.data[0];
@@ -111,61 +116,66 @@ void parsePackets()
 
 void openLoop()
 {
-  //we will tell the motors to stop if our commands are too small (sometimes the joystick input is a little noisy)
-  if((abs(rovecomm_packet.data[0]) < 50 
-     && abs(rovecomm_packet.data[1]) < 50 
-     && abs(rovecomm_packet.data[2]) < 50 
-     && abs(rovecomm_packet.data[3]) < 50)
-     || Shoulder.atTiltLimit(rovecomm_packet.data[1])
-     || Elbow.atTiltLimit(-rovecomm_packet.data[2]))  //different direction to trigger limits
-     //|| Shoulder.atTwistLimit(rovecomm_packet.data[0],jointAngles[0]))
-  {
-    Serial.println("stopping");
-    stop();
-    return;
-  }
-
+  Serial.print("1:");Serial.println(rovecomm_packet.data[0]);
+  Serial.print("2:");Serial.println(rovecomm_packet.data[1]);
+  Serial.print("3:");Serial.println(rovecomm_packet.data[2]);
+  Serial.print("4:");Serial.println(rovecomm_packet.data[3]);
+      
   ///////////////////////////////////////////////////////////////////////////////////
   //We check for whether we are going past limits every time we move the arm
   //additionally we scale down the speed a little when we are going down (with gravity)
   //this is done to ensure more smooth control and have everything seem the same 'speed'
   ///////////////////////////////////////////////////////////////////////////////////
-  Serial.println(rovecomm_packet.data[2]);
-  if(rovecomm_packet.data[1] >= 70)
+  //Serial.println(rovecomm_packet.data[2]);
+
+  if(abs(rovecomm_packet.data[0]) <= INPUT_DEADBAND ) rovecomm_packet.data[0] = 0;
+  if(abs(rovecomm_packet.data[1]) <= INPUT_DEADBAND ) rovecomm_packet.data[1] = 0;
+  if(abs(rovecomm_packet.data[2]) <= INPUT_DEADBAND ) rovecomm_packet.data[2] = 0;
+  if(abs(rovecomm_packet.data[3]) <= INPUT_DEADBAND ) rovecomm_packet.data[3] = 0;
+
+  if(Shoulder.atTiltLimit(rovecomm_packet.data[1]))
+  {
+    Serial.println("Limit");
+    rovecomm_packet.data[1] = 0;
+  }
+
+  
+  if(rovecomm_packet.data[1] >= 0)
   {
     Shoulder.tiltTwistDecipercent((rovecomm_packet.data[1]), (rovecomm_packet.data[0]));
   }
-  else if(rovecomm_packet.data[1] <= -70 && !Shoulder.atTiltLimit(rovecomm_packet.data[1]))
+  else if(rovecomm_packet.data[1] <= 0)
   {
     Shoulder.tiltTwistDecipercent((rovecomm_packet.data[1])*2/3, (rovecomm_packet.data[0])*2/3);
   }
   //depending on the direction of twist ([0]) we will add compensation to avoid downwards drift
-  else if(rovecomm_packet.data[0] >= 70)
+  if(rovecomm_packet.data[0] >= 0)
   {
     Shoulder.tiltTwistDecipercent((rovecomm_packet.data[1]), (rovecomm_packet.data[0]), Elbow.Left, 1.45);
   }
-  else if(rovecomm_packet.data[0] <= -70)
+  else if(rovecomm_packet.data[0] <= 0)
   {
     Shoulder.tiltTwistDecipercent((rovecomm_packet.data[1]), (rovecomm_packet.data[0]), Elbow.Right, 1.45);
   }
+  
 
   ///////////////////////////////////////////////////////////////////////////////////
   //Same process for elbow as for shoulder
   ///////////////////////////////////////////////////////////////////////////////////
-  if(rovecomm_packet.data[2] >= 70)
+  if(rovecomm_packet.data[2] >= 0)
   {
       Elbow.tiltTwistDecipercent((rovecomm_packet.data[2])*2/3, (rovecomm_packet.data[3])*2/3);
   }
-  else if(rovecomm_packet.data[2] <= -70)
+  else if(rovecomm_packet.data[2] <= 0)
   {
       Elbow.tiltTwistDecipercent((rovecomm_packet.data[2])*1/3, (rovecomm_packet.data[3])*2/3);
   }
   //depending on the direction of twist ([3]) we will add compensation to avoid downwards drift
-  else if(rovecomm_packet.data[3] >= 70)
+  if(rovecomm_packet.data[3] >= 0)
   {
       Elbow.tiltTwistDecipercent((rovecomm_packet.data[2])*2/3, (rovecomm_packet.data[3])*2/3, Elbow.Right, 1.9);
   }
-  else if(rovecomm_packet.data[3] <= -70)
+  else if(rovecomm_packet.data[3] <= 0)
   {
       Elbow.tiltTwistDecipercent((rovecomm_packet.data[2])*2/3, (rovecomm_packet.data[3])*2/3);
   }

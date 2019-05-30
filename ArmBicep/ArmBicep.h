@@ -56,4 +56,6 @@ const uint8_t LS_2 = PM_4;
 const uint8_t LS_7 = PE_5;
 const uint8_t LS_4 = PD_7;
 
+#define INPUT_DEADBAND 100
+
 #endif

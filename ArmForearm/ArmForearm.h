@@ -61,6 +61,6 @@ const uint8_t M4_SW = PE_2;
 
 const uint8_t DIR_SW = PB_3;
 
-
+#define JOYSTICK_DEADBAND 250
 
 #endif

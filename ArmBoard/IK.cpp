@@ -400,9 +400,9 @@ void incrementRoverIK(int16_t moveValues[IKArgCount])
     Serial.println(piInc);
     Serial.println(roInc);
 
-    destPositions[0] = 0.3*xInc + presentCoordinates[0]; //adjusted the step sizes here to make motion much smoother
-    destPositions[1] = 0.3*yInc + presentCoordinates[1];
-    destPositions[2] = 0.3*zInc + presentCoordinates[2];
+    destPositions[0] = 0.15*xInc + presentCoordinates[0]; //adjusted the step sizes here to make motion much smoother
+    destPositions[1] = 0.15*yInc + presentCoordinates[1];
+    destPositions[2] = 0.15*zInc + presentCoordinates[2];
     destPositions[3] = -yaInc + presentCoordinates[3];
     destPositions[4] = -piInc + presentCoordinates[4];
     destPositions[5] = 2*roInc + presentCoordinates[5];
