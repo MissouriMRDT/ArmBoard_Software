@@ -26,6 +26,8 @@ void setup()
   pinMode(LS_7, INPUT); //limit switch 7 on the arm moco, 2 does not work
   pinMode(LS_4, INPUT);
 
+  pinMode(SW_IND_1, OUTPUT);
+
   Shoulder.LeftMotor.drive(0);
   Shoulder.RightMotor.drive(0);
   Shoulder.TiltEncoder.start();
@@ -93,6 +95,7 @@ void updatePosition()
 void parsePackets()
 {
    rovecomm_packet = RoveComm.read();
+   //Serial.println(rovecomm_packet.data_id);
    switch(rovecomm_packet.data_id)
    {
     case RC_ARMBOARD_BICEP_DATAID:
@@ -109,9 +112,16 @@ void parsePackets()
       elbowTiltTarget = rovecomm_packet.data[2];
       elbowTwistTarget = rovecomm_packet.data[3];
       break;
+    case RC_ARMBOARD_DOLS_DATAID:
+      Serial.println("DoLS");
+      Serial.println(rovecomm_packet.data[0]);
+      do_ls = rovecomm_packet.data[0];
+      digitalWrite(SW_IND_1, do_ls);
+      break;
     default:
       break;
    }
+   digitalWrite(SW_IND_1, do_ls);
 }
 
 void openLoop()
@@ -133,10 +143,16 @@ void openLoop()
   if(abs(rovecomm_packet.data[2]) <= INPUT_DEADBAND ) rovecomm_packet.data[2] = 0;
   if(abs(rovecomm_packet.data[3]) <= INPUT_DEADBAND ) rovecomm_packet.data[3] = 0;
 
-  if(Shoulder.atTiltLimit(rovecomm_packet.data[1]))
+  if(Shoulder.atTiltLimit(rovecomm_packet.data[1]) && do_ls)
   {
-    Serial.println("Limit");
+    Serial.println("Bicep Limit");
     rovecomm_packet.data[1] = 0;
+  }
+
+  if(Elbow.atTiltLimit(rovecomm_packet.data[2]) && do_ls)
+  {
+    Serial.println("Elbow Limit");
+    rovecomm_packet.data[2] = 0;
   }
 
   

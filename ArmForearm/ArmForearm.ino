@@ -9,8 +9,8 @@ void setup()
   //initialize motors
   Wrist.LeftMotor.attach(WRIST_LEFT_INA, WRIST_LEFT_INB, WRIST_LEFT_PWM);
   Wrist.RightMotor.attach(WRIST_RIGHT_INA, WRIST_RIGHT_INB, WRIST_RIGHT_PWM);
-  Gripper.attach(GRIPPER_INA, GRIPPER_INB, GRIPPER_PWM);
-  Nipper.attach(NIPPER_INA, NIPPER_INB, NIPPER_PWM);
+  Gripper1.attach(Gripper1_INA, Gripper1_INB, Gripper1_PWM);
+  Gripper2.attach(NIPPER_INA, NIPPER_INB, NIPPER_PWM);
 
   //set motor speeds to 0, to be safe
   Wrist.LeftMotor.drive(0);
@@ -52,6 +52,7 @@ void OpenLoop()
     Serial.print("2:");Serial.println(rovecomm_packet.data[1]);
     Serial.print("3:");Serial.println(rovecomm_packet.data[2]);
     Serial.print("4:");Serial.println(rovecomm_packet.data[3]);
+    Serial.print("5:");Serial.println(rovecomm_packet.data[4]);
   
     if(abs(rovecomm_packet.data[0]) < JOYSTICK_DEADBAND && abs(rovecomm_packet.data[1]) < JOYSTICK_DEADBAND && abs(rovecomm_packet.data[3]) < JOYSTICK_DEADBAND)
     {
@@ -62,8 +63,9 @@ void OpenLoop()
     if(abs(rovecomm_packet.data[0]) >= JOYSTICK_DEADBAND || abs(rovecomm_packet.data[1]) >= JOYSTICK_DEADBAND)
       Wrist.tiltTwistDecipercent((rovecomm_packet.data[0]), (rovecomm_packet.data[1]));
     
-    Gripper.drive(rovecomm_packet.data[2]);
-    actuateSolenoid(rovecomm_packet.data[3]);
+    Gripper1.drive(rovecomm_packet.data[2]);
+    Gripper2.drive(rovecomm_packet.data[4]);
+    //actuateSolenoid(rovecomm_packet.data[3]);
     Watchdog.clear();
 }
 
@@ -75,6 +77,9 @@ void parsePackets()
     case RC_ARMBOARD_FOREARM_DATAID:
       Serial.println("OL");
       DO_CLOSED_LOOP = false;
+      if(rovecomm_packet.data[3] != 0) nipper_config = true;
+      if(rovecomm_packet.data[4] != 0) nipper_config = false;
+      Serial.println(nipper_config);
       OpenLoop();
       break;
     case RC_ARMBOARD_FOREARM_ANGLE_DATAID:
@@ -84,7 +89,7 @@ void parsePackets()
       twistTarget = rovecomm_packet.data[1];
       break;
     case RC_ARMBOARD_GRIPPER_DATAID:
-      Gripper.drive(rovecomm_packet.data[0]);
+      Gripper1.drive(rovecomm_packet.data[0]);
       break;
     case RC_ARMBOARD_SOLENOID_DATAID:
       actuateSolenoid(rovecomm_packet.data[0]);
@@ -137,7 +142,10 @@ void ClosedLoop()
 
 void actuateSolenoid(int value)
 {
-   if(value == 1)
+  if(nipper_config)
+  {
+    Serial.println("Sol");
+    if(value == 1)
     {
         digitalWrite(NIPPER_INA, HIGH);
         digitalWrite(NIPPER_INB, LOW);
@@ -148,7 +156,8 @@ void actuateSolenoid(int value)
         digitalWrite(NIPPER_INA, LOW);
         digitalWrite(NIPPER_INB, LOW);
         digitalWrite(NIPPER_PWM, LOW);
-    }      
+    }    
+  }
 }
 
 void checkButtons()
@@ -260,6 +269,7 @@ void stop()
   Serial.println("Stopped");
   Wrist.tiltTwistDecipercent(0,0);
   DO_CLOSED_LOOP = false;
-  Gripper.drive(0);
+  Gripper1.drive(0);
+  Gripper2.drive(0);
   Watchdog.clear();
 }

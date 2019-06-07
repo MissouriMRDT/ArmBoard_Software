@@ -5,8 +5,8 @@
 #include "RoveComm.h"
 
 RoveDifferentialJoint Wrist;
-RoveStmVnhPwm Gripper;
-RoveStmVnhPwm Nipper;
+RoveStmVnhPwm Gripper1;
+RoveStmVnhPwm Gripper2;
 
 RoveCommEthernetUdp RoveComm;
 RoveWatchdog Watchdog;
@@ -43,9 +43,9 @@ const uint8_t WRIST_RIGHT_INA     = PL_2;
 const uint8_t WRIST_RIGHT_INB     = PL_3;
 const uint8_t WRIST_RIGHT_PWM     = PF_2;
 
-const uint8_t GRIPPER_INA        = PQ_2;
-const uint8_t GRIPPER_INB        = PQ_3;
-const uint8_t GRIPPER_PWM        = PK_4;
+const uint8_t Gripper1_INA        = PQ_2;
+const uint8_t Gripper1_INB        = PQ_3;
+const uint8_t Gripper1_PWM        = PK_4;
 
 const uint8_t NIPPER_INA        = PP_3;
 const uint8_t NIPPER_INB        = PQ_1;
@@ -60,6 +60,8 @@ const uint8_t M3_SW = PE_1;
 const uint8_t M4_SW = PE_2;
 
 const uint8_t DIR_SW = PB_3;
+
+bool nipper_config = true;
 
 #define JOYSTICK_DEADBAND 250
 

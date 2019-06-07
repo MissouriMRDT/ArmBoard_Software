@@ -51,10 +51,14 @@ const uint8_t SHOULDER_TWIST_ENCODER   = PM_0;
 const uint8_t ELBOW_TILT_ENCODER       = PD_4;
 const uint8_t ELBOW_TWIST_ENCODER      = PD_5;
 
+#define SW_IND_1 PM_7
+
 const uint8_t LS_1 = PM_5;
 const uint8_t LS_2 = PM_4;
 const uint8_t LS_7 = PE_5;
 const uint8_t LS_4 = PD_7;
+
+bool do_ls = true;
 
 #define INPUT_DEADBAND 100
 
