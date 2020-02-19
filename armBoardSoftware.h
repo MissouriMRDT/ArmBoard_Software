@@ -10,7 +10,6 @@
 #include <RoveComm.h>
 
 //Arm Specific Libraries
-#include <RoveDifferentialJointBrushedDC.h>
 #include <RoveDifferentialJointBrushless.h>
 #include <RovesODrive.h>
 #include <RoveStmVnhPwm.h>
@@ -43,7 +42,7 @@ const int ELBOW_MIN_TWIST_ANGLE = 0;
 //Max & Min Speeds
 const int MAX_SPEED_FORWARD = 1000; //Again, random values
 const int MAX_SPEED_REVERSE = 1000;
-const int MIN_SPEED = 250;
+const int MIN_SPEED = 150;
 
 /*Declare Pins*/
 
@@ -77,5 +76,6 @@ const uint8_t SW2_LED = PL_2;
 
 /*Function Declerations*/
 void openLoopControl();
+void Estop();
 
 #endif

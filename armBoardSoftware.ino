@@ -18,6 +18,9 @@ RoveDifferentialJointBrushless Wrist(WRIST_SERIAL, ENC_WRIST_TILT, ENC_WRIST_TWI
 //Gripper
 RoveStmVnhPwm Gripper;
 
+/*Declare Arrays*/
+int currentJointVals[6];
+int futureJointVals[6];
 
 void setup() 
 {
@@ -50,7 +53,10 @@ void setup()
   pinMode(ERROR_LED, OUTPUT);
   pinMode(SW1_LED, OUTPUT);
   pinMode(SW2_LED, OUTPUT);
- 
+
+  /*Start Watchdog*/
+  Watchdog.attach(Estop);
+  Watchdog.start(150);
 }
 
 void loop() 
@@ -64,6 +70,7 @@ void loop()
     {
       case RC_ARMBOARD_MOVEOPENLOOP_DATAID:
         openLoopControl();
+        Watchdog.clear();
         break;
         
       case RC_ARMBOARD_SOLENOID_DATAID:
@@ -89,16 +96,41 @@ void loop()
           digitalWrite(LASER_ACTUATION, LOW);
         }
         break;
+        
       case RC_ARMBOARD_GRIPPER_DATAID:
         //Sets gripper motor to a speed between [-1000,1000]
-        Gripper.drive(rovecomm_packet.data[0]);
-   
+        int16_t* gripperSpeed = (int16_t*)rovecomm_packet.data;
+        Gripper.drive(gripperSpeed[0]);
+        break;
     }
  }
- 
 }
 
 void openLoopControl()
 {
-  
+  int16_t* openLoopVelocityValues = (int16_t*)rovecomm_packet.data;
+  //Check if input is above min, otherwise set motor speeds to 0
+  for(int i = 0; i < 6; i++) 
+  {
+    if(abs(openLoopVelocityValues[i]) < MIN_SPEED) 
+    {
+      openLoopVelocityValues[i] = 0; 
+    }
+  }
+  //Run Joints at given velocity
+  Serial.println("Open Loops Speeds:");
+  for(int i = 0; i < 6; i++)
+  {
+    Serial.println(openLoopVelocityValues[i]); 
+  }
+  Bicep.tiltTwistDecipercent(openLoopVelocityValues[0], openLoopVelocityValues[1]);
+  Elbow.tiltTwistDecipercent(openLoopVelocityValues[2], openLoopVelocityValues[3]);
+  Wrist.tiltTwistDecipercent(openLoopVelocityValues[4], openLoopVelocityValues[5]);
+}
+
+void Estop() 
+{
+  Bicep.tiltTwistDecipercent(0,0);
+  Elbow.tiltTwistDecipercent(0,0);
+  Wrist.tiltTwistDecipercent(0,0); 
 }
