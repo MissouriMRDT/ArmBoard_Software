@@ -8,6 +8,7 @@ RoveCommEthernetUdp RoveComm;
 struct rovecomm_packet rovecomm_packet;
 
 //Watchdog
+//TODO: Analyse functionality of current watchdog. Do we want a hard board reset after several watchdog triggers?
 RoveWatchdog Watchdog;
 
 //ODrives
