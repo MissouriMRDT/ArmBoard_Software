@@ -15,9 +15,9 @@
 /*Declare Constants*/
 
 //Gear Ratios
-const int BICEP_GR = 450; //Don't know exact, need to change
-const int ELBOW_GR = 450;
-const int WRIST_GR = 150;
+const int BICEP_GR = 600; //Don't know exact, need to change
+const int ELBOW_GR = 400;
+const int WRIST_GR = 168;
 
 //Odrive Serials
 HardwareSerial* BICEP_SERIAL = &Serial7; //Yeah yeah Eli was right about consts sucking
