@@ -1,23 +1,5 @@
 #include "armBoardSoftware.h"
 
-
-/*Initialize Class Objects*/
-
-//Rovecomm
-RoveCommEthernetUdp RoveComm;
-struct rovecomm_packet rovecomm_packet;
-
-//Watchdog
-RoveWatchdog Watchdog;
-
-//ODrives
-RoveDifferentialJointBrushless Bicep(BICEP_SERIAL, ENC_BICEP_TILT, ENC_BICEP_TWIST, BICEP_GR, MAX_SPEED_FORWARD, MAX_SPEED_REVERSE);
-RoveDifferentialJointBrushless Elbow(ELBOW_SERIAL, ENC_ELBOW_TILT, ENC_ELBOW_TWIST, ELBOW_GR, MAX_SPEED_FORWARD, MAX_SPEED_REVERSE);
-RoveDifferentialJointBrushless Wrist(WRIST_SERIAL, ENC_WRIST_TILT, ENC_WRIST_TWIST, WRIST_GR, MAX_SPEED_FORWARD, MAX_SPEED_REVERSE);
-
-//Gripper
-RoveStmVnhPwm Gripper;
-
 /*Declare Arrays*/
 int currentJointVals[6];
 int futureJointVals[6];
@@ -25,10 +7,14 @@ int futureJointVals[6];
 void setup() 
 {
   Serial.begin(115200);
-  RoveComm.begin(RC_ARMBOARD_FOURTHOCTET);
   Serial.println("Starting Communication");
+  RoveComm.begin(RC_ARMBOARD_FOURTHOCTET, RC_ROVECOMM_ETHERNET_ARMBOARD_PORT);
 
   /*Attatch Pins to Class Objects*/
+
+  Bicep.attachJoint(BICEP_SERIAL, ENC_BICEP_TILT, ENC_BICEP_TWIST);
+  Elbow.attachJoint(ELBOW_SERIAL, ENC_ELBOW_TILT, ENC_ELBOW_TWIST);
+  Wrist.attachJoint(WRIST_SERIAL, ENC_WRIST_TILT, ENC_WRIST_TWIST);
 
   //Joint Limit Switches
   Bicep.attachLimitSwitches(LS_UPPER_BICEP, LS_LOWER_BICEP);  
@@ -55,8 +41,8 @@ void setup()
   pinMode(SW2_LED, OUTPUT);
 
   /*Start Watchdog*/
-  Watchdog.attach(Estop);
-  Watchdog.start(150);
+  //Watchdog.attach(Estop);
+  //Watchdog.start(150);
 }
 
 void loop() 
@@ -64,13 +50,14 @@ void loop()
  //Check to see if there is a RoveComm packet
  //If so, check what kind and execute command 
  rovecomm_packet = RoveComm.read();
+ //Serial.println(rovecomm_packet.data_id);
  if(rovecomm_packet.data_id != 0) 
  {
   switch(rovecomm_packet.data_id)
     {
       case RC_ARMBOARD_MOVEOPENLOOP_DATAID:
         openLoopControl();
-        Watchdog.clear();
+        //Watchdog.clear();
         break;
         
       case RC_ARMBOARD_SOLENOID_DATAID:
@@ -116,21 +103,23 @@ void openLoopControl()
     {
       openLoopVelocityValues[i] = 0; 
     }
+      Serial.print("Joint ");
+      Serial.print(i);
+      Serial.print(" value: ");
+      Serial.println(openLoopVelocityValues[i]);
+  
   }
   //Run Joints at given velocity
-  Serial.println("Open Loops Speeds:");
-  for(int i = 0; i < 6; i++)
-  {
-    Serial.println(openLoopVelocityValues[i]); 
-  }
   Bicep.tiltTwistDecipercent(openLoopVelocityValues[0], openLoopVelocityValues[1]);
   Elbow.tiltTwistDecipercent(openLoopVelocityValues[2], openLoopVelocityValues[3]);
   Wrist.tiltTwistDecipercent(openLoopVelocityValues[4], openLoopVelocityValues[5]);
+  Serial.println("Wrote speeds");
 }
 
 void Estop() 
 {
   Bicep.tiltTwistDecipercent(0,0);
   Elbow.tiltTwistDecipercent(0,0);
-  Wrist.tiltTwistDecipercent(0,0); 
+  Wrist.tiltTwistDecipercent(0,0);
+  Serial.println("Stopping Motors"); 
 }

@@ -2,12 +2,9 @@
 #define ARMBOARD_H
 
 //General Libraries
-#include <RoveBoardMap.h>
-#include <RoveCcp.h>
-#include <RoveTimer.h>
-#include <RoveTimerInterrupt.h>
 #include <RoveWatchdog.h>
 #include <RoveComm.h>
+#include "Energia.h"
 
 //Arm Specific Libraries
 #include <RoveDifferentialJointBrushless.h>
@@ -40,8 +37,8 @@ const int ELBOW_MIN_TILT_ANGLE = 0;
 const int ELBOW_MIN_TWIST_ANGLE = 0;
 
 //Max & Min Speeds
-const int MAX_SPEED_FORWARD = 1000; //Again, random values
-const int MAX_SPEED_REVERSE = 1000;
+const int MAX_SPEED_FORWARD = 20000; //Again, random values
+const int MAX_SPEED_REVERSE = -20000;
 const int MIN_SPEED = 150;
 
 /*Declare Pins*/
@@ -73,6 +70,23 @@ const uint8_t GRIPPER_PWM = PM_6;
 const uint8_t ERROR_LED = PN_3;
 const uint8_t SW1_LED = PN_2;
 const uint8_t SW2_LED = PL_2;
+
+/*Initialize Class Objects*/
+
+//Rovecomm
+RoveCommEthernet RoveComm;
+rovecomm_packet rovecomm_packet;
+
+//Watchdog
+//RoveWatchdog Watchdog;
+
+//Gripper
+RoveStmVnhPwm Gripper;
+
+//Joints
+RoveDifferentialJointBrushless Bicep(BICEP_GR, MAX_SPEED_FORWARD, MAX_SPEED_REVERSE);
+RoveDifferentialJointBrushless Elbow(ELBOW_GR, MAX_SPEED_FORWARD, MAX_SPEED_REVERSE);
+RoveDifferentialJointBrushless Wrist(WRIST_GR, MAX_SPEED_FORWARD, MAX_SPEED_REVERSE);
 
 /*Function Declerations*/
 void openLoopControl();
