@@ -37,8 +37,8 @@ const int ELBOW_MIN_TILT_ANGLE = 0;
 const int ELBOW_MIN_TWIST_ANGLE = 0;
 
 //Max & Min Speeds
-const int MAX_SPEED_FORWARD = 20000; //Again, random values
-const int MAX_SPEED_REVERSE = -20000;
+const int MAX_SPEED_FORWARD = 100000; //Again, random values
+const int MAX_SPEED_REVERSE = -100000;
 const int MIN_SPEED = 150;
 
 /*Declare Pins*/
@@ -78,7 +78,7 @@ RoveCommEthernet RoveComm;
 rovecomm_packet rovecomm_packet;
 
 //Watchdog
-//RoveWatchdog Watchdog;
+RoveWatchdog Watchdog;
 
 //Gripper
 RoveStmVnhPwm Gripper;

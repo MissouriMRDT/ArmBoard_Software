@@ -41,8 +41,8 @@ void setup()
   pinMode(SW2_LED, OUTPUT);
 
   /*Start Watchdog*/
-  //Watchdog.attach(Estop);
-  //Watchdog.start(150);
+  Watchdog.attach(Estop);
+  Watchdog.start(500, DISABLE_BOARD_RESET);
 }
 
 void loop() 
@@ -57,7 +57,6 @@ void loop()
     {
       case RC_ARMBOARD_MOVEOPENLOOP_DATAID:
         openLoopControl();
-        //Watchdog.clear();
         break;
         
       case RC_ARMBOARD_SOLENOID_DATAID:
@@ -83,7 +82,31 @@ void loop()
           digitalWrite(LASER_ACTUATION, LOW);
         }
         break;
-        
+      case RC_ARMBOARD_SET_CLOSED_LOOP_DATAID:
+        uint8_t* state;
+        state = (uint8_t*)rovecomm_packet.data;
+        if(state[0])
+        {
+          Serial.println("Setting to closed loop");
+          Bicep.Joint.left.writeState(AXIS_STATE_CLOSED_LOOP_CONTROL);
+          Bicep.Joint.right.writeState(AXIS_STATE_CLOSED_LOOP_CONTROL);
+          Elbow.Joint.left.writeState(AXIS_STATE_CLOSED_LOOP_CONTROL);
+          Elbow.Joint.right.writeState(AXIS_STATE_CLOSED_LOOP_CONTROL);
+          Wrist.Joint.left.writeState(AXIS_STATE_CLOSED_LOOP_CONTROL);
+          Wrist.Joint.right.writeState(AXIS_STATE_CLOSED_LOOP_CONTROL);
+
+        }
+        else
+        {
+          Serial.println("Setting to idle state");
+          Bicep.Joint.left.writeState(AXIS_STATE_IDLE);
+          Bicep.Joint.right.writeState(AXIS_STATE_IDLE);
+          Elbow.Joint.left.writeState(AXIS_STATE_IDLE);
+          Elbow.Joint.right.writeState(AXIS_STATE_IDLE);
+          Wrist.Joint.left.writeState(AXIS_STATE_IDLE);
+          Wrist.Joint.right.writeState(AXIS_STATE_IDLE);
+        }
+        break;
       case RC_ARMBOARD_GRIPPER_DATAID:
         //Sets gripper motor to a speed between [-1000,1000]
         int16_t* gripperSpeed = (int16_t*)rovecomm_packet.data;
@@ -109,10 +132,21 @@ void openLoopControl()
       Serial.println(openLoopVelocityValues[i]);
   
   }
-  //Run Joints at given velocity
+  //run Joints at given velocity
   Bicep.tiltTwistDecipercent(openLoopVelocityValues[0], openLoopVelocityValues[1]);
   Elbow.tiltTwistDecipercent(openLoopVelocityValues[2], openLoopVelocityValues[3]);
   Wrist.tiltTwistDecipercent(openLoopVelocityValues[4], openLoopVelocityValues[5]);
+  
+  //update the ODrive watchdogs
+  Bicep.Joint.left.updateWatchdog();
+  Bicep.Joint.right.updateWatchdog();
+  Elbow.Joint.left.updateWatchdog(); 
+  Elbow.Joint.right.updateWatchdog(); 
+  Wrist.Joint.left.updateWatchdog(); 
+  Wrist.Joint.right.updateWatchdog();
+
+  //
+  Watchdog.clear();
   Serial.println("Wrote speeds");
 }
 
