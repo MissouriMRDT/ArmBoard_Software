@@ -145,7 +145,7 @@ void openLoopControl()
   Wrist.Joint.left.updateWatchdog(); 
   Wrist.Joint.right.updateWatchdog();
 
-  //
+  //Clearing the internal watchdog 
   Watchdog.clear();
   Serial.println("Wrote speeds");
 }

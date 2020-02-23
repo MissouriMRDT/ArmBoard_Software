@@ -37,8 +37,12 @@ const int ELBOW_MIN_TILT_ANGLE = 0;
 const int ELBOW_MIN_TWIST_ANGLE = 0;
 
 //Max & Min Speeds
-const int MAX_SPEED_FORWARD = 100000; //Again, random values
-const int MAX_SPEED_REVERSE = -100000;
+const int WRIST_MAX_SPEED_FORWARD = 200000; //Again, random values
+const int WRIST_MAX_SPEED_REVERSE = -200000;
+const int ELBOW_MAX_SPEED_FORWARD = 100000; //Again, random values
+const int ELBOW_MAX_SPEED_REVERSE = -100000;
+const int BICEP_MAX_SPEED_FORWARD = 100000; //Again, random values
+const int BICEP_MAX_SPEED_REVERSE = -100000;
 const int MIN_SPEED = 150;
 
 /*Declare Pins*/
@@ -84,9 +88,9 @@ RoveWatchdog Watchdog;
 RoveStmVnhPwm Gripper;
 
 //Joints
-RoveDifferentialJointBrushless Bicep(BICEP_GR, MAX_SPEED_FORWARD, MAX_SPEED_REVERSE);
-RoveDifferentialJointBrushless Elbow(ELBOW_GR, MAX_SPEED_FORWARD, MAX_SPEED_REVERSE);
-RoveDifferentialJointBrushless Wrist(WRIST_GR, MAX_SPEED_FORWARD, MAX_SPEED_REVERSE);
+RoveDifferentialJointBrushless Bicep(BICEP_GR, BICEP_MAX_SPEED_FORWARD, BICEP_MAX_SPEED_REVERSE);
+RoveDifferentialJointBrushless Elbow(ELBOW_GR, ELBOW_MAX_SPEED_FORWARD, ELBOW_MAX_SPEED_REVERSE);
+RoveDifferentialJointBrushless Wrist(WRIST_GR, WRIST_MAX_SPEED_FORWARD, WRIST_MAX_SPEED_REVERSE);
 
 /*Function Declerations*/
 void openLoopControl();
