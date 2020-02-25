@@ -14,30 +14,39 @@
 
 /*Declare Constants*/
 
-//PID Values
+//PID Loops
 const float MIN_BICEP_OUTPUT_TILT = 0;
 const float MAX_BICEP_OUTPUT_TILT = 0;
+const float BICEP_TILT_KP = 0;
+const float BICEP_TILT_KI = 0;
+const float BICEP_TILT_KD = 0;
 const float MIN_BICEP_OUTPUT_TWIST = 0;
 const float MAX_BICEP_OUTPUT_TWIST = 0;
-const float BICEP_KP = 0;
-const float BICEP_KI = 0;
-const float BICEP_KD = 0;
+const float BICEP_TWIST_KP = 0;
+const float BICEP_TWIST_KI = 0;
+const float BICEP_TWIST_KD = 0;
 
 const float MIN_ELBOW_OUTPUT_TILT = 0;
 const float MAX_ELBOW_OUTPUT_TILT = 0;
+const float ELBOW_TILT_KP = 0;
+const float ELBOW_TILT_KI = 0;
+const float ELBOW_TILT_KD = 0;
 const float MIN_ELBOW_OUTPUT_TWIST = 0;
 const float MAX_ELBOW_OUTPUT_TWIST = 0;
-const float ELBOW_KP = 0;
-const float ELBOW_KI = 0;
-const float ELBOW_KD = 0;
+const float ELBOW_TWIST_KP = 0;
+const float ELBOW_TWIST_KI = 0;
+const float ELBOW_TWIST_KD = 0;
 
 const float MIN_WRIST_OUTPUT_TILT = 0;
 const float MAX_WRIST_OUTPUT_TILT = 0;
+const float WRIST_TILT_KP = 0;
+const float WRIST_TILT_KI = 0;
+const float WRIST_TILT_KD = 0;
 const float MIN_WRIST_OUTPUT_TWIST = 0;
 const float MAX_WRIST_OUTPUT_TWIST = 0;
-const float WRIST_KP = 0;
-const float WRIST_KI = 0;
-const float WRIST_KD = 0;
+const float WRIST_TWIST_KP = 0;
+const float WRIST_TWIST_KI = 0;
+const float WRIST_TWIST_KD = 0;
 
 //Gear Ratios
 const int BICEP_GR = 600; //Don't know exact, need to change
@@ -62,8 +71,12 @@ const int ELBOW_MIN_TILT_ANGLE = 0;
 const int ELBOW_MIN_TWIST_ANGLE = 0;
 
 //Max & Min Speeds
-const int MAX_SPEED_FORWARD = 20000; //Again, random values
-const int MAX_SPEED_REVERSE = -20000;
+const int WRIST_MAX_SPEED_FORWARD = 200000; //Again, random values
+const int WRIST_MAX_SPEED_REVERSE = -200000;
+const int ELBOW_MAX_SPEED_FORWARD = 100000; //Again, random values
+const int ELBOW_MAX_SPEED_REVERSE = -100000;
+const int BICEP_MAX_SPEED_FORWARD = 100000; //Again, random values
+const int BICEP_MAX_SPEED_REVERSE = -100000;
 const int MIN_SPEED = 150;
 
 /*Declare Pins*/
@@ -103,17 +116,18 @@ RoveCommEthernet RoveComm;
 rovecomm_packet rovecomm_packet;
 
 //Watchdog
-//RoveWatchdog Watchdog;
+RoveWatchdog Watchdog;
 
 //Gripper
 RoveStmVnhPwm Gripper;
 
 //Joints
-RoveDifferentialJointBrushless Bicep(BICEP_GR, MAX_SPEED_FORWARD, MAX_SPEED_REVERSE);
-RoveDifferentialJointBrushless Elbow(ELBOW_GR, MAX_SPEED_FORWARD, MAX_SPEED_REVERSE);
-RoveDifferentialJointBrushless Wrist(WRIST_GR, MAX_SPEED_FORWARD, MAX_SPEED_REVERSE);
+RoveDifferentialJointBrushless Bicep(BICEP_GR, BICEP_MAX_SPEED_FORWARD, BICEP_MAX_SPEED_REVERSE);
+RoveDifferentialJointBrushless Elbow(ELBOW_GR, ELBOW_MAX_SPEED_FORWARD, ELBOW_MAX_SPEED_REVERSE);
+RoveDifferentialJointBrushless Wrist(WRIST_GR, WRIST_MAX_SPEED_FORWARD, WRIST_MAX_SPEED_REVERSE);
 
 /*Function Declerations*/
+void updatePosition();
 void openLoopControl();
 void Estop();
 
