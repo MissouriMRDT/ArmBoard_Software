@@ -12,18 +12,25 @@ void setup()
 
   /*Attatch Pins to Class Objects*/
 
-  //Joint Serial & Encoders
-  Bicep.attachJoint(BICEP_SERIAL, ENC_BICEP_TILT, ENC_BICEP_TWIST);
-  Elbow.attachJoint(ELBOW_SERIAL, ENC_ELBOW_TILT, ENC_ELBOW_TWIST);
-  Wrist.attachJoint(WRIST_SERIAL, ENC_WRIST_TILT, ENC_WRIST_TWIST);
-
-  //Joint PID
-  Bicep.attachTiltPID(MIN_BICEP_OUTPUT_TILT, MAX_BICEP_OUTPUT_TILT, BICEP_TILT_KP, BICEP_TILT_KI, BICEP_TILT_KD);
-  Bicep.attachTwistPID(MIN_BICEP_OUTPUT_TWIST, MAX_BICEP_OUTPUT_TWIST, BICEP_TWIST_KP, BICEP_TWIST_KI, BICEP_TWIST_KD);
-  Elbow.attachTiltPID(MIN_ELBOW_OUTPUT_TILT, MAX_ELBOW_OUTPUT_TILT, ELBOW_TILT_KP, ELBOW_TILT_KI, ELBOW_TILT_KD);
-  Elbow.attachTwistPID(MIN_ELBOW_OUTPUT_TWIST, MAX_ELBOW_OUTPUT_TWIST, ELBOW_TWIST_KP, ELBOW_TWIST_KI, ELBOW_TWIST_KD);
-  Wrist.attachTiltPID(MIN_WRIST_OUTPUT_TILT, MAX_WRIST_OUTPUT_TILT, WRIST_TILT_KP, WRIST_TILT_KI, WRIST_TILT_KD);
-  Wrist.attachTwistPID(MIN_WRIST_OUTPUT_TWIST, MAX_WRIST_OUTPUT_TWIST, WRIST_TWIST_KP, WRIST_TWIST_KI, WRIST_TWIST_KD);
+  //Joint Serial, Encoders, and PID 
+  Bicep.attachJoint(BICEP_SERIAL, ENC_BICEP_TILT, ENC_BICEP_TWIST,
+                    MIN_BICEP_OUTPUT_TILT, MAX_BICEP_OUTPUT_TILT, 
+                    BICEP_TILT_KP, BICEP_TILT_KI, BICEP_TILT_KD,
+                    MIN_BICEP_OUTPUT_TWIST, MAX_BICEP_OUTPUT_TWIST,
+                    BICEP_TWIST_KP, BICEP_TWIST_KI, BICEP_TWIST_KD
+                   );
+  Elbow.attachJoint(ELBOW_SERIAL, ENC_ELBOW_TILT, ENC_ELBOW_TWIST,
+                    MIN_ELBOW_OUTPUT_TILT, MAX_ELBOW_OUTPUT_TILT,
+                    ELBOW_TILT_KP, ELBOW_TILT_KI, ELBOW_TILT_KD,
+                    MIN_ELBOW_OUTPUT_TWIST, MAX_ELBOW_OUTPUT_TWIST,
+                    ELBOW_TWIST_KP, ELBOW_TWIST_KI, ELBOW_TWIST_KD
+                   );
+  Wrist.attachJoint(WRIST_SERIAL, ENC_WRIST_TILT, ENC_WRIST_TWIST,
+                    MIN_WRIST_OUTPUT_TILT, MAX_WRIST_OUTPUT_TILT,
+                    WRIST_TILT_KP, WRIST_TILT_KI, WRIST_TILT_KD,
+                    MIN_WRIST_OUTPUT_TWIST, MAX_WRIST_OUTPUT_TWIST,
+                    WRIST_TWIST_KP, WRIST_TWIST_KI, WRIST_TWIST_KD
+                   );
 
   //Joint Limit Switches
   Bicep.attachLimitSwitches(LS_UPPER_BICEP, LS_LOWER_BICEP);  
@@ -65,58 +72,23 @@ void loop()
   switch(rovecomm_packet.data_id)
     {
       case RC_ARMBOARD_MOVEOPENLOOP_DATAID:
+        //Control arm with raw velocity values
         openLoopControl();
         break;
         
       case RC_ARMBOARD_SOLENOID_DATAID:
-        //If we get a command to activate end effector, write to pin to actuate
-        if(rovecomm_packet.data[0] == RC_ARMBOARD_SOLENOID_ENABLE) 
-        {                                                       
-          digitalWrite(SOLENOID_ACTUATION, HIGH);               
-        }                                                       
-          else if(rovecomm_packet.data[0] == RC_ARMBOARD_SOLENOID_DISABLE) 
-        {
-          digitalWrite(SOLENOID_ACTUATION, LOW);
-        }
+        //Control the position of solenoid
+        actuateSolenoid();
         break; 
         
       case RC_ARMBOARD_LASER_DATAID:
-        //If we get a command to activate laser, write to pin to actuate
-        if(rovecomm_packet.data[0] == RC_ARMBOARD_LASER_ENABLE) 
-        {                                                       
-          digitalWrite(LASER_ACTUATION, HIGH);               
-        }                                                       
-          else if(rovecomm_packet.data[0] == RC_ARMBOARD_LASER_DISABLE) 
-        {
-          digitalWrite(LASER_ACTUATION, LOW);
-        }
+        //Control the state of the laser
+        actuateLaser();
         break;
+
       case RC_ARMBOARD_SET_CLOSED_LOOP_DATAID:
-        //If we set motors to closed loop control, SW1 LED turns on
-        uint8_t* state;
-        state = (uint8_t*)rovecomm_packet.data;
-        if(state[0])
-        {
-          Serial.println("Setting to closed loop");
-          Bicep.Joint.left.writeState(AXIS_STATE_CLOSED_LOOP_CONTROL);
-          Bicep.Joint.right.writeState(AXIS_STATE_CLOSED_LOOP_CONTROL);
-          Elbow.Joint.left.writeState(AXIS_STATE_CLOSED_LOOP_CONTROL);
-          Elbow.Joint.right.writeState(AXIS_STATE_CLOSED_LOOP_CONTROL);
-          Wrist.Joint.left.writeState(AXIS_STATE_CLOSED_LOOP_CONTROL);
-          Wrist.Joint.right.writeState(AXIS_STATE_CLOSED_LOOP_CONTROL);
-          digitalWrite(SW1_LED, HIGH);
-        }
-        else
-        {
-          Serial.println("Setting to idle state");
-          Bicep.Joint.left.writeState(AXIS_STATE_IDLE);
-          Bicep.Joint.right.writeState(AXIS_STATE_IDLE);
-          Elbow.Joint.left.writeState(AXIS_STATE_IDLE);
-          Elbow.Joint.right.writeState(AXIS_STATE_IDLE);
-          Wrist.Joint.left.writeState(AXIS_STATE_IDLE);
-          Wrist.Joint.right.writeState(AXIS_STATE_IDLE);
-          digitalWrite(SW1_LED, LOW);
-        }
+        //Allow the Odrives to be moved
+        setClosedLoop();
         break;
       case RC_ARMBOARD_GRIPPER_DATAID:
         //Sets gripper motor to a speed between [-1000,1000]
@@ -124,10 +96,65 @@ void loop()
         Gripper.drive(gripperSpeed[0]);
         break;
     }
- }
+  }
 }
 
-void updatePosition() 
+void actuateLaser()
+{
+  //If we get a command to activate laser, write to pin to actuate
+  if(rovecomm_packet.data[0] == RC_ARMBOARD_LASER_ENABLE) 
+  {                                                       
+    digitalWrite(LASER_ACTUATION, HIGH);               
+  }                                                       
+  else if(rovecomm_packet.data[0] == RC_ARMBOARD_LASER_DISABLE) 
+  {
+    digitalWrite(LASER_ACTUATION, LOW);
+  }
+}
+
+void actuateSolenoid()
+{
+  //If we get a command to activate end effector, write to pin to actuate
+  if(rovecomm_packet.data[0] == RC_ARMBOARD_SOLENOID_ENABLE) 
+  {                                                       
+    digitalWrite(SOLENOID_ACTUATION, HIGH);               
+  }                                                       
+  else if(rovecomm_packet.data[0] == RC_ARMBOARD_SOLENOID_DISABLE) 
+  {
+    digitalWrite(SOLENOID_ACTUATION, LOW);
+  }
+}
+
+void setClosedLoop() 
+{
+  //If we set motors to closed loop control, SW1 LED turns on
+  uint8_t* state;
+  state = (uint8_t*)rovecomm_packet.data;
+  if(state[0])
+  {
+    Serial.println("Setting to closed loop");
+    Bicep.Joint.left.writeState(AXIS_STATE_CLOSED_LOOP_CONTROL);
+    Bicep.Joint.right.writeState(AXIS_STATE_CLOSED_LOOP_CONTROL);
+    Elbow.Joint.left.writeState(AXIS_STATE_CLOSED_LOOP_CONTROL);
+    Elbow.Joint.right.writeState(AXIS_STATE_CLOSED_LOOP_CONTROL);
+    Wrist.Joint.left.writeState(AXIS_STATE_CLOSED_LOOP_CONTROL);
+    Wrist.Joint.right.writeState(AXIS_STATE_CLOSED_LOOP_CONTROL);
+    digitalWrite(SW1_LED, HIGH);
+  }
+  else
+  {
+    Serial.println("Setting to idle state");
+    Bicep.Joint.left.writeState(AXIS_STATE_IDLE);
+    Bicep.Joint.right.writeState(AXIS_STATE_IDLE);
+    Elbow.Joint.left.writeState(AXIS_STATE_IDLE);
+    Elbow.Joint.right.writeState(AXIS_STATE_IDLE);
+    Wrist.Joint.left.writeState(AXIS_STATE_IDLE);
+    Wrist.Joint.right.writeState(AXIS_STATE_IDLE);
+    digitalWrite(SW1_LED, LOW);
+  }
+}
+
+void getPosition() 
 {
   
 }
@@ -143,7 +170,7 @@ void openLoopControl()
       openLoopVelocityValues[i] = 0; 
     }
       Serial.print("Joint ");
-      Serial.print(i);
+      Serial.print(i+1);
       Serial.print(" value: ");
       Serial.println(openLoopVelocityValues[i]);
   
@@ -152,19 +179,6 @@ void openLoopControl()
   Bicep.tiltTwistDecipercent(openLoopVelocityValues[0], openLoopVelocityValues[1]);
   Elbow.tiltTwistDecipercent(openLoopVelocityValues[2], openLoopVelocityValues[3]);
   Wrist.tiltTwistDecipercent(openLoopVelocityValues[4], openLoopVelocityValues[5]);
-
-  if(openLoopVelocityValues[6] > 150) 
-  {
-    Gripper.drive(openLoopVelocityValues[6]);
-  }
-  else if(openLoopVelocityValues[7] < -150)
-  {
-    Gripper.drive(openLoopVelocityValues[7]);
-  }
-  else 
-  {
-    Gripper.drive(0);
-  }
   
   //update the ODrive watchdogs
   Bicep.Joint.left.updateWatchdog();

@@ -49,9 +49,9 @@ const float WRIST_TWIST_KI = 0;
 const float WRIST_TWIST_KD = 0;
 
 //Gear Ratios
-const int BICEP_GR = 600; //Don't know exact, need to change
-const int ELBOW_GR = 400;
-const int WRIST_GR = 168;
+const int BICEP_GEAR_RATIO = 600;
+const int ELBOW_GEAR_RATIO = 400;
+const int WRIST_GEAR_RATIO = 168;
 
 //Odrive Serials
 HardwareSerial* BICEP_SERIAL = &Serial7; //Yeah yeah Eli was right about consts sucking
@@ -77,7 +77,7 @@ const int ELBOW_MAX_SPEED_FORWARD = 100000; //Again, random values
 const int ELBOW_MAX_SPEED_REVERSE = -100000;
 const int BICEP_MAX_SPEED_FORWARD = 100000; //Again, random values
 const int BICEP_MAX_SPEED_REVERSE = -100000;
-const int MIN_SPEED = 150;
+const int MIN_SPEED = 50;
 
 /*Declare Pins*/
 
@@ -122,12 +122,14 @@ RoveWatchdog Watchdog;
 RoveStmVnhPwm Gripper;
 
 //Joints
-RoveDifferentialJointBrushless Bicep(BICEP_GR, BICEP_MAX_SPEED_FORWARD, BICEP_MAX_SPEED_REVERSE);
-RoveDifferentialJointBrushless Elbow(ELBOW_GR, ELBOW_MAX_SPEED_FORWARD, ELBOW_MAX_SPEED_REVERSE);
-RoveDifferentialJointBrushless Wrist(WRIST_GR, WRIST_MAX_SPEED_FORWARD, WRIST_MAX_SPEED_REVERSE);
+RoveDifferentialJointBrushless Bicep(BICEP_GEAR_RATIO, BICEP_MAX_SPEED_FORWARD, BICEP_MAX_SPEED_REVERSE);
+RoveDifferentialJointBrushless Elbow(ELBOW_GEAR_RATIO, ELBOW_MAX_SPEED_FORWARD, ELBOW_MAX_SPEED_REVERSE);
+RoveDifferentialJointBrushless Wrist(WRIST_GEAR_RATIO, WRIST_MAX_SPEED_FORWARD, WRIST_MAX_SPEED_REVERSE);
 
 /*Function Declerations*/
-void updatePosition();
+void getPosition();
+void actuateLaser();
+void actuateSolenoid();
 void openLoopControl();
 void Estop();
 
