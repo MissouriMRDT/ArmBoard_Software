@@ -48,6 +48,11 @@ const float WRIST_TWIST_KP = 0;
 const float WRIST_TWIST_KI = 0;
 const float WRIST_TWIST_KD = 0;
 
+//Joint Tolerances
+const float BICEP_TOLERANCE = 0;
+const float ELBOW_TOLERANCE = 0;
+const float WRIST_TOLERANCE = 0;
+
 //Gear Ratios
 const int BICEP_GEAR_RATIO = 600;
 const int ELBOW_GEAR_RATIO = 400;
@@ -122,12 +127,13 @@ RoveWatchdog Watchdog;
 RoveStmVnhPwm Gripper;
 
 //Joints
-RoveDifferentialJointBrushless Bicep(BICEP_GEAR_RATIO, BICEP_MAX_SPEED_FORWARD, BICEP_MAX_SPEED_REVERSE);
-RoveDifferentialJointBrushless Elbow(ELBOW_GEAR_RATIO, ELBOW_MAX_SPEED_FORWARD, ELBOW_MAX_SPEED_REVERSE);
-RoveDifferentialJointBrushless Wrist(WRIST_GEAR_RATIO, WRIST_MAX_SPEED_FORWARD, WRIST_MAX_SPEED_REVERSE);
+RoveDifferentialJointBrushless Bicep(BICEP_GEAR_RATIO, BICEP_MAX_SPEED_FORWARD, BICEP_MAX_SPEED_REVERSE, BICEP_TOLERANCE);
+RoveDifferentialJointBrushless Elbow(ELBOW_GEAR_RATIO, ELBOW_MAX_SPEED_FORWARD, ELBOW_MAX_SPEED_REVERSE, ELBOW_TOLERANCE);
+RoveDifferentialJointBrushless Wrist(WRIST_GEAR_RATIO, WRIST_MAX_SPEED_FORWARD, WRIST_MAX_SPEED_REVERSE, WRIST_TOLERANCE);
 
 /*Function Declerations*/
 void getPosition();
+void setClosedLoop();
 void actuateLaser();
 void actuateSolenoid();
 void openLoopControl();

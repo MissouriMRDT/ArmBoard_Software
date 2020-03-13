@@ -31,7 +31,7 @@ void setup()
                     MIN_WRIST_OUTPUT_TWIST, MAX_WRIST_OUTPUT_TWIST,
                     WRIST_TWIST_KP, WRIST_TWIST_KI, WRIST_TWIST_KD
                    );
-
+                   
   //Joint Limit Switches
   Bicep.attachLimitSwitches(LS_UPPER_BICEP, LS_LOWER_BICEP);  
   Elbow.attachLimitSwitches(LS_UPPER_ELBOW, LS_LOWER_ELBOW);  
