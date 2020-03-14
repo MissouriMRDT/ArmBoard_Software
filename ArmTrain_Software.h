@@ -1,5 +1,5 @@
-#ifndef ARMBOARD_H
-#define ARMBOARD_H
+#ifndef ARMTRAIN_H
+#define ARMTRAIN_H
 
 //General Libraries
 #include <RoveWatchdog.h>
@@ -49,9 +49,9 @@ const float WRIST_TWIST_KI = 0;
 const float WRIST_TWIST_KD = 0;
 
 //Joint Tolerances
-const float BICEP_TOLERANCE = 0;
-const float ELBOW_TOLERANCE = 0;
-const float WRIST_TOLERANCE = 0;
+const float BICEP_TOLERANCE = 2.5;
+const float ELBOW_TOLERANCE = 2.5;
+const float WRIST_TOLERANCE = 2.5;
 
 //Gear Ratios
 const int BICEP_GEAR_RATIO = 600;
@@ -137,6 +137,7 @@ void setClosedLoop();
 void actuateLaser();
 void actuateSolenoid();
 void openLoopControl();
+void closedLoopControl();
 void Estop();
 
 #endif

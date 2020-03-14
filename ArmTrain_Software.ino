@@ -1,4 +1,4 @@
-#include "armBoardSoftware.h"
+#include "ArmTrain_Software.h"
 
 /*Declare Arrays*/
 int currentJointVals[6];
@@ -191,6 +191,46 @@ void openLoopControl()
   //Clearing the internal watchdog 
   Watchdog.clear();
   Serial.println("Wrote speeds");
+}
+
+void closedLoopControl() 
+{
+  float bicepTiltTwistOutput[2] = {};
+  float elbowTiltTwistOutput[2] = {};
+  float wristTiltTwistOutput[2] = {};
+
+  float* closedLoopAngleValues = (float*)rovecomm_packet.data;
+  Serial.println("Angle Values:");
+  for(int i = 0; i < 6; i++) 
+  {
+    Serial.print("Joint ");
+    Serial.print(i+1);
+    Serial.print(" angle: ");
+    Serial.println(closedLoopAngleValues[i]);
+  }
+
+  Bicep.moveToPos(closedLoopAngleValues[0],closedLoopAngleValues[1],bicepTiltTwistOutput);
+  Elbow.moveToPos(closedLoopAngleValues[2],closedLoopAngleValues[3],elbowTiltTwistOutput);
+  Wrist.moveToPos(closedLoopAngleValues[4],closedLoopAngleValues[5],wristTiltTwistOutput);
+
+  //If any of the joints aren't going to move, rehome them
+  if( (bicepTiltTwistOutput[0] == 0) && (bicepTiltTwistOutput[1] == 0))
+  {
+    Bicep.rehomePosition();
+  }
+  if( (elbowTiltTwistOutput[0] == 0) && (elbowTiltTwistOutput[1] == 0))
+  {
+    Elbow.rehomePosition();
+  }
+  if( (wristTiltTwistOutput[0] == 0) && (wristTiltTwistOutput[1] == 0))
+  {
+    Wrist.rehomePosition();
+  }
+
+  Bicep.tiltTwistDecipercent(bicepTiltTwistOutput[0],bicepTiltTwistOutput[1]);
+  Elbow.tiltTwistDecipercent(elbowTiltTwistOutput[0],elbowTiltTwistOutput[1]);
+  Wrist.tiltTwistDecipercent(wristTiltTwistOutput[0],wristTiltTwistOutput[1]);
+
 }
 
 void Estop() 
