@@ -75,7 +75,11 @@ void loop()
         //Control arm with raw velocity values
         openLoopControl();
         break;
-        
+      
+      case RC_ARMBOARD_MOVETOPOSITION_DATAID:
+        closedLoopControl();
+        break;
+
       case RC_ARMBOARD_SOLENOID_DATAID:
         //Control the position of solenoid
         actuateSolenoid();
@@ -173,7 +177,6 @@ void openLoopControl()
       Serial.print(i+1);
       Serial.print(" value: ");
       Serial.println(openLoopVelocityValues[i]);
-  
   }
   //run Joints at given velocity
   Bicep.tiltTwistDecipercent(openLoopVelocityValues[0], openLoopVelocityValues[1]);
@@ -230,6 +233,18 @@ void closedLoopControl()
   Bicep.tiltTwistDecipercent(bicepTiltTwistOutput[0],bicepTiltTwistOutput[1]);
   Elbow.tiltTwistDecipercent(elbowTiltTwistOutput[0],elbowTiltTwistOutput[1]);
   Wrist.tiltTwistDecipercent(wristTiltTwistOutput[0],wristTiltTwistOutput[1]);
+
+  //update the ODrive watchdogs
+  Bicep.Joint.left.updateWatchdog();
+  Bicep.Joint.right.updateWatchdog();
+  Elbow.Joint.left.updateWatchdog(); 
+  Elbow.Joint.right.updateWatchdog(); 
+  Wrist.Joint.left.updateWatchdog(); 
+  Wrist.Joint.right.updateWatchdog();
+
+  //Clearing the internal watchdog 
+  Watchdog.clear();
+  Serial.println("Wrote speeds");
 
 }
 
