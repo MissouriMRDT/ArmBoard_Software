@@ -77,6 +77,7 @@ void loop()
         break;
       
       case RC_ARMBOARD_MOVETOPOSITION_DATAID:
+        //Control the arm with raw angle values
         closedLoopControl();
         break;
 
@@ -121,7 +122,7 @@ void actuateSolenoid()
   //If we get a command to activate end effector, write to pin to actuate
   if(rovecomm_packet.data[0] == RC_ARMBOARD_SOLENOID_ENABLE) 
   {                                                       
-    digitalWrite(SOLENOID_ACTUATION, HIGH);               
+    digitalWrite(SOLENOID_ACTUATION, HIGH); 
   }                                                       
   else if(rovecomm_packet.data[0] == RC_ARMBOARD_SOLENOID_DISABLE) 
   {
@@ -202,6 +203,7 @@ void closedLoopControl()
   float elbowTiltTwistOutput[2] = {};
   float wristTiltTwistOutput[2] = {};
 
+  //Print out our angle values
   float* closedLoopAngleValues = (float*)rovecomm_packet.data;
   Serial.println("Angle Values:");
   for(int i = 0; i < 6; i++) 
@@ -212,6 +214,7 @@ void closedLoopControl()
     Serial.println(closedLoopAngleValues[i]);
   }
 
+  //This is for figuring out the velocity values
   Bicep.moveToPos(closedLoopAngleValues[0],closedLoopAngleValues[1],bicepTiltTwistOutput);
   Elbow.moveToPos(closedLoopAngleValues[2],closedLoopAngleValues[3],elbowTiltTwistOutput);
   Wrist.moveToPos(closedLoopAngleValues[4],closedLoopAngleValues[5],wristTiltTwistOutput);
@@ -230,6 +233,7 @@ void closedLoopControl()
     Wrist.rehomePosition();
   }
 
+  //Move the joints based on PID control with given angle values
   Bicep.tiltTwistDecipercent(bicepTiltTwistOutput[0],bicepTiltTwistOutput[1]);
   Elbow.tiltTwistDecipercent(elbowTiltTwistOutput[0],elbowTiltTwistOutput[1]);
   Wrist.tiltTwistDecipercent(wristTiltTwistOutput[0],wristTiltTwistOutput[1]);
