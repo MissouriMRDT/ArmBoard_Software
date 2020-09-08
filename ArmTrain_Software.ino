@@ -71,7 +71,7 @@ void loop()
  {
   switch(rovecomm_packet.data_id)
     {
-      case RC_ARMBOARD_MOVEOPENLOOP_DATAID:
+      case RC_ARMBOARD_VELOCITY_DATAID:
         //Control arm with raw velocity values
         openLoopControl();
         break;
@@ -86,7 +86,7 @@ void loop()
         actuateSolenoid();
         break; 
         
-      case RC_ARMBOARD_LASER_DATAID:
+      case RC_ARMBOARD_LASER_CONTROL_DATAID:
         //Control the state of the laser
         actuateLaser();
         break;
@@ -107,11 +107,11 @@ void loop()
 void actuateLaser()
 {
   //If we get a command to activate laser, write to pin to actuate
-  if(rovecomm_packet.data[0] == RC_ARMBOARD_LASER_ENABLE) 
+  if(rovecomm_packet.data[0] == RC_ARMBOARD_LASER_CONTROL_DATAID) 
   {                                                       
     digitalWrite(LASER_ACTUATION, HIGH);               
   }                                                       
-  else if(rovecomm_packet.data[0] == RC_ARMBOARD_LASER_DISABLE) 
+  else if(rovecomm_packet.data[0] == RC_ARMBOARD_LASER_CONTROL_DATAID) 
   {
     digitalWrite(LASER_ACTUATION, LOW);
   }
@@ -120,11 +120,11 @@ void actuateLaser()
 void actuateSolenoid()
 {
   //If we get a command to activate end effector, write to pin to actuate
-  if(rovecomm_packet.data[0] == RC_ARMBOARD_SOLENOID_ENABLE) 
+  if(rovecomm_packet.data[0] == RC_ARMBOARD_SOLENOID_DATAID) 
   {                                                       
     digitalWrite(SOLENOID_ACTUATION, HIGH); 
   }                                                       
-  else if(rovecomm_packet.data[0] == RC_ARMBOARD_SOLENOID_DISABLE) 
+  else if(rovecomm_packet.data[0] == RC_ARMBOARD_SOLENOID_DATAID) 
   {
     digitalWrite(SOLENOID_ACTUATION, LOW);
   }
@@ -145,6 +145,7 @@ void setClosedLoop()
     Wrist.Joint.left.writeState(AXIS_STATE_CLOSED_LOOP_CONTROL);
     Wrist.Joint.right.writeState(AXIS_STATE_CLOSED_LOOP_CONTROL);
     digitalWrite(SW1_LED, HIGH);
+    Serial.println("Set to closed loop");
   }
   else
   {
@@ -156,6 +157,7 @@ void setClosedLoop()
     Wrist.Joint.left.writeState(AXIS_STATE_IDLE);
     Wrist.Joint.right.writeState(AXIS_STATE_IDLE);
     digitalWrite(SW1_LED, LOW);
+    Serial.println("Set to idle loop");
   }
 }
 
