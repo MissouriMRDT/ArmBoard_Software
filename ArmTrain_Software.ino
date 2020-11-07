@@ -8,7 +8,7 @@ void setup()
 {
   Serial.begin(115200);
   Serial.println("Starting Communication");
-  RoveComm.begin(RC_ARMBOARD_FOURTHOCTET, RC_ROVECOMM_ETHERNET_ARMBOARD_PORT);
+  RoveComm.begin(RC_ARMBOARD_FOURTHOCTET, &TCPServer);
 
   /*Attatch Pins to Class Objects*/
 
@@ -65,11 +65,11 @@ void loop()
 {
  //Check to see if there is a RoveComm packet
  //If so, check what kind and execute command 
- rovecomm_packet = RoveComm.read();
- //Serial.println(rovecomm_packet.data_id);
- if(rovecomm_packet.data_id != 0) 
+ packet = RoveComm.read();
+ //Serial.println(packet.data_id);
+ if(packet.data_id != 0) 
  {
-  switch(rovecomm_packet.data_id)
+  switch(packet.data_id)
     {
       case RC_ARMBOARD_VELOCITY_DATAID:
         //Control arm with raw velocity values
@@ -97,7 +97,7 @@ void loop()
         break;
       case RC_ARMBOARD_GRIPPER_DATAID:
         //Sets gripper motor to a speed between [-1000,1000]
-        int16_t* gripperSpeed = (int16_t*)rovecomm_packet.data;
+        int16_t* gripperSpeed = (int16_t*)packet.data;
         Gripper.drive(gripperSpeed[0]);
         break;
     }
@@ -107,11 +107,11 @@ void loop()
 void actuateLaser()
 {
   //If we get a command to activate laser, write to pin to actuate
-  if(rovecomm_packet.data[0] == RC_ARMBOARD_LASER_CONTROL_DATAID) 
+  if(packet.data[0] == RC_ARMBOARD_LASER_CONTROL_DATAID) 
   {                                                       
     digitalWrite(LASER_ACTUATION, HIGH);               
   }                                                       
-  else if(rovecomm_packet.data[0] == RC_ARMBOARD_LASER_CONTROL_DATAID) 
+  else if(packet.data[0] == RC_ARMBOARD_LASER_CONTROL_DATAID) 
   {
     digitalWrite(LASER_ACTUATION, LOW);
   }
@@ -120,11 +120,11 @@ void actuateLaser()
 void actuateSolenoid()
 {
   //If we get a command to activate end effector, write to pin to actuate
-  if(rovecomm_packet.data[0] == RC_ARMBOARD_SOLENOID_DATAID) 
+  if(packet.data[0] == RC_ARMBOARD_SOLENOID_DATAID) 
   {                                                       
     digitalWrite(SOLENOID_ACTUATION, HIGH); 
   }                                                       
-  else if(rovecomm_packet.data[0] == RC_ARMBOARD_SOLENOID_DATAID) 
+  else if(packet.data[0] == RC_ARMBOARD_SOLENOID_DATAID) 
   {
     digitalWrite(SOLENOID_ACTUATION, LOW);
   }
@@ -134,7 +134,7 @@ void setClosedLoop()
 {
   //If we set motors to closed loop control, SW1 LED turns on
   uint8_t* state;
-  state = (uint8_t*)rovecomm_packet.data;
+  state = (uint8_t*)packet.data;
   if(state[0])
   {
     Serial.println("Setting to closed loop");
@@ -168,7 +168,7 @@ void getPosition()
 
 void openLoopControl()
 {
-  int16_t* openLoopVelocityValues = (int16_t*)rovecomm_packet.data;
+  int16_t* openLoopVelocityValues = (int16_t*)packet.data;
   //Check if input is above min, otherwise set motor speeds to 0
   for(int i = 0; i < 6; i++) 
   {
@@ -206,7 +206,7 @@ void closedLoopControl()
   float wristTiltTwistOutput[2] = {};
 
   //Print out our angle values
-  float* closedLoopAngleValues = (float*)rovecomm_packet.data;
+  float* closedLoopAngleValues = (float*)packet.data;
   Serial.println("Angle Values:");
   for(int i = 0; i < 6; i++) 
   {
