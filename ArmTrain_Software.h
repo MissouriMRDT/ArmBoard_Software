@@ -60,8 +60,8 @@ const int WRIST_GEAR_RATIO = 168;
 
 //Odrive Serials
 HardwareSerial* BICEP_SERIAL = &Serial7; //Yeah yeah Eli was right about consts sucking
-HardwareSerial* ELBOW_SERIAL = &Serial3; //I'm doing this, dont @ me
-HardwareSerial* WRIST_SERIAL = &Serial5;
+HardwareSerial* ELBOW_SERIAL = &Serial4; //I'm doing this, dont @ me
+HardwareSerial* WRIST_SERIAL = &Serial6;
 
 //Max Angles
 const int BICEP_MAX_TILT_ANGLE = 90; //Just putting in random values
@@ -87,18 +87,18 @@ const int MIN_SPEED = 50;
 /*Declare Pins*/
 
 //Limit Switches
-const uint8_t LS_LOWER_BICEP = PM_5;
-const uint8_t LS_UPPER_BICEP = PM_4;
-const uint8_t LS_LOWER_ELBOW = PB_3;
-const uint8_t LS_UPPER_ELBOW = PB_2;
+const uint8_t LS_LOWER_BICEP = PA_4;
+const uint8_t LS_UPPER_BICEP = PA_5;
+const uint8_t LS_LOWER_ELBOW = PB_2;
+const uint8_t LS_UPPER_ELBOW = PB_3;
 
 //Absolute Encoders
-const uint8_t ENC_BICEP_TILT = PM_7;
-const uint8_t ENC_BICEP_TWIST = PM_1;
-const uint8_t ENC_ELBOW_TILT = PD_4;
-const uint8_t ENC_ELBOW_TWIST = PM_0;
-const uint8_t ENC_WRIST_TILT = PD_5;
-const uint8_t ENC_WRIST_TWIST = PD_0;
+const uint8_t ENC_BICEP_TILT = PM_2;
+const uint8_t ENC_BICEP_TWIST = PD_3;
+const uint8_t ENC_ELBOW_TILT = PM_0;
+const uint8_t ENC_ELBOW_TWIST = PM_1;
+const uint8_t ENC_WRIST_TILT = PL_4;
+const uint8_t ENC_WRIST_TWIST = PL_5;
 
 //Laser & Solenoid
 const uint8_t LASER_ACTUATION = PL_3;
@@ -110,9 +110,9 @@ const uint8_t GRIPPER_INB = PQ_1;
 const uint8_t GRIPPER_PWM = PM_6;
 
 //Software Indicators
-const uint8_t ERROR_LED = PN_3;
-const uint8_t SW1_LED = PN_2;
-const uint8_t SW2_LED = PL_2;
+const uint8_t ERROR_LED = PN_4;
+const uint8_t SW1_LED = PP_4;
+const uint8_t SW2_LED = PN_5;
 
 /*Initialize Class Objects*/
 
