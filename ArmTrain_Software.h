@@ -119,7 +119,7 @@ const uint8_t SW2_LED = PL_2;
 //Rovecomm
 RoveCommEthernet RoveComm;
 rovecomm_packet packet;
-EthernetServer TCPServer(RC_ROVECOMM_ETHERNET_ARMBOARD_PORT);
+EthernetServer TCPServer(RC_ROVECOMM_ARMBOARD_PORT);
 
 //Watchdog
 RoveWatchdog Watchdog;
