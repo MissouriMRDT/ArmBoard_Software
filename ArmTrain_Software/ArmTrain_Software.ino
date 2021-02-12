@@ -46,10 +46,6 @@ void setup()
   pinMode(LS_LOWER_BICEP, INPUT);
   pinMode(LS_UPPER_ELBOW, INPUT);
   pinMode(LS_LOWER_ELBOW, INPUT);
- 
-  //Laser & Solenoid
-  pinMode(LASER_ACTUATION, OUTPUT);
-  pinMode(SOLENOID_ACTUATION, OUTPUT);
   
   //Software Indicators
   pinMode(ERROR_LED, OUTPUT);
@@ -71,62 +67,24 @@ void loop()
  {
   switch(packet.data_id)
     {
-      case RC_ARMBOARD_VELOCITY_DATAID:
+      case RC_ARMBOARD_ARMVELOCITYCONTROL_DATA_ID:
         //Control arm with raw velocity values
         openLoopControl();
         break;
-      
-      case RC_ARMBOARD_MOVETOPOSITION_DATAID:
+      case RC_ARMBOARD_ARMMOVETOPOSITION_DATA_ID:
         //Control the arm with raw angle values
         closedLoopControl();
         break;
-
-      case RC_ARMBOARD_SOLENOID_DATAID:
-        //Control the position of solenoid
-        actuateSolenoid();
-        break; 
-        
-      case RC_ARMBOARD_LASER_CONTROL_DATAID:
-        //Control the state of the laser
-        actuateLaser();
-        break;
-
-      case RC_ARMBOARD_SET_CLOSED_LOOP_DATAID:
-        //Allow the Odrives to be moved
+      case RC_ARMBOARD_SETCLOSEDLOOPSTATE_DATA_ID:
+        //Allow the Odrives to be moved/ must be used before any other joint commands
         setClosedLoop();
         break;
-      case RC_ARMBOARD_GRIPPER_DATAID:
+      case RC_ARMBOARD_GRIPPERMOVE_DATA_ID:
         //Sets gripper motor to a speed between [-1000,1000]
         int16_t* gripperSpeed = (int16_t*)packet.data;
         Gripper.drive(gripperSpeed[0]);
         break;
     }
-  }
-}
-
-void actuateLaser()
-{
-  //If we get a command to activate laser, write to pin to actuate
-  if(packet.data[0] == RC_ARMBOARD_LASER_CONTROL_DATAID) 
-  {                                                       
-    digitalWrite(LASER_ACTUATION, HIGH);               
-  }                                                       
-  else if(packet.data[0] == RC_ARMBOARD_LASER_CONTROL_DATAID) 
-  {
-    digitalWrite(LASER_ACTUATION, LOW);
-  }
-}
-
-void actuateSolenoid()
-{
-  //If we get a command to activate end effector, write to pin to actuate
-  if(packet.data[0] == RC_ARMBOARD_SOLENOID_DATAID) 
-  {                                                       
-    digitalWrite(SOLENOID_ACTUATION, HIGH); 
-  }                                                       
-  else if(packet.data[0] == RC_ARMBOARD_SOLENOID_DATAID) 
-  {
-    digitalWrite(SOLENOID_ACTUATION, LOW);
   }
 }
 
