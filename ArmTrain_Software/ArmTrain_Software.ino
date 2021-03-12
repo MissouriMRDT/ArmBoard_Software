@@ -86,6 +86,18 @@ void loop()
         break;
     }
   }
+  Serial.println("Encoder1:");
+  Serial.println(Bicep.getTiltAngleAbsolute());
+  Serial.println("Encoder2:");
+  Serial.println(Bicep.getTwistAngleAbsolute());
+  Serial.println("Encoder3:");
+  Serial.println(Elbow.getTiltAngleAbsolute());
+  Serial.println("Encoder4:");
+  Serial.println(Elbow.getTiltAngleAbsolute());
+  Serial.println("Encoder5:");
+  Serial.println(Wrist.getTiltAngleAbsolute());
+  Serial.println("Encoder6:");
+  Serial.println(Wrist.getTiltAngleAbsolute());
 }
 
 void setClosedLoop() 
