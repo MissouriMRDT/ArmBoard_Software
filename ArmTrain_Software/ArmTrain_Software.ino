@@ -46,10 +46,6 @@ void setup()
   pinMode(LS_LOWER_BICEP, INPUT);
   pinMode(LS_UPPER_ELBOW, INPUT);
   pinMode(LS_LOWER_ELBOW, INPUT);
- 
-  //Laser & Solenoid
-  pinMode(LASER_ACTUATION, OUTPUT);
-  pinMode(SOLENOID_ACTUATION, OUTPUT);
   
   //Software Indicators
   pinMode(ERROR_LED, OUTPUT);
@@ -75,17 +71,14 @@ void loop()
         //Control arm with raw velocity values
         openLoopControl();
         break;
-      
       case RC_ARMBOARD_ARMMOVETOPOSITION_DATA_ID:
         //Control the arm with raw angle values
         closedLoopControl();
         break;
-
       case RC_ARMBOARD_SETCLOSEDLOOPSTATE_DATA_ID:
-        //Allow the Odrives to be moved
+        //Allow the Odrives to be moved/ must be used before any other joint commands
         setClosedLoop();
         break;
-
       case RC_ARMBOARD_GRIPPERMOVE_DATA_ID:
         //Sets gripper motor to a speed between [-1000,1000]
         int16_t* gripperSpeed = (int16_t*)packet.data;
@@ -93,6 +86,18 @@ void loop()
         break;
     }
   }
+  Serial.println("Encoder1:");
+  Serial.println(Bicep.getTiltAngleAbsolute());
+  Serial.println("Encoder2:");
+  Serial.println(Bicep.getTwistAngleAbsolute());
+  Serial.println("Encoder3:");
+  Serial.println(Elbow.getTiltAngleAbsolute());
+  Serial.println("Encoder4:");
+  Serial.println(Elbow.getTiltAngleAbsolute());
+  Serial.println("Encoder5:");
+  Serial.println(Wrist.getTiltAngleAbsolute());
+  Serial.println("Encoder6:");
+  Serial.println(Wrist.getTiltAngleAbsolute());
 }
 
 void setClosedLoop() 
