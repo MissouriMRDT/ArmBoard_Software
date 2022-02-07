@@ -1,21 +1,71 @@
 #include "ArmTrain_Software.h"
 
+
+//Pin definitions
+
 //Motor Buttons
-const uint8_t MOTOR_1 = PD_7;
-const uint8_t MOTOR_2 = PA_6;
-const uint8_t MOTOR_3 = PM_4;
-const uint8_t MOTOR_4 = PM_5;
-const uint8_t MOTOR_5 = PD_0;
-const uint8_t MOTOR_6 = PN_2;
+const uint8_t MOTOR_1 = PE_0;
+const uint8_t MOTOR_2 = PE_1;
+const uint8_t MOTOR_3 = PE_2;
+const uint8_t MOTOR_4 = PE_3;
+const uint8_t MOTOR_5 = PD_7;
+const uint8_t MOTOR_6 = PA_6;
+const uint8_t MOTOR_7 = PM_4;
+
+//Motor Inputs
+const uint8_t IN_A_1 = PC_6;
+const uint8_t IN_B_1 = PE_5;
+const uint8_t IN_A_2 = PD_3;
+const uint8_t IN_B_2 = PC_7;
+const uint8_t IN_A_3 = PB_2;
+const uint8_t IN_B_3 = PB_3;
+const uint8_t IN_A_4 = PD_4;
+const uint8_t IN_B_4 = PD_5;
+const uint8_t IN_A_5 = PQ_0;
+const uint8_t IN_B_5 = PP_4;
+const uint8_t IN_A_6 = PN_5;
+const uint8_t IN_B_6 = PN_4;
+const uint8_t IN_A_7 = PP_1;
+const uint8_t IN_B_7 = PP_0;
+
+//Motor PWM
+const uint8_t PWM_1 = PH_3;
+const uint8_t PWM_2 = PD_1;
+const uint8_t PWM_3 = PD_0;
+const uint8_t PWM_4 = PD_2;
+const uint8_t PWM_5 = PM_7;
+const uint8_t PWM_6 = PA_5;
+const uint8_t PWM_7 = PM_0;
+
+//Encoders
+const uint8_t ENC_1 = PM_1;
+const uint8_t ENC_2 = PM_2;
+const uint8_t ENC_3 = PH_0;
+const uint8_t ENC_4 = PH_1;
+const uint8_t ENC_5 = PK_6;
+const uint8_t ENC_6 = PK_7;
+
+#define NUM_INPUT 8
+#define NUM_OUTPUT 21
+
+uint8_t OUTPUT_PINS[NUM_OUTPUT] = {};
+
+uint8_t INPUT_PINS[NUM_INPUT] = {MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, MOTOR_5, MOTOR_6, MOTOR_7};
 
 void setup() 
 {
-    pinMode(MOTOR_1,INPUT); //MOTORS 1-6
-    pinMode(MOTOR_2,INPUT);
-    pinMode(MOTOR_3,INPUT);
-    pinMode(MOTOR_4,INPUT);
-    pinMode(MOTOR_5,INPUT);
-    pinMode(MOTOR_6,INPUT);
+    //All input pins
+    for(int i = 0; i<NUM_INPUT; i++)
+    {
+        pinMode(INPUT_PINS[i], INPUT);
+    }
+
+    //All output pins
+    for(int i = 0; i < NUM_OUTPUT; i++)
+    {
+        pinMode(OUTPUT_PINS[i], OUTPUT);
+    }
+
 
     pinMode(LS_LOWER_BICEP,OUTPUT); //LS 1-4
     pinMode(LS_UPPER_BICEP,OUTPUT);
