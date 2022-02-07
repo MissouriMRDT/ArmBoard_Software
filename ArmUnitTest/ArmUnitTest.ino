@@ -45,6 +45,16 @@ const uint8_t ENC_4 = PH_1;
 const uint8_t ENC_5 = PK_6;
 const uint8_t ENC_6 = PK_7;
 
+//Limit Switches
+const uint8_t LIM_1 = PP_5;
+const uint8_t LIM_2 = PA_7;
+const uint8_t LIM_3 = PQ_2;
+const uint8_t LIM_4 = PQ_4;
+
+//External LEDS
+const uint8_t LED_1 = PM_6;
+const uint8_t LED_2 = PP_3;
+
 #define NUM_INPUT 8
 #define NUM_OUTPUT 21
 
