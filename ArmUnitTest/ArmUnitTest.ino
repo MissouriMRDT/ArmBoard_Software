@@ -2,7 +2,7 @@
 
 
 //Pin definitions
-
+//INPUTS
 //Motor Buttons
 const uint8_t MOTOR_1 = PE_0;
 const uint8_t MOTOR_2 = PE_1;
@@ -12,6 +12,21 @@ const uint8_t MOTOR_5 = PD_7;
 const uint8_t MOTOR_6 = PA_6;
 const uint8_t MOTOR_7 = PM_4;
 
+//Encoders
+const uint8_t ENC_1 = PM_1;
+const uint8_t ENC_2 = PM_2;
+const uint8_t ENC_3 = PH_0;
+const uint8_t ENC_4 = PH_1;
+const uint8_t ENC_5 = PK_6;
+const uint8_t ENC_6 = PK_7;
+
+//Limit Switches
+const uint8_t LIM_1 = PP_5;
+const uint8_t LIM_2 = PA_7;
+const uint8_t LIM_3 = PQ_2;
+const uint8_t LIM_4 = PQ_4;
+
+//OUTPUTS
 //Motor Inputs
 const uint8_t IN_A_1 = PC_6;
 const uint8_t IN_B_1 = PE_5;
@@ -37,30 +52,31 @@ const uint8_t PWM_5 = PM_7;
 const uint8_t PWM_6 = PA_5;
 const uint8_t PWM_7 = PM_0;
 
-//Encoders
-const uint8_t ENC_1 = PM_1;
-const uint8_t ENC_2 = PM_2;
-const uint8_t ENC_3 = PH_0;
-const uint8_t ENC_4 = PH_1;
-const uint8_t ENC_5 = PK_6;
-const uint8_t ENC_6 = PK_7;
-
-//Limit Switches
-const uint8_t LIM_1 = PP_5;
-const uint8_t LIM_2 = PA_7;
-const uint8_t LIM_3 = PQ_2;
-const uint8_t LIM_4 = PQ_4;
-
 //External LEDS
 const uint8_t LED_1 = PM_6;
 const uint8_t LED_2 = PP_3;
 
-#define NUM_INPUT 8
-#define NUM_OUTPUT 21
+//Gripper Peripherals
+const uint8_t LASER_EN = PN_2;
+const uint8_t SOLENIOD_EN = PN_3;
 
-uint8_t OUTPUT_PINS[NUM_OUTPUT] = {};
 
-uint8_t INPUT_PINS[NUM_INPUT] = {MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, MOTOR_5, MOTOR_6, MOTOR_7};
+#define NUM_INPUT 17
+#define NUM_OUTPUT 25
+
+uint8_t OUTPUT_PINS[NUM_OUTPUT] = {
+    IN_A_1, IN_A_2, IN_A_3, IN_A_4, IN_A_5, IN_A_6, IN_A_7,
+    IN_B_1, IN_B_2, IN_B_3, IN_B_4, IN_B_5, IN_B_6, IN_B_7, 
+    PWM_1, PWM_2, PWM_3, PWM_4, PWM_5, PWM_6, PWM_7,
+    LED_1, LED_2,
+    LASER_EN, SOLENIOD_EN
+};
+
+uint8_t INPUT_PINS[NUM_INPUT] = {
+    MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4, MOTOR_5, MOTOR_6, MOTOR_7, 
+    ENC_1, ENC_2, ENC_3, ENC_4, ENC_5, ENC_6,
+    LIM_1, LIM_2, LIM_3, LIM_4
+};
 
 void setup() 
 {
@@ -77,26 +93,7 @@ void setup()
     }
 
 
-    pinMode(LS_LOWER_BICEP,OUTPUT); //LS 1-4
-    pinMode(LS_UPPER_BICEP,OUTPUT);
-    pinMode(LS_LOWER_ELBOW,OUTPUT);
-    pinMode(LS_UPPER_ELBOW,OUTPUT);
-
-    pinMode(ENC_WRIST_TILT,OUTPUT); //ENC 1-6
-    pinMode(ENC_WRIST_TWIST,OUTPUT);
-    pinMode(ENC_ELBOW_TILT,OUTPUT);
-    pinMode(ENC_ELBOW_TWIST,OUTPUT);
-    pinMode(ENC_BICEP_TILT,OUTPUT);
-    pinMode(ENC_BICEP_TWIST,OUTPUT);
-
-    pinMode(SW1_LED,OUTPUT); //SW 1-3
-    pinMode(SW2_LED,OUTPUT);
-    pinMode(ERROR_LED,OUTPUT);
-
-    pinMode(GRIPPER_INA,OUTPUT); //GRIPPER
-    pinMode(GRIPPER_INB,OUTPUT);
-    pinMode(GRIPPER_PWM,OUTPUT);
-
+    //UART setup
     pinMode(PC_4,INPUT); //Rx left
     pinMode(PC_5,OUTPUT); //Tx left
     pinMode(PK_0,INPUT); //Rx mid
