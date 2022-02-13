@@ -104,6 +104,10 @@ void setup()
 
 void loop() 
 {
+
+    //I have no clue what this shit does
+    
+
     if(digitalRead(MOTOR_1)==HIGH) //motor 1
     {
         digitalWrite(LS_LOWER_BICEP,HIGH); //ls1
