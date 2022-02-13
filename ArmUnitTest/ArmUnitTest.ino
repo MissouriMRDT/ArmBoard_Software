@@ -24,7 +24,7 @@ const uint8_t ENC_6 = PK_7;
 const uint8_t LIM_1 = PP_5;
 const uint8_t LIM_2 = PA_7;
 const uint8_t LIM_3 = PQ_2;
-const uint8_t LIM_4 = PQ_4;
+const uint8_t LIM_4 = PQ_3;
 
 //OUTPUTS
 //Motor Inputs
@@ -104,9 +104,9 @@ void setup()
 
 void loop() 
 {
-
+     
     //I have no clue what this shit does
-    
+    //Best guess is it tests the buttons and the individual unit tests that need to be done.
 
     if(digitalRead(MOTOR_1)==HIGH) //motor 1
     {
