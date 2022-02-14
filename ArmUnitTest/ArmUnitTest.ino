@@ -3,6 +3,8 @@
 #define NUM_INPUT 17
 #define NUM_OUTPUT 25
 
+bool laser_on = false;
+bool soleniod_on = false;
 uint8_t OUTPUT_PINS[NUM_OUTPUT] = {
     IN_A_1, IN_A_2, IN_A_3, IN_A_4, IN_A_5, IN_A_6, IN_A_7,
     IN_B_1, IN_B_2, IN_B_3, IN_B_4, IN_B_5, IN_B_6, IN_B_7, 
@@ -43,7 +45,6 @@ void setup()
 
 void loop() 
 {
-     
   //I have no clue what this shit does
   //Best guess is it tests the buttons and the individual unit tests that need to be done.
   
@@ -73,12 +74,30 @@ void loop()
 
   if(m_4_press)
   {
-    //do 4th set of tests
+    //Toggle Laser
+    if(laser_on)
+    {
+      digitalWrite(LASER_EN, HIGH);
+    }
+    else
+    {
+      digitalWrite(LASER_EN, LOW);
+    }
+    laser_on = !laser_on;
   }
 
   if(m_5_press)
   {
-    //do 5th set of tests
+    //Toggle Solenoid
+    if(soleniod_on)
+    {
+      digitalWrite(SOLENIOD_EN, HIGH);
+    }
+    else
+    {
+      digitalWrite(SOLENIOD_EN, LOW);
+    }
+    soleniod_on = !soleniod_on;
   }
   
   if(m_6_press)
