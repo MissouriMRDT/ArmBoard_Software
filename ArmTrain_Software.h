@@ -85,30 +85,63 @@ const int BICEP_MAX_SPEED_REVERSE = -100000;
 const int MIN_SPEED = 50;
 
 /*Declare Pins*/
+//INPUTS
+//Motor Buttons
+const uint8_t MOTOR_1 = PE_0;
+const uint8_t MOTOR_2 = PE_1;
+const uint8_t MOTOR_3 = PE_2;
+const uint8_t MOTOR_4 = PE_3;
+const uint8_t MOTOR_5 = PD_7;
+const uint8_t MOTOR_6 = PA_6;
+const uint8_t MOTOR_7 = PM_4;
+
+//Encoders
+const uint8_t ENC_1 = PM_1;
+const uint8_t ENC_2 = PM_2;
+const uint8_t ENC_3 = PH_0;
+const uint8_t ENC_4 = PH_1;
+const uint8_t ENC_5 = PK_6;
+const uint8_t ENC_6 = PK_7;
 
 //Limit Switches
-const uint8_t LS_LOWER_BICEP = PA_4;
-const uint8_t LS_UPPER_BICEP = PA_5;
-const uint8_t LS_LOWER_ELBOW = PB_2;
-const uint8_t LS_UPPER_ELBOW = PB_3;
+const uint8_t LIM_1 = PP_5;
+const uint8_t LIM_2 = PA_7;
+const uint8_t LIM_3 = PQ_2;
+const uint8_t LIM_4 = PQ_3;
 
-//Absolute Encoders
-const uint8_t ENC_BICEP_TILT = PM_2;
-const uint8_t ENC_BICEP_TWIST = PD_3;
-const uint8_t ENC_ELBOW_TILT = PM_0;
-const uint8_t ENC_ELBOW_TWIST = PM_1;
-const uint8_t ENC_WRIST_TILT = PL_4;
-const uint8_t ENC_WRIST_TWIST = PL_5;
+//OUTPUTS
+//Motor Inputs
+const uint8_t IN_A_1 = PC_6;
+const uint8_t IN_B_1 = PE_5;
+const uint8_t IN_A_2 = PD_3;
+const uint8_t IN_B_2 = PC_7;
+const uint8_t IN_A_3 = PB_2;
+const uint8_t IN_B_3 = PB_3;
+const uint8_t IN_A_4 = PD_4;
+const uint8_t IN_B_4 = PD_5;
+const uint8_t IN_A_5 = PQ_0;
+const uint8_t IN_B_5 = PP_4;
+const uint8_t IN_A_6 = PN_5;
+const uint8_t IN_B_6 = PN_4;
+const uint8_t IN_A_7 = PP_1;
+const uint8_t IN_B_7 = PP_0;
 
-//Gripper Motor
-const uint8_t GRIPPER_INA = PP_3;
-const uint8_t GRIPPER_INB = PQ_1;
-const uint8_t GRIPPER_PWM = PM_6;
+//Motor PWM
+const uint8_t PWM_1 = PH_3;
+const uint8_t PWM_2 = PD_1;
+const uint8_t PWM_3 = PD_0;
+const uint8_t PWM_4 = PD_2;
+const uint8_t PWM_5 = PM_7;
+const uint8_t PWM_6 = PA_5;
+const uint8_t PWM_7 = PM_0;
 
-//Software Indicators
-const uint8_t ERROR_LED = PN_4;
-const uint8_t SW1_LED = PP_4;
-const uint8_t SW2_LED = PN_5;
+//External LEDS
+const uint8_t LED_1 = PM_6;
+const uint8_t LED_2 = PP_3;
+
+//Gripper Peripherals
+const uint8_t LASER_EN = PN_2;
+const uint8_t SOLENIOD_EN = PN_3;
 
 /*Initialize Class Objects*/
 
