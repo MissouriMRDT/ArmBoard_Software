@@ -1,66 +1,5 @@
 #include "ArmTrain_Software.h"
 
-
-//Pin definitions
-//INPUTS
-//Motor Buttons
-const uint8_t MOTOR_1 = PE_0;
-const uint8_t MOTOR_2 = PE_1;
-const uint8_t MOTOR_3 = PE_2;
-const uint8_t MOTOR_4 = PE_3;
-const uint8_t MOTOR_5 = PD_7;
-const uint8_t MOTOR_6 = PA_6;
-const uint8_t MOTOR_7 = PM_4;
-
-//Encoders
-const uint8_t ENC_1 = PM_1;
-const uint8_t ENC_2 = PM_2;
-const uint8_t ENC_3 = PH_0;
-const uint8_t ENC_4 = PH_1;
-const uint8_t ENC_5 = PK_6;
-const uint8_t ENC_6 = PK_7;
-
-//Limit Switches
-const uint8_t LIM_1 = PP_5;
-const uint8_t LIM_2 = PA_7;
-const uint8_t LIM_3 = PQ_2;
-const uint8_t LIM_4 = PQ_3;
-
-//OUTPUTS
-//Motor Inputs
-const uint8_t IN_A_1 = PC_6;
-const uint8_t IN_B_1 = PE_5;
-const uint8_t IN_A_2 = PD_3;
-const uint8_t IN_B_2 = PC_7;
-const uint8_t IN_A_3 = PB_2;
-const uint8_t IN_B_3 = PB_3;
-const uint8_t IN_A_4 = PD_4;
-const uint8_t IN_B_4 = PD_5;
-const uint8_t IN_A_5 = PQ_0;
-const uint8_t IN_B_5 = PP_4;
-const uint8_t IN_A_6 = PN_5;
-const uint8_t IN_B_6 = PN_4;
-const uint8_t IN_A_7 = PP_1;
-const uint8_t IN_B_7 = PP_0;
-
-//Motor PWM
-const uint8_t PWM_1 = PH_3;
-const uint8_t PWM_2 = PD_1;
-const uint8_t PWM_3 = PD_0;
-const uint8_t PWM_4 = PD_2;
-const uint8_t PWM_5 = PM_7;
-const uint8_t PWM_6 = PA_5;
-const uint8_t PWM_7 = PM_0;
-
-//External LEDS
-const uint8_t LED_1 = PM_6;
-const uint8_t LED_2 = PP_3;
-
-//Gripper Peripherals
-const uint8_t LASER_EN = PN_2;
-const uint8_t SOLENIOD_EN = PN_3;
-
-
 #define NUM_INPUT 17
 #define NUM_OUTPUT 25
 
@@ -105,59 +44,102 @@ void setup()
 void loop() 
 {
      
-    //I have no clue what this shit does
-    //Best guess is it tests the buttons and the individual unit tests that need to be done.
+  //I have no clue what this shit does
+  //Best guess is it tests the buttons and the individual unit tests that need to be done.
+  
+  //Poll keys for press detection.
+  bool m_1_press = digital_read(MOTOR_1);
+  bool m_2_press = digital_read(MOTOR_2);
+  bool m_3_press = digital_read(MOTOR_3);
+  bool m_4_press = digital_read(MOTOR_4);
+  bool m_5_press = digital_read(MOTOR_5);
+  bool m_6_press = digital_read(MOTOR_6);
+  bool m_7_press = digital_read(MOTOR_7);
 
-    if(digitalRead(MOTOR_1)==HIGH) //motor 1
-    {
-        digitalWrite(LS_LOWER_BICEP,HIGH); //ls1
-        digitalWrite(LS_UPPER_BICEP,HIGH); //ls2
-        digitalWrite(LS_LOWER_ELBOW,HIGH); //ls3
-        digitalWrite(LS_UPPER_ELBOW,HIGH); //ls4
-    }
-    if(digitalRead(MOTOR_2)==HIGH) //motor 2
-    {
-        digitalWrite(SW1_LED,HIGH); //sw1
-        digitalWrite(SW2_LED,HIGH); //sw2
-        digitalWrite(ERROR_LED,HIGH); //sw3
-    }
-    if(digitalRead(MOTOR_3)==HIGH) //motor 3
-    {
-        analogWrite(ENC_WRIST_TILT,255); //enc1
-        analogWrite(ENC_WRIST_TWIST,255); //enc2
-        analogWrite(ENC_ELBOW_TILT,255); //enc3
-        analogWrite(ENC_ELBOW_TWIST,255); //enc4
-        analogWrite(ENC_BICEP_TILT,255); //enc5
-        analogWrite(ENC_BICEP_TWIST,255); //enc6
-    }
-    if(digitalRead(MOTOR_4)==HIGH) //motor 4
-    {
-        digitalWrite(PC_5,HIGH); //Tx left
-        digitalWrite(PK_1,HIGH); //Tx mid
-        digitalWrite(PP_1,HIGH); //Tx right
-    }
-    else
-    {
-        digitalWrite(LS_LOWER_BICEP,LOW); //ls1
-        digitalWrite(LS_UPPER_BICEP,LOW); //ls2
-        digitalWrite(LS_LOWER_ELBOW,LOW); //ls3
-        digitalWrite(LS_UPPER_ELBOW,LOW); //ls4
+  if(m_1_press)
+  {
+    //do first set of tests   
+  }
 
-        digitalWrite(SW1_LED,LOW); //sw1
-        digitalWrite(SW2_LED,LOW); //sw2
-        digitalWrite(ERROR_LED,LOW); //sw3
+  if(m_2_press)
+  {
+    //do second set of tests
+  }
 
-        analogWrite(ENC_WRIST_TILT,0); //enc1
-        analogWrite(ENC_WRIST_TWIST,0); //enc2
-        analogWrite(ENC_ELBOW_TILT,0); //enc3
-        analogWrite(ENC_ELBOW_TWIST,0); //enc4
-        analogWrite(ENC_BICEP_TILT,0); //enc5
-        analogWrite(ENC_BICEP_TWIST,0); //enc6
+  if(m_3_press)
+  {
+    //do third set of tests
+  }
 
-        digitalWrite(PC_5,LOW); //Tx left
-        digitalWrite(PK_1,LOW); //Tx mid
-        digitalWrite(PP_1,LOW); //Tx right
-    }
+  if(m_4_press)
+  {
+    //do 4th set of tests
+  }
+
+  if(m_5_press)
+  {
+    //do 5th set of tests
+  }
+  
+  if(m_6_press)
+  {
+    //do 6th set of tests
+  }
+
+  if(m_7_press)
+  {
+    //do 7th set of tests
+  }
+  if(digitalRead(MOTOR_1)==HIGH) //motor 1
+  {
+    digitalWrite(LS_LOWER_BICEP,HIGH); //ls1
+    digitalWrite(LS_UPPER_BICEP,HIGH); //ls2
+    digitalWrite(LS_LOWER_ELBOW,HIGH); //ls3
+    digitalWrite(LS_UPPER_ELBOW,HIGH); //ls4
+  }
+  if(digitalRead(MOTOR_2)==HIGH) //motor 2
+  {
+    digitalWrite(SW1_LED,HIGH); //sw1
+    digitalWrite(SW2_LED,HIGH); //sw2
+    digitalWrite(ERROR_LED,HIGH); //sw3
+  }
+  if(digitalRead(MOTOR_3)==HIGH) //motor 3
+  {
+    analogWrite(ENC_WRIST_TILT,255); //enc1
+    analogWrite(ENC_WRIST_TWIST,255); //enc2
+    analogWrite(ENC_ELBOW_TILT,255); //enc3
+    analogWrite(ENC_ELBOW_TWIST,255); //enc4
+    analogWrite(ENC_BICEP_TILT,255); //enc5
+    analogWrite(ENC_BICEP_TWIST,255); //enc6
+  }
+  if(digitalRead(MOTOR_4)==HIGH) //motor 4
+  {
+    digitalWrite(PC_5,HIGH); //Tx left
+    digitalWrite(PK_1,HIGH); //Tx mid
+    digitalWrite(PP_1,HIGH); //Tx right
+  }
+  else
+  {
+    digitalWrite(LS_LOWER_BICEP,LOW); //ls1
+    digitalWrite(LS_UPPER_BICEP,LOW); //ls2
+    digitalWrite(LS_LOWER_ELBOW,LOW); //ls3
+    digitalWrite(LS_UPPER_ELBOW,LOW); //ls4
+
+    digitalWrite(SW1_LED,LOW); //sw1
+    digitalWrite(SW2_LED,LOW); //sw2
+    digitalWrite(ERROR_LED,LOW); //sw3
+
+    analogWrite(ENC_WRIST_TILT,0); //enc1
+    analogWrite(ENC_WRIST_TWIST,0); //enc2
+    analogWrite(ENC_ELBOW_TILT,0); //enc3
+    analogWrite(ENC_ELBOW_TWIST,0); //enc4
+    analogWrite(ENC_BICEP_TILT,0); //enc5
+    analogWrite(ENC_BICEP_TWIST,0); //enc6
+
+    digitalWrite(PC_5,LOW); //Tx left
+    digitalWrite(PK_1,LOW); //Tx mid
+    digitalWrite(PP_1,LOW); //Tx right
+  }
 }
 
 
