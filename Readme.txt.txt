@@ -1,0 +1,2 @@
+This zip contains a collection of all the necessary libraries for the arm train software for the 2019 Competition, as well as the board specific code.
+This serves as a download for a user wanting to get setup fully with working Valkyrie arm software.

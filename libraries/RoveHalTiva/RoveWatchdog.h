@@ -1,0 +1,22 @@
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+// MRDT 2019
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Todo
+
+#ifndef ROVE_WATCHDOG_H
+#define ROVE_WATCHDOG_H
+
+#include <stdint.h>
+
+class RoveWatchdog
+{
+public:
+
+  void attach( void(*userFunction)(void) ); 
+  void start(  int   timeout_millis, int estops_before_board_reset=5 );
+  void stop();
+  void clear();
+};
+
+#endif // ROVE_WATCHDOG_H
