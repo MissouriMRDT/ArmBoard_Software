@@ -1,69 +1,78 @@
-//RoveComm Example
-//Sends single value and array entry to roveComm
-//Reads array entry from RoveComm
-//Andrew Van Horn, 11/2018
-/*The following values used in this example are defined in RoveManifest.h
- * const uint8_t EXAMPLE_FOURTH_OCTET          = 141;
- * const uint16_t SINGLE_VALUE_EXAMPLE_ID = 10;
- * const uint16_t ARRAY_ENTRY_EXAMPLE_ID  = 11;
- * const uint16_t ARRAY_READ_EXAMPLE_ID   = 12;
- */
+//Example of receiving and writing rovecomm data for a mock driveboard
 
 #include "RoveComm.h"
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-RoveCommEthernetUdp RoveComm;
-struct rovecomm_packet rovecomm_read_packet;
 
-#define OUTPUT_SINGLE_ENTRY  1
-#define OUTPUT_ARRAY_ENTRY   1
+RoveCommEthernet RoveComm;
+rovecomm_packet packet;
+
+int16_t motor_speed[6] = {-500, 200, 740, -720, 10, -182};
+
+//timekeeping variables
+uint32_t last_update_time;
+
+//declare the Ethernet Server in the top level sketch with the requisite port ID any time you want to use RoveComm
+EthernetServer TCPServer(RC_ROVECOMM_DRIVEBOARD_PORT);
 
 void setup() 
 {
-  RoveComm.begin(EXAMPLE_FOURTH_OCTET);
   Serial.begin(9600);
-  delay(10);
-  pinMode(A0, INPUT);
-  pinMode(A1, INPUT);
-  pinMode(A2, INPUT);
-  Serial.println("Initialised");
-  delay(10);
+
+  //Set up rovecomm with the correct IP and the TCP server
+  RoveComm.begin(RC_DRIVEBOARD_FOURTHOCTET, &TCPServer);
+  delay(100);
+
+  Serial.println("Started: ");
+  
+  //update timekeeping
+  last_update_time = millis();
 }
 
-void loop()
+void loop() 
 {
-  if(OUTPUT_SINGLE_ENTRY)
-  {
-    RoveComm.write(SINGLE_VALUE_EXAMPLE_ID, 1, analogRead(A0));
-    Serial.print("Writing: ");
-    Serial.println(analogRead(A0));
-    delay(10);
-  }
+  packet = RoveComm.read();
 
-  if(OUTPUT_ARRAY_ENTRY)
-  {
-    uint16_t send_data[] = {analogRead(A0),analogRead(A1), analogRead(A2)};
-    Serial.println("Writing Array");
-    RoveComm.write(SINGLE_VALUE_EXAMPLE_ID, 3, send_data);
-    delay(10);
-  }
-  
-  rovecomm_read_packet =RoveComm.read();
+  Serial.println("Data id: ");
+  Serial.println(packet.data_id);
 
-  if(rovecomm_read_packet.data_id != 0)
+  switch(packet.data_id)
   {
-    Serial.print("Packet Read: ");
-    Serial.println(rovecomm_read_packet.data_id);
-  }
-  
-  switch(rovecomm_read_packet.data_id)
-  {
-    case (ARRAY_READ_EXAMPLE_ID):
-      for(uint8_t i = 0; i< rovecomm_read_packet.data_count; i++)
-      {
-        Serial.println(rovecomm_read_packet.data[i]);
-      }
+    case RC_DRIVEBOARD_DRIVEINDIVIDUAL_DATA_ID:
+      Serial.println("We received an individual wheel drive command");
+      break;
+    case RC_DRIVEBOARD_DRIVELEFTRIGHT_DATA_ID:
+      //cast the packet to the correct data type
+      int16_t* speeds;
+      speeds = (int16_t*)packet.data;
+      
+      //print out speeds nicely formatted
+      Serial.println("We received a left/right drive command:");
+
+      char buf[100];
+      sprintf(buf, "Left: %d, Right: %d", speeds[0], speeds[1]);
+      Serial.println(buf);
+
+      //set the motor speeds to the commanded speeds in RoveComm
+      motor_speed[0] = speeds[0];
+      motor_speed[1] = speeds[0];
+      motor_speed[2] = speeds[0];
+      motor_speed[3] = speeds[1];
+      motor_speed[4] = speeds[1];
+      motor_speed[5] = speeds[1];
+      break;
     default:
-     delay(1000);
+      Serial.println("Unexpected data id: ");
+      Serial.println(packet.data_id);
+      break;
   }
-  
+
+  //Code to drive motors goes here
+
+  //Write some mock drive speeds back every 100 milliseconds, it is important that any
+  //telemetry is NOT rate limited (using delays) as this will prevent
+  //packets from arriving in a timely manner 
+  if(millis()-last_update_time >= ROVECOMM_UPDATE_RATE)
+  {
+      RoveComm.write(RC_DRIVEBOARD_DRIVESPEEDS_DATA_ID, RC_DRIVEBOARD_DRIVESPEEDS_DATA_COUNT, motor_speed);
+      last_update_time = millis();
+  }
 }

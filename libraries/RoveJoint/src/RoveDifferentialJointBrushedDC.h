@@ -2,8 +2,8 @@
 // MRDT Differential Joint 2019
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ROVE_DIFF
-#define ROVE_DIFF
+#ifndef ROVE_DIFF_BRUSHED
+#define ROVE_DIFF_BRUSHED
 
 #include "RoveStmVnhPwm.h"
 #include "RoveUsDigiMa3Pwm.h"
@@ -13,15 +13,15 @@
 
 #include <stdint.h>
 
-class RoveDifferentialJoint
+class RoveDifferentialJointBrushed
 {
   public:
 
     RoveStmVnhPwm RightMotor;
     RoveStmVnhPwm LeftMotor;
 
-    RoveUsDigiMa3Pwm   TiltEncoder;
-    RoveUsDigiMa3Pwm   TwistEncoder;
+    RoveUsDigiMa3Pwm TiltEncoder;
+    RoveUsDigiMa3Pwm TwistEncoder;
 
     RovePidFloats TiltPid;
     RovePidFloats TwistPid;
@@ -37,12 +37,10 @@ class RoveDifferentialJoint
     ///////////////////////////////////////////////////////////////////////////////////////////////////////
     //Limit Switch Handling
     ///////////////////////////////////////////////////////////////////////////////////////////////////////
-    //Since we don't have a class for this we are going to just pass all the neccessary pin values
-    //Maybe when I get bored I will add an unneccessary class for this
     void attachLimitSwitches(uint8_t upperPin, uint8_t lowerPin);
     //returns whether or not the Limit switch is pressed (if we are moving past that given limit)
-    bool LowerLSPressed();
-    bool UpperLSPressed();
+    bool isLowerLSPressed();
+    bool isUpperLSPressed();
     void setTwistLimits(int left_lim, int right_lim);
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -55,9 +53,7 @@ class RoveDifferentialJoint
     ///////////////////////////////////////////////////////////////////////////////////////////////////////
     //Encoder Handling
     ///////////////////////////////////////////////////////////////////////////////////////////////////////
-
     bool TwistEncoderDisconnect();
-
     bool TiltEncoderDisconnect();
 
 };

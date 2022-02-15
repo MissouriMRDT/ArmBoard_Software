@@ -131,7 +131,7 @@ template< class TYPE, size_t SIZE > TYPE RoveRingBuff< TYPE, SIZE >::average()
   { return ~TYPE(0); }
 
   else 
-  { return this->sum() / this->count(); }
+  { return this->peekFromFront( this->cnt/2 ); } // We take the median not mean, as this prevents issues with circular data (aka. degrees)
 }
 
 #endif // ROVE_RING_BUFF_H

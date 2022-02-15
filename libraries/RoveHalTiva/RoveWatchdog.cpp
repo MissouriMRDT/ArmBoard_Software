@@ -18,6 +18,7 @@ static void watchdogIsr();
 
 static int  isr_without_user_clear_count  = 0;
 static int  isr_before_board_reset_count = 0;
+static ResetConfig board_reset_config;
 
 //////////////////////////////////////////////////////////
 void RoveWatchdog::attach( void(*userFunction)(void) )
@@ -28,8 +29,9 @@ void RoveWatchdog::attach( void(*userFunction)(void) )
   WatchdogUnlock( WATCHDOG0_BASE );
 }
 
-void RoveWatchdog::start( int timeout_millis, int estops_before_board_reset ) /////////////////////
+void RoveWatchdog::start( int timeout_millis, ResetConfig reset, int estops_before_board_reset ) /////////////////////
 { isr_before_board_reset_count = estops_before_board_reset;
+  board_reset_config = reset;
   WatchdogIntRegister(  WATCHDOG0_BASE, watchdogIsr);
   WatchdogReloadSet(    WATCHDOG0_BASE, 1000 * roveware::SYSCLOCK_TICKS_PER_MICRO  * timeout_millis );
   WatchdogResetEnable(  WATCHDOG0_BASE );
@@ -47,7 +49,7 @@ void RoveWatchdog::clear() //////////
   isr_without_user_clear_count = 0; }
 
 void watchdogIsr() ///////////////////////////////////////////////////
-{ if( isr_without_user_clear_count++ <= isr_before_board_reset_count )
+{ if( (board_reset_config == DISABLE_BOARD_RESET)  || isr_without_user_clear_count++ <= isr_before_board_reset_count )
   { WatchdogIntClear( WATCHDOG0_BASE ); 
     userIsr(); }
 }
