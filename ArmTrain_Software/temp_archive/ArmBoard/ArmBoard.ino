@@ -58,28 +58,28 @@ void loop()
   case RC_ARMBOARD_MOVETOANGLE_DATAID:
     doClosedLoop();
     break;
-  case RC_ARMBOARD_IKINCROV_DATAID:
-    Serial.println("IK INCREMENT");
-    initPresentCoordinates();
-    int16_t moveCommands[6];
-    for(int i = 0; i<6;i++)
-    {
-      moveCommands[i] = (int16_t)rovecomm_packet.data[i];
-    }
-    incrementRoverIK(moveCommands);
-    uint32_t bicepMove[4];
-    bicepMove[0] = bicepAngleVals[0]; //J1
-    bicepMove[1] = invertAngle(bicepAngleVals[1],true); //J2
-    bicepMove[2] = bicepAngleVals[2]; //J3
-    bicepMove[3] = invertAngle(bicepAngleVals[3],true); //J4
-    RoveComm.writeTo(RC_ARMBOARD_BICEP_ANGLE_DATAID, 4, bicepMove, 192, 168, 1, RC_BICEP_FOURTHOCTET, 11000);
-    uint32_t forearmMove[4];
-    forearmMove[0] = forearmAngleVals[0]; //J5
-    forearmMove[1] = forearmAngleVals[1]; //J6
-    RoveComm.writeTo(RC_ARMBOARD_FOREARM_ANGLE_DATAID, 2, forearmMove, 192, 168, 1, RC_FOREARM_FOURTHOCTET, 11000);
-    RoveComm.writeTo(RC_ARMBOARD_GRIPPER_DATAID, 1, rovecomm_packet.data[6], 192, 168, 1, RC_FOREARM_FOURTHOCTET, 11000);
-    RoveComm.writeTo(RC_ARMBOARD_SOLENOID_DATAID, 1, rovecomm_packet.data[7], 192, 168, 1, RC_FOREARM_FOURTHOCTET, 11000);
-    break;
+  // case RC_ARMBOARD_IKINCROV_DATAID:
+  //   Serial.println("IK INCREMENT");
+  //   initPresentCoordinates();
+  //   int16_t moveCommands[6];
+  //   for(int i = 0; i<6;i++)
+  //   {
+  //     moveCommands[i] = (int16_t)rovecomm_packet.data[i];
+  //   }
+  //   incrementRoverIK(moveCommands);
+  //   uint32_t bicepMove[4];
+  //   bicepMove[0] = bicepAngleVals[0]; //J1
+  //   bicepMove[1] = invertAngle(bicepAngleVals[1],true); //J2
+  //   bicepMove[2] = bicepAngleVals[2]; //J3
+  //   bicepMove[3] = invertAngle(bicepAngleVals[3],true); //J4
+  //   RoveComm.writeTo(RC_ARMBOARD_BICEP_ANGLE_DATAID, 4, bicepMove, 192, 168, 1, RC_BICEP_FOURTHOCTET, 11000);
+  //   uint32_t forearmMove[4];
+  //   forearmMove[0] = forearmAngleVals[0]; //J5
+  //   forearmMove[1] = forearmAngleVals[1]; //J6
+  //   RoveComm.writeTo(RC_ARMBOARD_FOREARM_ANGLE_DATAID, 2, forearmMove, 192, 168, 1, RC_FOREARM_FOURTHOCTET, 11000);
+  //   RoveComm.writeTo(RC_ARMBOARD_GRIPPER_DATAID, 1, rovecomm_packet.data[6], 192, 168, 1, RC_FOREARM_FOURTHOCTET, 11000);
+  //   RoveComm.writeTo(RC_ARMBOARD_SOLENOID_DATAID, 1, rovecomm_packet.data[7], 192, 168, 1, RC_FOREARM_FOURTHOCTET, 11000);
+  //   break;
   case RC_ARMBOARD_DOLS_DATAID:
     Serial.println("DoLS");
     Serial.println(rovecomm_packet.data[0]);
@@ -174,31 +174,31 @@ void sendPosition()
    }
 }
 
-void parseCommand()
-{
-  Serial.println("Parsing");
-  if(rovecomm_packet.data[RC_ARMBOARD_POSITION_GETENTRY] == 1)
-  {
-    Serial.println("Joint 1 Angle:");
-    Serial.println(currentPositions[0]);
-    Serial.println("Joint 2 Angle:");
-    Serial.println(currentPositions[1]);
-    Serial.println("Joint 3 Angle:");
-    Serial.println(currentPositions[2]);
-    Serial.println("Joint 4 Angle:");
-    Serial.println(currentPositions[3]);
-    Serial.println("Joint 5 Angle:");
-    Serial.println(currentPositions[4]);
-    Serial.println("Joint 6 Angle:");
-    Serial.println(currentPositions[5]);
-    Serial.println("sending");
-    RoveComm.write(RC_ARMBOARD_MOTORANGLES_DATAID, 6, currentPositions);
-  }
-  else if(rovecomm_packet.data[RC_ARMBOARD_ARMCOMMANDS_SWAPP_GRIPPERENTRY] == 1)
-  {
-    //definitely do something, but we don't have the second gripper so nope for now
-  }
-}
+// void parseCommand()
+// {
+//   Serial.println("Parsing");
+//   if(rovecomm_packet.data[RC_ARMBOARD_POSITION_GETENTRY] == 1)
+//   {
+//     Serial.println("Joint 1 Angle:");
+//     Serial.println(currentPositions[0]);
+//     Serial.println("Joint 2 Angle:");
+//     Serial.println(currentPositions[1]);
+//     Serial.println("Joint 3 Angle:");
+//     Serial.println(currentPositions[2]);
+//     Serial.println("Joint 4 Angle:");
+//     Serial.println(currentPositions[3]);
+//     Serial.println("Joint 5 Angle:");
+//     Serial.println(currentPositions[4]);
+//     Serial.println("Joint 6 Angle:");
+//     Serial.println(currentPositions[5]);
+//     Serial.println("sending");
+//     RoveComm.write(RC_ARMBOARD_MOTORANGLES_DATAID, 6, currentPositions);
+//   }
+//   else if(rovecomm_packet.data[RC_ARMBOARD_ARMCOMMANDS_SWAPP_GRIPPERENTRY] == 1)
+//   {
+//     //definitely do something, but we don't have the second gripper so nope for now
+//   }
+// }
 
 void updatePosition()
 {
