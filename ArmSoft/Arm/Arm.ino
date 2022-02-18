@@ -7,30 +7,30 @@ void setup()
     delay(10);
     Serial.println("Arm loop begin:");
     RoveComm.begin(RC_ARMBOARD_FOURTHOCTET, &TCPServer);
-    Serial.print(".... . .... .... .... .^^:...        . .... . ....");
-    Serial.print("..................... JG?JYJ???77!~^:.   .........");
-    Serial.print("....Arm Time........ ^B:.7^^?!!!!!!?JYYJ~ ........");
-    Serial.print(".................... PY JJ ?^.^^:    .:?@~ .......");
-    Serial.print("..Has Begun........ ^&7!B.7P P^ ~J  .: .@5 .......");
-    Serial.print(".................... !&#P7#^7P  5#PJG~  J&: ......");
-    Serial.print(".................... .YJGB55G577JG!J! . .&? ......");
-    Serial.print(".....................  .:  ..:^5@^ .. .. 5B  .....");
-    Serial.print(".............         .   ..   Y&.   ... ~@^ .....");
-    Serial.print(".........   .:^~~~^^:.   ...  7@Y ...... .#5 .....");
-    Serial.print(".......  .~JPPGGGBGGGGPJ~   :G&7. ....... ?@^ ....");
-    Serial.print(".....  :YPY!:.. .....:~JGP^^#G:  ........ .#P  ...");
-    Serial.print("..... ?B7.              .~Y&P  ........... 5@~ ...");
-    Serial.print(".... ?#^  ..............  7@: ...........  J@Y ...");
-    Serial.print("... :&7  ................ ?&. ............ ?@? ...");
-    Serial.print("... :&~.:    .........    ^&^ .......... !^P@^ ...");
-    Serial.print("... 7#::?Y7^.        ..^~: JY .......... !B@5 ....");
-    Serial.print("... Y#.  ^?5PP5YJJJY55Y?~.  !. ......... ~@&: ....");
-    Serial.print("... ^@J     .^~7??7!^:.   .   .......... ~@? .....");
-    Serial.print(".... !&Y.                                Y#. .....");
-    Serial.print("..... ^G#Y~.         .~~!!~!JYJ7!~~~~?JPGG! ......");
-    Serial.print("......  !G&#PJ!~::..:^7YB@@##GYYY55555Y?^  .......");
-    Serial.print("........  :!YGB##BBBGGPY?~:..            .........");
-    Serial.print("...... ..     .::^^^:.       .... .... .... . .. .");
+    Serial.println(".... . .... .... .... .^^:...        . .... . ....");
+    Serial.println("..................... JG?JYJ???77!~^:.   .........");
+    Serial.prinlnt("....Arm Time........ ^B:.7^^?!!!!!!?JYYJ~ ........");
+    Serial.println(".................... PY JJ ?^.^^:    .:?@~ .......");
+    Serial.println("..Has Begun........ ^&7!B.7P P^ ~J  .: .@5 .......");
+    Serial.println(".................... !&#P7#^7P  5#PJG~  J&: ......");
+    Serial.println(".................... .YJGB55G577JG!J! . .&? ......");
+    Serial.println(".....................  .:  ..:^5@^ .. .. 5B  .....");
+    Serial.println(".............         .   ..   Y&.   ... ~@^ .....");
+    Serial.println(".........   .:^~~~^^:.   ...  7@Y ...... .#5 .....");
+    Serial.println(".......  .~JPPGGGBGGGGPJ~   :G&7. ....... ?@^ ....");
+    Serial.println(".....  :YPY!:.. .....:~JGP^^#G:  ........ .#P  ...");
+    Serial.println("..... ?B7.              .~Y&P  ........... 5@~ ...");
+    Serial.println(".... ?#^  ..............  7@: ...........  J@Y ...");
+    Serial.println("... :&7  ................ ?&. ............ ?@? ...");
+    Serial.println("... :&~.:    .........    ^&^ .......... !^P@^ ...");
+    Serial.println("... 7#::?Y7^.        ..^~: JY .......... !B@5 ....");
+    Serial.println("... Y#.  ^?5PP5YJJJY55Y?~.  !. ......... ~@&: ....");
+    Serial.println("... ^@J     .^~7??7!^:.   .   .......... ~@? .....");
+    Serial.println(".... !&Y.                                Y#. .....");
+    Serial.println("..... ^G#Y~.         .~~!!~!JYJ7!~~~~?JPGG! ......");
+    Serial.println("......  !G&#PJ!~::..:^7YB@@##GYYY55555Y?^  .......");
+    Serial.println("........  :!YGB##BBBGGPY?~:..            .........");
+    Serial.println("...... ..     .::^^^:.       .... .... .... . .. .");
     stop(); //set all to 0 and clear watchdog
 
 
@@ -198,7 +198,7 @@ void doOpenLoop()
 void toolSelection()
 {
  //we write the tool id to forearm so that forearm can keep track of whether the solenoid can be enabled or not
- RoveComm.write(RC_ARMBOARD_ENCODERSTATUS_DATA_ID, RC_ARMBOARD_ENCODERSTATUS_DATA_COUNT, (uint8_t)1);
+ //RoveComm.write(RC_ARMBOARD_ENCODERSTATUS_DATA_ID, RC_ARMBOARD_ENCODERSTATUS_DATA_COUNT, (uint8_t)1);
  // used to be servo stuffs
 }
 
