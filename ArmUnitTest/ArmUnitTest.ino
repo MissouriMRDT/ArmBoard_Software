@@ -41,10 +41,22 @@ void setup()
     pinMode(PK_1,OUTPUT); //Tx mid
     pinMode(PP_0,INPUT); //Rx right
     pinMode(PP_1,OUTPUT); //Tx right
+
+    //Serial Connection
+    Serial.begin(115200);
+    Serial.println("Starting Communication");
+    RoveComm.begin(RC_ARMBOARD_FOURTHOCTET, &TCPServer);
+
+    //Setup Estop
+    Watchdog.attach(Estop);
+    Watchdog.start(500, DISABLE_BOARD_RESET);
 }
 
 void loop() 
 {
+  
+
+
   //I have no clue what this shit does
   //Best guess is it tests the buttons and the individual unit tests that need to be done.
   
@@ -59,28 +71,34 @@ void loop()
 
   if(m_1_press)
   {
+    serial.println("Debug Test 1")
     //do first set of tests   
   }
 
   if(m_2_press)
   {
+    serial.println("Debug Test 2");
     //do second set of tests
   }
 
   if(m_3_press)
   {
+    serial.println("Debug Test 3");
     //do third set of tests
   }
 
   if(m_4_press)
   {
+    serial.println("Debug Test 4");
     //Toggle Laser
     if(laser_on)
     {
+      serial.println("Laser On");
       digitalWrite(LASER_EN, HIGH);
     }
     else
     {
+      serial.println("Laser Off");
       digitalWrite(LASER_EN, LOW);
     }
     laser_on = !laser_on;
@@ -88,13 +106,16 @@ void loop()
 
   if(m_5_press)
   {
+    Serial.println("Debug Test 5");
     //Toggle Solenoid
     if(soleniod_on)
     {
+      serial.println("Soleniod On");
       digitalWrite(SOLENIOD_EN, HIGH);
     }
     else
     {
+      serial.println("Solenoid Off");
       digitalWrite(SOLENIOD_EN, LOW);
     }
     soleniod_on = !soleniod_on;
@@ -102,11 +123,13 @@ void loop()
   
   if(m_6_press)
   {
+    serial.println("Debug Test 6");
     //do 6th set of tests
   }
 
   if(m_7_press)
   {
+    serial.println("Debug Test 7");
     //do 7th set of tests
   }
   if(digitalRead(MOTOR_1)==HIGH) //motor 1
