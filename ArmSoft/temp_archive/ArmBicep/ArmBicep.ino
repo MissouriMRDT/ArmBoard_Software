@@ -3,6 +3,7 @@
 void setup()
 {
   Serial.begin(115200);
+
   delay(10);
   Serial.println("Begun");
   RoveComm.begin(RC_BICEP_FOURTHOCTET);

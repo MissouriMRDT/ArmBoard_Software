@@ -5,6 +5,10 @@
 #include "RoveComm.h"
 #include "RovePid.h"
 
+RoveCommEthernet RoveComm;
+EthernetServer TCPServer(RC_ROVECOMM_ARMBOARD_PORT);
+rovecomm_packet packet;
+
 RoveJoint J1; //shoulder left right
 RoveJoint J2; //shoulder up down
 RoveJoint J3; //   elbow up down
@@ -83,7 +87,7 @@ const uint LASER = PN_2;
 const uint SOL   = PN_3;
 
 
-#define SW_IND_1 PP3
+#define SW_IND_1 PP_3
 
 bool do_ls = true;
 
