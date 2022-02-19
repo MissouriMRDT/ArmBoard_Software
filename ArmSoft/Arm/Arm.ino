@@ -1,39 +1,43 @@
 #include "Arm.h"
 
+#define LED RED_LED
 void setup()
 {
+    pinMode(LED, OUTPUT);
+    digitalWrite(LED, HIGH);
+
     Serial.begin(115200);
-
+    
     delay(10);
-    Serial.println("Arm loop begin:");
+    Serial.println("Arm:");
     RoveComm.begin(RC_ARMBOARD_FOURTHOCTET, &TCPServer);
-    Serial.println(".... . .... .... .... .^^:...        . .... . ....");
-    Serial.println("..................... JG?JYJ???77!~^:.   .........");
-    Serial.prinlnt("....Arm Time........ ^B:.7^^?!!!!!!?JYYJ~ ........");
-    Serial.println(".................... PY JJ ?^.^^:    .:?@~ .......");
-    Serial.println("..Has Begun........ ^&7!B.7P P^ ~J  .: .@5 .......");
-    Serial.println(".................... !&#P7#^7P  5#PJG~  J&: ......");
-    Serial.println(".................... .YJGB55G577JG!J! . .&? ......");
-    Serial.println(".....................  .:  ..:^5@^ .. .. 5B  .....");
-    Serial.println(".............         .   ..   Y&.   ... ~@^ .....");
-    Serial.println(".........   .:^~~~^^:.   ...  7@Y ...... .#5 .....");
-    Serial.println(".......  .~JPPGGGBGGGGPJ~   :G&7. ....... ?@^ ....");
-    Serial.println(".....  :YPY!:.. .....:~JGP^^#G:  ........ .#P  ...");
-    Serial.println("..... ?B7.              .~Y&P  ........... 5@~ ...");
-    Serial.println(".... ?#^  ..............  7@: ...........  J@Y ...");
-    Serial.println("... :&7  ................ ?&. ............ ?@? ...");
-    Serial.println("... :&~.:    .........    ^&^ .......... !^P@^ ...");
-    Serial.println("... 7#::?Y7^.        ..^~: JY .......... !B@5 ....");
-    Serial.println("... Y#.  ^?5PP5YJJJY55Y?~.  !. ......... ~@&: ....");
-    Serial.println("... ^@J     .^~7??7!^:.   .   .......... ~@? .....");
-    Serial.println(".... !&Y.                                Y#. .....");
-    Serial.println("..... ^G#Y~.         .~~!!~!JYJ7!~~~~?JPGG! ......");
-    Serial.println("......  !G&#PJ!~::..:^7YB@@##GYYY55555Y?^  .......");
-    Serial.println("........  :!YGB##BBBGGPY?~:..            .........");
-    Serial.println("...... ..     .::^^^:.       .... .... .... . .. .");
+    Serial.println("                       ^^:...                     ");
+    Serial.println("                      JG?JYJ???77!~^:.            ");
+    Serial.println("    Arm Time         ^B:.7^^?!!!!!!?JYYJ~         ");
+    Serial.println("                     PY JJ ?^.^^:    .:?@~        ");
+    Serial.println("  Has Begun         ^&7!B.7P P^ ~J  .: .@5        ");
+    Serial.println("                     !&#P7#^7P  5#PJG~  J&:       ");
+    Serial.println("                     .YJGB55G577JG!J! . .&?       ");
+    Serial.println("                       .:  ..:^5@^ .. .. 5B       ");
+    Serial.println("                               Y&.   ... ~@^      ");
+    Serial.println("            .:^~~~^^:.        7@Y ...... .#5      ");
+    Serial.println("         .~JPPGGGBGGGGPJ~   :G&7. ....... ?@^     ");
+    Serial.println("       :YPY!:.. .....:~JGP^^#G:  ........ .#P     ");
+    Serial.println("      ?B7.              .~Y&P  ........... 5@~    ");
+    Serial.println("     ?#^  ..............  7@: ...........  J@Y    ");
+    Serial.println("    :&7  ................ ?&. ............ ?@?    ");
+    Serial.println("    :&~.:    .........    ^&^ .......... !^P@^    ");
+    Serial.println("    7#::?Y7^.        ..^~: JY .......... !B@5     ");
+    Serial.println("    Y#.  ^?5PP5YJJJY55Y?~.  !. ......... ~@&:     ");
+    Serial.println("    ^@J     .^~7??7!^:.   .   .......... ~@?      ");
+    Serial.println("     !&Y.                                Y#.      ");
+    Serial.println("      ^G#Y~.         .~~!!~!JYJ7!~~~~?JPGG!       ");
+    Serial.println("        !G&#PJ!~::..:^7YB@@##GYYY55555Y?^         ");
+    Serial.println("          :!YGB##BBBGGPY?~:                       ");
+    Serial.println("               ::^^^:                             ");
+
+    delay(3000);
     stop(); //set all to 0 and clear watchdog
-
-
 
 
 
@@ -58,7 +62,7 @@ void setup()
     pinMode(CS4, INPUT);
     pinMode(CS5, INPUT);
     pinMode(CS6, INPUT);
-    pinMode(CSGR, INPUT);
+    pinMode(CSGR,INPUT);
 
     //                 A in   B in   PWM   invert bus mV scalemV cs  maxAmp     --- 12V max = scale_to_millivolts / bus_millivolts => 100.0% scale
     J1.motor_1.attach( J1INA, J1INB, J1PWM, false, 12000, 12000, CS1, 6500); //6.5amp stall current of motors
@@ -77,17 +81,17 @@ void setup()
     J5.encoder_1.attach( PK_6, 7, false, 0, false, 0, 1000);
     J6.encoder_1.attach( PK_7, 7, false, 0, false, 0, 1000);
 
+    digitalWrite(LED, LOW);
 }
 
 uint32_t timer = millis();
 
 void loop()
 {
-    //1take in data
-    //2updatePosition();
-    //3closedloop
-
+    digitalWrite(LED, HIGH);
     packet = RoveComm.read();
+    Serial.println(packet.data_id);
+    J1.DriveMotor(500);
     if(packet.data_id != 0)
     {
         //Serial.println(packet.data_id);
@@ -167,7 +171,8 @@ void loop()
     {
         //error packet
     }
-
+    digitalWrite(LED, LOW);
+    delay(50);     //DEL ME
 }
 
 void doOpenLoop()
@@ -215,7 +220,7 @@ void ClosedLoop()
     float newtargetAngles[6];
     float currentAngles[6];
 
-    currentAngles[0] = jointAngles[0];
+    currentAngles[0] = jointAngles[0]; //store for new targets difference
     currentAngles[1] = jointAngles[1];
     currentAngles[2] = jointAngles[2];
     currentAngles[3] = jointAngles[3];
@@ -228,8 +233,8 @@ void ClosedLoop()
     //take array of target points
     //assign the points
     updatePosition();
-    //movetoAngle( J1, 1, 1, currentAngles, newtargetAngles[0]);    //?dont know what to put here yet? from bicep --->Shoulder, shoulderTiltTarget, shoulderTwistTarget, angles, outputs
-    
+    //movetoAngle( J1, , newtargetAngles, newtargetAngles[0]);    //?dont know what to put here yet? from bicep --->Shoulder, shoulderTiltTarget, shoulderTwistTarget, angles, outputs
+
     //do something with the output
     int J1tilt = 1;
     int J1twist = 1; //these exist so it compiles
@@ -271,12 +276,12 @@ void stop()
 
 void updatePosition()
 {
-    jointAngles[0] = J1.encoder_1.readMillidegrees();
-    jointAngles[2] = J2.encoder_1.readMillidegrees();
-    jointAngles[4] = J3.encoder_1.readMillidegrees();
-    jointAngles[6] = J4.encoder_1.readMillidegrees();
-    jointAngles[8] = J5.encoder_1.readMillidegrees();
-    jointAngles[10] = J6.encoder_1.readMillidegrees();
+    jointAngles[0] = J1.encoder_1.readDegrees();
+    jointAngles[1] = J2.encoder_1.readDegrees();
+    jointAngles[2] = J3.encoder_1.readDegrees();
+    jointAngles[3] = J4.encoder_1.readDegrees(); //read degrees instead of milli
+    jointAngles[4] = J5.encoder_1.readDegrees();
+    jointAngles[5] = J6.encoder_1.readDegrees();
 
     if (timer > millis())
     {
@@ -286,20 +291,56 @@ void updatePosition()
     if (millis() - timer > 100) 
     {
     timer = millis(); 
-    RoveComm.write(RC_ARMBOARD_ENCODERSTATUS_DATA_ID, RC_ARMBOARD_ENCODERSTATUS_DATA_COUNT, (uint8_t)1);
+    RoveComm.write(RC_ARMBOARD_JOINTANGLES_DATA_ID, RC_ARMBOARD_JOINTANGLES_DATA_COUNT, jointAngles); //send as float
     }
 }
 
-// void moveToAngle(RoveDifferentialJoint &Joint, float tiltTo, float twistTo, float Angles[2], float outputs[2])
+void moveJoint(RoveJoint &Joint,  float move, float selectedjointAngle, float selectedjointTargetAngle)
+{
+    float mv = 0;
+    int mvOUT = 0;    //output
+    int angleOUT = 0;   //output angle
+    float pidOUT = 0;
+    float pidAngleOUT = 0;
+
+    //Math for smarter moving ------
+    //find which is smaller and bigger
+    float smaller = min(mv, selectedjointAngle);
+    float larger = max(mv, selectedjointAngle);
+
+    if(smaller+(360-larger) < abs(selectedjointAngle-mv))
+    {
+        if(selectedjointAngle - (smaller + (360 - larger))<0)
+        {
+            pidOUT = selectedjointAngle + (smaller + (360 - larger));
+            pidAngleOUT = pidOUT - ((360 - mv) + (selectedjointAngle - 0));
+        }
+        else if(selectedjointAngle - (smaller + (360 - larger))>0)            //all math switched with normal 
+        {
+            pidOUT = selectedjointAngle - (smaller + (360 - larger));
+            pidAngleOUT = pidOUT + ((mv - 0) + (360 - selectedjointAngle));
+        }
+
+        //mv = -Joint.TwistPid.incrementPid(pidOUT, pidAngleOUT, 2.5 );    //tiltpid? fix        ... ikd what 2.5 is aboout
+    }
+
+    
+}
+
+void movediffJoint()
+{
+
+}
+// void moveToAngle(RoveDifferentialJoint &Joint, float tiltTo, float twistTo, float Angles[2], float outputs[2]) //one output one angle instad of two and two
 // {
 //     float tilt = 0;
-//     float twist = 0;
+//     float twist = 0;//
 //     int smaller = 0;
 //     int larger =  0;
-//     int fakeTilt = 0;
-//     int fakeTiltAngle = 0;
-//     int fakeTwist = 0;
-//     int fakeTwistAngle = 0;
+//     int fakeTilt = 0;//
+//     int fakeTiltAngle = 0;//
+//     int fakeTwist = 0;//
+//     int fakeTwistAngle = 0;//
 //     ///MATH FOR J1
 //     //check if it's faster to go from 360->0 or 0->360 then the normal way
 //     smaller = min(twistTo, Angles[1]);

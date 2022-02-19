@@ -265,7 +265,7 @@ void closedLoop()
     float elbowTwist = outputs[1];
     if(elbowTilt < 0)
     {
-      elbowTilt = map(elbowTilt, -300, 0, -150, -90);
+      elbowTilt = map(elbowTilt, -300, 0, -150, -90); //keep pid numbers for now, will change in
     }
     else if(elbowTilt > 0)
     {
@@ -277,7 +277,7 @@ void closedLoop()
       Elbow.tiltTwistDecipercent(elbowTilt, elbowTwist);
     }
 
-    if(elbowTilt == 0 && elbowTwist == 0 && shoulderTilt == 0 && shoulderTwist == 0)
+    if(elbowTilt == 0 && elbowTwist == 0 && shoulderTilt == 0 && shoulderTwist == 0) // only move if speeds are zero
     {
       DO_CLOSED_LOOP = false;
       Shoulder.LeftMotor.drive(0);
