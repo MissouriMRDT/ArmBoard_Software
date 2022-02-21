@@ -47,6 +47,15 @@ void setup()
     Serial.println("Starting Communication");
     RoveComm.begin(RC_ARMBOARD_FOURTHOCTET, &TCPServer);
 
+    Bicep_R.attach(IN_A_1, IN_B_1, MOTOR_1);
+    Bicep_L.attach(IN_A_2, IN_B_2, MOTOR_2);
+    Bicep.LeftMotor = Bicep_L;
+    Bicep.RightMotor = Bicep_R;
+    Bicep.attachLimitSwitches(LIM_1, LIM_2);
+    
+
+
+
     //Setup Estop
     Watchdog.attach(Estop);
     Watchdog.start(500, DISABLE_BOARD_RESET);

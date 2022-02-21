@@ -8,6 +8,7 @@
 
 //Arm Specific Libraries
 #include <RoveDifferentialJointBrushless.h>
+#include <RoveDifferentialJointBrushedDC.h>
 #include <RovesODrive.h>
 #include <RoveStmVnhPwm.h>
 #include <RoveUsDigiMa3Pwm.h>
@@ -153,13 +154,20 @@ EthernetServer TCPServer(RC_ROVECOMM_ARMBOARD_PORT);
 //Watchdog
 RoveWatchdog Watchdog;
 
-//Gripper
+//Motors
+RoveStmVnhPwm Bicep_R;
+RoveStmVnhPwm Bicep_L;
 RoveStmVnhPwm Gripper;
 
+
 //Joints
+RoveDifferentialJointBrushed Bicep();
+
+/*
 RoveDifferentialJointBrushless Bicep(BICEP_GEAR_RATIO, BICEP_MAX_SPEED_FORWARD, BICEP_MAX_SPEED_REVERSE, BICEP_TOLERANCE);
 RoveDifferentialJointBrushless Elbow(ELBOW_GEAR_RATIO, ELBOW_MAX_SPEED_FORWARD, ELBOW_MAX_SPEED_REVERSE, ELBOW_TOLERANCE);
 RoveDifferentialJointBrushless Wrist(WRIST_GEAR_RATIO, WRIST_MAX_SPEED_FORWARD, WRIST_MAX_SPEED_REVERSE, WRIST_TOLERANCE);
+*/
 
 /*Function Declerations*/
 void getPosition();
