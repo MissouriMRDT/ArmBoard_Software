@@ -55,6 +55,12 @@ void setup()
     pinMode(LASER, OUTPUT);
     pinMode(SOL, OUTPUT);
 
+    //encoders
+    pinMode(ENCJ1, INPUT);
+    pinMode(ENCJ2, INPUT);
+
+
+
     //current sensors analog read these pins in RoveStmVnhPwm
     pinMode(CS1, INPUT);
     pinMode(CS2, INPUT);
@@ -65,21 +71,29 @@ void setup()
     pinMode(CSGR,INPUT);
 
     //                 A in   B in   PWM   invert bus mV scalemV cs  maxAmp     --- 12V max = scale_to_millivolts / bus_millivolts => 100.0% scale
-    J1.motor_1.attach( J1INA, J1INB, J1PWM, false, 12000, 12000, CS1, 6500); //6.5amp stall current of motors
-    J2.motor_1.attach( J2INA, J2INB, J2PWM, false, 12000, 12000, CS2, 6500);
-    J3.motor_1.attach( J3INA, J3INB, J3PWM, false, 12000, 12000, CS3, 6500);
-    J4.motor_1.attach( J4INA, J4INB, J4PWM, false, 12000, 12000, CS4, 6500);
-    J5.motor_1.attach( J5INA, J5INB, J5PWM, false, 12000, 12000, CS5, 6500);
-    J6.motor_1.attach( J6INA, J6INB, J6PWM, false, 12000, 12000, CS6, 6500);
-    GRIP.motor_1.attach( GRINA, GRINB, GRPWM, false, 12000, 12000, CSGR, 6500);
+    J1.motor_1.attach( J1INA, J1INB, J1PWM); //6.5amp stall current of motors
+    J2.motor_1.attach( J2INA, J2INB, J2PWM);
+    J3.motor_1.attach( J3INA, J3INB, J3PWM);
+    //J4.motor_1.attach( J4INA, J4INB, J4PWM);
+    J5.motor_1.attach( J5INA, J5INB, J5PWM);
+    J6.motor_1.attach( J6INA, J6INB, J6PWM);
+    GRIP.motor_1.attach( GRINA, GRINB, GRPWM);
 
     //                   pin    priority    autocalibrate   offset  invert  read@0  read@360  
-    J1.encoder_1.attach( PM_1, 7, false, 0, false, 0, 1000);
-    J2.encoder_1.attach( PM_2, 7, false, 0, false, 0, 1000);
-    J3.encoder_1.attach( PH_0, 7, false, 0, false, 0, 1000);
-    J4.encoder_1.attach( PH_1, 7, false, 0, false, 0, 1000);
-    J5.encoder_1.attach( PK_6, 7, false, 0, false, 0, 1000);
-    J6.encoder_1.attach( PK_7, 7, false, 0, false, 0, 1000);
+    J1.encoder_1.attach( ENCJ1);
+    J2.encoder_1.attach( ENCJ2);
+    // J3.encoder_1.attach( PH_0, 7, false, 0, false, 0, 1000);
+    // J4.encoder_1.attach( PH_1, 7, false, 0, false, 0, 1000);
+    // J5.encoder_1.attach( PK_6, 7, false, 0, false, 0, 1000);
+    // J6.encoder_1.attach( PK_7, 7, false, 0, false, 0, 1000);
+    J1.encoder_1.start();
+    J2.encoder_1.start();
+    //J3.encoder_1.start();
+    //J4.encoder_1.start();
+    //J5.encoder_1.start();
+    //J6.encoder_1.start();
+
+
 
     digitalWrite(LED, LOW);
 }
@@ -90,8 +104,35 @@ void loop()
 {
     digitalWrite(LED, HIGH);
     packet = RoveComm.read();
-    Serial.println(packet.data_id);
-    J1.DriveMotor(500);
+    //stop();
+    // J1.DriveMotor(1000);
+    // J2.DriveMotor(1000);
+    // // fuckie J3.DriveMotor(1000);
+    // J4.DriveMotor(1000);
+    // J5.DriveMotor(1000);
+    // // no work J6.DriveMotor(1000);
+    //updatePosition();
+
+    //jointAngles[0] = J1.encoder_1.readDegrees();
+    //jointAngles[1] = J2.encoder_1.readDegrees();
+
+
+
+    jointAngles[0] = J1.encoder_1.readDegrees();
+    delay(100);
+    jointAngles[1] = J2.encoder_1.readDegrees();
+
+    String ej1string = String(jointAngles[0]);
+    String ej2string = String(jointAngles[1]);
+
+    Serial.print("  J1 angle:" + ej1string);
+    delay(100);
+    Serial.print("  J2 angle:" + ej2string);
+    Serial.println("position updated");
+
+
+
+    
     if(packet.data_id != 0)
     {
         //Serial.println(packet.data_id);
@@ -207,6 +248,30 @@ void toolSelection()
  // used to be servo stuffs
 }
 
+void openLoop()
+{
+    Serial.print("1:");Serial.println(packet.data[0]);
+    Serial.print("2:");Serial.println(packet.data[1]);
+    Serial.print("3:");Serial.println(packet.data[2]);
+    Serial.print("4:");Serial.println(packet.data[3]);
+        
+
+    if(abs(packet.data[0]) <= INPUT_DEADBAND ) packet.data[0] = 0;
+    if(abs(packet.data[1]) <= INPUT_DEADBAND ) packet.data[1] = 0;
+    if(abs(packet.data[2]) <= INPUT_DEADBAND ) packet.data[2] = 0;
+    if(abs(packet.data[3]) <= INPUT_DEADBAND ) packet.data[3] = 0;
+
+
+    L1.DriveMotor(packet.data[0]);
+    L2.DriveMotor(packet.data[1]);
+    L3.DriveMotor(packet.data[2]);
+    L4.DriveMotor(packet.data[3]);
+    L5.DriveMotor(packet.data[4]);
+    L6.DriveMotor(packet.data[5]);
+
+    Watchdog.clear();
+}
+
 void ClosedLoop()
 {
     Serial.println(packet.data[5]);
@@ -278,20 +343,31 @@ void updatePosition()
 {
     jointAngles[0] = J1.encoder_1.readDegrees();
     jointAngles[1] = J2.encoder_1.readDegrees();
-    jointAngles[2] = J3.encoder_1.readDegrees();
-    jointAngles[3] = J4.encoder_1.readDegrees(); //read degrees instead of milli
-    jointAngles[4] = J5.encoder_1.readDegrees();
-    jointAngles[5] = J6.encoder_1.readDegrees();
+    // jointAngles[2] = J3.encoder_1.readDegrees();
+    // jointAngles[3] = J4.encoder_1.readDegrees(); //read degrees instead of milli
+    // jointAngles[4] = J5.encoder_1.readDegrees();
+    // jointAngles[5] = J6.encoder_1.readDegrees();
+
+    Serial.print("  J1 angle:" + jointAngles[0]);
+    Serial.print("  J2 angle:" + jointAngles[1]);
+    // Serial.print("  J3 angle:" + jointAngles[2]);
+    // Serial.print("  J4 angle:" + jointAngles[3]);
+    // Serial.print("  J5 angle:" + jointAngles[4]);
+    // Serial.print("  J6 angle:" + jointAngles[5]);
+
+    Serial.print("ENCJ1:" + analogRead(ENCJ1));
+    Serial.println();
+
 
     if (timer > millis())
     {
     timer = millis();
     }
 
-    if (millis() - timer > 100) 
+    if ((millis() - timer) > 100) 
     {
     timer = millis(); 
-    RoveComm.write(RC_ARMBOARD_JOINTANGLES_DATA_ID, RC_ARMBOARD_JOINTANGLES_DATA_COUNT, jointAngles); //send as float
+    //RoveComm.write(RC_ARMBOARD_JOINTANGLES_DATA_ID, RC_ARMBOARD_JOINTANGLES_DATA_COUNT, jointAngles); //send as float
     }
 }
 

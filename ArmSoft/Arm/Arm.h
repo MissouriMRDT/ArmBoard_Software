@@ -33,25 +33,28 @@ void closedLoop();
 void updatePosition();
 
 //Joint 1   U-D
-const uint8_t J1INA = PC_6;
+const uint8_t J1INA = PC_6;   //
 const uint8_t J1INB = PE_5;
-const uint8_t J1PWM = PH_3;
+const uint8_t J1PWM = PF_1;   //
 const uint8_t J1LS_1 = PP_5;
 const uint8_t J1LS_2 = PA_7;
 const uint8_t CS1 = PE_4;
+const uint8_t ENCJ1 = PD_0;     //2021 MAGWIRE
+
 
 //Joint 2   L-R
 const uint8_t J2INA = PD_3;
 const uint8_t J2INB = PC_7;
-const uint8_t J2PWM = PD_1;
+const uint8_t J2PWM = PF_2;
 const uint8_t J2LS_1 = PQ_2;
 const uint8_t J2LS_2 = PQ_3;
 const uint8_t CS2 = PB_4;
+const uint8_t ENCJ2 = PD_1;      //2021 PD_1 is now the encoder 2 pin, dont ask but this is the way for now
 
 //Joint 3   U-D
 const uint8_t J3INA = PB_2;
 const uint8_t J3INB = PB_3;
-const uint8_t J3PWM = PD_0;
+const uint8_t J3PWM = PF_3;
 const uint8_t J3LS_1 = PG_1;
 const uint8_t J3LS_2 = PK_4;
 const uint8_t CS3 = PB_5;
@@ -59,19 +62,19 @@ const uint8_t CS3 = PB_5;
 //Joint 4   L-R
 const uint8_t J4INA = PD_4;
 const uint8_t J4INB = PD_5;
-const uint8_t J4PWM = PD_2;
+const uint8_t J4PWM = PG_1;
 const uint8_t CS4 = PK_0;
 
 //Joint 5   Diffw6
 const uint8_t J5INA = PQ_0;
 const uint8_t J5INB = PP_4;
-const uint8_t J5PWM = PM_7;
+const uint8_t J5PWM = PK_4;
 const uint8_t CS5 = PK_1;
 
 //Joint 6   Diffw5
 const uint8_t J6INA = PN_5;
 const uint8_t J6INB = PN_4;
-const uint8_t J6PWM = PA_5;
+const uint8_t J6PWM = PK_5;
 const uint8_t CS6 = PK_2;
 
 //Gripper
