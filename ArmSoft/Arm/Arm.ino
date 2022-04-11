@@ -1,16 +1,76 @@
 #include "Arm.h"
 
-#define LED RED_LED
-void setup()
-{
-    pinMode(LED, OUTPUT);
-    digitalWrite(LED, HIGH);
 
+void setup()
+{   
     Serial.begin(115200);
-    
-    delay(10);
-    Serial.println("Arm:");
+    Serial.println("Armboard setup");
+    pinMode(GREEN_LED, OUTPUT);
+    pinMode(RED_LED, OUTPUT);
+    digitalWrite(GREEN_LED, HIGH);
     RoveComm.begin(RC_ARMBOARD_FOURTHOCTET, &TCPServer);
+    
+    pinMode(J1LS_1, INPUT); //Limit Switches set as input pins
+    pinMode(J1LS_2, INPUT);
+    pinMode(J2LS_1, INPUT); 
+    pinMode(J2LS_2, INPUT);
+    pinMode(J3LS_1, INPUT);
+    pinMode(J3LS_2, INPUT);
+
+    pinMode(SW_IND_1, OUTPUT);
+    
+    pinMode(LASER, OUTPUT); //laser and sol might not need to be OUTPUT
+    pinMode(SOL, OUTPUT);
+
+    pinMode(ENCJ1, INPUT);  //encoders
+    pinMode(ENCJ2, INPUT);
+
+    pinMode(CS1, INPUT); //current sensors analog read these pins in RoveStmVnhPwm
+    pinMode(CS2, INPUT);
+    pinMode(CS3, INPUT);
+    pinMode(CS4, INPUT);
+    pinMode(CS5, INPUT);
+    pinMode(CS6, INPUT);
+    pinMode(CSGR,INPUT);
+
+    //A in   B in   PWM   invert bus mV scalemV cs  maxAmp     --- 12V max = scale_to_millivolts / bus_millivolts => 100.0% scale
+    J1.motor_1.attach( J1INA, J1INB, J1PWM); //6.5amp stall current of motors
+    J2.motor_1.attach( J2INA, J2INB, J2PWM);
+    J3.motor_1.attach( J3INA, J3INB, J3PWM);
+    //J4.motor_1.attach( J4INA, J4INB, J4PWM);
+    J5.motor_1.attach( J5INA, J5INB, J5PWM);
+    J6.motor_1.attach( J6INA, J6INB, J6PWM);
+    GRIP.motor_1.attach( GRINA, GRINB, GRPWM);
+
+    //                   pin    priority    autocalibrate   offset  invert  read@0  read@360  
+    J1.encoder_1.attach(ENCJ1);
+    J2.encoder_1.attach(ENCJ2);
+    // J3.encoder_1.attach( PH_0, 7, false, 0, false, 0, 1000);
+    // J4.encoder_1.attach( PH_1, 7, false, 0, false, 0, 1000);
+    // J5.encoder_1.attach( PK_6, 7, false, 0, false, 0, 1000);
+    // J6.encoder_1.attach( PK_7, 7, false, 0, false, 0, 1000);
+ 
+    J1.attachLimitSwitches(J1LS_1, J1LS_2);
+    J2.attachLimitSwitches(J2LS_1, J2LS_2);
+    J3.attachLimitSwitches(J3LS_1, J3LS_2);
+
+    
+    J1.encoder_1.start();
+    J2.encoder_1.start();
+    //J3.encoder.start();
+    //J4.encoder.start();
+    //J5.encoder.start();
+    //J6.encoder.start();
+
+    Serial.println("watchdog setup start");
+    Watchdog.attach(estop);
+    WatchdogTelemetry.attach(telemetry);
+    Watchdog.start(watchdogTimeout);
+    WatchdogTelemetry.start(ROVECOMM_UPDATE_RATE);
+    Serial.println("watchdog setup complete");
+
+    estop();  //stops all motors and clears Watchdog
+
     Serial.println("                       ^^:...                     ");
     Serial.println("                      JG?JYJ???77!~^:.            ");
     Serial.println("    Arm Time         ^B:.7^^?!!!!!!?JYYJ~         ");
@@ -35,74 +95,33 @@ void setup()
     Serial.println("        !G&#PJ!~::..:^7YB@@##GYYY55555Y?^         ");
     Serial.println("          :!YGB##BBBGGPY?~:                       ");
     Serial.println("               ::^^^:                             ");
+    
+    delay(2000);
+    Serial.println("3");
+    digitalWrite(RED_LED, HIGH);   //3sec countdown
+    delay(950);
+    digitalWrite(RED_LED, LOW);
+    delay(50);
+    Serial.println("2");
+    digitalWrite(RED_LED, HIGH);
+    delay(950);
+    digitalWrite(RED_LED, LOW);
+    delay(50);
+    Serial.println("1");
+    digitalWrite(RED_LED, HIGH);
+    delay(950); 
+    digitalWrite(RED_LED, LOW);
+    delay(50);
+    Serial.println("GO");
 
-    delay(3000);
-    stop(); //set all to 0 and clear watchdog
-
-
-
-    pinMode(J1LS_1, INPUT);
-    pinMode(J1LS_2, INPUT);
-
-    pinMode(J2LS_1, INPUT); 
-    pinMode(J2LS_2, INPUT);
-
-    pinMode(J3LS_1, INPUT);
-    pinMode(J3LS_2, INPUT);
-
-    pinMode(SW_IND_1, OUTPUT);
-    //laser and sol might not need to be OUTPUT
-    pinMode(LASER, OUTPUT);
-    pinMode(SOL, OUTPUT);
-
-    //encoders
-    pinMode(ENCJ1, INPUT);
-    pinMode(ENCJ2, INPUT);
-
-
-
-    //current sensors analog read these pins in RoveStmVnhPwm
-    pinMode(CS1, INPUT);
-    pinMode(CS2, INPUT);
-    pinMode(CS3, INPUT);
-    pinMode(CS4, INPUT);
-    pinMode(CS5, INPUT);
-    pinMode(CS6, INPUT);
-    pinMode(CSGR,INPUT);
-
-    //                 A in   B in   PWM   invert bus mV scalemV cs  maxAmp     --- 12V max = scale_to_millivolts / bus_millivolts => 100.0% scale
-    J1.motor_1.attach( J1INA, J1INB, J1PWM); //6.5amp stall current of motors
-    J2.motor_1.attach( J2INA, J2INB, J2PWM);
-    J3.motor_1.attach( J3INA, J3INB, J3PWM);
-    //J4.motor_1.attach( J4INA, J4INB, J4PWM);
-    J5.motor_1.attach( J5INA, J5INB, J5PWM);
-    J6.motor_1.attach( J6INA, J6INB, J6PWM);
-    GRIP.motor_1.attach( GRINA, GRINB, GRPWM);
-
-    //                   pin    priority    autocalibrate   offset  invert  read@0  read@360  
-    J1.encoder_1.attach( ENCJ1);
-    J2.encoder_1.attach( ENCJ2);
-    // J3.encoder_1.attach( PH_0, 7, false, 0, false, 0, 1000);
-    // J4.encoder_1.attach( PH_1, 7, false, 0, false, 0, 1000);
-    // J5.encoder_1.attach( PK_6, 7, false, 0, false, 0, 1000);
-    // J6.encoder_1.attach( PK_7, 7, false, 0, false, 0, 1000);
-    J1.encoder_1.start();
-    J2.encoder_1.start();
-    //J3.encoder_1.start();
-    //J4.encoder_1.start();
-    //J5.encoder_1.start();
-    //J6.encoder_1.start();
-
-
-
-    digitalWrite(LED, LOW);
+    digitalWrite(GREEN_LED, LOW);
+    
 }
 
 uint32_t timer = millis();
-
 void loop()
 {
-    digitalWrite(LED, HIGH);
+    digitalWrite(RED_LED, HIGH);
     packet = RoveComm.read();
     //stop();
     // J1.DriveMotor(1000);
@@ -113,45 +132,36 @@ void loop()
     // // no work J6.DriveMotor(1000);
     //updatePosition();
 
-    //jointAngles[0] = J1.encoder_1.readDegrees();
-    //jointAngles[1] = J2.encoder_1.readDegrees();
-
-
-
     jointAngles[0] = J1.encoder_1.readDegrees();
-    delay(100);
     jointAngles[1] = J2.encoder_1.readDegrees();
 
     String ej1string = String(jointAngles[0]);
     String ej2string = String(jointAngles[1]);
 
     Serial.print("  J1 angle:" + ej1string);
-    delay(100);
     Serial.print("  J2 angle:" + ej2string);
     Serial.println("position updated");
 
 
-
-    
     if(packet.data_id != 0)
     {
         //Serial.println(packet.data_id);
         switch(packet.data_id)
         {
         case RC_ARMBOARD_ARMVELOCITYCONTROL_DATA_ID:
-            doOpenLoop(); //pass in 6 values
+            doOpenLoop();
             break;
         case RC_ARMBOARD_ARMMOVETOPOSITION_DATA_ID: // recieve degrees, convert to physical to movement
             ClosedLoop();
             break;
-        case RC_ARMBOARD_ARMINCREMENTPOSITION_DATA_ID: //[J1, J2, J3, J4, J5, J6] (Degrees)
-            break;
-        case RC_ARMBOARD_ARMMOVEIK_DATA_ID:             //[X, Y, Z, Y, P, R] (in)
-            break;
-        case RC_ARMBOARD_ARMINCREMENTIKROVER_DATA_ID:   //[X, Y, Z, Y, P, R] (in)
-            break;
-        case RC_ARMBOARD_ARMINCREMENTIKWRIST_DATA_ID:   //[X, Y, Z, Y, P, R] (in)
-            break;
+        // case RC_ARMBOARD_ARMINCREMENTPOSITION_DATA_ID: //[J1, J2, J3, J4, J5, J6] (Degrees)
+        //     break;
+        // case RC_ARMBOARD_ARMMOVEIK_DATA_ID:             //[X, Y, Z, Y, P, R] (in)
+        //     break;
+        // case RC_ARMBOARD_ARMINCREMENTIKROVER_DATA_ID:   //[X, Y, Z, Y, P, R] (in)
+        //     break;
+        // case RC_ARMBOARD_ARMINCREMENTIKWRIST_DATA_ID:   //[X, Y, Z, Y, P, R] (in)
+        //     break;
         case RC_ARMBOARD_LASERS_DATA_ID:       //[1-enable, 0-disable]
             Serial.println("Laser"); //laser is one val, probably works as is, do solinoid like this maybe
             if(packet.data[0] == 1)
@@ -167,9 +177,13 @@ void loop()
                 digitalWrite(SOL, LOW);
             break;
         case RC_ARMBOARD_GRIPPERMOVE_DATA_ID: //[Power] (-1000, 1000) (m%)
+            //int16_t* gripperSpeed = (int16_t*)packet.data;
+            //Gripper.DriveMotor(gripperSpeed[0]);
+            GRIP.DriveMotor(packet.data[0]);
+            Watchdog.clear();
             break;
-        case RC_ARMBOARD_WATCHDOGOVERRIDE_DATA_ID: //[0-Turn off Watchdog Override, 1-Turn on Watchdog Override]
-            break;
+        // case RC_ARMBOARD_WATCHDOGOVERRIDE_DATA_ID: //[0-Turn off Watchdog Override, 1-Turn on Watchdog Override]
+        //     break;
             case RC_ARMBOARD_LIMITSWITCHOVERRIDE_DATA_ID: //[Base Tilt Up, Base Tilt Down, Base Twist CW, Base Twist CCW, Elbow Tilt Up, Elbow Tilt Down, Elbow  Twist CW, Elbow  Twist CCW] (0-Turn off Limit Switch Override, 1-Turn on Limit Switch Override) (bitmasked)
             Serial.println("DoLS");
             Serial.println(packet.data[0]);
@@ -178,10 +192,10 @@ void loop()
         case RC_ARMBOARD_REQUESTJOINTPOSITIONS_DATA_ID: //change to arm motorangles             //just 6 values of degrees of joints not x y z but degrees //Prompt arm for J1-6 positions
             updatePosition();
             break;
-        case RC_ARMBOARD_TOGGLEPOSITIONTELEM_DATA_ID:   //Start auto pushing arm J1-6 positions
-            break;
-        case RC_ARMBOARD_REQUESTAXESPOSITIONS_DATA_ID:  //Prompt arm for XYZPYR Data
-            break;
+        // case RC_ARMBOARD_TOGGLEPOSITIONTELEM_DATA_ID:   //Start auto pushing arm J1-6 positions
+        //     break;
+        // case RC_ARMBOARD_REQUESTAXESPOSITIONS_DATA_ID:  //Prompt arm for XYZPYR Data
+        //     break;
         //case RC_ARMBOARD_IKINCROV_DATAID:
         //   Serial.println("IK INCREMENT");
         //   initPresentCoordinates();
@@ -212,33 +226,48 @@ void loop()
     {
         //error packet
     }
-    digitalWrite(LED, LOW);
-    delay(50);     //DEL ME
+    digitalWrite(RED_LED, LOW);
+}
+
+void estop() //estop includes watchdog clear
+{
+    J1.DriveMotor(0);
+    J2.DriveMotor(0);
+    J3.DriveMotor(0);
+    J4.DriveMotor(0);
+    Wrist.tiltTwistDrive(0,0);
+
+    digitalWrite(LASER, LOW);
+    digitalWrite(SOL, LOW);
+
+    Watchdog.clear();  
+}
+void telemetry()
+{
+    return;
 }
 
 void doOpenLoop()
 {
     
-                             //j1 j2 j3 j4 j5 j6
-    uint32_t jointAngles[6]; //0, 1, 2, 3, 4, 5
-   
+                               //j1 j2 j3 j4 j5 j6
+    //uint32_t jointAngles[6]; //0, 1, 2, 3, 4, 5
+    int16_t* motorSpeeds = (int16_t*)packet.data;
     Serial.println("Open Loop");
     Serial.println(packet.data_id);
-    Serial.print("1:");Serial.println(packet.data[0]);
-    Serial.print("2:");Serial.println(packet.data[1]);
-    Serial.print("3:");Serial.println(packet.data[2]);
-    Serial.print("4:");Serial.println(packet.data[3]);
-    Serial.print("5:");Serial.println(packet.data[4]);
-    Serial.print("6:");Serial.println(packet.data[5]);
+    // Serial.print("1:");Serial.println(packet.data[0]);
+    // Serial.print("2:");Serial.println(packet.data[1]);
+    // Serial.print("3:");Serial.println(packet.data[2]);
+    // Serial.print("4:");Serial.println(packet.data[3]);
+    // Serial.print("5:");Serial.println(packet.data[4]);
+    // Serial.print("6:");Serial.println(packet.data[5]);
 
-    jointAngles[0] = packet.data[0]; //J1
-    jointAngles[1] = packet.data[1]; //J2
-    jointAngles[2] = packet.data[2]; //J3
-    jointAngles[3] = packet.data[3]; //J4
-    jointAngles[4] = packet.data[4]; //J5
-    jointAngles[5] = packet.data[5]; //J6
-    jointAngles[6] = packet.data[6]; //Gripper
-    Serial.println(jointAngles[6]);
+    J1.DriveMotor(motorSpeeds[0]);
+    J2.DriveMotor(motorSpeeds[1]);
+    J3.DriveMotor(motorSpeeds[2]);
+    J4.DriveMotor(motorSpeeds[3]);
+    Wrist.tiltTwistDrive(motorSpeeds[4], motorSpeeds[5]);
+    Watchdog.clear();
 }
 
 void toolSelection()
@@ -262,12 +291,12 @@ void openLoop()
     if(abs(packet.data[3]) <= INPUT_DEADBAND ) packet.data[3] = 0;
 
 
-    L1.DriveMotor(packet.data[0]);
-    L2.DriveMotor(packet.data[1]);
-    L3.DriveMotor(packet.data[2]);
-    L4.DriveMotor(packet.data[3]);
-    L5.DriveMotor(packet.data[4]);
-    L6.DriveMotor(packet.data[5]);
+    J1.DriveMotor(packet.data[0]);
+    J2.DriveMotor(packet.data[1]);
+    J3.DriveMotor(packet.data[2]);
+    J4.DriveMotor(packet.data[3]);
+    J5.DriveMotor(packet.data[4]);
+    J6.DriveMotor(packet.data[5]);
 
     Watchdog.clear();
 }
@@ -328,35 +357,24 @@ void ClosedLoop()
 
 }
 
-void stop()
-{
-    J1.DriveMotor(0);
-    J2.DriveMotor(0);
-    J3.DriveMotor(0);
-    J4.DriveMotor(0);
-    J5.DriveMotor(0);
-    J6.DriveMotor(0);
-    //fixthis Watchdog.clear();
-}
-
 void updatePosition()
 {
     jointAngles[0] = J1.encoder_1.readDegrees();
     jointAngles[1] = J2.encoder_1.readDegrees();
-    // jointAngles[2] = J3.encoder_1.readDegrees();
-    // jointAngles[3] = J4.encoder_1.readDegrees(); //read degrees instead of milli
-    // jointAngles[4] = J5.encoder_1.readDegrees();
-    // jointAngles[5] = J6.encoder_1.readDegrees();
+    jointAngles[2] = J3.encoder_1.readDegrees();
+    jointAngles[3] = J4.encoder_1.readDegrees(); //read degrees instead of milli
+    jointAngles[4] = J5.encoder_1.readDegrees();
+    jointAngles[5] = J6.encoder_1.readDegrees();
 
-    Serial.print("  J1 angle:" + jointAngles[0]);
-    Serial.print("  J2 angle:" + jointAngles[1]);
+    //Serial.print("  J1 angle:" + jointAngles[0]);
+    //Serial.print("  J2 angle:" + jointAngles[1]);
     // Serial.print("  J3 angle:" + jointAngles[2]);
     // Serial.print("  J4 angle:" + jointAngles[3]);
     // Serial.print("  J5 angle:" + jointAngles[4]);
     // Serial.print("  J6 angle:" + jointAngles[5]);
 
-    Serial.print("ENCJ1:" + analogRead(ENCJ1));
-    Serial.println();
+    // Serial.print("ENCJ1:" + analogRead(ENCJ1));
+    // Serial.println();
 
 
     if (timer > millis())
@@ -370,107 +388,3 @@ void updatePosition()
     //RoveComm.write(RC_ARMBOARD_JOINTANGLES_DATA_ID, RC_ARMBOARD_JOINTANGLES_DATA_COUNT, jointAngles); //send as float
     }
 }
-
-void moveJoint(RoveJoint &Joint,  float move, float selectedjointAngle, float selectedjointTargetAngle)
-{
-    float mv = 0;
-    int mvOUT = 0;    //output
-    int angleOUT = 0;   //output angle
-    float pidOUT = 0;
-    float pidAngleOUT = 0;
-
-    //Math for smarter moving ------
-    //find which is smaller and bigger
-    float smaller = min(mv, selectedjointAngle);
-    float larger = max(mv, selectedjointAngle);
-
-    if(smaller+(360-larger) < abs(selectedjointAngle-mv))
-    {
-        if(selectedjointAngle - (smaller + (360 - larger))<0)
-        {
-            pidOUT = selectedjointAngle + (smaller + (360 - larger));
-            pidAngleOUT = pidOUT - ((360 - mv) + (selectedjointAngle - 0));
-        }
-        else if(selectedjointAngle - (smaller + (360 - larger))>0)            //all math switched with normal 
-        {
-            pidOUT = selectedjointAngle - (smaller + (360 - larger));
-            pidAngleOUT = pidOUT + ((mv - 0) + (360 - selectedjointAngle));
-        }
-
-        //mv = -Joint.TwistPid.incrementPid(pidOUT, pidAngleOUT, 2.5 );    //tiltpid? fix        ... ikd what 2.5 is aboout
-    }
-
-    
-}
-
-void movediffJoint()
-{
-
-}
-// void moveToAngle(RoveDifferentialJoint &Joint, float tiltTo, float twistTo, float Angles[2], float outputs[2]) //one output one angle instad of two and two
-// {
-//     float tilt = 0;
-//     float twist = 0;//
-//     int smaller = 0;
-//     int larger =  0;
-//     int fakeTilt = 0;//
-//     int fakeTiltAngle = 0;//
-//     int fakeTwist = 0;//
-//     int fakeTwistAngle = 0;//
-//     ///MATH FOR J1
-//     //check if it's faster to go from 360->0 or 0->360 then the normal way
-//     smaller = min(twistTo, Angles[1]);
-//     larger =  max(twistTo, Angles[1]);
-//     //if wrapping around 360 is faster than going normally
-//     if((smaller+(360000-larger)) < abs(Angles[1]-twistTo))
-//     {
-//       if(Angles[1]-(smaller+(360000-larger))<0)
-//       {
-//         fakeTwist  = Angles[1]+(smaller+(360000-larger));
-//         fakeTwistAngle = fakeTwist-((360000-twistTo) + (Angles[1]-0));
-       
-//       }
-//       else if(Angles[1]-(smaller+(360000-larger))>0)
-//       {
-//         fakeTwist  = Angles[1]-(smaller+(360000-larger));
-//         fakeTwistAngle = fakeTwist+((twistTo-0) + (360000-Angles[1]));
-       
-//       }
-//       twist  = -Joint.TwistPid.incrementPid(fakeTwist, fakeTwistAngle,2.5);
-  
-//     }
-//     else if((smaller+(360000-larger)) >= abs(Angles[1]-twistTo))
-//     {
-//        twist  = Joint.TwistPid.incrementPid(twistTo, Angles[1],2.5);
-//     }
-
-//     ///MATH FOR J0
-//     //check if it's faster to go from 360->0 or 0->360 then the normal way
-//     smaller = min(tiltTo, Angles[0]);
-//     larger =  max(tiltTo, Angles[0]);
-//     //if wrapping around 360 is faster than going normally
-//     if((smaller+(360000-larger)) < abs(Angles[0]-tiltTo))
-//     {
-//        if(Angles[0]-(smaller+(360000-larger))<0)
-//       {
-//         fakeTilt  = Angles[1]+(smaller+(360000-larger));
-//         fakeTiltAngle = fakeTilt-((360000-tiltTo) + (Angles[0]-0));
-       
-//       }
-//       else if(Angles[0]-(smaller+(360000-larger))>0)
-//       {
-//         fakeTilt  = Angles[0]-(smaller+(360000-larger));
-//         fakeTiltAngle = fakeTilt+((tiltTo-0) + (360000-Angles[0]));
-       
-//       }
-//       tilt  = -Joint.TiltPid.incrementPid(fakeTilt, fakeTiltAngle,2.5);
-//     }
-//     //if the normal way is faster, or equal we want less of a headache
-//     else if((smaller+(360000-larger)) >= abs(Angles[0]-tiltTo))
-//     {
-//        tilt  = Joint.TiltPid.incrementPid(tiltTo, ((float)Angles[0]),2.5);
-//     }
-
-//     outputs[0] = tilt;
-//     outputs[1] = twist;
-// }
