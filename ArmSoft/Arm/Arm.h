@@ -27,6 +27,8 @@ RovePidInts Pid;
 uint16_t jointAngles[6]; // 0  1  2  3  4  5
 float jointTargets[6];
 
+uint8_t motorCS[8];  //Current Sense Telemetry  should be only 7 but requires manifest change
+
 void estop();
 void doOpenLoop();
 void openLoop();
@@ -64,28 +66,28 @@ void closedLoop();
  #define J4INA  PD_4
  #define J4INB  PD_5
  #define J4PWM  PG_1
-//no encoder or limit switches
+    //no encoder or limit switches
  #define CS4    PK_0
 
 //Joint 5   Diffw6
  #define J5INA  PQ_0
  #define J5INB  PP_4
  #define J5PWM  PK_4
-//no encoder or limit switches
+    //no encoder or limit switches
  #define CS5    PK_1
 
 //Joint 6   Diffw5
  #define J6INA  PN_5
  #define J6INB  PN_4
  #define J6PWM  PK_5
-//no encoder or limit switches
+    //no encoder or limit switches
  #define CS6    PK_2
 
 //Gripper
  #define GRINA  PP_0
  #define GRINB  PP_1
  #define GRPWM  PM_0
-//no encoder or limit switches
+    //no encoder or limit switches
  #define CSGR   PK_3
 
 
@@ -96,7 +98,7 @@ void closedLoop();
 
 #define SW_IND_1 PP_3
 
-bool do_LS = true; //might not need this
+bool do_LS = true; 
 #define INPUT_DEADBAND 100
 
 #endif

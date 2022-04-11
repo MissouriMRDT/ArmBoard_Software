@@ -70,7 +70,7 @@ void setup()
     Serial.println("watchdog setup complete");
 
     estop();  //stops all motors and clears Watchdog
-
+    delay(100);
     Serial.println("                       ^^:...                     ");
     Serial.println("                      JG?JYJ???77!~^:.            ");
     Serial.println("    Arm Time         ^B:.7^^?!!!!!!?JYYJ~         ");
@@ -177,18 +177,31 @@ void loop()
                 digitalWrite(SOL, LOW);
             break;
         case RC_ARMBOARD_GRIPPERMOVE_DATA_ID: //[Power] (-1000, 1000) (m%)
-            //int16_t* gripperSpeed = (int16_t*)packet.data;
-            //Gripper.DriveMotor(gripperSpeed[0]);
             GRIP.DriveMotor(packet.data[0]);
             Watchdog.clear();
             break;
-        // case RC_ARMBOARD_WATCHDOGOVERRIDE_DATA_ID: //[0-Turn off Watchdog Override, 1-Turn on Watchdog Override]
+        // case RC_ARMBOARD_MOTORCURRENTS_DATAID; // current sense telemetry
+        //     motorCS[0] = analogRead(CS1);
+        //     motorCS[1] = analogRead(CS2);
+        //     motorCS[2] = analogRead(CS3);
+        //     motorCS[3] = analogRead(CS4);
+        //     motorCS[4] = analogRead(CS5);
+        //     motorCS[5] = analogRead(CS6);
+        //     motorCS[6] = analogRead(CSGR);
+        //     motorCS[7] = 0);
+        //     // RoveComm.writeTo(RC_ARMBOARD_MOTORCURRENTS_DATAID, RC_ARMBOARD_MOTORCURRENTS_DATACOUNT,
+        //     //                 motorCS, RC_ROVECOMM_SUBNET_IP_FIRST_OCTET, RC_ROVECOMM_SUBNET_IP_SECOND_OCTET,
+        //     //                 RC_ROVECOMM_SUBNET_IP_THIRD_OCTET, RC_MICROPIBOARD_FOURTHOCTET, RC_ROVECOMM_ETHERNET_UDP_PORT);
+        //     Watchdog.clear();
         //     break;
-            case RC_ARMBOARD_LIMITSWITCHOVERRIDE_DATA_ID: //[Base Tilt Up, Base Tilt Down, Base Twist CW, Base Twist CCW, Elbow Tilt Up, Elbow Tilt Down, Elbow  Twist CW, Elbow  Twist CCW] (0-Turn off Limit Switch Override, 1-Turn on Limit Switch Override) (bitmasked)
-            Serial.println("DoLS");
-            Serial.println(packet.data[0]);
-            //RoveComm.write(RC_ARMBOARD_ENCODERSTATUS_DATA_ID, RC_ARMBOARD_ENCODERSTATUS_DATA_COUNT, RC_ARMBOARD_ENCODERSTATUS_DATA_TYPE);
-            break;
+            // case RC_ARMBOARD_WATCHDOGOVERRIDE_DATA_ID: //[0-Turn off Watchdog Override, 1-Turn on Watchdog Override]
+            //     break;
+            // case RC_ARMBOARD_DOLS_DATAID: //[Base Tilt Up, Base Tilt Down, Base Twist CW, Base Twist CCW, Elbow Tilt Up, Elbow Tilt Down, Elbow  Twist CW, Elbow  Twist CCW] (0-Turn off Limit Switch Override, 1-Turn on Limit Switch Override) (bitmasked)
+            //     Serial.println("DoLS");
+            //     Serial.println(packet.data[0]);
+            //     //if true then overide to always have limitswitches as true
+            //     //RoveComm.write(RC_ARMBOARD_ENCODERSTATUS_DATA_ID, RC_ARMBOARD_ENCODERSTATUS_DATA_COUNT, RC_ARMBOARD_ENCODERSTATUS_DATA_TYPE);
+            //     break;
         case RC_ARMBOARD_REQUESTJOINTPOSITIONS_DATA_ID: //change to arm motorangles             //just 6 values of degrees of joints not x y z but degrees //Prompt arm for J1-6 positions
             updatePosition();
             break;
