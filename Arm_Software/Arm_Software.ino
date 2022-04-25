@@ -53,7 +53,6 @@ void setup()
 
 void loop()
 {
-    updatePosition();
     parsePackets();
     updatePosition();
     if (closedloopActive)
@@ -80,7 +79,7 @@ void parsePackets()
             Watchdog.clear();
             break;
         case RC_ARMBOARD_LASERS_DATA_ID:
-            if (packet.data[0])
+            if ((uint8_t)packet.data[0])
             {
                 digitalWrite(LaserToggle, HIGH);
             }
@@ -91,7 +90,7 @@ void parsePackets()
             Watchdog.clear();
             break;
         case RC_ARMBOARD_SOLENOID_DATA_ID:
-            if (packet.data[0])
+            if ((uint8_t)packet.data[0])
             {
                 digitalWrite(SolenoidToggle, HIGH);
             }
@@ -102,16 +101,7 @@ void parsePackets()
             Watchdog.clear();
             break;
         case RC_ARMBOARD_ARMMOVETOPOSITION_DATA_ID:
-            int16_t* motorAngles;
-            motorAngles = (int16_t*)packet.data;
-            closedloopActive = true;
-            shoulderTiltTarget = motorAngles[0]; 
-            shoulderTwistTarget = motorAngles[1];
-            elbowTiltTarget = motorAngles[2];
-            elbowTwistTarget = motorAngles[3];
-            wristTiltTarget = motorAngles[4];
-            wristTwistTarget = motorAngles[5];
-            Watchdog.clear();
+            readTargetAngles();
             break;
         case RC_ARMBOARD_GRIPPERMOVE_DATA_ID:
             int16_t* gripperSpeed;
@@ -122,6 +112,20 @@ void parsePackets()
         default:
             break;
     }   
+}
+
+void setTargetAngles()
+{
+    int16_t* motorAngles;
+    motorAngles = (int16_t*)packet.data;
+    closedloopActive = true;
+    shoulderTiltTarget = motorAngles[0]; 
+    shoulderTwistTarget = motorAngles[1];
+    elbowTiltTarget = motorAngles[2];
+    elbowTwistTarget = motorAngles[3];
+    wristTiltTarget = motorAngles[4];
+    wristTwistTarget = motorAngles[5];
+    Watchdog.clear();
 }
 
 
@@ -174,12 +178,12 @@ void closedLoop()
     ////////////////////////////////////////////////////////////////////////////
     //We always check if we are moving past limits and compensate for twists
     ///////////////////////////////////////////////////////////////////////////
-    if((shoulderTilt != 0 /*&& !Shoulder.atTiltLimit(shoulderTilt)*/)) //&&!Shoulder.atTwistLimit(shoulderTwist, jointAngles[0])))
+    if( shoulderTilt != 0 ) 
     { 
         ShoulderTilt.DriveMotor(shoulderTilt);
     }
 
-    if((shoulderTwist != 0 /*&& !Shoulder.atTwistLimit(shoulderTwist)*/)) //&&!Shoulder.atTwistLimit(shoulderTwist, jointAngles[0])))
+    if( shoulderTwist != 0 ) 
     { 
         ShoulderTwist.DriveMotor(shoulderTwist);
     }
@@ -200,12 +204,12 @@ void closedLoop()
       elbowTilt = map(elbowTilt, 0, 300, 250, 300);
     }
 
-    if((elbowTilt != 0  /*&& !Elbow.atTiltLimit(-elbowTilt)*/))
+    if( elbowTilt != 0 )
     { 
       ElbowTilt.DriveMotor(elbowTilt);
     }
 
-    if((elbowTwist != 0  /*&& !Elbow.atTiltLimit(-elbowTilt)*/))
+    if( elbowTwist != 0 )
     { 
       ElbowTwist.DriveMotor(elbowTwist);
     }
@@ -339,6 +343,7 @@ void moveToAngle(RoveJointDifferential &Joint, float tiltTo, float twistTo, floa
 
 void telemetry()
 {
+    updatePosition();
     RoveComm.write(RC_ARMBOARD_JOINTANGLES_DATA_ID, RC_ARMBOARD_JOINTANGLES_DATA_COUNT, jointAngles);
 }
 
@@ -350,7 +355,5 @@ void estop()
     ElbowTilt.DriveMotor(0);
     ElbowTwist.DriveMotor(0);
     Wrist.tiltTwistDrive(0, 0);
-    digitalWrite(LaserToggle, LOW);
-    digitalWrite(SolenoidToggle, LOW);
     Gripper.DriveMotor(0);
 }

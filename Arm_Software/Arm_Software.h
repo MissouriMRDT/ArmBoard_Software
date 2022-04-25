@@ -89,3 +89,4 @@ void updatePosition();
 void closedLoop();
 void movetoAngle(RoveJoint &Joint, float moveTo, float Angle, float output);
 void movetoAngle(RoveJointDifferential &Joint, float tiltTo, float twistTo, float Angles[2], float outputs[2]);
+void setTargetAngles();
