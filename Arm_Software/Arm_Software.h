@@ -54,30 +54,30 @@
 #define LimitSwitchLower_J3     PG_1
 #define LimitSwitchUpper_J3     PK_4
 
-// Laser Pin
+// End Effectors
 #define LaserToggle             PN_2
-
-// Solenoid Pin
 #define SolenoidToggle          PN_3
 
 #define PidTolerance            2.5
+#define WatchdogTimeout         1000
 
+// RoveComm declarations
+RoveCommEthernet RoveComm;
+rovecomm_packet packet;
+EthernetServer TCPServer(RC_ROVECOMM_ARMBOARD_PORT);
+
+// Joint and motor declarations
 RoveJoint ShoulderTilt, ShoulderTwist, ElbowTilt, ElbowTwist;
 RoveJointDifferential Wrist;
 RoveStmVnhPwm Gripper;
 
-RoveCommEthernet RoveComm;
-rovecomm_packet packet;
+// Watchdog declarations
 RoveWatchdog Watchdog;
 RoveWatchdog WatchdogTelemetry;
-EthernetServer TCPServer(RC_ROVECOMM_ARMBOARD_PORT);
 
-const uint16_t watchdogTimeout = 1000;
-
+// Joint target variables
 float jointAngles[6];
-
 float jointTargets[6];
-
 float shoulderTiltTarget;
 float shoulderTwistTarget;
 float elbowTiltTarget;
@@ -88,9 +88,11 @@ float wristTwistTarget;
 bool closedloopActive = false;
 
 void parsePackets();
+void openLoop();
+void setTargetAngles();
 void updatePosition();
 void closedLoop();
 void movetoAngle(RoveJoint &Joint, float moveTo, float Angle, float output);
 void movetoAngle(RoveJointDifferential &Joint, float tiltTo, float twistTo, float Angles[2], float outputs[2]);
-void setTargetAngles();
-void openLoop();
+void telemetry();
+void estop();

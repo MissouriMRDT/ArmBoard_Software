@@ -47,7 +47,7 @@ void setup()
 
     Watchdog.attach(estop);
     WatchdogTelemetry.attach(telemetry);
-    Watchdog.start(watchdogTimeout);
+    Watchdog.start(WatchdogTimeout);
     WatchdogTelemetry.start(ROVECOMM_UPDATE_RATE);
 }
 
@@ -69,6 +69,10 @@ void parsePackets()
         case RC_ARMBOARD_ARMVELOCITYCONTROL_DATA_ID:
             openLoop();
             break;
+        case RC_ARMBOARD_ARMMOVETOPOSITION_DATA_ID:
+            setTargetAngles();
+            Watchdog.clear();
+            break;
         case RC_ARMBOARD_LASERS_DATA_ID:
             if ((uint8_t)packet.data[0])
             {
@@ -89,10 +93,6 @@ void parsePackets()
                 digitalWrite(SolenoidToggle, LOW);
             }
             break;
-        case RC_ARMBOARD_ARMMOVETOPOSITION_DATA_ID:
-            setTargetAngles();
-            Watchdog.clear();
-            break;
         case RC_ARMBOARD_GRIPPERMOVE_DATA_ID:
             int16_t* gripperSpeed;
             gripperSpeed = (int16_t*)packet.data;
@@ -102,6 +102,19 @@ void parsePackets()
         default:
             break;
     }   
+}
+
+void openLoop()
+{
+    int16_t* motorSpeeds; 
+    motorSpeeds = (int16_t*)packet.data;
+    closedloopActive = false;
+    ShoulderTilt.moveJoint(motorSpeeds[0]);
+    ShoulderTwist.moveJoint(motorSpeeds[1]);
+    ElbowTilt.moveJoint(motorSpeeds[2]);
+    ElbowTwist.moveJoint(motorSpeeds[3]);
+    Wrist.moveDiffJoint(motorSpeeds[4], motorSpeeds[5]);
+    Watchdog.clear();
 }
 
 void setTargetAngles()
@@ -115,19 +128,6 @@ void setTargetAngles()
     elbowTwistTarget = motorAngles[3];
     wristTiltTarget = motorAngles[4];
     wristTwistTarget = motorAngles[5];
-    Watchdog.clear();
-}
-
-void openLoop()
-{
-    int16_t* motorSpeeds; 
-    motorSpeeds = (int16_t*)packet.data;
-    closedloopActive = false;
-    ShoulderTilt.moveJoint(motorSpeeds[0]);
-    ShoulderTwist.moveJoint(motorSpeeds[1]);
-    ElbowTilt.moveJoint(motorSpeeds[2]);
-    ElbowTwist.moveJoint(motorSpeeds[3]);
-    Wrist.moveDiffJoint(motorSpeeds[4], motorSpeeds[5]);
     Watchdog.clear();
 }
 
