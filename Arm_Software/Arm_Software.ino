@@ -99,6 +99,9 @@ void parsePackets()
             Gripper.drive(gripperSpeed[0]);
             Watchdog.clear();
             break;
+        case RC_ARMBOARD_REQUESTJOINTPOSITIONS_DATA_ID:
+            RoveComm.writeReliable(RC_ARMBOARD_JOINTANGLES_DATA_ID, RC_ARMBOARD_REQUESTJOINTPOSITIONS_DATA_COUNT, jointAngles);
+            break;
         default:
             break;
     }   
@@ -249,7 +252,7 @@ void moveToAngle(RoveJointDifferential &Joint, float tiltAngle, float twistAngle
 void telemetry()
 {
     updatePosition();
-    RoveComm.write(RC_ARMBOARD_JOINTANGLES_DATA_ID, RC_ARMBOARD_JOINTANGLES_DATA_COUNT, jointAngles);
+    RoveComm.writeReliable(RC_ARMBOARD_JOINTANGLES_DATA_ID, RC_ARMBOARD_JOINTANGLES_DATA_COUNT, jointAngles);
 }
 
 
