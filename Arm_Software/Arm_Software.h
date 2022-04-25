@@ -60,8 +60,11 @@
 // Solenoid Pin
 #define SolenoidToggle          PN_3
 
-RoveJoint ShoulderTilt, ShoulderTwist, ElbowTilt, ElbowTwist, Gripper;
+#define PidTolerance            2.5
+
+RoveJoint ShoulderTilt, ShoulderTwist, ElbowTilt, ElbowTwist;
 RoveJointDifferential Wrist;
+RoveStmVnhPwm Gripper;
 
 RoveCommEthernet RoveComm;
 rovecomm_packet packet;
@@ -90,3 +93,4 @@ void closedLoop();
 void movetoAngle(RoveJoint &Joint, float moveTo, float Angle, float output);
 void movetoAngle(RoveJointDifferential &Joint, float tiltTo, float twistTo, float Angles[2], float outputs[2]);
 void setTargetAngles();
+void openLoop();
