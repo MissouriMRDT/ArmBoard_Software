@@ -46,18 +46,22 @@ void setup()
     RoveComm.begin(RC_ARMBOARD_FOURTHOCTET, &TCPServer);
 
     Watchdog.attach(estop);
-    WatchdogTelemetry.attach(telemetry);
     Watchdog.start(WatchdogTimeout);
-    WatchdogTelemetry.start(ROVECOMM_UPDATE_RATE);
 }
 
 void loop()
 {
     parsePackets();
-    if (closedloopActive)
+    if (closedloopActive == true)
     {
         closedLoop();
     }
+    if((millis() - timer) >= ROVECOMM_UPDATE_RATE)
+    {
+        updatePosition();
+        RoveComm.writeReliable(RC_ARMBOARD_JOINTANGLES_DATA_ID, RC_ARMBOARD_JOINTANGLES_DATA_COUNT, jointAngles);
+        timer = millis();
+    }  
 }
 
 void parsePackets()
@@ -68,6 +72,7 @@ void parsePackets()
     {
         case RC_ARMBOARD_ARMVELOCITYCONTROL_DATA_ID:
             openLoop();
+            Watchdog.clear();
             break;
         case RC_ARMBOARD_ARMMOVETOPOSITION_DATA_ID:
             setTargetAngles();
@@ -117,7 +122,6 @@ void openLoop()
     ElbowTilt.moveJoint(motorSpeeds[2]);
     ElbowTwist.moveJoint(motorSpeeds[3]);
     Wrist.moveDiffJoint(motorSpeeds[4], motorSpeeds[5]);
-    Watchdog.clear();
 }
 
 void setTargetAngles()
@@ -248,13 +252,6 @@ void moveToAngle(RoveJointDifferential &Joint, float tiltAngle, float twistAngle
     outputs[0] = Joint.tiltPid.incrementPid( goalAngles[0], newAngles[0], PidTolerance );
     outputs[1] = Joint.twistPid.incrementPid( goalAngles[1], newAngles[1], PidTolerance );
 }
-
-void telemetry()
-{
-    updatePosition();
-    RoveComm.writeReliable(RC_ARMBOARD_JOINTANGLES_DATA_ID, RC_ARMBOARD_JOINTANGLES_DATA_COUNT, jointAngles);
-}
-
 
 void estop()
 {

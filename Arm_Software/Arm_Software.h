@@ -59,7 +59,7 @@
 #define SolenoidToggle          PN_3
 
 #define PidTolerance            2.5
-#define WatchdogTimeout         1000
+#define WatchdogTimeout         500
 
 // RoveComm declarations
 RoveCommEthernet RoveComm;
@@ -73,7 +73,7 @@ RoveStmVnhPwm Gripper;
 
 // Watchdog declarations
 RoveWatchdog Watchdog;
-RoveWatchdog WatchdogTelemetry;
+//RoveTimerInterrupt WatchdogTelemetry;
 
 // Joint target variables
 float jointAngles[6];
@@ -86,6 +86,7 @@ float wristTiltTarget;
 float wristTwistTarget;
 
 bool closedloopActive = false;
+uint32_t timer = millis();
 
 void parsePackets();
 void openLoop();
@@ -94,5 +95,4 @@ void updatePosition();
 void closedLoop();
 void movetoAngle(RoveJoint &Joint, float moveTo, float Angle, float output);
 void movetoAngle(RoveJointDifferential &Joint, float tiltTo, float twistTo, float Angles[2], float outputs[2]);
-void telemetry();
 void estop();
