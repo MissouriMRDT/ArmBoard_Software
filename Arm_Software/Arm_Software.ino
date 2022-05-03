@@ -11,6 +11,7 @@ void setup()
     Wrist.leftMotor.attach(MotorINA_6,MotorINB_6,MotorPWM_6);
     Gripper.attach(MotorINA_7,MotorINB_7,MotorPWM_7);
 
+    delay(100);
     ShoulderTilt.encoder.attach(Encoder_ShoulderTilt);
     ShoulderTwist.encoder.attach(Encoder_ShoulderTwist);
     ElbowTilt.encoder.attach(Encoder_ElbowTilt);
@@ -18,6 +19,7 @@ void setup()
     Wrist.tiltEncoder.attach(Encoder_WristTilt);
     Wrist.twistEncoder.attach(Encoder_WristTwist);
 
+    delay(100);
     ShoulderTilt.attachLimitSwitches(LimitSwitchLower_J1, LimitSwitchUpper_J1);
     ShoulderTwist.attachLimitSwitches(LimitSwitchLower_J2, LimitSwitchUpper_J2);
     ElbowTilt.attachLimitSwitches(LimitSwitchLower_J3, LimitSwitchUpper_J3);
@@ -28,7 +30,9 @@ void setup()
     ElbowTwist.setAngleLimits(360,0);
 
     ShoulderTilt.encoder.start();
+    delay(100);
     ShoulderTwist.encoder.start();
+    delay(100);
     ElbowTilt.encoder.start();
     ElbowTwist.encoder.start();
     Wrist.tiltEncoder.start();
@@ -43,6 +47,12 @@ void setup()
     Wrist.tiltPid.attach( -1000.0, 1000.0, 20.0, 0, 0);
     Wrist.twistPid.attach( -1000.0, 1000.0, 20.0, 0, 0 );
 
+    pinMode(LaserToggle, OUTPUT);
+    pinMode(SolenoidToggle, OUTPUT);
+
+    digitalWrite(LaserToggle, LOW);
+    digitalWrite(SolenoidToggle, LOW);
+
     RoveComm.begin(RC_ARMBOARD_FOURTHOCTET, &TCPServer);
 
     Watchdog.attach(estop);
@@ -56,10 +66,10 @@ void loop()
     {
         closedLoop();
     }
-    if((millis() - timer) >= ROVECOMM_UPDATE_RATE)
+    if((millis() - timer) >= ROVECOMM_UPDATE_RATE*4)
     {
         updatePosition();
-        RoveComm.writeReliable(RC_ARMBOARD_JOINTANGLES_DATA_ID, RC_ARMBOARD_JOINTANGLES_DATA_COUNT, jointAngles);
+        RoveComm.write(RC_ARMBOARD_JOINTANGLES_DATA_ID, RC_ARMBOARD_JOINTANGLES_DATA_COUNT, jointAngles);
         timer = millis();
     }  
 }
@@ -258,7 +268,7 @@ void estop()
     ShoulderTilt.moveJoint(0);
     ShoulderTwist.moveJoint(0);
     ElbowTilt.moveJoint(0);
-    ElbowTwist.moveJoint(0);
-    Wrist.moveDiffJoint(0, 0);
+    ElbowTwist.stopJoint(0);
+    Wrist.stopDiffJoint(0, 0);
     Gripper.drive(0);
 }
