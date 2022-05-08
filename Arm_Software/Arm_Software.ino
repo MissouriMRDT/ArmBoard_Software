@@ -61,15 +61,15 @@ void setup()
 
 void loop()
 {
-    parsePackets();
+    parsePackets();/*
     if (closedloopActive == true)
     {
         closedLoop();
-    }
+    }*/
     if((millis() - timer) >= ROVECOMM_UPDATE_RATE*4)
     {
         updatePosition();
-        RoveComm.write(RC_ARMBOARD_JOINTANGLES_DATA_ID, RC_ARMBOARD_JOINTANGLES_DATA_COUNT, jointAngles);
+        //RoveComm.write(RC_ARMBOARD_JOINTANGLES_DATA_ID, RC_ARMBOARD_JOINTANGLES_DATA_COUNT, jointAngles);
         timer = millis();
     }  
 }
@@ -85,9 +85,18 @@ void parsePackets()
             Watchdog.clear();
             break;
         case RC_ARMBOARD_ARMMOVETOPOSITION_DATA_ID:
+        {
             setTargetAngles();
+            float outputs[6] = {0};
+            updatePosition();
+            moveToAngle(ElbowTwist, elbowTwistTarget, jointAngles[3], outputs[3]);
+            ElbowTwist.moveJoint(outputs[3]); 
+            RoveComm.write(RC_ARMBOARD_MOTORCURRENTS_DATA_ID, RC_ARMBOARD_MOTORCURRENTS_DATA_COUNT, outputs);
+            updatePosition();
+            RoveComm.write(RC_ARMBOARD_JOINTANGLES_DATA_ID, RC_ARMBOARD_JOINTANGLES_DATA_COUNT, jointAngles);
             Watchdog.clear();
             break;
+        }
         case RC_ARMBOARD_LASERS_DATA_ID:
             if ((uint8_t)packet.data[0])
             {
@@ -145,7 +154,6 @@ void setTargetAngles()
     elbowTwistTarget = motorAngles[3];
     wristTiltTarget = motorAngles[4];
     wristTwistTarget = motorAngles[5];
-    Watchdog.clear();
 }
 
 void updatePosition()
@@ -167,9 +175,11 @@ void closedLoop()
     angles[0] = jointAngles[0];
     angles[1] = jointAngles[1];
     moveToAngle(ShoulderTilt, shoulderTiltTarget, angles[0], outputs[0]);
+    Watchdog.clear();
     float shoulderTilt = outputs[0];
     moveToAngle(ShoulderTwist, shoulderTiltTarget, angles[1], outputs[1]);
     float shoulderTwist = outputs[1];
+    Watchdog.clear();
 
     if( shoulderTilt != 0 ) 
     { 
@@ -185,9 +195,10 @@ void closedLoop()
     angles[1] = jointAngles[3];
     moveToAngle(ElbowTilt, elbowTiltTarget, angles[0], outputs[0]);
     float elbowTilt = outputs[0];
+    Watchdog.clear();
     moveToAngle(ElbowTwist, elbowTwistTarget, angles[1], outputs[1]);
     float elbowTwist = outputs[1];
-
+    Watchdog.clear();
     if( elbowTilt != 0 )
     { 
       ElbowTilt.moveJoint(elbowTilt);
@@ -200,6 +211,7 @@ void closedLoop()
     updatePosition();
     angles[0] = jointAngles[4];
     angles[1] = jointAngles[5];
+    Watchdog.clear();
     moveToAngle(Wrist, wristTiltTarget, wristTwistTarget, angles, outputs);
     float wristTilt = outputs[0];
     float wristTwist = outputs[1];
@@ -212,34 +224,30 @@ void closedLoop()
     Watchdog.clear();
 }
 
-void moveToAngle(RoveJoint &Joint, float goalAngle, float angle, float output)
+void moveToAngle(RoveJoint &Joint, float goalAngle, float angle, float& output)
 {
     float smallerAngle, largerAngle, cwAngle, ccAngle;
-    float newAngle;
 
     smallerAngle = min( angle, goalAngle );
     largerAngle = max( angle, goalAngle );
 
     cwAngle = ( largerAngle - smallerAngle );
-    ccAngle = ( smallerAngle - largerAngle );
+    ccAngle = ( smallerAngle - (largerAngle+360) );
 
     if ( cwAngle > abs( ccAngle ) )
     {
-        newAngle = cwAngle;
+        output = Joint.pid.incrementPid( angle, goalAngle, PidTolerance );
     }
     else 
     {
-        newAngle = ccAngle;
+        output = Joint.pid.incrementPid( goalAngle, angle, PidTolerance );
     }
-
-    output = Joint.pid.incrementPid( goalAngle, newAngle, PidTolerance );
 }
 
 void moveToAngle(RoveJointDifferential &Joint, float tiltAngle, float twistAngle, float angles[2], float outputs[2])
 {
     float smallerAngle, largerAngle, cwAngle, ccAngle;
     float goalAngles[2] = {tiltAngle, twistAngle};
-    float newAngles[2] = {};
 
     for (uint8_t i = 0; i < 2; i++)
     {
@@ -251,24 +259,21 @@ void moveToAngle(RoveJointDifferential &Joint, float tiltAngle, float twistAngle
 
         if ( cwAngle > abs( ccAngle ) )
         {
-            newAngles[i] = cwAngle;
+            outputs[i] = Joint.tiltPid.incrementPid( angles[i], goalAngles[i], PidTolerance );
         }
         else 
         {
-            newAngles[i] = ccAngle;
+            outputs[i] = Joint.tiltPid.incrementPid( goalAngles[i], angles[i], PidTolerance );
         }
     }
-
-    outputs[0] = Joint.tiltPid.incrementPid( goalAngles[0], newAngles[0], PidTolerance );
-    outputs[1] = Joint.twistPid.incrementPid( goalAngles[1], newAngles[1], PidTolerance );
 }
 
 void estop()
 {
-    ShoulderTilt.moveJoint(0);
-    ShoulderTwist.moveJoint(0);
-    ElbowTilt.moveJoint(0);
-    ElbowTwist.stopJoint(0);
+    ShoulderTilt.stopJoint(1000);
+    ShoulderTwist.stopJoint(0);
+    ElbowTilt.stopJoint(1000);
+    ElbowTwist.stopJoint(1000);
     Wrist.stopDiffJoint(0, 0);
-    Gripper.drive(0);
+    Gripper.hardBrake(0);
 }
