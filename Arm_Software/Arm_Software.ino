@@ -15,7 +15,7 @@ void setup()
     ShoulderTilt.encoder.attach(Encoder_ShoulderTilt);
     ShoulderTwist.encoder.attach(Encoder_ShoulderTwist);
     ElbowTilt.encoder.attach(Encoder_ElbowTilt);
-    ElbowTwist.encoder.attach(Encoder_ElbowTwist);
+    ElbowTwist.encoder.attach(Encoder_ElbowTwist, 7, false, -295000);
     Wrist.tiltEncoder.attach(Encoder_WristTilt);
     Wrist.twistEncoder.attach(Encoder_WristTwist);
 
@@ -39,7 +39,7 @@ void setup()
     Wrist.twistEncoder.start();
 
     ElbowTilt.pid.attach( -1000.0, 1000.0, 27, 0, 0);
-    ElbowTwist.pid.attach( -1000.0, 1000.0, 15.0, 0, 0 );
+    ElbowTwist.pid.attach( -500.0, 500.0, 10.0, 0, 0 );
 
     ShoulderTilt.pid.attach( -1000.0, 1000.0, 20.0, 0, 0 );
     ShoulderTwist.pid.attach( -1000.0, 1000.0, 20.0, 0, 0 );
@@ -145,8 +145,8 @@ void openLoop()
 
 void setTargetAngles()
 {
-    int16_t* motorAngles;
-    motorAngles = (int16_t*)packet.data;
+    float* motorAngles;
+    motorAngles = (float*)packet.data;
     closedloopActive = true;
     shoulderTiltTarget = motorAngles[0]; 
     shoulderTwistTarget = motorAngles[1];
@@ -232,7 +232,7 @@ void moveToAngle(RoveJoint &Joint, float goalAngle, float angle, float& output)
     largerAngle = max( angle, goalAngle );
 
     cwAngle = ( largerAngle - smallerAngle );
-    ccAngle = ( smallerAngle - (largerAngle+360) );
+    ccAngle = ( (smallerAngle+360) - largerAngle );
 
     if ( cwAngle > abs( ccAngle ) )
     {
@@ -270,10 +270,10 @@ void moveToAngle(RoveJointDifferential &Joint, float tiltAngle, float twistAngle
 
 void estop()
 {
-    ShoulderTilt.stopJoint(1000);
-    ShoulderTwist.stopJoint(0);
-    ElbowTilt.stopJoint(1000);
-    ElbowTwist.stopJoint(1000);
-    Wrist.stopDiffJoint(0, 0);
-    Gripper.hardBrake(0);
+    ShoulderTilt.moveJoint(0);
+    ShoulderTwist.moveJoint(0);
+    ElbowTilt.moveJoint(0);
+    ElbowTwist.moveJoint(0);
+    Wrist.moveDiffJoint(0, 0);
+    Gripper.drive(0);
 }

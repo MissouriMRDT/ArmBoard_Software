@@ -58,7 +58,7 @@
 #define LaserToggle             PN_2
 #define SolenoidToggle          PN_3
 
-#define PidTolerance            2.5
+#define PidTolerance            2
 #define WatchdogTimeout         500
 
 // RoveComm declarations
