@@ -70,15 +70,15 @@ void setup()
 
 void loop()
 {
-    parsePackets();/*
+    parsePackets();
     if (closedloopActive == true)
     {
         closedLoop();
-    }*/
+    }
     if((millis() - timer) >= ROVECOMM_UPDATE_RATE*4)
     {
         updatePosition();
-        //RoveComm.write(RC_ARMBOARD_JOINTANGLES_DATA_ID, RC_ARMBOARD_JOINTANGLES_DATA_COUNT, jointAngles);
+        RoveComm.write(RC_ARMBOARD_JOINTANGLES_DATA_ID, RC_ARMBOARD_JOINTANGLES_DATA_COUNT, jointAngles);
         timer = millis();
     }  
 }
@@ -96,6 +96,7 @@ void parsePackets()
         case RC_ARMBOARD_ARMMOVETOPOSITION_DATA_ID:
         {
             setTargetAngles();
+            closedloopActive = true
             Watchdog.clear();
             break;
         }
