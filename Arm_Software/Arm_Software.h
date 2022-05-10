@@ -39,8 +39,8 @@
 #define MotorPWM_7              PM_0
 
 // Joint Encoder Pins
-#define Encoder_ShoulderTilt    PL_4
-#define Encoder_ShoulderTwist   PL_5
+#define Encoder_ShoulderTilt    PL_5
+#define Encoder_ShoulderTwist   PL_4
 #define Encoder_ElbowTilt       PA_4
 #define Encoder_ElbowTwist      PM_3
 #define Encoder_WristTilt       PM_5
