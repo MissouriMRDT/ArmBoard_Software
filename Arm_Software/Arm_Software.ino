@@ -96,7 +96,7 @@ void parsePackets()
         case RC_ARMBOARD_ARMMOVETOPOSITION_DATA_ID:
         {
             setTargetAngles();
-            closedloopActive = true
+            closedloopActive = true;
             Watchdog.clear();
             break;
         }

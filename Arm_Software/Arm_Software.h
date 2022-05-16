@@ -2,6 +2,8 @@
 
 #include "RoveComm.h"
 #include "RoveJoint.h"
+#include "IK.h"
+#include "ArmModel.h"
 
 // Motor 1 Pins
 #define MotorINA_1              PC_6
