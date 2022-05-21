@@ -22,9 +22,9 @@ void setup()
     Wrist.twistEncoder.attach(Encoder_WristTwist, 7, false, -180000);
 
     delay(100);
-    ShoulderTilt.attachLimitSwitches(LimitSwitchLower_J1, LimitSwitchUpper_J1);
-    ShoulderTwist.attachLimitSwitches(LimitSwitchLower_J2, LimitSwitchUpper_J2);
-    ElbowTilt.attachLimitSwitches(LimitSwitchLower_J3, LimitSwitchUpper_J3);
+    ShoulderTilt.attachLimitSwitches(LimitSwitchLower_J1, LimitSwitchLower_J1);
+    ShoulderTwist.attachLimitSwitches(LimitSwitchLower_J2, LimitSwitchLower_J2);
+    ElbowTilt.attachLimitSwitches(LimitSwitchLower_J3, LimitSwitchLower_J3);
 
     ShoulderTilt.setAngleLimits(180,45);
     ShoulderTwist.setAngleLimits(360,0);
@@ -139,9 +139,18 @@ void openLoop()
     int16_t* motorSpeeds; 
     motorSpeeds = (int16_t*)packet.data;
     closedloopActive = false;
-    ShoulderTilt.moveJoint(motorSpeeds[0]);
-    ShoulderTwist.moveJoint(motorSpeeds[1]);
-    ElbowTilt.moveJoint(motorSpeeds[2]);
+    if ( !ShoulderTilt.atHardLimit(motorSpeeds[0]) )
+    {
+        ShoulderTilt.moveJoint(motorSpeeds[0]);
+    }
+    if ( !ShoulderTwist.atHardLimit(motorSpeeds[1]) )
+    {
+        ShoulderTwist.moveJoint(motorSpeeds[1]);
+    }
+    if ( !ElbowTilt.atHardLimit(motorSpeeds[2]) )
+    {
+        ElbowTilt.moveJoint(motorSpeeds[2]);
+    }
     ElbowTwist.moveJoint(motorSpeeds[3]);
     Wrist.moveDiffJoint(motorSpeeds[4], motorSpeeds[5]);
 }
@@ -257,6 +266,7 @@ void moveToAngle(RoveJointDifferential &Joint, float tiltAngle, float twistAngle
     float smallerAngle, largerAngle, cwAngle, ccAngle;
     float goalAngles[2] = {tiltAngle, twistAngle};
     bool cwBigger[2] = {false, false};
+    bool twistMove = false;
 
     for (uint8_t i = 0; i < 2; i++)
     {
@@ -272,18 +282,25 @@ void moveToAngle(RoveJointDifferential &Joint, float tiltAngle, float twistAngle
         }
     }
 
-    if ( cwBigger[0] == true )
+    if ( cwBigger[0] == true && twistMove == false )
     {
         outputs[0] = Joint.tiltPid.incrementPid( angles[0], goalAngles[0], PidTolerance );
+        outputs[1] = Joint.twistPid.incrementPid( goalAngles[0], angles[1], PidTolerance );
     }
-    if ( cwBigger[1] == true )
+    if ( cwBigger[1] == true && twistMove == true )
+    {
+        outputs[1] = Joint.twistPid.incrementPid( angles[1], goalAngles[1], PidTolerance );
+        outputs[0] = Joint.tiltPid.incrementPid( angles[0], goalAngles[1], PidTolerance );
+    }
+    else if ( twistMove == true )
     {
         outputs[1] = Joint.twistPid.incrementPid( goalAngles[1], angles[1], PidTolerance );
+        outputs[0] = Joint.tiltPid.incrementPid( goalAngles[1], angles[0], PidTolerance );
     }
-    else 
+    else
     {
         outputs[0] = Joint.tiltPid.incrementPid( goalAngles[0], angles[0], PidTolerance );
-        outputs[1] = Joint.twistPid.incrementPid( angles[1], goalAngles[1], PidTolerance );
+        outputs[1] = Joint.twistPid.incrementPid( angles[1], goalAngles[0], PidTolerance );
     }
 
 }
