@@ -8,7 +8,7 @@
 // Motor 1 Pins
 #define MotorINA_1              PC_6
 #define MotorINB_1              PE_5
-#define MotorPWM_1              PM_2
+#define MotorPWM_1              PF_1
 
 // Motor 2 Pins
 #define MotorINA_2              PD_3
@@ -33,7 +33,7 @@
 // Motor 6 Pins
 #define MotorINA_6              PN_5
 #define MotorINB_6              PN_4
-#define MotorPWM_6              PA_5
+#define MotorPWM_6              PA_5//PF_2
 
 // Motor 7 Pins
 #define MotorINA_7              PP_1
@@ -41,8 +41,8 @@
 #define MotorPWM_7              PM_0
 
 // Joint Encoder Pins
-#define Encoder_ShoulderTilt    PL_5
-#define Encoder_ShoulderTwist   PL_4
+#define Encoder_ShoulderTilt    PM_4
+#define Encoder_ShoulderTwist   PM_1
 #define Encoder_ElbowTilt       PA_4
 #define Encoder_ElbowTwist      PM_3
 #define Encoder_WristTilt       PM_5

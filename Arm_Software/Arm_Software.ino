@@ -11,17 +11,13 @@ void setup()
     Wrist.leftMotor.attach(MotorINA_6,MotorINB_6,MotorPWM_6);
     Gripper.attach(MotorINA_7,MotorINB_7,MotorPWM_7);
 
-    delay(100);
-    ShoulderTwist.encoder.attach(Encoder_ShoulderTwist, 7, false);
-    delay(100);
     ShoulderTilt.encoder.attach(Encoder_ShoulderTilt, 7, false);
-    delay(100);
+    ShoulderTwist.encoder.attach(Encoder_ShoulderTwist, 7, false);
     ElbowTilt.encoder.attach(Encoder_ElbowTilt, 7, false, -40000);
     ElbowTwist.encoder.attach(Encoder_ElbowTwist, 7, false, -295000);
     Wrist.tiltEncoder.attach(Encoder_WristTilt, 7, false, -180000);
     Wrist.twistEncoder.attach(Encoder_WristTwist, 7, false, -180000);
 
-    delay(100);
     ShoulderTilt.attachLimitSwitches(LimitSwitchLower_J1, LimitSwitchLower_J1);
     ShoulderTwist.attachLimitSwitches(LimitSwitchLower_J2, LimitSwitchLower_J2);
     ElbowTilt.attachLimitSwitches(LimitSwitchLower_J3, LimitSwitchLower_J3);
@@ -32,9 +28,7 @@ void setup()
     ElbowTwist.setAngleLimits(360,0);
 
     ShoulderTilt.encoder.start();
-    delay(100);
     ShoulderTwist.encoder.start();
-    delay(100);
     ElbowTilt.encoder.start();
     ElbowTwist.encoder.start();
     Wrist.tiltEncoder.start();
