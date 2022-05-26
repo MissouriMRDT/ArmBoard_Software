@@ -107,11 +107,11 @@ void parsePackets()
         case RC_ARMBOARD_SOLENOID_DATA_ID:
             if ((uint8_t)packet.data[0])
             {
-                digitalWrite(SolenoidToggle, LOW);
+                digitalWrite(SolenoidToggle, HIGH);
             }
             else
             {
-                digitalWrite(SolenoidToggle, HIGH);
+                digitalWrite(SolenoidToggle, LOW);
             }
             break;
         case RC_ARMBOARD_GRIPPERMOVE_DATA_ID:

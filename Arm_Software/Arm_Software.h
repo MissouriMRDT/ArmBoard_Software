@@ -33,7 +33,7 @@
 // Motor 6 Pins
 #define MotorINA_6              PN_5
 #define MotorINB_6              PN_4
-#define MotorPWM_6              PA_5//PF_2
+#define MotorPWM_6              PF_2 
 
 // Motor 7 Pins
 #define MotorINA_7              PP_1
