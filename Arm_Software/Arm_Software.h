@@ -2,8 +2,9 @@
 
 #include "RoveComm.h"
 #include "RoveJoint.h"
-#include "IK.h"
 #include "ArmModel.h"
+
+using namespace std;
 
 // Motor 1 Pins
 #define MotorINA_1              PC_6
@@ -41,7 +42,7 @@
 #define MotorPWM_7              PM_0
 
 // Joint Encoder Pins
-#define Encoder_ShoulderTilt    PM_4
+#define Encoder_ShoulderTilt    PL_5
 #define Encoder_ShoulderTwist   PM_1
 #define Encoder_ElbowTilt       PA_4
 #define Encoder_ElbowTwist      PM_3
@@ -69,8 +70,11 @@ rovecomm_packet packet;
 EthernetServer TCPServer(RC_ROVECOMM_ARMBOARD_PORT);
 
 // Joint and motor declarations
-RoveJoint ShoulderTilt, ShoulderTwist, ElbowTilt, ElbowTwist;
-RoveJointDifferential Wrist;
+RoveJoint ShoulderTilt;         // J1
+RoveJoint ShoulderTwist;        // J2
+RoveJoint ElbowTilt;            // J3
+RoveJoint ElbowTwist;           // J4
+RoveJointDifferential Wrist;    // J5 and J6
 RoveStmVnhPwm Gripper;
 
 // Watchdog declarations
@@ -80,21 +84,16 @@ RoveWatchdog Watchdog;
 // Joint target variables
 float jointAngles[6];
 float jointTargets[6];
-float shoulderTiltTarget;
-float shoulderTwistTarget;
-float elbowTiltTarget;
-float elbowTwistTarget;
-float wristTiltTarget;
-float wristTwistTarget;
+float coordinates[6];
 
 bool closedloopActive = false;
 uint32_t timer = millis();
 
 void parsePackets();
 void openLoop();
-void setTargetAngles();
 void updatePosition();
+void updateCoordinates();
 void closedLoop();
-void movetoAngle(RoveJoint &Joint, float moveTo, float Angle, float& output);
-void movetoAngle(RoveJointDifferential &Joint, float tiltTo, float twistTo, float Angles[2], float outputs[2]);
+void movetoAngle(RoveJoint &Joint, float target, float angle, float& output);
+void movetoAngle(RoveJointDifferential &Joint, float targets[2], float angles[2], float outputs[2]);
 void estop();

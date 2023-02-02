@@ -94,7 +94,7 @@ void matrixMathScale(float* A, int m, int n, float k)
 	}
 }
 
-
+/*
 //Matrix Inversion Routine
 // * This function inverts a matrix based on the Gauss Jordan method.
 // * Specifically, it uses partial pivoting to improve numeric stability.
@@ -180,3 +180,4 @@ int matrixMathInvert(float* A, int n)
 	}
 	return 1;
 }
+*/
