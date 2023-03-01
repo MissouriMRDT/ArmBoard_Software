@@ -1,8 +1,9 @@
 #include "ArmModel.h"
 
+
 const float* T6_EE = T6_DefaultEE;
 
-void setOpMode(OpMode m){
+void setOpMode(OpMode m) {
   switch (m) {
     case HEX_KEY:
       T6_EE = T6_HexKey;
@@ -16,11 +17,13 @@ void setOpMode(OpMode m){
   }
 }
 
+
+
 // Calculates the Homogeneous Transformation Matrix using the Denavit-Hartenberg convention.
 // theta and alpha are in radians
 // 
 // A = output HTM
-void DHTrans(float theta, float d, float r, float alpha, float A[4][4]){
+void DHTrans(float theta, float d, float r, float alpha, float A[4][4]) {
    A[0][0] = cos(theta);
    A[0][1] = -sin(theta)*cos(alpha);
    A[0][2] = sin(theta)*sin(alpha);
@@ -43,7 +46,7 @@ void DHTrans(float theta, float d, float r, float alpha, float A[4][4]){
 //
 // theta = angle to rotate, in radians
 // Rx = ouput Rotation Matrix
-void rotX(float theta, float Rx[3][3]){
+void rotX(float theta, float Rx[3][3]) {
   Rx[0][0] = 1;
   Rx[0][1] = 0;
   Rx[0][2] = 0;
@@ -59,7 +62,7 @@ void rotX(float theta, float Rx[3][3]){
 //
 // theta = angle to rotate, in radians
 // Ry = ouput Rotation Matrix
-void rotY(float theta, float Ry[3][3]){
+void rotY(float theta, float Ry[3][3]) {
   Ry[0][0] = cos(theta);
   Ry[0][1] = 0;
   Ry[0][2] = -sin(theta);
@@ -75,7 +78,7 @@ void rotY(float theta, float Ry[3][3]){
 //
 // theta = angle to rotate, in radians
 // Rz = ouput Rotation Matrix
-void rotZ(float theta, float Rz[3][3]){
+void rotZ(float theta, float Rz[3][3]) {
   Rz[0][0] = cos(theta);
   Rz[0][1] = -sin(theta);
   Rz[0][2] = 0;
@@ -88,7 +91,34 @@ void rotZ(float theta, float Rz[3][3]){
 }
 
 
-void forwardKinematics(const float angles[6], float coords[6]){
+
+const float DEG_TO_RAD = M_PI / 180.0;
+
+// Wraps an angle in radians to [0, 2*PI)
+float wrapRadians(float radians) {
+  radians = fmod(radians + M_2PI, M_2PI);
+  return (radians < 0)? (radians + M_2PI) : radians;
+}
+
+// Calculates the absolute distance between theta1 and theta2 in radians, [0, PI]
+float angleDist(float theta1, float theta2) {
+  theta1 = wrapRadians(theta1);
+  theta2 = wrapRadians(theta2);
+  float delta = std::abs(theta1 - theta2);
+
+  return (delta > M_PI)? (M_2PI - delta) : delta;
+}
+
+
+void forwardKinematics(float angles[6], float coords[6]) {
+  // Convert angles to radians for math
+  angles[0] *= DEG_TO_RAD;
+  angles[1] *= DEG_TO_RAD;
+  angles[2] *= DEG_TO_RAD;
+  angles[3] *= DEG_TO_RAD;
+  angles[4] *= DEG_TO_RAD;
+  angles[5] *= DEG_TO_RAD;
+
   float Htmp1[4][4];
   float Htmp2[4][4];
   float H1_2[4][4];
@@ -133,12 +163,27 @@ void forwardKinematics(const float angles[6], float coords[6]){
   coords[0] = H1_EE[0][3];
   coords[1] = H1_EE[1][3];
   coords[2] = H1_EE[2][3];
-  coords[3] = atan2(-H1_EE[0][1], H1_EE[1][1]);
-  coords[4] = atan2(H1_EE[2][1], sqrt(1 - pow(H1_EE[2][1], 2)));
-  coords[5] = atan2(H1_EE[2][0], H1_EE[2][2]);
+  // Convert angles back to degrees
+  coords[3] = atan2(-H1_EE[0][1], H1_EE[1][1]) / DEG_TO_RAD;
+  coords[4] = atan2(H1_EE[2][1], sqrt(1 - pow(H1_EE[2][1], 2))) / DEG_TO_RAD;
+  coords[5] = atan2(H1_EE[2][0], H1_EE[2][2]) / DEG_TO_RAD;
 }
 
-bool inverseKinematics(const float dest[6], const float curr[6], float angles[6]){
+
+
+bool inverseKinematics(float dest[6], float curr[6], float angles[6]) {
+  // Convert angles to radians for math
+  dest[3] *= DEG_TO_RAD;
+  dest[4] *= DEG_TO_RAD;
+  dest[5] *= DEG_TO_RAD;
+
+  curr[0] *= DEG_TO_RAD;
+  curr[1] *= DEG_TO_RAD;
+  curr[2] *= DEG_TO_RAD;
+  curr[3] *= DEG_TO_RAD;
+  curr[4] *= DEG_TO_RAD;
+  curr[5] *= DEG_TO_RAD;
+
   /*
     * Calculations are performed for a spherical wrist
 
@@ -254,29 +299,15 @@ bool inverseKinematics(const float dest[6], const float curr[6], float angles[6]
   }
 
   // Account for wrist singularity
-  if (abs(angles[4]) < 0.02) {
+  if (std::abs(angles[4]) < 0.02) {
       angles[3] = curr[3];
       angles[5] = atan2(R4_EE[1][2], R4_EE[1][0]) - curr[3];
   }
 
-  angles[3] = wrapRadians(angles[3]);
-  angles[4] = wrapRadians(angles[4]);
-  angles[5] = wrapRadians(angles[5]);
+  // Convert angles back to degrees
+  angles[3] = wrapRadians(angles[3]) / DEG_TO_RAD;
+  angles[4] = wrapRadians(angles[4]) / DEG_TO_RAD;
+  angles[5] = wrapRadians(angles[5]) / DEG_TO_RAD;
 
   return true;
-}
-
-float wrapRadians(float radians)
-{
-  radians = fmod(radians + M_2PI, M_2PI);
-  return (radians < 0)? (radians + M_2PI) : radians;
-}
-
-float angleDist(float theta1, float theta2)
-{
-  theta1 = wrapRadians(theta1);
-  theta2 = wrapRadians(theta2);
-  float delta = abs(theta1 - theta2);
-
-  return (delta > M_PI)? (M_2PI - delta) : delta;
 }

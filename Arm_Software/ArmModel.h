@@ -50,25 +50,19 @@ enum OpMode{HEX_KEY, GRIPPER, DEFAULT};
 void setOpMode(OpMode m);
 
 // Calculates the coordinates of the End Effector given a set of joint angles
-// Angles are in radians, distances are in inches.
+// Angles are in degrees, distances are in inches.
 //
 // angles = input joint angles (J1-J6)
 // coords = output coordinates (x, y, z, yaw, pitch, roll)
-void forwardKinematics(const float angles[6], float coords[6]);
+void forwardKinematics(float angles[6], float coords[6]);
 
 // Calculates the joint angles required to place the End Effector at the given coordinates.
-// Angles are in radians, distances are in inches.
+// Angles are in degrees, distances are in inches.
 // Returns true if destination is within valid operating range.
 //
 // coords = input coordinates (x, y, z, yaw, pitch, roll)
 // curr = current joint angles (J1-J6)
 // angles = output joint angles (J1-J6)
-bool inverseKinematics(const float coords[6], const float curr[6], float angles[6]);
-
-// Wraps an angle in radians to [0, 2*PI)
-float wrapRadians(float radians);
-
-// Calculates the absolute distance between theta1 and theta2 in radians, [0, PI]
-float angleDist(float theta1, float theta2);
+bool inverseKinematics(float coords[6], float curr[6], float angles[6]);
 
 #endif

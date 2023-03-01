@@ -1,9 +1,10 @@
 # ArmBoard_Software
-Embedded software for Armboard, developed for the Tiva microcontroller using Energia.
+Embedded software for ArmBoard, developed for the Teensy microcontroller using Arduino.
 
 ## Dependencies
 - RoveComm
+- RoveControl
 - RoveEncoder
-- RoveHalTiva
 - RoveJoint
 - RoveMotor
+- RoveSwitch
