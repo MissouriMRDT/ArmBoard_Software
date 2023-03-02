@@ -101,12 +101,10 @@ RovePIDController PID1, PID2, PID3, PID4, PID5, PID6;
 // Joints
 RoveJoint J1(&Motor1);
 RoveJoint J2(&Motor2);
-RoveJoint J3(&Motor3);
-RoveJoint J4(&Motor4);
-RoveDifferentialJoint Wrist(&Motor5, &Motor6);
-RoveJoint Gripper(&Motor7);
-
-
+RoveJoint J3(&Motor5);
+RoveJoint J4(&Motor8);
+RoveDifferentialJoint Wrist(&Motor3, &Motor4);
+#define Gripper Motor9
 
 // Closed loop variables
 bool closedLoopActive = false;

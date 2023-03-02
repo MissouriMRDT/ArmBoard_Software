@@ -32,6 +32,18 @@ void setup() {
     Encoder5.begin([]{Encoder5.handleInterrupt();});
     Encoder6.begin([]{Encoder6.handleInterrupt();});
 
+
+    // Config motor output limits
+    Motor1.configOutputLimits(950, -950);
+    Motor2.configOutputLimits(950, -950);
+    Motor3.configOutputLimits(950, -950);
+    Motor4.configOutputLimits(950, -950);
+    Motor5.configOutputLimits(950, -950);
+    Motor6.configOutputLimits(950, -950);
+    Motor7.configOutputLimits(950, -950);
+    Motor8.configOutputLimits(950, -950);
+    Motor9.configOutputLimits(950, -950);
+
     // Configure PID controllers
     PID1.configPID(0, 0, 0);
     PID2.configPID(0, 0, 0);
@@ -226,6 +238,18 @@ void openLoop(int16_t decipercents[6]) {
     J3.drive(decipercents[2]);
     J4.drive(decipercents[3]);
     Wrist.drive(decipercents[4], decipercents[5]);
+
+    Serial.print(decipercents[0]);
+    Serial.print(",");
+    Serial.print(decipercents[1]);
+    Serial.print(",");
+    Serial.print(decipercents[2]);
+    Serial.print(",");
+    Serial.print(decipercents[3]);
+    Serial.print(",");
+    Serial.print(decipercents[4]);
+    Serial.print(",");
+    Serial.println(decipercents[5]);
 }
 
 void closedLoop(uint32_t timestamp) {
