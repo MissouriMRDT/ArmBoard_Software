@@ -29,22 +29,23 @@ const uint8_t FWD_PWM_1 = 11;
 const uint8_t RVS_PWM_1 = 10;
 const uint8_t FWD_PWM_2 = 9;
 const uint8_t RVS_PWM_2 = 8;
-const uint8_t FWD_PWM_3 = 21;
-const uint8_t RVS_PWM_3 = 20;
+const uint8_t FWD_PWM_3 = 5;
+const uint8_t RVS_PWM_3 = 4;
 
-const uint8_t FWD_PWM_4 = 17;
-const uint8_t RVS_PWM_4 = 16;
+const uint8_t FWD_PWM_4 = 3;
+const uint8_t RVS_PWM_4 = 2;
 const uint8_t FWD_PWM_5 = 15;
 const uint8_t RVS_PWM_5 = 14;
-const uint8_t FWD_PWM_6 = 41;
-const uint8_t RVS_PWM_6 = 40;
+const uint8_t FWD_PWM_6 = 1;
+const uint8_t RVS_PWM_6 = 0;
 
-const uint8_t FWD_PWM_7 = 39;
-const uint8_t RVS_PWM_7 = 38;
+const uint8_t FWD_PWM_7 = 24;
+const uint8_t RVS_PWM_7 = 18;
 const uint8_t FWD_PWM_8 = 37;
 const uint8_t RVS_PWM_8 = 36;
 const uint8_t FWD_PWM_9 = 7;
 const uint8_t RVS_PWM_9 = 6;
+
 
 // Encoder Pins
 const uint8_t ENC_1 = 33;
@@ -101,10 +102,11 @@ RovePIDController PID1, PID2, PID3, PID4, PID5, PID6;
 // Joints
 RoveJoint J1(&Motor1);
 RoveJoint J2(&Motor2);
-RoveJoint J3(&Motor5);
-RoveJoint J4(&Motor8);
-RoveDifferentialJoint Wrist(&Motor3, &Motor4);
-#define Gripper Motor9
+RoveJoint J3(&Motor3);
+RoveJoint J4(&Motor4);
+RoveDifferentialJoint Wrist(&Motor5, &Motor6);
+#define Gripper Motor7
+#define HexKey Motor8
 
 // Closed loop variables
 bool closedLoopActive = false;

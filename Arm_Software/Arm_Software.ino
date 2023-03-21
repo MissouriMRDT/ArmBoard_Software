@@ -9,12 +9,12 @@ void setup() {
     pinMode(LAS_2, OUTPUT);
 
     // TODO configure in constructor of LimitSwitch
-    pinMode(LIM_1, INPUT);
-    pinMode(LIM_2, INPUT);
-    pinMode(LIM_3, INPUT);
-    pinMode(LIM_4, INPUT);
-    pinMode(LIM_5, INPUT);
-    pinMode(LIM_6, INPUT);
+    //pinMode(LIM_1, INPUT);
+    //pinMode(LIM_2, INPUT);
+    //pinMode(LIM_3, INPUT);
+    //pinMode(LIM_4, INPUT);
+    //pinMode(LIM_5, INPUT);
+    //pinMode(LIM_6, INPUT);
 
     // Configure encoder offsets
     Encoder1.configOffset(0);
@@ -131,6 +131,15 @@ void loop() {
             break;
         }
 
+        // Open loop control of hex key
+        case RC_ARMBOARD_ENDEFFECTOR_DATA_ID:
+        {
+            int16_t data = ((int16_t*) packet.data)[0];
+            HexKey.drive(data);
+            feedWatchdog();
+            break;
+        }
+
         // Open loop control of gripper
         case RC_ARMBOARD_GRIPPERMOVE_DATA_ID:
         {
@@ -238,18 +247,6 @@ void openLoop(int16_t decipercents[6]) {
     J3.drive(decipercents[2]);
     J4.drive(decipercents[3]);
     Wrist.drive(decipercents[4], decipercents[5]);
-
-    Serial.print(decipercents[0]);
-    Serial.print(",");
-    Serial.print(decipercents[1]);
-    Serial.print(",");
-    Serial.print(decipercents[2]);
-    Serial.print(",");
-    Serial.print(decipercents[3]);
-    Serial.print(",");
-    Serial.print(decipercents[4]);
-    Serial.print(",");
-    Serial.println(decipercents[5]);
 }
 
 void closedLoop(uint32_t timestamp) {
