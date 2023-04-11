@@ -5,8 +5,7 @@ void setup() {
     Serial.begin(115200);
 
     // Configure lasers
-    pinMode(LAS_1, OUTPUT);
-    pinMode(LAS_2, OUTPUT);
+    pinMode(LAS, OUTPUT);
 
     // TODO configure in constructor of LimitSwitch
     //pinMode(LIM_1, INPUT);
@@ -153,8 +152,7 @@ void loop() {
         case RC_ARMBOARD_LASERS_DATA_ID:
         {
             uint8_t data = ((uint8_t*) packet.data)[0];
-            digitalWrite(LAS_1, data);
-            digitalWrite(LAS_2, data);
+            digitalWrite(LAS, data);
             break;
         }
 

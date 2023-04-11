@@ -2,6 +2,7 @@
 #define ARMBOARD_SOFTWARE_H
 
 #include "ArmModel.h"
+#include "PinAssignments.h"
 
 #include <RoveComm.h>
 #include <RoveHBridge.h>
@@ -21,52 +22,6 @@ EthernetServer TCPServer(RC_ROVECOMM_ARMBOARD_PORT);
 // Watchdog declarations
 #define WATCHDOG_TIMEOUT 300000
 IntervalTimer Watchdog;
-
-
-
-// Motor Pins
-const uint8_t FWD_PWM_1 = 11;
-const uint8_t RVS_PWM_1 = 10;
-const uint8_t FWD_PWM_2 = 9;
-const uint8_t RVS_PWM_2 = 8;
-const uint8_t FWD_PWM_3 = 5;
-const uint8_t RVS_PWM_3 = 4;
-
-const uint8_t FWD_PWM_4 = 3;
-const uint8_t RVS_PWM_4 = 2;
-const uint8_t FWD_PWM_5 = 15;
-const uint8_t RVS_PWM_5 = 14;
-const uint8_t FWD_PWM_6 = 1;
-const uint8_t RVS_PWM_6 = 0;
-
-const uint8_t FWD_PWM_7 = 24;
-const uint8_t RVS_PWM_7 = 18;
-const uint8_t FWD_PWM_8 = 37;
-const uint8_t RVS_PWM_8 = 36;
-const uint8_t FWD_PWM_9 = 7;
-const uint8_t RVS_PWM_9 = 6;
-
-
-// Encoder Pins
-const uint8_t ENC_1 = 33;
-const uint8_t ENC_2 = 13;
-const uint8_t ENC_3 = 12;
-const uint8_t ENC_4 = 25;
-const uint8_t ENC_5 = 28;
-const uint8_t ENC_6 = 29;
-
-// Limit Switch Pins
-const uint8_t LIM_1 = 5;
-const uint8_t LIM_2 = 4;
-const uint8_t LIM_3 = 3;
-const uint8_t LIM_4 = 2;
-const uint8_t LIM_5 = 1;
-const uint8_t LIM_6 = 0;
-
-// Laser Pins
-const uint8_t LAS_1 = 22;
-const uint8_t LAS_2 = 23;
-
 
 
 // Motors
@@ -97,7 +52,12 @@ LimitSwitch LS5(LIM_5);
 LimitSwitch LS6(LIM_6);
 
 // PID Controllers
-RovePIDController PID1, PID2, PID3, PID4, PID5, PID6;
+RovePIDController PID1;
+RovePIDController PID2;
+RovePIDController PID3;
+RovePIDController PID4;
+RovePIDController PID5;
+RovePIDController PID6;
 
 // Joints
 RoveJoint J1(&Motor1);
@@ -107,6 +67,7 @@ RoveJoint J4(&Motor4);
 RoveDifferentialJoint Wrist(&Motor5, &Motor6);
 #define Gripper Motor7
 #define HexKey Motor8
+
 
 // Closed loop variables
 bool closedLoopActive = false;
