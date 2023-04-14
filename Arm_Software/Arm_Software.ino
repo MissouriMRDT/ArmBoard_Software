@@ -57,16 +57,16 @@ void setup() {
     J2.attachEncoder(&Encoder2);
     J3.attachEncoder(&Encoder3);
     J4.attachEncoder(&Encoder4);
-    Wrist.attachTwistEncoder(&Encoder5);
-    Wrist.attachTiltEncoder(&Encoder6);
+    J5.attachEncoder(&Encoder5);
+    J6.attachEncoder(&Encoder6);
 
     // Attach PID controllers
     J1.attachPID(&PID1);
     J2.attachPID(&PID2);
     J3.attachPID(&PID3);
     J4.attachPID(&PID4);
-    Wrist.attachTwistPID(&PID5);
-    Wrist.attachTiltPID(&PID6);
+    J5.attachPID(&PID5);
+    J6.attachPID(&PID6);
 
     // Attach hard limits
     //J1.attachHardLimits(&LS1, &LS2);
@@ -244,7 +244,8 @@ void openLoop(int16_t decipercents[6]) {
     J2.drive(decipercents[1]);
     J3.drive(decipercents[2]);
     J4.drive(decipercents[3]);
-    Wrist.drive(decipercents[4], decipercents[5]);
+    J5.drive(decipercents[4]);
+    J6.drive(decipercents[5]);
 }
 
 void closedLoop(uint32_t timestamp) {
@@ -252,7 +253,8 @@ void closedLoop(uint32_t timestamp) {
     J2.setAngle(targetAngles[1], timestamp);
     J3.setAngle(targetAngles[2], timestamp);
     J4.setAngle(targetAngles[3], timestamp);
-    Wrist.setAngles(targetAngles[4], targetAngles[5], timestamp);
+    J5.setAngle(targetAngles[4], timestamp);
+    J6.setAngle(targetAngles[5], timestamp);
 }
 
 void estop() {
@@ -260,7 +262,8 @@ void estop() {
     J2.drive(0);
     J3.drive(0);
     J4.drive(0);
-    Wrist.drive(0, 0);
+    J5.drive(0);
+    J6.drive(0);
 }
 
 void feedWatchdog() {
