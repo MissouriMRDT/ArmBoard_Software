@@ -4,24 +4,23 @@
 void setup() {
     Serial.begin(115200);
 
-    // Configure lasers
+    // Configure laser
     pinMode(LAS, OUTPUT);
 
-    // TODO configure in constructor of LimitSwitch
-    //pinMode(LIM_1, INPUT);
-    //pinMode(LIM_2, INPUT);
-    //pinMode(LIM_3, INPUT);
-    //pinMode(LIM_4, INPUT);
-    //pinMode(LIM_5, INPUT);
-    //pinMode(LIM_6, INPUT);
+    // Configure buttons
+    pinMode(B_ENC_0, INPUT);
+    pinMode(B_ENC_1, INPUT);
+    pinMode(B_ENC_2, INPUT);
+    pinMode(B_ENC_3, INPUT);
+    pinMode(DIR_SW, INPUT);
 
     // Configure encoder offsets
-    Encoder1.configOffset(0);
-    Encoder2.configOffset(0);
-    Encoder3.configOffset(0);
-    Encoder4.configOffset(0);
-    Encoder5.configOffset(0);
-    Encoder6.configOffset(0);
+    Encoder1.configOffset(340);
+    Encoder2.configOffset(121);
+    Encoder3.configOffset(49);
+    Encoder4.configOffset(334);
+    Encoder5.configOffset(80);
+    Encoder6.configOffset(188);
 
     // Attach encoder interrupts
     Encoder1.begin([]{Encoder1.handleInterrupt();});
@@ -32,16 +31,32 @@ void setup() {
     Encoder6.begin([]{Encoder6.handleInterrupt();});
 
 
+    // Configure limit switch inverts
+    LS1.configInvert(false);
+    LS2.configInvert(false);
+    LS3.configInvert(true);
+    LS4.configInvert(true);
+    LS5.configInvert(false);
+    LS6.configInvert(false);
+    LS7.configInvert(false);
+    LS8.configInvert(false);
+    LS9.configInvert(false);
+    LS10.configInvert(false);
+    LS11.configInvert(false);
+    LS12.configInvert(false);
+
+
     // Config motor output limits
-    Motor1.configOutputLimits(950, -950);
-    Motor2.configOutputLimits(950, -950);
-    Motor3.configOutputLimits(950, -950);
-    Motor4.configOutputLimits(950, -950);
-    Motor5.configOutputLimits(950, -950);
-    Motor6.configOutputLimits(950, -950);
-    Motor7.configOutputLimits(950, -950);
-    Motor8.configOutputLimits(950, -950);
-    Motor9.configOutputLimits(950, -950);
+    Motor1.configOutputLimits(900, -900);
+    Motor2.configOutputLimits(900, -900);
+    Motor3.configOutputLimits(900, -900);
+    Motor4.configOutputLimits(900, -900);
+    Motor5.configOutputLimits(900, -900);
+    Motor6.configOutputLimits(900, -900);
+    Motor7.configOutputLimits(900, -900);
+    Motor8.configOutputLimits(900, -900);
+    Motor9.configOutputLimits(900, -900);
+
 
     // Configure PID controllers
     PID1.configPID(0, 0, 0);
@@ -69,15 +84,18 @@ void setup() {
     J6.attachPID(&PID6);
 
     // Attach hard limits
-    //J1.attachHardLimits(&LS1, &LS2);
-    //J2.attachHardLimits(&LS3, &LS4);
-    //J3.attachHardLimits(&LS5, &LS6);
+    J1.attachHardLimits(&LS11, &LS12);
+    J2.attachHardLimits(&LS9, &LS10);
+    J3.attachHardLimits(&LS7, &LS8);
+    J4.attachHardLimits(&LS5, &LS6);
+    J5.attachHardLimits(&LS3, &LS4);
 
     // Configure soft limits
     //J1.configSoftLimits(0, 360);
     //J2.configSoftLimits(0, 360);
     //J3.configSoftLimits(0, 360);
     //J4.configSoftLimits(0, 360);
+    //J5.configSoftLimits(0, 360);
 
     RoveComm.begin(RC_ARMBOARD_FOURTHOCTET, &TCPServer, RC_ROVECOMM_ARMBOARD_MAC);
     feedWatchdog();
@@ -183,6 +201,8 @@ void loop() {
     // Update closed loop
     if (closedLoopActive) closedLoop(timestamp);
 
+    updateManualButtons();
+
 
     // Periodically write telemetry
     if ((timestamp - lastWriteCoordinatesTimestamp) >= ROVECOMM_UPDATE_RATE*4) {
@@ -237,6 +257,81 @@ bool updateTargetAngles_IK(float dest[6]) {
     return valid;
 }
 
+void updateManualButtons() {
+
+    bool direction = digitalRead(DIR_SW);
+    uint8_t manualButtons = (digitalRead(B_ENC_3)<<3) | (digitalRead(B_ENC_2)<<2) | (digitalRead(B_ENC_1)<<1) | (digitalRead(B_ENC_0)<<0);
+
+    if (manualButtons == lastManualButtons) {
+        switch (manualButtons) {
+            case 1:
+                Motor1.drive( (direction? 900 : -900) );
+                break;
+            case 2:
+                Motor2.drive( (direction? 900 : -900) );
+                break;
+            case 3:
+                Motor3.drive( (direction? 900 : -900) );
+                break;
+            case 4:
+                Motor4.drive( (direction? 900 : -900) );
+                break;
+            case 5:
+                Motor5.drive( (direction? 300 : -300) );
+                break;
+            case 6:
+                Motor6.drive( (direction? 900 : -900) );
+                break;
+            case 7:
+                Motor7.drive( (direction? 900 : -900) );
+                break;
+            case 8:
+                Motor8.drive( (direction? 900 : -900) );
+                break;
+            case 9:
+                Motor9.drive( (direction? 900 : -900) );
+                break;
+            default:
+                break;
+        }
+    }
+    else {
+        switch (lastManualButtons) {
+            case 1:
+                Motor1.drive(0);
+                break;
+            case 2:
+                Motor2.drive(0);
+                break;
+            case 3:
+                Motor3.drive(0);
+                break;
+            case 4:
+                Motor4.drive(0);
+                break;
+            case 5:
+                Motor5.drive(0);
+                break;
+            case 6:
+                Motor6.drive(0);
+                break;
+            case 7:
+                Motor7.drive(0);
+                break;
+            case 8:
+                Motor8.drive(0);
+                break;
+            case 9:
+                Motor9.drive(0);
+                break;
+            default:
+                break;
+        }
+    }
+
+    lastManualButtons = manualButtons;
+}
+
 
 
 void openLoop(int16_t decipercents[6]) {
@@ -264,6 +359,8 @@ void estop() {
     J4.drive(0);
     J5.drive(0);
     J6.drive(0);
+    Gripper.drive(0);
+    HexKey.drive(0);
 }
 
 void feedWatchdog() {

@@ -110,14 +110,15 @@ float angleDist(float theta1, float theta2) {
 }
 
 
-void forwardKinematics(float angles[6], float coords[6]) {
+void forwardKinematics(float jointAngles[6], float coords[6]) {
   // Convert angles to radians for math
-  angles[0] *= DEG_TO_RAD;
-  angles[1] *= DEG_TO_RAD;
-  angles[2] *= DEG_TO_RAD;
-  angles[3] *= DEG_TO_RAD;
-  angles[4] *= DEG_TO_RAD;
-  angles[5] *= DEG_TO_RAD;
+  float angles[6];
+  angles[0] = jointAngles[0] * DEG_TO_RAD;
+  angles[1] = jointAngles[1] * DEG_TO_RAD;
+  angles[2] = jointAngles[2] * DEG_TO_RAD;
+  angles[3] = jointAngles[3] * DEG_TO_RAD;
+  angles[4] = jointAngles[4] * DEG_TO_RAD;
+  angles[5] = jointAngles[5] * DEG_TO_RAD;
 
   float Htmp1[4][4];
   float Htmp2[4][4];

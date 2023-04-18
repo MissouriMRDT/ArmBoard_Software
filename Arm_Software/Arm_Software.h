@@ -49,6 +49,12 @@ LimitSwitch LS3(LIM_3);
 LimitSwitch LS4(LIM_4);
 LimitSwitch LS5(LIM_5);
 LimitSwitch LS6(LIM_6);
+LimitSwitch LS7(LIM_7);
+LimitSwitch LS8(LIM_8);
+LimitSwitch LS9(LIM_9);
+LimitSwitch LS10(LIM_10);
+LimitSwitch LS11(LIM_11);
+LimitSwitch LS12(LIM_12);
 
 // PID Controllers
 RovePIDController PID1;
@@ -74,12 +80,14 @@ bool closedLoopActive = false;
 float jointAngles[6];
 float coordinates[6];
 float targetAngles[6];
+uint8_t lastManualButtons = 0;
 
 // Methods
 void updateJointAngles();
 void updateCoordinates();
 void updateTargetAngles_Position(float targets[6]);
 bool updateTargetAngles_IK(float dest[6]);
+void updateManualButtons();
 
 void openLoop(int16_t decipercents[6]);
 void closedLoop(uint32_t timestamp);
