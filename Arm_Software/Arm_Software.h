@@ -8,19 +8,27 @@
 #include <RoveHBridge.h>
 #include <MA3PWM.h>
 #include <LimitSwitch.h>
+#include <BidirectionalLimitSwitch.h>
 #include <RovePIDController.h>
 #include <RoveJoint.h>
 
 #include <cstdint>
 
 
-// RoveComm declarations
+// RoveComm
 RoveCommEthernet RoveComm;
-EthernetServer TCPServer(RC_ROVECOMM_ARMBOARD_PORT);
+EthernetServer TCPServer(RC_ROVECOMM_ETHERNET_TCP_PORT);
 
-// Watchdog declarations
+// Watchdog
 #define WATCHDOG_TIMEOUT 300000
 IntervalTimer Watchdog;
+uint8_t watchdogStatus = 0;
+bool watchdogOverride = false;
+
+// Telemetry
+#define TELEMETRY_PERIOD 150000
+IntervalTimer Telemetry;
+bool telemetryOverride = false;
 
 
 // Motors
@@ -53,8 +61,9 @@ LimitSwitch LS7(LIM_7);
 LimitSwitch LS8(LIM_8);
 LimitSwitch LS9(LIM_9);
 LimitSwitch LS10(LIM_10);
-LimitSwitch LS11(LIM_11);
-LimitSwitch LS12(LIM_12);
+//LimitSwitch LS11(LIM_11);
+//LimitSwitch LS12(LIM_12);
+BidirectionalLimitSwitch BD_LS12(LIM_12, &Motor1);
 
 // PID Controllers
 RovePIDController PID1;
@@ -73,25 +82,21 @@ RoveJoint J5(&Motor5);
 RoveJoint J6(&Motor6);
 #define Gripper Motor7
 #define HexKey Motor8
+#define SpareMotor Motor9
 
 
-// Closed loop variables
+// Control variables
 bool closedLoopActive = false;
 float jointAngles[6];
 float coordinates[6];
 float targetAngles[6];
-uint8_t lastManualButtons = 0;
+int16_t decipercents[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 
 // Methods
 void updateJointAngles();
 void updateCoordinates();
-void updateTargetAngles_Position(float targets[6]);
-bool updateTargetAngles_IK(float dest[6]);
-void updateManualButtons();
-
-void openLoop(int16_t decipercents[6]);
-void closedLoop(uint32_t timestamp);
 void estop();
+void telemetry();
 void feedWatchdog();
 
 #endif
