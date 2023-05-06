@@ -5,6 +5,7 @@
 
 void setup() {
     Serial.begin(115200);
+    Serial.println("Setup");
 
 
     // Configure laser pin
@@ -142,8 +143,9 @@ void setup() {
     //J4.configSoftLimits(330, 30);
     //J5.configSoftLimits(50, 310);
 
-
+    Serial.println("RoveComm Initializing...");
     RoveComm.begin(RC_ARMBOARD_FIRSTOCTET, RC_ARMBOARD_SECONDOCTET, RC_ARMBOARD_THIRDOCTET, RC_ARMBOARD_FOURTHOCTET, &TCPServer);
+    Serial.println("Complete");
     feedWatchdog();
     Telemetry.begin(telemetry, TELEMETRY_PERIOD);
 }
@@ -151,7 +153,7 @@ void setup() {
 
 
 void loop() {
-    uint32_t timestamp = millis();
+    float timestamp = ((float) millis()) / 1000.0;
     updateJointAngles();
     updateCoordinates();
 
@@ -278,7 +280,19 @@ void loop() {
         {
             uint16_t data = ((uint16_t*) packet.data)[0];
 
-            // TODO: adjust to uint16_t in rovecomm
+            J6.overrideForwardHardLimit(data & (1<<11));
+            J6.overrideReverseHardLimit(data & (1<<10));
+            J5.overrideForwardHardLimit(data & (1<<9));
+            J5.overrideReverseHardLimit(data & (1<<8));
+            J4.overrideForwardHardLimit(data & (1<<7));
+            J4.overrideReverseHardLimit(data & (1<<6));
+            J3.overrideForwardHardLimit(data & (1<<5));
+            J3.overrideReverseHardLimit(data & (1<<4));
+            J2.overrideForwardHardLimit(data & (1<<3));
+            J2.overrideReverseHardLimit(data & (1<<2));
+            J1.overrideForwardHardLimit(data & (1<<1));
+            J1.overrideReverseHardLimit(data & (1<<0));
+
             break;
         }
 
@@ -340,11 +354,11 @@ void loop() {
         else J3.drive(decipercents[2], timestamp);
 
         // J4
-        if (manualButtons == 4) Motor4.drive((direction? 900 : -900), timestamp);
+        if (manualButtons == 4) Motor4.drive((direction? 700 : -700), timestamp);
         else J4.drive(decipercents[3], timestamp);
 
         // J5
-        if (manualButtons == 5) Motor5.drive((direction? 300 : -300), timestamp);
+        if (manualButtons == 5) Motor5.drive((direction? 500 : -500), timestamp);
         else J5.drive(decipercents[4], timestamp);
 
         // J6

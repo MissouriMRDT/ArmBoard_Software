@@ -16,8 +16,8 @@
 
 
 // RoveComm
-RoveCommEthernet RoveComm;
 EthernetServer TCPServer(RC_ROVECOMM_ETHERNET_TCP_PORT);
+RoveCommEthernet RoveComm;
 
 // Watchdog
 #define WATCHDOG_TIMEOUT 300000
