@@ -97,8 +97,8 @@ void setup() {
     Motor9.configMinOutputs(-10, 10);
 
     // Config motor ramp rates
-    Motor1.configRampRate(2000);
-    Motor2.configRampRate(2000);
+    Motor1.configRampRate(10000);
+    Motor2.configRampRate(10000);
 
 
     // Configure PID controllers
@@ -129,10 +129,10 @@ void setup() {
     J6.attachPID(&PID6);
 
     // Attach hard limits
-    J1.attachHardLimits(&BD_LS12.reverseSwitch(), &BD_LS12.forwardSwitch());
-    J2.attachHardLimits(&LS10, &LS9);
-    J3.attachHardLimits(&LS8, &LS7);
-    J4.attachHardLimits(&LS6, &LS5);
+    J1.attachHardLimits(&BD_LS12.forwardSwitch(), &BD_LS12.reverseSwitch());
+    J2.attachHardLimits(&LS9, &LS10);
+    J3.attachHardLimits(&LS7, &LS8);
+    J4.attachHardLimits(&LS5, &LS6);
     J5.attachHardLimits(&LS4, &LS3);
 
 
