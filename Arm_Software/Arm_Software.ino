@@ -72,7 +72,7 @@ void setup() {
     Motor6.configInvert(false);
     Motor7.configInvert(false);
     Motor8.configInvert(false);
-    Motor9.configInvert(false);
+    Motor9.configInvert(true);
 
     // Config motor output limits
     Motor1.configMaxOutputs(-900, 900);
@@ -94,11 +94,12 @@ void setup() {
     Motor6.configMinOutputs(-20, 20);
     Motor7.configMinOutputs(-10, 10);
     Motor8.configMinOutputs(-10, 10);
-    Motor9.configMinOutputs(-10, 10);
+    Motor9.configMinOutputs(-50, 50);
 
     // Config motor ramp rates
     Motor1.configRampRate(10000);
     Motor2.configRampRate(10000);
+    Motor9.configRampRate(10000);
 
 
     // Configure PID controllers
@@ -133,7 +134,7 @@ void setup() {
     J2.attachHardLimits(&LS9, &LS10);
     J3.attachHardLimits(&LS7, &LS8);
     J4.attachHardLimits(&LS5, &LS6);
-    J5.attachHardLimits(&LS4, &LS3);
+    //J5.attachHardLimits(&LS4, &LS3);
 
 
     // Configure soft limits
@@ -146,6 +147,7 @@ void setup() {
     Serial.println("RoveComm Initializing...");
     RoveComm.begin(RC_ARMBOARD_FIRSTOCTET, RC_ARMBOARD_SECONDOCTET, RC_ARMBOARD_THIRDOCTET, RC_ARMBOARD_FOURTHOCTET, &TCPServer);
     Serial.println("Complete");
+    
     feedWatchdog();
     Telemetry.begin(telemetry, TELEMETRY_PERIOD);
 }
@@ -342,40 +344,40 @@ void loop() {
     }
     else {
         // J1
-        if (manualButtons == 1) Motor1.drive((direction? 900 : -900), timestamp);
+        if (manualButtons == 1) J1.drive((direction? 900 : -900), timestamp);
         else J1.drive(decipercents[0], timestamp);
 
         // J2
-        if (manualButtons == 2) Motor2.drive((direction? 900 : -900), timestamp);
+        if (manualButtons == 2) J2.drive((direction? 900 : -900), timestamp);
         else J2.drive(decipercents[1], timestamp);
 
         // J3
-        if (manualButtons == 3) Motor3.drive((direction? 900 : -900), timestamp);
+        if (manualButtons == 3) J3.drive((direction? 900 : -900), timestamp);
         else J3.drive(decipercents[2], timestamp);
 
         // J4
-        if (manualButtons == 4) Motor4.drive((direction? 700 : -700), timestamp);
+        if (manualButtons == 4) J4.drive((direction? 700 : -700), timestamp);
         else J4.drive(decipercents[3], timestamp);
 
         // J5
-        if (manualButtons == 5) Motor5.drive((direction? 500 : -500), timestamp);
+        if (manualButtons == 5) J5.drive((direction? 500 : -500), timestamp);
         else J5.drive(decipercents[4], timestamp);
 
         // J6
-        if (manualButtons == 6) Motor6.drive((direction? 900 : -900), timestamp);
+        if (manualButtons == 6) J6.drive((direction? 900 : -900), timestamp);
         else J6.drive(decipercents[5], timestamp);
     }
 
     // Gripper
-    if (manualButtons == 7) Motor7.drive((direction? 900 : -900), timestamp);
+    if (manualButtons == 7) Gripper.drive((direction? 900 : -900), timestamp);
     else Gripper.drive(decipercents[6], timestamp);
 
     // Hex Key
-    if (manualButtons == 8) Motor8.drive((direction? 900 : -900), timestamp);
+    if (manualButtons == 8) HexKey.drive((direction? 900 : -900), timestamp);
     else HexKey.drive(decipercents[7], timestamp);
 
     // Spare
-    if (manualButtons == 9) Motor9.drive((direction? 900 : -900), timestamp);
+    if (manualButtons == 9) SpareMotor.drive((direction? 900 : -900), timestamp);
     else SpareMotor.drive(0, timestamp);
 
 }
