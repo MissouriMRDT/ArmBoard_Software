@@ -22,8 +22,8 @@ void setup() {
     // Configure limit switch inverts
     LS1.configInvert(false);
     LS2.configInvert(false);
-    LS3.configInvert(true);
-    LS4.configInvert(true);
+    LS3.configInvert(false);
+    LS4.configInvert(false);
     LS5.configInvert(false);
     LS6.configInvert(false);
     LS7.configInvert(false);
@@ -42,7 +42,7 @@ void setup() {
     Encoder1.configInvert(true);
     Encoder2.configInvert(true);
     Encoder3.configInvert(true);
-    Encoder4.configInvert(true);
+    Encoder4.configInvert(false);
     Encoder5.configInvert(false);
     Encoder6.configInvert(false);
 
@@ -67,9 +67,9 @@ void setup() {
     Motor1.configInvert(true);
     Motor2.configInvert(true);
     Motor3.configInvert(true);
-    Motor4.configInvert(true);
-    Motor5.configInvert(true);
-    Motor6.configInvert(false);
+    Motor4.configInvert(false);
+    Motor5.configInvert(false);
+    Motor6.configInvert(true);
     Motor7.configInvert(false);
     Motor8.configInvert(false);
     Motor9.configInvert(true);
@@ -107,10 +107,8 @@ void setup() {
     PID2.configPID(0, 0, 0);
     PID3.configPID(90, 0, 0);
     PID4.configPID(0, 0, 0);
-    PID5.configPID(69, 0, 0);
-    PID6.configPID(100, 0, 0);
-
-    PID6.enableContinuousFeedback(0, 360);
+    PID5.configPID(0, 0, 0);
+    PID6.configPID(0, 0, 0);
 
 
     // Attach encoders
@@ -118,23 +116,21 @@ void setup() {
     J2.attachEncoder(&Encoder2);
     J3.attachEncoder(&Encoder3);
     J4.attachEncoder(&Encoder4);
-    J5.attachEncoder(&Encoder5);
-    J6.attachEncoder(&Encoder6);
+    Wrist.attachTiltEncoder(&Encoder5);
+    Wrist.attachTwistEncoder(&Encoder6);
 
     // Attach PID controllers
     J1.attachPID(&PID1);
     J2.attachPID(&PID2);
     J3.attachPID(&PID3);
     J4.attachPID(&PID4);
-    J5.attachPID(&PID5);
-    J6.attachPID(&PID6);
+    Wrist.attachTiltPID(&PID5);
+    Wrist.attachTwistPID(&PID6);
 
     // Attach hard limits
     J1.attachHardLimits(&BD_LS12.forwardSwitch(), &BD_LS12.reverseSwitch());
     J2.attachHardLimits(&LS9, &LS10);
     J3.attachHardLimits(&LS7, &LS8);
-    J4.attachHardLimits(&LS5, &LS6);
-    //J5.attachHardLimits(&LS4, &LS3);
 
 
     // Configure soft limits
@@ -142,7 +138,6 @@ void setup() {
     //J2.configSoftLimits(215, 105);
     //J3.configSoftLimits(110, 220);
     //J4.configSoftLimits(330, 30);
-    //J5.configSoftLimits(50, 310);
 
     Serial.println("RoveComm Initializing...");
     RoveComm.begin(RC_ARMBOARD_FIRSTOCTET, RC_ARMBOARD_SECONDOCTET, RC_ARMBOARD_THIRDOCTET, RC_ARMBOARD_FOURTHOCTET, &TCPServer);
@@ -282,10 +277,10 @@ void loop() {
         {
             uint16_t data = ((uint16_t*) packet.data)[0];
 
-            J6.overrideForwardHardLimit(data & (1<<11));
-            J6.overrideReverseHardLimit(data & (1<<10));
-            J5.overrideForwardHardLimit(data & (1<<9));
-            J5.overrideReverseHardLimit(data & (1<<8));
+            Wrist.overrideTwistForwardHardLimit(data & (1<<11));
+            Wrist.overrideTwistReverseHardLimit(data & (1<<10));
+            Wrist.overrideTiltForwardHardLimit(data & (1<<9));
+            Wrist.overrideTiltReverseHardLimit(data & (1<<8));
             J4.overrideForwardHardLimit(data & (1<<7));
             J4.overrideReverseHardLimit(data & (1<<6));
             J3.overrideForwardHardLimit(data & (1<<5));
@@ -339,8 +334,7 @@ void loop() {
         J2.setAngle(targetAngles[1], timestamp);
         J3.setAngle(targetAngles[2], timestamp);
         J4.setAngle(targetAngles[3], timestamp);
-        J5.setAngle(targetAngles[4], timestamp);
-        J6.setAngle(targetAngles[5], timestamp);
+        Wrist.setAngles(targetAngles[5], targetAngles[4], timestamp);
     }
     else {
         // J1
@@ -356,16 +350,13 @@ void loop() {
         else J3.drive(decipercents[2], timestamp);
 
         // J4
-        if (manualButtons == 4) J4.drive((direction? 700 : -700), timestamp);
+        if (manualButtons == 4) J4.drive((direction? 900 : -900), timestamp);
         else J4.drive(decipercents[3], timestamp);
 
         // J5
-        if (manualButtons == 5) J5.drive((direction? 500 : -500), timestamp);
-        else J5.drive(decipercents[4], timestamp);
-
-        // J6
-        if (manualButtons == 6) J6.drive((direction? 900 : -900), timestamp);
-        else J6.drive(decipercents[5], timestamp);
+        if (manualButtons == 5) Wrist.drive(0, (direction? 900 : -900), timestamp);
+        else if (manualButtons == 6) Wrist.drive((direction? 900 : -900), 0, timestamp);
+        else Wrist.drive(decipercents[5], decipercents[4], timestamp);
     }
 
     // Gripper

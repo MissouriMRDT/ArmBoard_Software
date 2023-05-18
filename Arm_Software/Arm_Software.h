@@ -11,6 +11,7 @@
 #include <BidirectionalLimitSwitch.h>
 #include <RovePIDController.h>
 #include <RoveJoint.h>
+#include <RoveDifferentialJoint.h>
 
 #include <cstdint>
 
@@ -78,8 +79,7 @@ RoveJoint J1(&Motor1);
 RoveJoint J2(&Motor9);
 RoveJoint J3(&Motor3);
 RoveJoint J4(&Motor4);
-RoveJoint J5(&Motor5);
-RoveJoint J6(&Motor6);
+RoveDifferentialJoint Wrist(&Motor5, &Motor6);
 #define Gripper Motor7
 #define HexKey Motor8
 #define SpareMotor Motor2
