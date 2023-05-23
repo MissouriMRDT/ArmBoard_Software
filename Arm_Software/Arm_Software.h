@@ -82,7 +82,7 @@ RoveJoint J4(&Motor4);
 RoveDifferentialJoint Wrist(&Motor5, &Motor6);
 #define Gripper Motor7
 #define HexKey Motor8
-#define SpareMotor Motor2
+#define Solenoid Motor2
 
 
 // Control variables
@@ -91,6 +91,7 @@ float jointAngles[6];
 float coordinates[6];
 float targetAngles[6];
 int16_t decipercents[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+bool extendSolenoid = false;
 
 // Methods
 void updateJointAngles();

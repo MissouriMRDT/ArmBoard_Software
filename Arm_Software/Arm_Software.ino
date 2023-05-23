@@ -65,7 +65,7 @@ void setup() {
 
     // Config motor inverts
     Motor1.configInvert(true);
-    Motor2.configInvert(true);
+    Motor2.configInvert(false);
     Motor3.configInvert(true);
     Motor4.configInvert(false);
     Motor5.configInvert(false);
@@ -98,7 +98,6 @@ void setup() {
 
     // Config motor ramp rates
     Motor1.configRampRate(10000);
-    Motor2.configRampRate(10000);
     Motor9.configRampRate(10000);
 
 
@@ -245,21 +244,23 @@ void loop() {
             break;
         }
 
-        // Open loop control of hex key
+        // Toggle solenoid
         case RC_ARMBOARD_ENDEFFECTOR_DATA_ID:
         {
-            int16_t data = ((int16_t*) packet.data)[0];
+            uint8_t data = ((uint8_t*) packet.data)[0];
 
-            decipercents[7] = data;
+            extendSolenoid = data;
             break;
         }
 
-        // Open loop control of gripper
+        // Open loop control of gripper 1 and 2
         case RC_ARMBOARD_GRIPPERMOVE_DATA_ID:
         {
-            int16_t data = ((int16_t*) packet.data)[0];
+            int16_t* data = (int16_t*) packet.data;
 
-            decipercents[6] = data;
+            decipercents[6] = data[0];
+            decipercents[7] = data[1];
+            feedWatchdog();
             break;
         }
 
@@ -368,8 +369,8 @@ void loop() {
     else HexKey.drive(decipercents[7], timestamp);
 
     // Spare
-    if (manualButtons == 9) SpareMotor.drive((direction? 900 : -900), timestamp);
-    else SpareMotor.drive(0, timestamp);
+    if (manualButtons == 9) Solenoid.drive((direction? 900 : -900), timestamp);
+    else Solenoid.drive((extendSolenoid? 900 : 0), timestamp);
 
 }
 
