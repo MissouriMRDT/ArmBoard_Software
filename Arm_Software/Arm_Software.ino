@@ -65,7 +65,7 @@ void setup() {
 
     // Config motor inverts
     Motor1.configInvert(true);
-    Motor2.configInvert(false);
+    Motor2.configInvert(true);
     Motor3.configInvert(true);
     Motor4.configInvert(false);
     Motor5.configInvert(false);
