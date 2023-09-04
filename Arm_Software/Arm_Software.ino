@@ -1,310 +1,270 @@
 #include "Arm_Software.h"
 
-void setup()
-{
+
+void setup() {
     Serial.begin(115200);
-    ShoulderTilt.motor.attach(MotorINA_1,MotorINB_1,MotorPWM_1);
-    ShoulderTwist.motor.attach(MotorINA_2,MotorINB_2,MotorPWM_2);
-    ElbowTilt.motor.attach(MotorINA_3,MotorINB_3,MotorPWM_3);
-    ElbowTwist.motor.attach(MotorINA_4,MotorINB_4,MotorPWM_4);
-    Wrist.rightMotor.attach(MotorINA_5,MotorINB_5,MotorPWM_5);
-    Wrist.leftMotor.attach(MotorINA_6,MotorINB_6,MotorPWM_6);
-    Gripper.attach(MotorINA_7,MotorINB_7,MotorPWM_7);
 
-    ShoulderTilt.encoder.attach(Encoder_ShoulderTilt, 7, false);
-    ShoulderTwist.encoder.attach(Encoder_ShoulderTwist, 7, false);
-    ElbowTilt.encoder.attach(Encoder_ElbowTilt, 7, false, -40000);
-    ElbowTwist.encoder.attach(Encoder_ElbowTwist, 7, false, -295000);
-    Wrist.tiltEncoder.attach(Encoder_WristTilt, 7, false, -180000);
-    Wrist.twistEncoder.attach(Encoder_WristTwist, 7, false, -180000);
+    // Configure lasers
+    pinMode(LAS_1, OUTPUT);
+    pinMode(LAS_2, OUTPUT);
 
-    ShoulderTilt.attachLimitSwitches(LimitSwitchLower_J1, LimitSwitchLower_J1);
-    ShoulderTwist.attachLimitSwitches(LimitSwitchLower_J2, LimitSwitchLower_J2);
-    ElbowTilt.attachLimitSwitches(LimitSwitchLower_J3, LimitSwitchLower_J3);
+    // TODO configure in constructor of LimitSwitch
+    //pinMode(LIM_1, INPUT);
+    //pinMode(LIM_2, INPUT);
+    //pinMode(LIM_3, INPUT);
+    //pinMode(LIM_4, INPUT);
+    //pinMode(LIM_5, INPUT);
+    //pinMode(LIM_6, INPUT);
 
-    ShoulderTilt.setAngleLimits(180,45);
-    ShoulderTwist.setAngleLimits(360,0);
-    ElbowTilt.setAngleLimits(200,130);
-    ElbowTwist.setAngleLimits(360,0);
+    // Configure encoder offsets
+    Encoder1.configOffset(0);
+    Encoder2.configOffset(0);
+    Encoder3.configOffset(0);
+    Encoder4.configOffset(0);
+    Encoder5.configOffset(0);
+    Encoder6.configOffset(0);
 
-    ShoulderTilt.encoder.start();
-    ShoulderTwist.encoder.start();
-    ElbowTilt.encoder.start();
-    ElbowTwist.encoder.start();
-    Wrist.tiltEncoder.start();
-    Wrist.twistEncoder.start();
+    // Attach encoder interrupts
+    Encoder1.begin([]{Encoder1.handleInterrupt();});
+    Encoder2.begin([]{Encoder2.handleInterrupt();});
+    Encoder3.begin([]{Encoder3.handleInterrupt();});
+    Encoder4.begin([]{Encoder4.handleInterrupt();});
+    Encoder5.begin([]{Encoder5.handleInterrupt();});
+    Encoder6.begin([]{Encoder6.handleInterrupt();});
 
-    ElbowTilt.pid.attach( -1000.0, 1000.0, 150.0, 0, 0);
-    ElbowTwist.pid.attach( -500.0, 500.0, 10.0, 0, 0 );
 
-    ShoulderTilt.pid.attach( -1000.0, 500.0, 100.0, 0, 0 );
-    ShoulderTwist.pid.attach( -1000.0, 1000.0, 20.0, 0, 0 );
+    // Config motor output limits
+    Motor1.configOutputLimits(950, -950);
+    Motor2.configOutputLimits(950, -950);
+    Motor3.configOutputLimits(950, -950);
+    Motor4.configOutputLimits(950, -950);
+    Motor5.configOutputLimits(950, -950);
+    Motor6.configOutputLimits(950, -950);
+    Motor7.configOutputLimits(950, -950);
+    Motor8.configOutputLimits(950, -950);
+    Motor9.configOutputLimits(950, -950);
 
-    Wrist.tiltPid.attach( -1000.0, 1000.0, 11.0, 0, 0 );
-    Wrist.twistPid.attach( -1000.0, 1000.0, 11.0, 0, 0 );
+    // Configure PID controllers
+    PID1.configPID(0, 0, 0);
+    PID2.configPID(0, 0, 0);
+    PID3.configPID(0, 0, 0);
+    PID4.configPID(0, 0, 0);
+    PID5.configPID(0, 0, 0);
+    PID6.configPID(0, 0, 0);
 
-    pinMode(LaserToggle, OUTPUT);
-    pinMode(SolenoidToggle, OUTPUT);
+    
+    // Attach encoders
+    J1.attachEncoder(&Encoder1);
+    J2.attachEncoder(&Encoder2);
+    J3.attachEncoder(&Encoder3);
+    J4.attachEncoder(&Encoder4);
+    Wrist.attachTwistEncoder(&Encoder5);
+    Wrist.attachTiltEncoder(&Encoder6);
 
-    pinMode(LimitSwitchLower_J1, INPUT);
-    pinMode(LimitSwitchUpper_J1, INPUT);
-    pinMode(LimitSwitchLower_J2, INPUT);
-    pinMode(LimitSwitchUpper_J2, INPUT);
-    pinMode(LimitSwitchLower_J3, INPUT);
-    pinMode(LimitSwitchUpper_J3, INPUT);
+    // Attach PID controllers
+    J1.attachPID(&PID1);
+    J2.attachPID(&PID2);
+    J3.attachPID(&PID3);
+    J4.attachPID(&PID4);
+    Wrist.attachTwistPID(&PID5);
+    Wrist.attachTiltPID(&PID6);
 
-    digitalWrite(LaserToggle, HIGH);
-    digitalWrite(SolenoidToggle, LOW);
+    // Attach hard limits
+    //J1.attachHardLimits(&LS1, &LS2);
+    //J2.attachHardLimits(&LS3, &LS4);
+    //J3.attachHardLimits(&LS5, &LS6);
 
-    RoveComm.begin(RC_ARMBOARD_FOURTHOCTET, &TCPServer);
+    // Configure soft limits
+    //J1.configSoftLimits(0, 360);
+    //J2.configSoftLimits(0, 360);
+    //J3.configSoftLimits(0, 360);
+    //J4.configSoftLimits(0, 360);
 
-    Watchdog.attach(estop);
-    Watchdog.start(WatchdogTimeout);
+    RoveComm.begin(RC_ARMBOARD_FOURTHOCTET, &TCPServer, RC_ROVECOMM_ARMBOARD_MAC);
+    feedWatchdog();
 }
 
-void loop()
-{
-    parsePackets();
-    if (closedloopActive == true)
-    {
-        closedLoop();
-    }
-    if((millis() - timer) >= ROVECOMM_UPDATE_RATE*4)
-    {
-        updatePosition();
-        RoveComm.write(RC_ARMBOARD_JOINTANGLES_DATA_ID, RC_ARMBOARD_JOINTANGLES_DATA_COUNT, jointAngles);
-        timer = millis();
-    }  
-}
 
-void parsePackets()
-{
-    packet = RoveComm.read();
+uint32_t lastWriteCoordinatesTimestamp = millis();
+uint32_t lastWriteJointAnglesTimestamp = millis();
 
-    switch ( packet.data_id )
-    {
-        case RC_ARMBOARD_ARMVELOCITYCONTROL_DATA_ID:
-            openLoop();
-            Watchdog.clear();
+void loop() {
+    uint32_t timestamp = millis();
+    updateJointAngles();
+    updateCoordinates();
+
+    // Parse RoveComm packets
+    rovecomm_packet packet = RoveComm.read();
+    switch (packet.data_id) {
+
+        // Open loop control of J1-J6
+        case RC_ARMBOARD_ARMVELOCITYCONTROL_DATA_ID: 
+        {
+            int16_t* data = (int16_t*) packet.data; // decipercent values for J1-J6
+            closedLoopActive = false;
+
+            openLoop(data);
+            feedWatchdog();
             break;
+        }
+
+        // Closed loop control of J1-J6
         case RC_ARMBOARD_ARMMOVETOPOSITION_DATA_ID:
         {
-            setTargetAngles();
-            closedloopActive = true;
-            Watchdog.clear();
+            float* data = (float*) packet.data; // target angles in degrees for J1-J6
+            closedLoopActive = true;
+
+            updateTargetAngles_Position(data);
+            feedWatchdog();
             break;
         }
-        case RC_ARMBOARD_LASERS_DATA_ID:
-            if ((uint8_t)packet.data[0])
-            {
-                digitalWrite(LaserToggle, HIGH);
-            }
-            else
-            {
-                digitalWrite(LaserToggle, LOW);
-            }
-            break;
-        case RC_ARMBOARD_SOLENOID_DATA_ID:
-            if ((uint8_t)packet.data[0])
-            {
-                digitalWrite(SolenoidToggle, HIGH);
-            }
-            else
-            {
-                digitalWrite(SolenoidToggle, LOW);
-            }
-            break;
-        case RC_ARMBOARD_GRIPPERMOVE_DATA_ID:
-            int16_t* gripperSpeed;
-            gripperSpeed = (int16_t*)packet.data;
-            Gripper.drive(gripperSpeed[0]);
-            Watchdog.clear();
-            break;
-        case RC_ARMBOARD_REQUESTJOINTPOSITIONS_DATA_ID:
-            RoveComm.writeReliable(RC_ARMBOARD_JOINTANGLES_DATA_ID, RC_ARMBOARD_REQUESTJOINTPOSITIONS_DATA_COUNT, jointAngles);
-            break;
-        default:
-            break;
-    }   
-}
 
-void openLoop()
-{
-    int16_t* motorSpeeds; 
-    motorSpeeds = (int16_t*)packet.data;
-    closedloopActive = false;
-    if ( !ShoulderTilt.atHardLimit(motorSpeeds[0]) )
-    {
-        ShoulderTilt.moveJoint(motorSpeeds[0]);
-    }
-    if ( !ShoulderTwist.atHardLimit(motorSpeeds[1]) )
-    {
-        ShoulderTwist.moveJoint(motorSpeeds[1]);
-    }
-    if ( !ElbowTilt.atHardLimit(motorSpeeds[2]) )
-    {
-        ElbowTilt.moveJoint(motorSpeeds[2]);
-    }
-    ElbowTwist.moveJoint(motorSpeeds[3]);
-    Wrist.moveDiffJoint(motorSpeeds[4], motorSpeeds[5]);
-}
-
-void setTargetAngles()
-{
-    float* motorAngles;
-    motorAngles = (float*)packet.data;
-    closedloopActive = true;
-    shoulderTiltTarget = motorAngles[0]; 
-    shoulderTwistTarget = motorAngles[1];
-    elbowTiltTarget = motorAngles[2];
-    elbowTwistTarget = motorAngles[3];
-    wristTiltTarget = motorAngles[4];
-    wristTwistTarget = motorAngles[5];
-}
-
-void updatePosition()
-{
-    jointAngles[0] = ShoulderTilt.encoder.readDegrees();
-    jointAngles[1] = ShoulderTwist.encoder.readDegrees();
-    jointAngles[2] = ElbowTilt.encoder.readDegrees();
-    jointAngles[3] = ElbowTwist.encoder.readDegrees();
-    jointAngles[4] = Wrist.tiltEncoder.readDegrees();
-    jointAngles[5] = Wrist.twistEncoder.readDegrees();
-}
-
-void closedLoop()
-{
-    float outputs[2];
-    float angles[2];
-
-    updatePosition();
-    angles[0] = jointAngles[0];
-    angles[1] = jointAngles[1];
-    if ( !( ShoulderTilt.atSoftLimit(angles[0], shoulderTiltTarget) ) )
-    {
-        moveToAngle(ShoulderTilt, shoulderTiltTarget, angles[0], outputs[0]);
-    }
-    if ( !( ShoulderTwist.atSoftLimit(angles[1], shoulderTwistTarget) ) )
-    {
-        moveToAngle(ShoulderTwist, shoulderTiltTarget, angles[1], outputs[1]);
-    }
-    Watchdog.clear();
-
-    if( ( outputs[0] != 0 ) && ( ShoulderTilt.atHardLimit(outputs[0]) == false ) ) 
-    { 
-        ShoulderTilt.moveJoint(outputs[0]);
-    }
-    if( ( outputs[1] != 0 ) && ( ShoulderTwist.atHardLimit(outputs[1]) == false ) ) 
-    { 
-        ShoulderTwist.moveJoint(outputs[0]);
-    }
-    
-    updatePosition();
-    angles[0] = jointAngles[2];
-    angles[1] = jointAngles[3];
-    if ( !( ElbowTilt.atSoftLimit(angles[0], elbowTiltTarget) ) )
-    {
-        moveToAngle(ElbowTilt, elbowTiltTarget, angles[0], outputs[0]);
-    }
-    if ( !( ElbowTwist.atSoftLimit(angles[1], elbowTwistTarget) ) )
-    {
-        moveToAngle(ElbowTwist, elbowTwistTarget, angles[1], outputs[1]);
-    }
-    Watchdog.clear();
-
-    if( ( outputs[0] != 0 ) && ( ElbowTilt.atHardLimit(outputs[0]) == false ) )
-    { 
-      ElbowTilt.moveJoint(outputs[0]);
-    }
-    if( outputs[1] != 0 )
-    { 
-      ElbowTwist.moveJoint(outputs[1]);
-    }
-
-    updatePosition();
-    angles[0] = jointAngles[4];
-    angles[1] = jointAngles[5];
-    moveToAngle(Wrist, wristTiltTarget, wristTwistTarget, angles, outputs);
-    Watchdog.clear();
-
-    if( (outputs[0] != 0) || (outputs[1] != 0) )
-    { 
-      Wrist.moveDiffJoint(outputs[0], outputs[1]);
-    }
-
-    Watchdog.clear();
-}
-
-void moveToAngle(RoveJoint &Joint, float goalAngle, float angle, float& output)
-{
-    float smallerAngle, largerAngle, cwAngle, ccAngle;
-
-    smallerAngle = min( angle, goalAngle );
-    largerAngle = max( angle, goalAngle );
-
-    cwAngle = ( largerAngle - smallerAngle );
-    ccAngle = ( (smallerAngle+360) - largerAngle );
-
-    if ( cwAngle > abs( ccAngle ) )
-    {
-        output = Joint.pid.incrementPid( angle, goalAngle, PidTolerance );
-    }
-    else 
-    {
-        output = Joint.pid.incrementPid( goalAngle, angle, PidTolerance );
-    }
-}
-
-void moveToAngle(RoveJointDifferential &Joint, float tiltAngle, float twistAngle, float angles[2], float outputs[2])
-{
-    float smallerAngle, largerAngle, cwAngle, ccAngle;
-    float goalAngles[2] = {tiltAngle, twistAngle};
-    bool cwBigger[2] = {false, false};
-    bool twistMove = false;
-
-    for (uint8_t i = 0; i < 2; i++)
-    {
-        smallerAngle = min( angles[i], goalAngles[i] );
-        largerAngle = max( angles[i], goalAngles[i] );
-
-        cwAngle = ( largerAngle - smallerAngle );
-        ccAngle = ( (smallerAngle+360) - largerAngle );
-
-        if ( cwAngle > abs( ccAngle ) )
+        // Closed loop control of J1-J6, using IK to calculate targetAngles
+        case RC_ARMBOARD_ARMMOVEIK_DATA_ID:
         {
-            cwBigger[i] = true;
+            float* data = (float*) packet.data; // Destination coordinates (x, y, z, yaw, pitch, roll), angles in degrees
+            closedLoopActive = true;
+
+            bool valid = updateTargetAngles_IK(data);
+            if (!valid) Serial.println("IK destination out of range.");
+            feedWatchdog();
+            break;
+        }
+
+        // Open loop control of hex key
+        case RC_ARMBOARD_ENDEFFECTOR_DATA_ID:
+        {
+            int16_t data = ((int16_t*) packet.data)[0];
+            HexKey.drive(data);
+            feedWatchdog();
+            break;
+        }
+
+        // Open loop control of gripper
+        case RC_ARMBOARD_GRIPPERMOVE_DATA_ID:
+        {
+            int16_t data = ((int16_t*) packet.data)[0];
+            Gripper.drive(data);
+            feedWatchdog();
+            break;
+        }
+        
+        // Toggle lasers on or off
+        case RC_ARMBOARD_LASERS_DATA_ID:
+        {
+            uint8_t data = ((uint8_t*) packet.data)[0];
+            digitalWrite(LAS_1, data);
+            digitalWrite(LAS_2, data);
+            break;
+        }
+
+        // Write joint angles to RoveComm
+        case RC_ARMBOARD_REQUESTJOINTPOSITIONS_DATA_ID:
+        {
+            RoveComm.writeReliable(RC_ARMBOARD_JOINTANGLES_DATA_ID, RC_ARMBOARD_JOINTANGLES_DATA_COUNT, jointAngles);
+            lastWriteJointAnglesTimestamp = timestamp;
+            break;
+        }
+
+        // Write coordinates to RoveComm
+        case RC_ARMBOARD_REQUESTAXESPOSITIONS_DATA_ID:
+        {
+            RoveComm.writeReliable(RC_ARMBOARD_IKCOORDINATES_DATA_ID, RC_ARMBOARD_IKCOORDINATES_DATA_COUNT, coordinates);
+            lastWriteCoordinatesTimestamp = timestamp;
+            break;
+        }
+
+        // Default
+        default:
+        {
+            break;
         }
     }
 
-    if ( cwBigger[0] == true && twistMove == false )
-    {
-        outputs[0] = Joint.tiltPid.incrementPid( angles[0], goalAngles[0], PidTolerance );
-        outputs[1] = Joint.twistPid.incrementPid( goalAngles[0], angles[1], PidTolerance );
+
+    // Update closed loop
+    if (closedLoopActive) closedLoop(timestamp);
+
+
+    // Periodically write telemetry
+    if ((timestamp - lastWriteCoordinatesTimestamp) >= ROVECOMM_UPDATE_RATE*4) {
+        RoveComm.write(RC_ARMBOARD_IKCOORDINATES_DATA_ID, RC_ARMBOARD_IKCOORDINATES_DATA_COUNT, coordinates);
+        lastWriteCoordinatesTimestamp = timestamp;
     }
-    if ( cwBigger[1] == true && twistMove == true )
-    {
-        outputs[1] = Joint.twistPid.incrementPid( angles[1], goalAngles[1], PidTolerance );
-        outputs[0] = Joint.tiltPid.incrementPid( angles[0], goalAngles[1], PidTolerance );
+
+    if ((timestamp - lastWriteJointAnglesTimestamp) >= ROVECOMM_UPDATE_RATE*4) {
+        RoveComm.write(RC_ARMBOARD_JOINTANGLES_DATA_ID, RC_ARMBOARD_JOINTANGLES_DATA_COUNT, jointAngles);
+        lastWriteJointAnglesTimestamp = timestamp;
     }
-    else if ( twistMove == true )
-    {
-        outputs[1] = Joint.twistPid.incrementPid( goalAngles[1], angles[1], PidTolerance );
-        outputs[0] = Joint.tiltPid.incrementPid( goalAngles[1], angles[0], PidTolerance );
-    }
-    else
-    {
-        outputs[0] = Joint.tiltPid.incrementPid( goalAngles[0], angles[0], PidTolerance );
-        outputs[1] = Joint.twistPid.incrementPid( angles[1], goalAngles[0], PidTolerance );
-    }
+
 
 }
 
-void estop()
-{
-    ShoulderTilt.moveJoint(0);
-    ShoulderTwist.moveJoint(0);
-    ElbowTilt.moveJoint(0);
-    ElbowTwist.moveJoint(0);
-    Wrist.moveDiffJoint(0, 0);
-    Gripper.drive(0);
+
+void updateJointAngles() {
+    jointAngles[0] = Encoder1.readDegrees();
+    jointAngles[1] = Encoder2.readDegrees();
+    jointAngles[2] = Encoder3.readDegrees();
+    jointAngles[3] = Encoder4.readDegrees();
+    jointAngles[4] = Encoder5.readDegrees();
+    jointAngles[5] = Encoder6.readDegrees();
+}
+
+void updateCoordinates() {
+    forwardKinematics(jointAngles, coordinates);
+}
+
+void updateTargetAngles_Position(float targets[6]) {
+    targetAngles[0] = targets[0];
+    targetAngles[1] = targets[1];
+    targetAngles[2] = targets[2];
+    targetAngles[3] = targets[3];
+    targetAngles[4] = targets[4];
+    targetAngles[5] = targets[5];
+}
+
+bool updateTargetAngles_IK(float dest[6]) {
+    bool valid = inverseKinematics(dest, jointAngles, targetAngles); 
+    
+    // If IK destination is invalid, hold current position
+    if (!valid) {
+        targetAngles[0] = jointAngles[0];
+        targetAngles[1] = jointAngles[1];
+        targetAngles[2] = jointAngles[2];
+        targetAngles[3] = jointAngles[3];
+        targetAngles[4] = jointAngles[4];
+        targetAngles[5] = jointAngles[5];
+    }
+
+    return valid;
+}
+
+
+
+void openLoop(int16_t decipercents[6]) {
+    J1.drive(decipercents[0]);
+    J2.drive(decipercents[1]);
+    J3.drive(decipercents[2]);
+    J4.drive(decipercents[3]);
+    Wrist.drive(decipercents[4], decipercents[5]);
+}
+
+void closedLoop(uint32_t timestamp) {
+    J1.setAngle(targetAngles[0], timestamp);
+    J2.setAngle(targetAngles[1], timestamp);
+    J3.setAngle(targetAngles[2], timestamp);
+    J4.setAngle(targetAngles[3], timestamp);
+    Wrist.setAngles(targetAngles[4], targetAngles[5], timestamp);
+}
+
+void estop() {
+    J1.drive(0);
+    J2.drive(0);
+    J3.drive(0);
+    J4.drive(0);
+    Wrist.drive(0, 0);
+}
+
+void feedWatchdog() {
+  Watchdog.begin(estop, WATCHDOG_TIMEOUT);
 }

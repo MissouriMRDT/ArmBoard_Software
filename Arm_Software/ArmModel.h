@@ -1,72 +1,68 @@
-#ifndef ARMMODELINFO_H_
-#define ARMMODELINFO_H_
+#ifndef ARMMODEL_H
+#define ARMMODEL_H
 
-#include "stdint.h"
+#define _USE_MATH_DEFINES
+#include <cmath>
+#include "Matrix.h"
 
-const uint8_t ArmJointCount = 6;
+const float M_2PI = 2.0 * M_PI;
 
-//D-H Parameters of Arm Model
-const float th1offset=1.57079632679; //should be 90 in order for origin frame to comply with "Rover
-// Coordinate Standard"
-const float d1=4.1301; // height of bicep tilt axis from baseplate/origin
-const float a1=0; //forward offset of bicep tilt axis relative to base rotate axis
-const float alpha1=1.57079632679; //anglular offset of J1 about X1 axis. (SHOULD BE 90 UNLESS ARM
-           // DESIGN IS SUPER FUNKY)
-const float th2offset=1.57079632679;//should be 90 in order to comply with DH convention
-const float d2=0;//offset to the right of the bicep relative to the base rotation axis(
-     //should probably stay as 0 even if bicep is offset. this offset can
-     //also be accounted for using d3)
-const float a2=17;//bicep length(distance between bicep tilt axis and elbow tilt axis)
-const float alpha2=0;//angular offset of elbow tilt axis about x2 axis.(SHOULD BE 90
-         //UNLESS ARM DESIGN IS SUPER FUNKY)
-const float th3offset=1.57079632679;//should be 90
-const float d3=0;//offset to the right of the forearm relative to the bicep(see d2
-     //comment, if the bicep is offset from the base rotate axis but you
-     //have d2 as 0, then d3 must be the offset to the right of the forearm
-     //relative to the base rotate axis)
-const float a3=0;//offset of forearm twist axis from the elbow tilt axis along the x2
-     //axis. (this is the "vertical" offset of the forearm.  DONT USE THIS
-     //if you calculated the actual distance between the elbow axis and
-     //wrist center and calculated the th3 offset accordingly. in that case
-     //a3 should be 0
-const float alpha3=1.57079632679;//angular offset of forearm about x3 axis. (SHOULD BE 90 UNLESS ARM
-         //DESIGN IS SUPER FUNKY)
-const float th4offset=0; //angular offset of forearm twist. should be 0 for standard
-             //spherical wrist orientation. (phoenix, horison, zenith, and
-             //gryphon's wrist joints all complied with this)
-const float d4=17.5;//Forearm Length. If a3 is zero but there is a "vertical" offset of
-      //the forearm, this value needs to be the center to center distance
-      //between the elbow tilt axis and the wrist center.
-const float a4=0; //needs to be 0 for spherical wrist
-const float alpha4=-1.57079632679; //should be -90 for standard spherical wrist orientation.
-            //(phoenix, horiZon, zenith, and gryphon's wrist joints all
-            //complied with this)
-const float th5offset=0; //wrist tilt angle offset. should be 0 unless there is a
-             //"vertical" forearm offset and you chose to use the center to
-             //center distances between the elbow tilt axis and the wrist
-             //center. if this is the case, th4offset needs to be calculated
-             //as the angle between the line center line between the elbow
-             //tilt axis and wrist center with the axis of gripper rotate(j6)
-const float d5=0;//needs to be 0 for spherical wrist
-const float a5=0;//needs to be 0 for spherical wrist
-const float alpha5=1.57079632679;//angular offset of gripper rotate axis from gripper tilt axis
-          //about x5 axis. needs to be 90 for spherical wrist
-const float th6offset=1.57079632679; //angular twist of gripper from normal orientation. should be
-              //90 for standard spherical wrist orientation. (phoenix,
-              //horiZon, zenith, and gryphon's wrist joints all complied with this)
-const float d6=0;//keep as 0
-const float a6=0;//keep as 0
-const float alpha6=1.57079632679; //angular tilt of gripper from normal orientation. should be 90
-           //for standard spherical wrist orientation. (phoenix, horiZon,
-           //zenith, and gryphon's wrist joints all complied with this)
+// DH Parameters
+// See documentation before modifying.
 
-//CENTER POINT OF GRIPPER
-const float OpPointOffset[3]={0, 7.0, 0};
-extern float opPointOffset[3];
+const float theta1_offset = M_PI_2;         // Keep as PI/2
+const float d1 = 4.5;                       // Distance between J1 and J2 along Z1 axis
+const float r1 = 0;                         // Distance between J1 and J2 along X1 axis
+const float alpha1 = M_PI_2;                // Keep as PI/2
 
-extern uint32_t currentPositions[6];
-extern uint32_t bicepAngleVals[4];
-extern uint32_t forearmAngleVals[2];
+const float theta2_offset = M_PI_2;         // Keep as PI/2
+const float d2 = 0;                         // Distance between J2 and J3 along Z2 axis
+const float r2 = 15;                        // Distance between J2 and J3 along X2 axis
+const float alpha2 = 0;                     // Keep as 0
 
+const float theta3_offset = 0;				       // Keep as 0
+const float d3 = 0;                         // Distance between J3 and J4 along Z3 axis
+const float r3 = 2.75;                      // Distance between J3 and J4 along X3 axis
+const float alpha3 = M_PI_2;                // Keep as PI/2 
 
-#endif /* ARMMODELINFO_H_ */
+const float theta4_offset = 0;              // Keep as 0
+const float d4 = 18;                        // Distance between J4 and J5 along Z4 axis
+const float r4 = 0;                         // Needs to be 0 for spherical wrist
+const float alpha4 = -M_PI_2;               // Keep as -PI/2 
+
+const float theta5_offset = 0;              // Keep as 0
+const float d5 = 0;                         // Needs to be 0 for spherical wrist
+const float r5 = 0;                         // Needs to be 0 for spherical wrist
+const float alpha5 = M_PI_2;                //angular offset of gripper rotate axis from gripper tilt axis about x5 axis. needs to be 90 for spherical wrist
+
+const float theta6_offset = M_PI_2;         // Keep as PI/2
+const float d6 = 0;                         // Accounted for by T6 translations below
+const float r6 = 0;                         // Accounted for by T6 translations below
+const float alpha6 = M_PI_2;                // Keep as PI/2
+
+const float T6_HexKey[3] = {0, 8, 0};       // (x, y, z) Translation from J6 to Hex Key in J6 reference frame
+const float T6_Gripper[3] = {0, 0, 0};      // (x, y, z) Translation from J6 to Gripper in J6 reference frame
+const float T6_DefaultEE[3] = {0, 0, 0};    // (x, y, z) Translation from J6 to Default End Effector in J6 reference frame
+
+enum OpMode{HEX_KEY, GRIPPER, DEFAULT};
+
+// Selects which End Effector offset to use
+void setOpMode(OpMode m);
+
+// Calculates the coordinates of the End Effector given a set of joint angles
+// Angles are in degrees, distances are in inches.
+//
+// angles = input joint angles (J1-J6)
+// coords = output coordinates (x, y, z, yaw, pitch, roll)
+void forwardKinematics(float angles[6], float coords[6]);
+
+// Calculates the joint angles required to place the End Effector at the given coordinates.
+// Angles are in degrees, distances are in inches.
+// Returns true if destination is within valid operating range.
+//
+// coords = input coordinates (x, y, z, yaw, pitch, roll)
+// curr = current joint angles (J1-J6)
+// angles = output joint angles (J1-J6)
+bool inverseKinematics(float coords[6], float curr[6], float angles[6]);
+
+#endif

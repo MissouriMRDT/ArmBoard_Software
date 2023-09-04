@@ -63,7 +63,7 @@ void matrixMathScale(float* A, int m, int n, float k);
 //
 // A = input matrix AND result matrix
 // n = number of rows = number of columns in A (n x n)
-int matrixMathInvert(float* A, int n);
+//int matrixMathInvert(float* A, int n);
 
 #ifdef __cplusplus
 }

@@ -1,100 +1,128 @@
-#pragma once
+#ifndef ARMBOARD_SOFTWARE_H
+#define ARMBOARD_SOFTWARE_H
 
-#include "RoveComm.h"
-#include "RoveJoint.h"
-#include "IK.h"
 #include "ArmModel.h"
 
-// Motor 1 Pins
-#define MotorINA_1              PC_6
-#define MotorINB_1              PE_5
-#define MotorPWM_1              PF_1
+#include <RoveComm.h>
+#include <RoveHBridge.h>
+#include <MA3PWM.h>
+#include <LimitSwitch.h>
+#include <RovePIDController.h>
+#include <RoveJoint.h>
+#include <RoveDifferentialJoint.h>
 
-// Motor 2 Pins
-#define MotorINA_2              PD_3
-#define MotorINB_2              PC_7
-#define MotorPWM_2              PD_1
+#include <cstdint>
 
-// Motor 3 Pins
-#define MotorINA_3              PB_2
-#define MotorINB_3              PB_3
-#define MotorPWM_3              PD_0
-
-// Motor 4 Pins
-#define MotorINA_4              PD_4
-#define MotorINB_4              PD_5
-#define MotorPWM_4              PD_2
-
-// Motor 5 Pins
-#define MotorINA_5              PQ_0
-#define MotorINB_5              PP_4
-#define MotorPWM_5              PM_7
-
-// Motor 6 Pins
-#define MotorINA_6              PN_5
-#define MotorINB_6              PN_4
-#define MotorPWM_6              PF_2 
-
-// Motor 7 Pins
-#define MotorINA_7              PP_1
-#define MotorINB_7              PP_0
-#define MotorPWM_7              PM_0
-
-// Joint Encoder Pins
-#define Encoder_ShoulderTilt    PM_4
-#define Encoder_ShoulderTwist   PM_1
-#define Encoder_ElbowTilt       PA_4
-#define Encoder_ElbowTwist      PM_3
-#define Encoder_WristTilt       PM_5
-#define Encoder_WristTwist      PM_6
-
-// Limit Switch Pins
-#define LimitSwitchLower_J1     PP_5
-#define LimitSwitchUpper_J1     PA_7
-#define LimitSwitchLower_J2     PQ_2
-#define LimitSwitchUpper_J2     PQ_3
-#define LimitSwitchLower_J3     PG_1
-#define LimitSwitchUpper_J3     PK_4
-
-// End Effectors
-#define LaserToggle             PN_2
-#define SolenoidToggle          PN_3
-
-#define PidTolerance            2
-#define WatchdogTimeout         500
 
 // RoveComm declarations
 RoveCommEthernet RoveComm;
-rovecomm_packet packet;
 EthernetServer TCPServer(RC_ROVECOMM_ARMBOARD_PORT);
 
-// Joint and motor declarations
-RoveJoint ShoulderTilt, ShoulderTwist, ElbowTilt, ElbowTwist;
-RoveJointDifferential Wrist;
-RoveStmVnhPwm Gripper;
-
 // Watchdog declarations
-RoveWatchdog Watchdog;
-//RoveTimerInterrupt WatchdogTelemetry;
+#define WATCHDOG_TIMEOUT 300000
+IntervalTimer Watchdog;
 
-// Joint target variables
+
+
+// Motor Pins
+const uint8_t FWD_PWM_1 = 11;
+const uint8_t RVS_PWM_1 = 10;
+const uint8_t FWD_PWM_2 = 9;
+const uint8_t RVS_PWM_2 = 8;
+const uint8_t FWD_PWM_3 = 5;
+const uint8_t RVS_PWM_3 = 4;
+
+const uint8_t FWD_PWM_4 = 3;
+const uint8_t RVS_PWM_4 = 2;
+const uint8_t FWD_PWM_5 = 15;
+const uint8_t RVS_PWM_5 = 14;
+const uint8_t FWD_PWM_6 = 1;
+const uint8_t RVS_PWM_6 = 0;
+
+const uint8_t FWD_PWM_7 = 24;
+const uint8_t RVS_PWM_7 = 18;
+const uint8_t FWD_PWM_8 = 37;
+const uint8_t RVS_PWM_8 = 36;
+const uint8_t FWD_PWM_9 = 7;
+const uint8_t RVS_PWM_9 = 6;
+
+
+// Encoder Pins
+const uint8_t ENC_1 = 33;
+const uint8_t ENC_2 = 13;
+const uint8_t ENC_3 = 12;
+const uint8_t ENC_4 = 25;
+const uint8_t ENC_5 = 28;
+const uint8_t ENC_6 = 29;
+
+// Limit Switch Pins
+const uint8_t LIM_1 = 5;
+const uint8_t LIM_2 = 4;
+const uint8_t LIM_3 = 3;
+const uint8_t LIM_4 = 2;
+const uint8_t LIM_5 = 1;
+const uint8_t LIM_6 = 0;
+
+// Laser Pins
+const uint8_t LAS_1 = 22;
+const uint8_t LAS_2 = 23;
+
+
+
+// Motors
+RoveHBridge Motor1(FWD_PWM_1, RVS_PWM_1);
+RoveHBridge Motor2(FWD_PWM_2, RVS_PWM_2);
+RoveHBridge Motor3(FWD_PWM_3, RVS_PWM_3);
+RoveHBridge Motor4(FWD_PWM_4, RVS_PWM_4);
+RoveHBridge Motor5(FWD_PWM_5, RVS_PWM_5);
+RoveHBridge Motor6(FWD_PWM_6, RVS_PWM_6);
+RoveHBridge Motor7(FWD_PWM_7, RVS_PWM_7);
+RoveHBridge Motor8(FWD_PWM_8, RVS_PWM_8);
+RoveHBridge Motor9(FWD_PWM_9, RVS_PWM_9);
+
+// Encoders
+MA3PWM Encoder1(ENC_1);
+MA3PWM Encoder2(ENC_2);
+MA3PWM Encoder3(ENC_3);
+MA3PWM Encoder4(ENC_4);
+MA3PWM Encoder5(ENC_5);
+MA3PWM Encoder6(ENC_6);
+
+// Limit Switches
+LimitSwitch LS1(LIM_1);
+LimitSwitch LS2(LIM_2);
+LimitSwitch LS3(LIM_3);
+LimitSwitch LS4(LIM_4);
+LimitSwitch LS5(LIM_5);
+LimitSwitch LS6(LIM_6);
+
+// PID Controllers
+RovePIDController PID1, PID2, PID3, PID4, PID5, PID6;
+
+// Joints
+RoveJoint J1(&Motor1);
+RoveJoint J2(&Motor2);
+RoveJoint J3(&Motor3);
+RoveJoint J4(&Motor4);
+RoveDifferentialJoint Wrist(&Motor5, &Motor6);
+#define Gripper Motor7
+#define HexKey Motor8
+
+// Closed loop variables
+bool closedLoopActive = false;
 float jointAngles[6];
-float jointTargets[6];
-float shoulderTiltTarget;
-float shoulderTwistTarget;
-float elbowTiltTarget;
-float elbowTwistTarget;
-float wristTiltTarget;
-float wristTwistTarget;
+float coordinates[6];
+float targetAngles[6];
 
-bool closedloopActive = false;
-uint32_t timer = millis();
+// Methods
+void updateJointAngles();
+void updateCoordinates();
+void updateTargetAngles_Position(float targets[6]);
+bool updateTargetAngles_IK(float dest[6]);
 
-void parsePackets();
-void openLoop();
-void setTargetAngles();
-void updatePosition();
-void closedLoop();
-void movetoAngle(RoveJoint &Joint, float moveTo, float Angle, float& output);
-void movetoAngle(RoveJointDifferential &Joint, float tiltTo, float twistTo, float Angles[2], float outputs[2]);
+void openLoop(int16_t decipercents[6]);
+void closedLoop(uint32_t timestamp);
 void estop();
+void feedWatchdog();
+
+#endif
