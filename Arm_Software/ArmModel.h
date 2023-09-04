@@ -52,9 +52,9 @@ void setOpMode(OpMode m);
 // Calculates the coordinates of the End Effector given a set of joint angles
 // Angles are in degrees, distances are in inches.
 //
-// angles = input joint angles (J1-J6)
+// jointAngles = input joint angles (J1-J6)
 // coords = output coordinates (x, y, z, yaw, pitch, roll)
-void forwardKinematics(float angles[6], float coords[6]);
+void forwardKinematics(float jointAngles[6], float coords[6]);
 
 // Calculates the joint angles required to place the End Effector at the given coordinates.
 // Angles are in degrees, distances are in inches.
