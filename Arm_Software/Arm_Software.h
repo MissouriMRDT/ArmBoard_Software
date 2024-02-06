@@ -1,7 +1,6 @@
 #ifndef ARMBOARD_SOFTWARE_H
 #define ARMBOARD_SOFTWARE_H
 
-#include "ArmModel.h"
 #include "PinAssignments.h"
 
 #include <RoveComm.h>
@@ -11,7 +10,6 @@
 #include <BidirectionalLimitSwitch.h>
 #include <RovePIDController.h>
 #include <RoveJoint.h>
-#include <RoveDifferentialJoint.h>
 
 #include <cstdint>
 
@@ -41,7 +39,6 @@ RoveHBridge Motor5(FWD_PWM_5, RVS_PWM_5);
 RoveHBridge Motor6(FWD_PWM_6, RVS_PWM_6);
 RoveHBridge Motor7(FWD_PWM_7, RVS_PWM_7);
 RoveHBridge Motor8(FWD_PWM_8, RVS_PWM_8);
-RoveHBridge Motor9(FWD_PWM_9, RVS_PWM_9);
 
 // Encoders
 MA3PWM Encoder1(ENC_1);
@@ -60,42 +57,15 @@ LimitSwitch LS5(LIM_5);
 LimitSwitch LS6(LIM_6);
 LimitSwitch LS7(LIM_7);
 LimitSwitch LS8(LIM_8);
-LimitSwitch LS9(LIM_9);
-LimitSwitch LS10(LIM_10);
-//LimitSwitch LS11(LIM_11);
-//LimitSwitch LS12(LIM_12);
-BidirectionalLimitSwitch BD_LS12(LIM_12, &Motor1);
-
-// PID Controllers
-RovePIDController PID1;
-RovePIDController PID2;
-RovePIDController PID3;
-RovePIDController PID4;
-RovePIDController PID5;
-RovePIDController PID6;
 
 // Joints
-RoveJoint J1(&Motor1);
-RoveJoint J2(&Motor9);
-RoveJoint J3(&Motor3);
-RoveJoint J4(&Motor4);
-RoveDifferentialJoint Wrist(&Motor5, &Motor6);
-#define Gripper Motor7
-#define HexKey Motor8
-#define Solenoid Motor2
 
 
 // Control variables
 bool closedLoopActive = false;
-float jointAngles[6];
-float coordinates[6];
-float targetAngles[6];
-int16_t decipercents[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 bool extendSolenoid = false;
 
 // Methods
-void updateJointAngles();
-void updateCoordinates();
 void estop();
 void telemetry();
 void feedWatchdog();
