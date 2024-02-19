@@ -30,24 +30,18 @@ void setup() {
     Encoder2.configInvert(false);
     Encoder3.configInvert(false);
     Encoder4.configInvert(false);
-    Encoder5.configInvert(false);
-    Encoder6.configInvert(false);
 
     // Configure encoder offsets
     Encoder1.configOffset(0);
     Encoder2.configOffset(0);
     Encoder3.configOffset(0);
     Encoder4.configOffset(0);
-    Encoder5.configOffset(0);
-    Encoder6.configOffset(0);
 
     // Attach encoder interrupts
     Encoder1.begin([]{Encoder1.handleInterrupt();});
     Encoder2.begin([]{Encoder2.handleInterrupt();});
     Encoder3.begin([]{Encoder3.handleInterrupt();});
     Encoder4.begin([]{Encoder4.handleInterrupt();});
-    Encoder5.begin([]{Encoder5.handleInterrupt();});
-    Encoder6.begin([]{Encoder6.handleInterrupt();});
 
     // Config motor inverts
     Motor1.configInvert(false);
@@ -90,8 +84,16 @@ void setup() {
     Motor8.configRampRate(10000);
 
     // Attach encoders
+    X.attachEncoder(&Encoder1);
+    Y1.attachEncoder(&Encoder2);
+    Y2.attachEncoder(&Encoder3);
+    Z.attachEncoder(&Encoder4);
 
     // Attach hard limits
+    X.attachHardLimits(&LS1, &LS2);
+    Y1.attachHardLimits(&LS3, &LS4);
+    Y2.attachHardLimits(&LS5, &LS6);
+    Z.attachHardLimits(&LS7, &LS8);
 
     // Configure soft limits
 
@@ -112,7 +114,113 @@ void loop() {
 
         case RC_ARMBOARD_OPENLOOP_DATA_ID:
         {
+            int16_t data[7] = (int16_t*)packet.data;
             
+            X_decipercent = data[0];
+            Y1_decipercent = data[1];
+            Y2_decipercent = data[2];
+            Z_decipercent = data[3];
+            Pitch_decipercent = data[4];
+            Roll1_decipercent = data[5];
+            Roll2_decipercent = data[6];
+
+            break;
+        }
+
+        case RC_ARMBOARD_SETPOSITION_DATA_ID:
+        {
+            
+            break;
+        }
+
+        case RC_ARMBOARD_INCREMENTPOSITION_DATA_ID:
+        {
+
+            break;
+        }
+
+        case RC_ARMBOARD_SETIK_DATA_ID:
+        {
+
+            break;
+        }
+
+        case RC_ARMBOARD_INCREMENTIK_ROVERRELATIVE_DATA_ID:
+        {
+
+            break;
+        }
+
+        case RC_ARMBOARD_INCREMENTIK_WRISTRELATIVE_DATA_ID:
+        {
+
+            break;
+        }
+
+        case RC_ARMBOARD_LASER_DATA_ID:
+        {
+            uint8_t data = *((uint8_t*) packet.data);
+
+            laserOn = (data == 0)? false : true;
+            break;
+        }
+
+        case RC_ARMBOARD_SOLENOID_DATA_ID:
+        {
+            uint8_t data = *((uint8_t*) packet.data);
+
+            extendSolenoid = (data == 0)? false : true;
+            break;
+        }
+
+        case RC_ARMBOARD_GRIPPER_DATA_ID:
+        {
+            int16_t data = *((int16_t*) packet.data);
+
+            switch(activeGripper) {
+                case 0:
+                    Gripper1_decipercent = data;
+                    Gripper2_decipercent = 0;
+                    break;
+                case 1:
+                    Gripper1_decipercent = 0;
+                    Gripper2_decipercent = data;
+                    break;
+            }
+            break;
+        }
+
+        case RC_ARMBOARD_WATCHDOGOVERRIDE_DATA_ID:
+        {
+            watchdogOverride = *((uint8_t*) packet.data);
+            break;
+        }
+
+        case RC_ARMBOARD_LIMITSWITCHOVERRIDE_DATA_ID:
+        {
+            uint8_t data = *((uint8_t*) packet.data);
+
+            X.overrideForwardHardLimit(data & (1<<0));
+            X.overrideReverseHardLimit(data & (1<<1));
+            Y1.overrideForwardHardLimit(data & (1<2));
+            Y1.overrideReverseHardLimit(data & (1<<3));
+            Y2.overrideForwardHardLimit(data & (1<<4));
+            Y2.overrideReverseHardLimit(data & (1<<5));
+            Z.overrideForwardHardLimit(data & (1<<6));
+            Z.overrideReverseHardLimit(data & (1<<7));
+            break;
+        }
+
+
+        case RC_ARMBOARD_CALIBRATEENCODER_DATA_ID:
+        {
+
+            break;
+        }
+
+        case RC_ARMBOARD_SELECTGRIPPER_DATA_ID:
+        {
+            activeGripper = *((uint8_t*) packet.data);
             break;
         }
 
@@ -128,23 +236,47 @@ void loop() {
 
     // X
     if (buttons == 1) X.drive((direction? 900 : -900));
-    else X.drive(XDecipercent);
+    else X.drive(X_decipercent);
 
     // Y1
+    if (buttons == 2) Y1.drive((direction? 900 : -900));
+    else Y1.drive(Y1_decipercent);
 
     // Y2
+    if (buttons == 3) Y2.drive((direction? 900 : -900));
+    else Y2.drive(Y2_decipercent);
 
     // Z
+    if (buttons == 4) Z.drive((direction? 900 : -900));
+    else Z.drive(Z_decipercent);
     
     // Pitch
+    if (buttons == 5) Pitch.drive((direction? 900 : -900));
+    else Pitch.drive(Pitch_decipercent);
 
     // Roll1
+    if (buttons == 6) Roll1.drive((direction? 900 : -900));
+    else Roll1.drive(Roll1_decipercent);
 
     // Roll2
+    if (buttons == 7) Roll2.drive((direction? 900 : -900));
+    else Roll2.drive(Roll2_decipercent);
 
-    // Gripper
+    // Gripper1
+    if (buttons == 8) Gripper1.drive((direction? 900 : -900));
+    else Gripper1.drive(Gripper1_decipercent);
 
+    // Gripper2
+    
     // Solenoid
+
+    // Servo
+    if (buttons == 11) CamServo.write((direction ? 0 : 180));
+    else CamServo.write(CamServo_position);
+
+    // Laser
+    if (buttons == 12) digitalWrite(LAS, HIGH);
+    else digitalWrite(LAS, (laserOn? HIGH : LOW));
 }
 
 
@@ -152,10 +284,17 @@ void estop() {
     if (!watchdogOverride) {
         watchdogStatus = 1;
 
-        for (int i = 0; i < 8; i++) {
-            decipercents[i] = 0;
-        }
         closedLoopActive = false;
+
+        X_decipercent = 0;
+        Y1_decipercent = 0;
+        Y2_decipercent = 0;
+        Z_decipercent = 0;
+        Pitch_decipercent = 0;
+        Roll1_decipercent = 0;
+        Roll2_decipercent = 0;
+        Gripper1_decipercent = 0;
+        Gripper2_decipercent = 0;
     }
 }
 
@@ -163,10 +302,10 @@ void telemetry() {
     RoveComm.write(RC_ARMBOARD_WATCHDOGSTATUS_DATA_ID, RC_ARMBOARD_WATCHDOGSTATUS_DATA_COUNT, watchdogStatus);
 
     if (!telemetryOverride) {
-        float positions[6] = {0, 0, 0, 0, 0, 0};
+        float positions[7] = {Encoder1.readDegrees(), Encoder2.readDegrees(), Encoder3.readDegrees(), Encoder4.readDegrees(), 0, 0, 0};
         RoveComm.write(RC_ARMBOARD_POSITIONS_DATA_ID, RC_ARMBOARD_POSITIONS_DATA_COUNT, positions);
 
-        float coordinates[6] = {0, 0, 0, 0, 0, 0};
+        float coordinates[5] = {0, 0, 0, 0, 0};
         RoveComm.write(RC_ARMBOARD_COORDINATES_DATA_ID, RC_ARMBOARD_COORDINATES_DATA_COUNT, coordinates);
     }
 }
