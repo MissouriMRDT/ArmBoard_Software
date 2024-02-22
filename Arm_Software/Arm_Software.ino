@@ -15,6 +15,9 @@ void setup() {
     pinMode(B_ENC_3, INPUT);
     pinMode(DIR_SW, INPUT);
 
+    // Servo
+    CamServo.attach(SERVO, 500, 2500);
+
     // Configure limit switch inverts
     LS1.configInvert(false);
     LS2.configInvert(false);
@@ -114,7 +117,7 @@ void loop() {
 
         case RC_ARMBOARD_OPENLOOP_DATA_ID:
         {
-            int16_t data[7] = (int16_t*)packet.data;
+            int16_t *data = (int16_t*)packet.data;
             
             X_decipercent = data[0];
             Y1_decipercent = data[1];
@@ -231,7 +234,6 @@ void loop() {
     bool direction = digitalRead(DIR_SW);
     uint8_t buttons = (digitalRead(B_ENC_3)<<3) | (digitalRead(B_ENC_2)<<2) | (digitalRead(B_ENC_1)<<1) | (digitalRead(B_ENC_0)<<0);
 
-
     // Motor outputs
 
     // X
@@ -270,13 +272,13 @@ void loop() {
     
     // Solenoid
 
-    // Servo
-    if (buttons == 11) CamServo.write((direction ? 0 : 180));
-    else CamServo.write(CamServo_position);
-
     // Laser
-    if (buttons == 12) digitalWrite(LAS, HIGH);
+    if (buttons == 9) digitalWrite(LAS, HIGH);
     else digitalWrite(LAS, (laserOn? HIGH : LOW));
+    
+    // Servo
+    if (buttons == 10) CamServo.write((direction ? 0 : 180));
+    else CamServo.write(CamServo_position);
 }
 
 
@@ -307,6 +309,10 @@ void telemetry() {
 
         float coordinates[5] = {0, 0, 0, 0, 0};
         RoveComm.write(RC_ARMBOARD_COORDINATES_DATA_ID, RC_ARMBOARD_COORDINATES_DATA_COUNT, coordinates);
+
+        uint8_t limitSwitches = (X.atForwardHardLimit() << 0) | (X.atReverseHardLimit() << 1) | (Y1.atForwardHardLimit() << 2) | (Y1.atReverseHardLimit() << 3) |
+                                (Y2.atForwardHardLimit() << 4) | (Y2.atReverseHardLimit() << 5) | (Z.atForwardHardLimit() << 6) | (Z.atReverseHardLimit() << 7);
+        RoveComm.write(RC_ARMBOARD_LIMITSWITCHTRIGGERED_DATA_ID, RC_ARMBOARD_LIMITSWITCHTRIGGERED_DATA_COUNT, limitSwitches);
     }
 }
 

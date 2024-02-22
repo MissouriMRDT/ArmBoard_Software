@@ -26,7 +26,7 @@ uint8_t watchdogStatus = 0;
 bool watchdogOverride = false;
 
 // Telemetry
-#define TELEMETRY_PERIOD 150000
+#define TELEMETRY_PERIOD 100000
 IntervalTimer Telemetry;
 bool telemetryOverride = false;
 
@@ -68,7 +68,7 @@ RoveJoint Roll2(&Motor7);
 #define Gripper1 (Motor8)
 
 // Servo
-Servo CamServo(SERVO);
+Servo CamServo;
 
 // Control variables
 uint8_t activeGripper = 0;
