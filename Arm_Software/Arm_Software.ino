@@ -106,6 +106,8 @@ void loop() {
             Roll1_decipercent = data[5];
             Roll2_decipercent = data[6];
 
+            feedWatchdog();
+
             break;
         }
 
@@ -169,6 +171,9 @@ void loop() {
                     Gripper2_decipercent = data;
                     break;
             }
+
+            feedWatchdog();
+
             break;
         }
 
