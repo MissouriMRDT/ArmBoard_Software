@@ -15,9 +15,6 @@ void setup() {
     pinMode(B_ENC_3, INPUT);
     pinMode(DIR_SW, INPUT);
 
-    // Servo
-    CamServo.attach(SERVO, 500, 2500);
-
     // Configure limit switch inverts
     LS1.configInvert(false);
     LS2.configInvert(false);
@@ -27,24 +24,10 @@ void setup() {
     LS6.configInvert(false);
     LS7.configInvert(false);
     LS8.configInvert(false);
-
-    // Configure encoder inverts
-    Encoder1.configInvert(false);
-    Encoder2.configInvert(false);
-    Encoder3.configInvert(false);
-    Encoder4.configInvert(false);
-
-    // Configure encoder offsets
-    Encoder1.configOffset(0);
-    Encoder2.configOffset(0);
-    Encoder3.configOffset(0);
-    Encoder4.configOffset(0);
-
-    // Attach encoder interrupts
-    Encoder1.begin([]{Encoder1.handleInterrupt();});
-    Encoder2.begin([]{Encoder2.handleInterrupt();});
-    Encoder3.begin([]{Encoder3.handleInterrupt();});
-    Encoder4.begin([]{Encoder4.handleInterrupt();});
+    LS9.configInvert(false);
+    LS10.configInvert(false);
+    LS11.configInvert(false);
+    LS12.configInvert(false);
 
     // Config motor inverts
     Motor1.configInvert(false);
@@ -55,6 +38,7 @@ void setup() {
     Motor6.configInvert(false);
     Motor7.configInvert(false);
     Motor8.configInvert(false);
+    Motor9.configInvert(false);
 
     // Config motor output limits
     Motor1.configMaxOutputs(-900, 900);
@@ -65,6 +49,7 @@ void setup() {
     Motor6.configMaxOutputs(-900, 900);
     Motor7.configMaxOutputs(-900, 900);
     Motor8.configMaxOutputs(-900, 900);
+    Motor9.configMaxOutputs(-900, 900);
 
     // Config motor deadbands
     Motor1.configMinOutputs(-10, 10);
@@ -75,6 +60,7 @@ void setup() {
     Motor6.configMinOutputs(-10, 10);
     Motor7.configMinOutputs(-10, 10);
     Motor8.configMinOutputs(-10, 10);
+    Motor9.configMinOutputs(-10, 10);
 
     // Config motor ramp rates
     Motor1.configRampRate(10000);
@@ -85,20 +71,13 @@ void setup() {
     Motor6.configRampRate(10000);
     Motor7.configRampRate(10000);
     Motor8.configRampRate(10000);
-
-    // Attach encoders
-    X.attachEncoder(&Encoder1);
-    Y1.attachEncoder(&Encoder2);
-    Y2.attachEncoder(&Encoder3);
-    Z.attachEncoder(&Encoder4);
+    Motor9.configRampRate(10000);
 
     // Attach hard limits
     X.attachHardLimits(&LS1, &LS2);
     Y1.attachHardLimits(&LS3, &LS4);
     Y2.attachHardLimits(&LS5, &LS6);
     Z.attachHardLimits(&LS7, &LS8);
-
-    // Configure soft limits
 
     Serial.println("RoveComm Initializing...");
     RoveComm.begin(RC_ARMBOARD_FIRSTOCTET, RC_ARMBOARD_SECONDOCTET, RC_ARMBOARD_THIRDOCTET, RC_ARMBOARD_FOURTHOCTET, &TCPServer);
@@ -269,16 +248,16 @@ void loop() {
     else Gripper1.drive(Gripper1_decipercent);
 
     // Gripper2
+    //if (buttons == 9) Gripper2.drive((direction? 900 : -900));
+    //else Gripper2.drive(Gripper2_decipercent);
     
     // Solenoid
+    if (buttons == 9) Solenoid.drive((direction? 900 : -900));
+    else Solenoid.drive((extendSolenoid)? 900 : 0);
 
     // Laser
-    if (buttons == 9) digitalWrite(LAS, HIGH);
+    if (buttons == 10) digitalWrite(LAS, HIGH);
     else digitalWrite(LAS, (laserOn? HIGH : LOW));
-    
-    // Servo
-    if (buttons == 10) CamServo.write((direction ? 0 : 180));
-    else CamServo.write(CamServo_position);
 }
 
 
@@ -304,7 +283,7 @@ void telemetry() {
     RoveComm.write(RC_ARMBOARD_WATCHDOGSTATUS_DATA_ID, RC_ARMBOARD_WATCHDOGSTATUS_DATA_COUNT, watchdogStatus);
 
     if (!telemetryOverride) {
-        float positions[7] = {Encoder1.readDegrees(), Encoder2.readDegrees(), Encoder3.readDegrees(), Encoder4.readDegrees(), 0, 0, 0};
+        float positions[7] = {0, 0, 0, 0, 0, 0, 0};
         RoveComm.write(RC_ARMBOARD_POSITIONS_DATA_ID, RC_ARMBOARD_POSITIONS_DATA_COUNT, positions);
 
         float coordinates[5] = {0, 0, 0, 0, 0};

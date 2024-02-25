@@ -40,12 +40,7 @@ RoveHBridge Motor5(M5_FWD, M5_RVS);
 RoveHBridge Motor6(M6_FWD, M6_RVS);
 RoveHBridge Motor7(M7_FWD, M7_RVS);
 RoveHBridge Motor8(M8_FWD, M8_RVS);
-
-// Encoders
-RoveQuadEncoder Encoder1(ENC_1A, ENC_1B, 1);
-RoveQuadEncoder Encoder2(ENC_2A, ENC_2B, 1);
-RoveQuadEncoder Encoder3(ENC_3A, ENC_3B, 1);
-RoveQuadEncoder Encoder4(ENC_4A, ENC_4B, 1);
+RoveHBridge Motor9(M9_FWD, M9_RVS);
 
 // Limit Switches
 LimitSwitch LS1(LIM_1);
@@ -56,6 +51,10 @@ LimitSwitch LS5(LIM_5);
 LimitSwitch LS6(LIM_6);
 LimitSwitch LS7(LIM_7);
 LimitSwitch LS8(LIM_8);
+LimitSwitch LS9(LIM_9);
+LimitSwitch LS10(LIM_10);
+LimitSwitch LS11(LIM_11);
+LimitSwitch LS12(LIM_12);
 
 // Joints
 RoveJoint X(&Motor1);
@@ -66,9 +65,8 @@ RoveJoint Pitch(&Motor5);
 RoveJoint Roll1(&Motor6);
 RoveJoint Roll2(&Motor7);
 #define Gripper1 (Motor8)
+#define Solenoid (Motor9)
 
-// Servo
-Servo CamServo;
 
 // Control variables
 uint8_t activeGripper = 0;
@@ -93,8 +91,6 @@ float Z_target = 0;
 float Pitch_target = 0;
 float Roll1_target = 0;
 float Roll2_target = 0;
-
-uint8_t CamServo_position = 90;
 
 
 // Methods
