@@ -1,6 +1,8 @@
 #ifndef ARMBOARD_SOFTWARE_H
 #define ARMBOARD_SOFTWARE_H
 
+//2024 REV 2
+
 #include "ArmModel.h"
 #include "PinAssignments.h"
 
@@ -33,56 +35,56 @@ bool telemetryOverride = false;
 
 
 // Motors
-RoveHBridge Motor1(FWD_PWM_1, RVS_PWM_1);
-RoveHBridge Motor2(FWD_PWM_2, RVS_PWM_2);
-RoveHBridge Motor3(FWD_PWM_3, RVS_PWM_3);
-RoveHBridge Motor4(FWD_PWM_4, RVS_PWM_4);
-RoveHBridge Motor5(FWD_PWM_5, RVS_PWM_5);
-RoveHBridge Motor6(FWD_PWM_6, RVS_PWM_6);
-RoveHBridge Motor7(FWD_PWM_7, RVS_PWM_7);
-RoveHBridge Motor8(FWD_PWM_8, RVS_PWM_8);
-RoveHBridge Motor9(FWD_PWM_9, RVS_PWM_9);
+// RoveHBridge Motor1(FWD_PWM_1, RVS_PWM_1);
+// RoveHBridge Motor2(FWD_PWM_2, RVS_PWM_2);
+// RoveHBridge Motor3(FWD_PWM_3, RVS_PWM_3);
+// RoveHBridge Motor4(FWD_PWM_4, RVS_PWM_4);
+// RoveHBridge Motor5(FWD_PWM_5, RVS_PWM_5);
+// RoveHBridge Motor6(FWD_PWM_6, RVS_PWM_6);
+// RoveHBridge Motor7(FWD_PWM_7, RVS_PWM_7);
+// RoveHBridge Motor8(FWD_PWM_8, RVS_PWM_8);
+// RoveHBridge Motor9(FWD_PWM_9, RVS_PWM_9);
 
 // Encoders
-MA3PWM Encoder1(ENC_1);
-MA3PWM Encoder2(ENC_2);
-MA3PWM Encoder3(ENC_3);
-MA3PWM Encoder4(ENC_4);
-MA3PWM Encoder5(ENC_5);
-MA3PWM Encoder6(ENC_6);
+// MA3PWM Encoder1(ENC_1);
+// MA3PWM Encoder2(ENC_2);
+// MA3PWM Encoder3(ENC_3);
+// MA3PWM Encoder4(ENC_4);
+// MA3PWM Encoder5(ENC_5);
+// MA3PWM Encoder6(ENC_6);
 
-// Limit Switches
-LimitSwitch LS1(LIM_1);
-LimitSwitch LS2(LIM_2);
-LimitSwitch LS3(LIM_3);
-LimitSwitch LS4(LIM_4);
-LimitSwitch LS5(LIM_5);
-LimitSwitch LS6(LIM_6);
-LimitSwitch LS7(LIM_7);
-LimitSwitch LS8(LIM_8);
-LimitSwitch LS9(LIM_9);
-LimitSwitch LS10(LIM_10);
+// // Limit Switches
+// LimitSwitch LS1(LIM_1);
+// LimitSwitch LS2(LIM_2);
+// LimitSwitch LS3(LIM_3);
+// LimitSwitch LS4(LIM_4);
+// LimitSwitch LS5(LIM_5);
+// LimitSwitch LS6(LIM_6);
+// LimitSwitch LS7(LIM_7);
+// LimitSwitch LS8(LIM_8);
+// LimitSwitch LS9(LIM_9);
+// LimitSwitch LS10(LIM_10);
 //LimitSwitch LS11(LIM_11);
 //LimitSwitch LS12(LIM_12);
-BidirectionalLimitSwitch BD_LS12(LIM_12, &Motor1);
+// BidirectionalLimitSwitch BD_LS12(LIM_12, &Motor1);
 
 // PID Controllers
-RovePIDController PID1;
-RovePIDController PID2;
-RovePIDController PID3;
-RovePIDController PID4;
-RovePIDController PID5;
-RovePIDController PID6;
+// RovePIDController PID1;
+// RovePIDController PID2;
+// RovePIDController PID3;
+// RovePIDController PID4;
+// RovePIDController PID5;
+// RovePIDController PID6;
 
 // Joints
-RoveJoint J1(&Motor1);
-RoveJoint J2(&Motor9);
-RoveJoint J3(&Motor3);
-RoveJoint J4(&Motor4);
-RoveDifferentialJoint Wrist(&Motor5, &Motor6);
-#define Gripper Motor7
-#define HexKey Motor8
-#define Solenoid Motor2
+// RoveJoint J1(&Motor1);
+// RoveJoint J2(&Motor9);
+// RoveJoint J3(&Motor3);
+// RoveJoint J4(&Motor4);
+// RoveDifferentialJoint Wrist(&Motor5, &Motor6);
+// #define Gripper Motor7
+// #define HexKey Motor8
+// #define Solenoid Motor2
 
 
 // Control variables

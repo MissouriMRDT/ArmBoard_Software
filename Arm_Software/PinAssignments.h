@@ -5,19 +5,19 @@
 
 
 // Motor Pins
-const uint8_t FWD_PWM_1 = 9;
-const uint8_t RVS_PWM_1 = 8;
+const uint8_t FWD_PWM_1 = 0;
+const uint8_t RVS_PWM_1 = 1;
 const uint8_t FWD_PWM_2 = 7;
-const uint8_t RVS_PWM_2 = 6;
-const uint8_t FWD_PWM_3 = 0;
-const uint8_t RVS_PWM_3 = 1;
+const uint8_t RVS_PWM_2 = 8;
+const uint8_t FWD_PWM_3 = 28;
+const uint8_t RVS_PWM_3 = 29;
 
-const uint8_t FWD_PWM_4 = 2;
-const uint8_t RVS_PWM_4 = 3;
-const uint8_t FWD_PWM_5 = 23;
-const uint8_t RVS_PWM_5 = 22;
-const uint8_t FWD_PWM_6 = 24;
-const uint8_t RVS_PWM_6 = 25;
+const uint8_t FWD_PWM_4 = 3;
+const uint8_t RVS_PWM_4 = 4;
+const uint8_t FWD_PWM_5 = 13;
+const uint8_t RVS_PWM_5 = 14;
+const uint8_t FWD_PWM_6 = 15;
+const uint8_t RVS_PWM_6 = 16;
 
 const uint8_t FWD_PWM_7 = 37;
 const uint8_t RVS_PWM_7 = 36;

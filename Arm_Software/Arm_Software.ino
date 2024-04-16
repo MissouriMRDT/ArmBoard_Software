@@ -18,126 +18,6 @@ void setup() {
     pinMode(B_ENC_3, INPUT);
     pinMode(DIR_SW, INPUT);
 
-
-    // Configure limit switch inverts
-    LS1.configInvert(false);
-    LS2.configInvert(false);
-    LS3.configInvert(false);
-    LS4.configInvert(false);
-    LS5.configInvert(false);
-    LS6.configInvert(false);
-    LS7.configInvert(false);
-    LS8.configInvert(false);
-    LS9.configInvert(false);
-    LS10.configInvert(false);
-    //LS11.configInvert(false);
-    //LS12.configInvert(false);
-    BD_LS12.configInvert(false);
-
-    // Begin bidirectional limit switches
-    BD_LS12.begin([]{BD_LS12.handleInterrupt();});
-
-
-    // Configure encoder inverts
-    Encoder1.configInvert(true);
-    Encoder2.configInvert(true);
-    Encoder3.configInvert(true);
-    Encoder4.configInvert(false);
-    Encoder5.configInvert(false);
-    Encoder6.configInvert(false);
-
-    // Configure encoder offsets
-    Encoder1.configOffset(0);
-    Encoder2.configOffset(0);
-    Encoder3.configOffset(0);
-    Encoder4.configOffset(0);
-    Encoder5.configOffset(0);
-    Encoder6.configOffset(0);
-
-    // Attach encoder interrupts
-    Encoder1.begin([]{Encoder1.handleInterrupt();});
-    Encoder2.begin([]{Encoder2.handleInterrupt();});
-    Encoder3.begin([]{Encoder3.handleInterrupt();});
-    Encoder4.begin([]{Encoder4.handleInterrupt();});
-    Encoder5.begin([]{Encoder5.handleInterrupt();});
-    Encoder6.begin([]{Encoder6.handleInterrupt();});
-
-
-    // Config motor inverts
-    Motor1.configInvert(true);
-    Motor2.configInvert(true);
-    Motor3.configInvert(true);
-    Motor4.configInvert(false);
-    Motor5.configInvert(false);
-    Motor6.configInvert(true);
-    Motor7.configInvert(false);
-    Motor8.configInvert(false);
-    Motor9.configInvert(true);
-
-    // Config motor output limits
-    Motor1.configMaxOutputs(-900, 900);
-    Motor2.configMaxOutputs(-900, 900);
-    Motor3.configMaxOutputs(-900, 900);
-    Motor4.configMaxOutputs(-900, 900);
-    Motor5.configMaxOutputs(-900, 900);
-    Motor6.configMaxOutputs(-900, 900);
-    Motor7.configMaxOutputs(-900, 900);
-    Motor8.configMaxOutputs(-900, 900);
-    Motor9.configMaxOutputs(-900, 900);
-
-    // Config motor deadbands
-    Motor1.configMinOutputs(-50, 50);
-    Motor2.configMinOutputs(-50, 50);
-    Motor3.configMinOutputs(-30, 30);
-    Motor4.configMinOutputs(-30, 30);
-    Motor5.configMinOutputs(-20, 20);
-    Motor6.configMinOutputs(-20, 20);
-    Motor7.configMinOutputs(-10, 10);
-    Motor8.configMinOutputs(-10, 10);
-    Motor9.configMinOutputs(-50, 50);
-
-    // Config motor ramp rates
-    Motor1.configRampRate(10000);
-    Motor9.configRampRate(10000);
-
-
-    // Configure PID controllers
-    PID1.configPID(130, 0, 0);
-    PID2.configPID(0, 0, 0);
-    PID3.configPID(90, 0, 0);
-    PID4.configPID(0, 0, 0);
-    PID5.configPID(0, 0, 0);
-    PID6.configPID(0, 0, 0);
-
-
-    // Attach encoders
-    J1.attachEncoder(&Encoder1);
-    J2.attachEncoder(&Encoder2);
-    J3.attachEncoder(&Encoder3);
-    J4.attachEncoder(&Encoder4);
-    Wrist.attachTiltEncoder(&Encoder5);
-    Wrist.attachTwistEncoder(&Encoder6);
-
-    // Attach PID controllers
-    J1.attachPID(&PID1);
-    J2.attachPID(&PID2);
-    J3.attachPID(&PID3);
-    J4.attachPID(&PID4);
-    Wrist.attachTiltPID(&PID5);
-    Wrist.attachTwistPID(&PID6);
-
-    // Attach hard limits
-    J1.attachHardLimits(&BD_LS12.forwardSwitch(), &BD_LS12.reverseSwitch());
-    J2.attachHardLimits(&LS9, &LS10);
-    J3.attachHardLimits(&LS7, &LS8);
-
-
-    // Configure soft limits
-    //J1.configSoftLimits(90, 270);
-    //J2.configSoftLimits(215, 105);
-    //J3.configSoftLimits(110, 220);
-    //J4.configSoftLimits(330, 30);
-
     Serial.println("RoveComm Initializing...");
     RoveComm.begin(RC_ARMBOARD_FIRSTOCTET, RC_ARMBOARD_SECONDOCTET, RC_ARMBOARD_THIRDOCTET, RC_ARMBOARD_FOURTHOCTET, &TCPServer);
     Serial.println("Complete");
@@ -150,8 +30,6 @@ void setup() {
 
 void loop() {
     float timestamp = ((float) millis()) / 1000.0;
-    updateJointAngles();
-    updateCoordinates();
 
     // Parse RoveComm packets
     rovecomm_packet packet = RoveComm.read();
