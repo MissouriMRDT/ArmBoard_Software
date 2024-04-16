@@ -5,64 +5,61 @@
 
 
 // Motor Pins
-const uint8_t FWD_PWM_1 = 0;
-const uint8_t RVS_PWM_1 = 1;
-const uint8_t FWD_PWM_2 = 7;
-const uint8_t RVS_PWM_2 = 8;
-const uint8_t FWD_PWM_3 = 28;
-const uint8_t RVS_PWM_3 = 29;
+#define M1_FWD      0
+#define M1_RVS      1
+#define M2_FWD      7
+#define M2_RVS      8
 
-const uint8_t FWD_PWM_4 = 3;
-const uint8_t RVS_PWM_4 = 4;
-const uint8_t FWD_PWM_5 = 13;
-const uint8_t RVS_PWM_5 = 14;
-const uint8_t FWD_PWM_6 = 15;
-const uint8_t RVS_PWM_6 = 16;
+#define M3_FWD      28
+#define M3_RVS      29
+#define M4_FWD      3
+#define M4_RVS      4
 
-const uint8_t FWD_PWM_7 = 37;
-const uint8_t RVS_PWM_7 = 36;
-const uint8_t FWD_PWM_8 = 28;
-const uint8_t RVS_PWM_8 = 29;
-const uint8_t FWD_PWM_9 = 5;
-const uint8_t RVS_PWM_9 = 4;
+#define M5_FWD      13
+#define M5_RVS      14
+#define M6_FWD      15
+#define M6_RVS      16
 
-
-// Limit Switch Pins
-const uint8_t LIM_1 = 14;
-const uint8_t LIM_2 = 13;
-const uint8_t LIM_3 = 16;
-const uint8_t LIM_4 = 15;
-const uint8_t LIM_5 = 18;
-const uint8_t LIM_6 = 17;
-
-const uint8_t LIM_7 = 20;
-const uint8_t LIM_8 = 19;
-const uint8_t LIM_9 = 10;
-const uint8_t LIM_10 = 21;
-const uint8_t LIM_11 = 12;
-const uint8_t LIM_12 = 11;
+#define M7_FWD      17
+#define M7_RVS      22
+#define M8_FWD      2
+#define M8_RVS      6
+#define M9_FWD      9
+#define M9_RVS      10
+#define M10_FWD      12
+#define M10_RVS      11
 
 
-// Encoder Pins
-const uint8_t ENC_1 = 41;
-const uint8_t ENC_2 = 40;
-const uint8_t ENC_3 = 39;
-const uint8_t ENC_4 = 38;
-const uint8_t ENC_5 = 35;
-const uint8_t ENC_6 = 34;
+// I/O Extender
+#define SDA         18
+#define SCL         19
 
 
-// Button Pins
-const uint8_t B_ENC_0 = 30;
-const uint8_t B_ENC_1 = 27;
-const uint8_t B_ENC_2 = 31;
-const uint8_t B_ENC_3 = 32;
+// Encoders
+#define ENC_1A      41
+#define ENC_1B      40
+#define ENC_2A      39
+#define ENC_2B      38
 
-const uint8_t DIR_SW = 33;
+#define ENC_3A      27
+#define ENC_3B      26
+#define ENC_4A      25
+#define ENC_4B      24
+
+#define ENC_5A      30
+#define ENC_5B      31
+#define ENC_6A      32
+#define ENC_6B      23
+
+#define ENC_7A      34
+#define ENC_7B      35
 
 
-// Laser Pin
-const uint8_t LAS = 26;
+// Buttons
+#define B_ENC_0     20
+#define B_ENC_1     21
+#define B_ENC_2     37
+#define B_ENC_3     36
 
 
 #endif
