@@ -102,7 +102,7 @@ void setup() {
     Y2.attachEncoder(&Encoder3);
     Z.attachEncoder(&Encoder4);
 
-    // TODO: Attach hard limits
+    // TODO: Attach hard limits (Needs lim switches)
 
 
     Serial.println("RoveComm Initializing...");
@@ -122,163 +122,115 @@ void loop() {
     rovecomm_packet packet = RoveComm.read();
     switch (packet.data_id) {
 
-        // Open loop control of J1-J6
-        case RC_ARMBOARD_ARMVELOCITYCONTROL_DATA_ID: 
+        case RC_ARMBOARD_OPENLOOP_DATA_ID:
         {
-            int16_t* data = (int16_t*) packet.data; // decipercent values for J1-J6
-
-            for (int i = 0; i < 6; i++) {
-                decipercents[i] = data[i];
-            }
-
-            closedLoopActive = false;
-            feedWatchdog();
-            break;
-        }
-
-        // Closed loop control of J1-J6
-        // case RC_ARMBOARD_ARMMOVETOPOSITION_DATA_ID:
-        // {
-        //     float* data = (float*) packet.data; // target angles in degrees for J1-J6
-
-        //     for (int i = 0; i < 6; i++) {
-        //         targetAngles[i] = data[i];
-        //     }
-
-        //     closedLoopActive = true;
-        //     feedWatchdog();
-        //     break;
-        // }
-
-        // // Incremental closed loop control of J1-J6
-        // case RC_ARMBOARD_ARMINCREMENTPOSITION_DATA_ID:
-        // {
-        //     float* data = (float*) packet.data; // change in target angles, in degrees, for J1-J6
-
-        //     for (int i = 0; i < 6; i++) {
-        //         targetAngles[i] = fmod(targetAngles[i] + data[i], 360);
-        //         if (targetAngles[i] < 0) targetAngles[i] += 360;
-        //     }
-
-        //     closedLoopActive = true;
-        //     feedWatchdog();
-        //     break;
-        // }
-
-        // Control of J1-J6 using IK
-        // case RC_ARMBOARD_ARMMOVEIK_DATA_ID:
-        // {
-        //     float* data = (float*) packet.data; // Destination coordinates (x, y, z, yaw, pitch, roll), angles in degrees
+            int16_t *data = (int16_t*)packet.data;
             
-        //     // If IK destination is invalid, hold current position
-        //     bool valid = inverseKinematics(data, jointAngles, targetAngles); 
-        //     if (!valid) {
-        //         targetAngles[0] = jointAngles[0];
-        //         targetAngles[1] = jointAngles[1];
-        //         targetAngles[2] = jointAngles[2];
-        //         targetAngles[3] = jointAngles[3];
-        //         targetAngles[4] = jointAngles[4];
-        //         targetAngles[5] = jointAngles[5];
-        //     }
+            X_decipercent = data[0];
+            Y1_decipercent = data[1];
+            Y2_decipercent = data[2];
+            Z_decipercent = data[3];
+            Pitch_decipercent = data[4];
+            Roll1_decipercent = data[5];
+            Roll2_decipercent = data[6];
 
-        //     closedLoopActive = true;
-        //     feedWatchdog();
-        //     break;
-        // }
-
-        // // Incremental control of J1-J6 using IK, relative to rover
-        // case RC_ARMBOARD_ARMINCREMENTIKROVER_DATA_ID:
-        // {
-        //     // TODO: support incremental IK
-        //     break;
-        // }
-
-        // // Incremental control of J1-J6 using IK, relative to wrist
-        // case RC_ARMBOARD_ARMINCREMENTIKWRIST_DATA_ID:
-        // {
-        //     // TODO: support incremental IK
-        //     break;
-        // }
-        
-        // Toggle lasers on or off // Dont know how to do with IO extender
-        case RC_ARMBOARD_LASERS_DATA_ID:
-        {
-            uint8_t data = ((uint8_t*) packet.data)[0];
-
-            digitalWrite(LAS, data);
             break;
         }
 
-        // Toggle solenoid // Dont know how to do with IO extender
-        case RC_ARMBOARD_ENDEFFECTOR_DATA_ID:
+        case RC_ARMBOARD_SETPOSITION_DATA_ID:
         {
-            uint8_t data = ((uint8_t*) packet.data)[0];
-
-            extendSolenoid = data;
+            
             break;
         }
 
-        // Open loop control of gripper 1 and 2
-        case RC_ARMBOARD_GRIPPERMOVE_DATA_ID:
+        case RC_ARMBOARD_INCREMENTPOSITION_DATA_ID:
         {
-            int16_t* data = (int16_t*) packet.data;
 
-            decipercents[6] = data[0];
-            decipercents[7] = data[1];
-            feedWatchdog();
             break;
         }
 
-        // Override watchdog
+        case RC_ARMBOARD_SETIK_DATA_ID:
+        {
+
+            break;
+        }
+
+        case RC_ARMBOARD_INCREMENTIK_ROVERRELATIVE_DATA_ID:
+        {
+
+            break;
+        }
+
+        case RC_ARMBOARD_INCREMENTIK_WRISTRELATIVE_DATA_ID:
+        {
+
+            break;
+        }
+
+        case RC_ARMBOARD_LASER_DATA_ID:
+        {
+            uint8_t data = *((uint8_t*) packet.data);
+
+            laserOn = (data == 0)? false : true;
+            break;
+        }
+
+        case RC_ARMBOARD_SOLENOID_DATA_ID:
+        {
+            uint8_t data = *((uint8_t*) packet.data);
+
+            extendSolenoid = (data == 0)? false : true;
+            break;
+        }
+
+        case RC_ARMBOARD_GRIPPER_DATA_ID:
+        {
+            int16_t data = *((int16_t*) packet.data);
+
+            switch(activeGripper) {
+                case 0:
+                    Gripper1_decipercent = data;
+                    Gripper2_decipercent = 0;
+                    break;
+                case 1:
+                    Gripper1_decipercent = 0;
+                    Gripper2_decipercent = data;
+                    break;
+            }
+            break;
+        }
+
         case RC_ARMBOARD_WATCHDOGOVERRIDE_DATA_ID:
         {
-            uint8_t data = ((uint8_t*) packet.data)[0];
-
-            watchdogOverride = data;
+            watchdogOverride = *((uint8_t*) packet.data);
             break;
         }
 
-        // Override limit switches
         case RC_ARMBOARD_LIMITSWITCHOVERRIDE_DATA_ID:
         {
-            uint16_t data = ((uint16_t*) packet.data)[0];
+            uint8_t data = *((uint8_t*) packet.data);
 
-            Wrist.overrideTwistForwardHardLimit(data & (1<<11));
-            Wrist.overrideTwistReverseHardLimit(data & (1<<10));
-            Wrist.overrideTiltForwardHardLimit(data & (1<<9));
-            Wrist.overrideTiltReverseHardLimit(data & (1<<8));
-            J4.overrideForwardHardLimit(data & (1<<7));
-            J4.overrideReverseHardLimit(data & (1<<6));
-            J3.overrideForwardHardLimit(data & (1<<5));
-            J3.overrideReverseHardLimit(data & (1<<4));
-            J2.overrideForwardHardLimit(data & (1<<3));
-            J2.overrideReverseHardLimit(data & (1<<2));
-            J1.overrideForwardHardLimit(data & (1<<1));
-            J1.overrideReverseHardLimit(data & (1<<0));
+            X.overrideForwardHardLimit(data & (1<<0));
+            X.overrideReverseHardLimit(data & (1<<1));
+            Y1.overrideForwardHardLimit(data & (1<2));
+            Y1.overrideReverseHardLimit(data & (1<<3));
+            Y2.overrideForwardHardLimit(data & (1<<4));
+            Y2.overrideReverseHardLimit(data & (1<<5));
+            Z.overrideForwardHardLimit(data & (1<<6));
+            Z.overrideReverseHardLimit(data & (1<<7));
+            break;
+        }
+
+
+        case RC_ARMBOARD_CALIBRATEENCODER_DATA_ID:
+        {
 
             break;
         }
 
-        // Write joint angles to RoveComm
-        case RC_ARMBOARD_REQUESTJOINTPOSITIONS_DATA_ID:
+        case RC_ARMBOARD_SELECTGRIPPER_DATA_ID:
         {
-            RoveComm.writeReliable(RC_ARMBOARD_JOINTANGLES_DATA_ID, RC_ARMBOARD_JOINTANGLES_DATA_COUNT, jointAngles);
-            break;
-        }
-
-        // Toggle continuous telemetry for jointAngles and coordinates
-        case RC_ARMBOARD_TOGGLEPOSITIONTELEM_DATA_ID:
-        {
-            uint8_t data = ((uint8_t*) packet.data)[0];
-
-            telemetryOverride = data;
-            break;
-        }
-
-        // Write coordinates to RoveComm
-        case RC_ARMBOARD_REQUESTAXESPOSITIONS_DATA_ID:
-        {
-            RoveComm.writeReliable(RC_ARMBOARD_IKCOORDINATES_DATA_ID, RC_ARMBOARD_IKCOORDINATES_DATA_COUNT, coordinates);
+            activeGripper = *((uint8_t*) packet.data);
             break;
         }
 
@@ -290,69 +242,54 @@ void loop() {
     }
 
 
+
     // Buttons
-    bool direction = digitalRead(DIR_SW);
-    uint8_t manualButtons = (digitalRead(B_ENC_3)<<3) | (digitalRead(B_ENC_2)<<2) | (digitalRead(B_ENC_1)<<1) | (digitalRead(B_ENC_0)<<0);
+    bool direction = digitalRead(DIR_SW); //Change for IO Extender
+    uint8_t buttons = (digitalRead(B_ENC_3)<<3) | (digitalRead(B_ENC_2)<<2) | (digitalRead(B_ENC_1)<<1) | (digitalRead(B_ENC_0)<<0);
 
     // Motor outputs
-    if (closedLoopActive) {
-        J1.setAngle(targetAngles[0], timestamp);
-        J2.setAngle(targetAngles[1], timestamp);
-        J3.setAngle(targetAngles[2], timestamp);
-        J4.setAngle(targetAngles[3], timestamp);
-        Wrist.setAngles(targetAngles[5], targetAngles[4], timestamp);
-    }
-    else {
-        // J1
-        if (manualButtons == 1) J1.drive((direction? 900 : -900), timestamp);
-        else J1.drive(decipercents[0], timestamp);
 
-        // J2
-        if (manualButtons == 2) J2.drive((direction? 900 : -900), timestamp);
-        else J2.drive(decipercents[1], timestamp);
+    // X
+    if (buttons == 1) X.drive((direction? 900 : -900));
+    else X.drive(X_decipercent);
 
-        // J3
-        if (manualButtons == 3) J3.drive((direction? 900 : -900), timestamp);
-        else J3.drive(decipercents[2], timestamp);
+    // Y1
+    if (buttons == 2) Y1.drive((direction? 900 : -900));
+    else Y1.drive(Y1_decipercent);
 
-        // J4
-        if (manualButtons == 4) J4.drive((direction? 900 : -900), timestamp);
-        else J4.drive(decipercents[3], timestamp);
+    // Y2
+    if (buttons == 3) Y2.drive((direction? 900 : -900));
+    else Y2.drive(Y2_decipercent);
 
-        // J5
-        if (manualButtons == 5) Wrist.drive(0, (direction? 900 : -900), timestamp);
-        else if (manualButtons == 6) Wrist.drive((direction? 900 : -900), 0, timestamp);
-        else Wrist.drive(decipercents[5], decipercents[4], timestamp);
-    }
+    // Z
+    if (buttons == 4) Z.drive((direction? 900 : -900));
+    else Z.drive(Z_decipercent);
+    
+    // Pitch
+    if (buttons == 5) Pitch.drive((direction? 900 : -900));
+    else Pitch.drive(Pitch_decipercent);
 
-    // Gripper
-    if (manualButtons == 7) Gripper.drive((direction? 900 : -900), timestamp);
-    else Gripper.drive(decipercents[6], timestamp);
+    // Roll1
+    if (buttons == 6) Roll1.drive((direction? 900 : -900));
+    else Roll1.drive(Roll1_decipercent);
 
-    // Hex Key
-    if (manualButtons == 8) HexKey.drive((direction? 900 : -900), timestamp);
-    else HexKey.drive(decipercents[7], timestamp);
+    // Roll2
+    if (buttons == 7) Roll2.drive((direction? 900 : -900));
+    else Roll2.drive(Roll2_decipercent);
 
-    // Spare
-    if (manualButtons == 9) Solenoid.drive((direction? 900 : -900), timestamp);
-    else Solenoid.drive((extendSolenoid? 900 : 0), timestamp);
+    // Gripper1
+    if (buttons == 8) Gripper1.drive((direction? 900 : -900));
+    else Gripper1.drive(Gripper1_decipercent);
+
+    // Gripper2
+    
+    // Solenoid
+
+    // Laser (Change for IO Extender)
+    if (buttons == 9) digitalWrite(LAS, HIGH);
+    else digitalWrite(LAS, (laserOn? HIGH : LOW));
 
 }
-
-
-void updateJointAngles() {
-    jointAngles[0] = Encoder1.readDegrees();
-    jointAngles[1] = Encoder2.readDegrees();
-    jointAngles[2] = Encoder3.readDegrees();
-    jointAngles[3] = Encoder4.readDegrees();
-    jointAngles[4] = Encoder5.readDegrees();
-    jointAngles[5] = Encoder6.readDegrees();
-}
-
-void updateCoordinates() {
-    forwardKinematics(jointAngles, coordinates);
-}
-
 
 
 void estop() {

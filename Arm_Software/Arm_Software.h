@@ -55,6 +55,8 @@ RoveQuadEncoder Encoder5(ENC_5A, ENC_5B, 1);
 RoveQuadEncoder Encoder6(ENC_6A, ENC_6B, 1);
 RoveQuadEncoder Encoder7(ENC_7A, ENC_7B, 1);
 
+//Limit Switches (Needs IO Extender)
+
 
 // Joints (Which motors? and 2 additional motors!)
 RoveJoint X(&Motor1);
@@ -65,16 +67,6 @@ RoveJoint Pitch(&Motor5);
 RoveJoint Roll1(&Motor6);
 RoveJoint Roll2(&Motor7);
 #define Gripper1 (Motor8)
-
-// Limit Switches
-
-// PID Controllers
-// RovePIDController PID1;
-// RovePIDController PID2;
-// RovePIDController PID3;
-// RovePIDController PID4;
-// RovePIDController PID5;
-// RovePIDController PID6;
 
 
 // // Control variables
@@ -102,8 +94,6 @@ bool extendSolenoid = false;
 bool closedLoopActive = false;
 
 // Methods
-void updateJointAngles();
-void updateCoordinates();
 void estop();
 void telemetry();
 void feedWatchdog();
