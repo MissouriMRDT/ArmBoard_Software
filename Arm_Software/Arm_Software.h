@@ -8,7 +8,7 @@
 #include <RoveComm.h>
 #include <RoveHBridge.h>
 #include <MA3PWM.h>
-#include <LimitSwitch.h>
+#include <SoftwareSwitch.h>
 #include <BidirectionalLimitSwitch.h>
 #include <RovePIDController.h>
 #include <RoveJoint.h>
@@ -56,9 +56,18 @@ RoveQuadEncoder Encoder6(ENC_6A, ENC_6B, 1);
 RoveQuadEncoder Encoder7(ENC_7A, ENC_7B, 1);
 
 //Limit Switches (Needs IO Extender)
+SoftwareSwitch LS1();
+SoftwareSwitch LS2();
+SoftwareSwitch LS3();
+SoftwareSwitch LS4();
+SoftwareSwitch LS5();
+SoftwareSwitch LS6();
+SoftwareSwitch LS7();
+SoftwareSwitch LS9();
+SoftwareSwitch LS10();
 
 
-// Joints (Which motors? and 2 additional motors!)
+// Joints
 RoveJoint X(&Motor1);
 RoveJoint Y1(&Motor2);
 RoveJoint Y2(&Motor3);
@@ -67,6 +76,8 @@ RoveJoint Pitch(&Motor5);
 RoveJoint Roll1(&Motor6);
 RoveJoint Roll2(&Motor7);
 #define Gripper1 (Motor8)
+#define Gripper2 (Motor9)
+#define Spare (Motor10)
 
 
 // // Control variables
@@ -80,18 +91,56 @@ int16_t Roll2_decipercent = 0;
 int16_t Gripper1_decipercent = 0;
 int16_t Gripper2_decipercent = 0;
 
-float X_target = 0;
-float Y_target = 0;
-float Z_target = 0;
-float Pitch_target = 0;
-float Roll1_target = 0;
-float Roll2_target = 0;
-
 uint8_t activeGripper = 0;
+
+bool closedLoopActive = false;
+bool direction = false;
 bool laserOn = false;
 bool extendSolenoid = false;
 
-bool closedLoopActive = false;
+
+//Joint Structs
+struct X_Joint {
+    float target = 0;
+    bool calibrating = false;
+    bool calibrated = false;
+}
+
+struct Y1_Joint {
+    float target = 0;
+    bool calibrating = false;
+    bool calibrated = false;
+}
+
+struct Y2_Joint {
+    float target = 0;
+    bool calibrating = false;
+    bool calibrated = false;
+}
+
+struct Z_Joint {
+    float target = 0;
+    bool calibrating = false;
+    bool calibrated = false;
+}
+
+struct Pitch_Joint {
+    float target = 0;
+    bool calibrating = false;
+    bool calibrated = false;
+}
+
+struct Roll1_Joint {
+    float target = 0;
+    bool calibrating = false;
+    bool calibrated = false;
+}
+
+struct Roll2_Joint {
+    float target = 0;
+    bool calibrating = false;
+    bool calibrated = false;
+}
 
 // Methods
 void estop();

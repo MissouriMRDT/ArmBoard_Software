@@ -8,10 +8,6 @@ void setup() {
     Serial.println("Setup");
 
 
-    // Configure I/O Extender
-    pinMode(SDA, BI); //How to set bidirectional?
-    pinMode(SCL, OUTPUT);
-
     // Configure buttons pins
     pinMode(B_ENC_0, INPUT);
     pinMode(B_ENC_1, INPUT);
@@ -96,13 +92,21 @@ void setup() {
     Motor10.configRampRate(10000);
 
 
-    // Attach encoders //Other 3 encoders???
+    // Attach encoders
     X.attachEncoder(&Encoder1);
     Y1.attachEncoder(&Encoder2);
     Y2.attachEncoder(&Encoder3);
     Z.attachEncoder(&Encoder4);
+    Pitch.attachEncoder(&Encoder5);
+    Roll1.attachEncoder(&Encoder6);
+    Roll2.attachEncoder(&Encoder7);
 
     // TODO: Attach hard limits (Needs lim switches)
+    X.attachHardLimits(&LS1, &LS2);
+    Y1.attachHardLimits(&LS3, &LS4);
+    Y2.attachHardLimits(&LS5, &LS6);
+    Z.attachHardLimits(&LS7, &LS8);
+    Pitch.attachHardLimits(&LS9, &LS10);
 
 
     Serial.println("RoveComm Initializing...");
@@ -116,7 +120,6 @@ void setup() {
 
 
 void loop() {
-    float timestamp = ((float) millis()) / 1000.0;
 
     // Parse RoveComm packets
     rovecomm_packet packet = RoveComm.read();
@@ -131,8 +134,14 @@ void loop() {
             Y2_decipercent = data[2];
             Z_decipercent = data[3];
             Pitch_decipercent = data[4];
-            Roll1_decipercent = data[5];
-            Roll2_decipercent = data[6];
+            
+            if (activeGripper) {
+                Roll1_decipercent = 0;
+                Roll2_decipercent = data[5];
+            } else {
+                Roll2_decipercent = 0;
+                Roll1_decipercent = data[5];
+            }
 
             break;
         }
@@ -218,6 +227,8 @@ void loop() {
             Y2.overrideReverseHardLimit(data & (1<<5));
             Z.overrideForwardHardLimit(data & (1<<6));
             Z.overrideReverseHardLimit(data & (1<<7));
+            Pitch.overrideForwardHardLimit(data & (1<<8));
+            Pitch.overrideReverseHardLimit(data & (1<<9));
             break;
         }
 
@@ -242,14 +253,14 @@ void loop() {
     }
 
 
-
     // Buttons
-    bool direction = digitalRead(DIR_SW); //Change for IO Extender
     uint8_t buttons = (digitalRead(B_ENC_3)<<3) | (digitalRead(B_ENC_2)<<2) | (digitalRead(B_ENC_1)<<1) | (digitalRead(B_ENC_0)<<0);
 
     // Motor outputs
 
     // X
+    // if calibrating: drive left, if at fwd lim switch, then set calibrating to false and set calibrated to true and also reset position var to 0
+    //Create a struct for each joint: target pos, calibrating, and calibrated
     if (buttons == 1) X.drive((direction? 900 : -900));
     else X.drive(X_decipercent);
 
@@ -282,12 +293,12 @@ void loop() {
     else Gripper1.drive(Gripper1_decipercent);
 
     // Gripper2
-    
-    // Solenoid
+    if (buttons == 9) Gripper2.drive((direction? 900 : -900));
+    else Gripper2.drive(Gripper2_decipercent);
 
-    // Laser (Change for IO Extender)
-    if (buttons == 9) digitalWrite(LAS, HIGH);
-    else digitalWrite(LAS, (laserOn? HIGH : LOW));
+    //Solenoid IO Extender
+    if (buttons == 10) ;
+    else ;
 
 }
 
@@ -321,7 +332,8 @@ void telemetry() {
         RoveComm.write(RC_ARMBOARD_COORDINATES_DATA_ID, RC_ARMBOARD_COORDINATES_DATA_COUNT, coordinates);
 
         uint8_t limitSwitches = (X.atForwardHardLimit() << 0) | (X.atReverseHardLimit() << 1) | (Y1.atForwardHardLimit() << 2) | (Y1.atReverseHardLimit() << 3) |
-                                (Y2.atForwardHardLimit() << 4) | (Y2.atReverseHardLimit() << 5) | (Z.atForwardHardLimit() << 6) | (Z.atReverseHardLimit() << 7);
+                                (Y2.atForwardHardLimit() << 4) | (Y2.atReverseHardLimit() << 5) | (Z.atForwardHardLimit() << 6) | (Z.atReverseHardLimit() << 7) | 
+                                (Pitch.atForwardHardLimit() << 8) | (Pitch.atReverseHardLimit() << 9);;
         RoveComm.write(RC_ARMBOARD_LIMITSWITCHTRIGGERED_DATA_ID, RC_ARMBOARD_LIMITSWITCHTRIGGERED_DATA_COUNT, limitSwitches);
     }
 }
