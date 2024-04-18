@@ -242,22 +242,13 @@ void loop() {
 
         case RC_ARMBOARD_CALIBRATEENCODER_DATA_ID:
         {
-            //Calibrate X
-            X_Joint.calibrating = true;
-            while (!X.atForwardHardLimit()) {
-                X.drive(900);
-            }
-            X.drive(0);
-            //Set position to 0 or positive value???
-            X.Motor()->setDegrees(1000)
-            while (!X.atReverseHardLimit()) {
-                X.drive(-900);
-            }
-            X.drive(0);
-            //Set postion to negative value???
-            X.Motor()->setDegrees(-1000)
-            X_Joint.calibrating = false;
-            X_Joint.calibrated = true;
+            uint8_t data = *((uint8_t*) packet.data);
+            
+            X_Joint.calibrating = data & (1<<0);
+            Y1_Joint.calibrating = data & (1<<1);
+            Y2_Joint.calibrating = data & (1<<2);
+            Z_Joint.calibrating = data & (1<<3);
+            Pitch_Joint.calibrating = data & (1<<4);
             break;
         }
 
@@ -271,6 +262,16 @@ void loop() {
         default:
         {
             break;
+        }
+    }
+
+    if (X_Joint.calibrating) {
+        X.drive(900);
+        if (X.atForwardHardLimit()) {
+            X.drive(0);
+            X.Encoder()->setDegrees(0);
+            X_Joint.calibrating = false;
+            X_Joint.calibrated = true;
         }
     }
 
