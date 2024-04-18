@@ -7,6 +7,13 @@ void setup() {
     Serial.begin(115200);
     Serial.println("Setup");
 
+    Joint X_Joint;
+    Joint Y1_Joint;
+    Joint Y2_Joint;
+    Joint Z_Joint;
+    Joint Pitch_Joint;
+    Joint Roll1_Joint;
+    Joint Roll2_Joint;
 
     // Configure buttons pins
     pinMode(B_ENC_0, INPUT);
@@ -14,84 +21,7 @@ void setup() {
     pinMode(B_ENC_2, INPUT);
     pinMode(B_ENC_3, INPUT);
 
-
-    // Configure encoder inverts
-    Encoder1.configInvert(false);
-    Encoder2.configInvert(false);
-    Encoder3.configInvert(false);
-    Encoder4.configInvert(false);
-    Encoder5.configInvert(false);
-    Encoder6.configInvert(false);
-    Encoder7.configInvert(false);
-
-    // Configure encoder offsets
-    Encoder1.configOffset(0);
-    Encoder2.configOffset(0);
-    Encoder3.configOffset(0);
-    Encoder4.configOffset(0);
-    Encoder5.configOffset(0);
-    Encoder6.configOffset(0);
-    Encoder7.configOffset(0);
-
-    // Attach encoder interrupts
-    Encoder1.begin([]{Encoder1.handleInterrupt();});
-    Encoder2.begin([]{Encoder2.handleInterrupt();});
-    Encoder3.begin([]{Encoder3.handleInterrupt();});
-    Encoder4.begin([]{Encoder4.handleInterrupt();});
-    Encoder5.begin([]{Encoder2.handleInterrupt();});
-    Encoder6.begin([]{Encoder3.handleInterrupt();});
-    Encoder7.begin([]{Encoder4.handleInterrupt();});
-
-    // Config motor inverts
-    Motor1.configInvert(false);
-    Motor2.configInvert(false);
-    Motor3.configInvert(false);
-    Motor4.configInvert(false);
-    Motor5.configInvert(false);
-    Motor6.configInvert(false);
-    Motor7.configInvert(false);
-    Motor8.configInvert(false);
-    Motor9.configInvert(false);
-    Motor10.configInvert(false);
-
-
-    // Config motor output limits
-    Motor1.configMaxOutputs(-900, 900);
-    Motor2.configMaxOutputs(-900, 900);
-    Motor3.configMaxOutputs(-900, 900);
-    Motor4.configMaxOutputs(-900, 900);
-    Motor5.configMaxOutputs(-900, 900);
-    Motor6.configMaxOutputs(-900, 900);
-    Motor7.configMaxOutputs(-900, 900);
-    Motor8.configMaxOutputs(-900, 900);
-    Motor9.configMaxOutputs(-900, 900);
-    Motor10.configMaxOutputs(-900, 900);
-
-    // Config motor deadbands
-    Motor1.configMinOutputs(-10, 10);
-    Motor2.configMinOutputs(-10, 10);
-    Motor3.configMinOutputs(-10, 10);
-    Motor4.configMinOutputs(-10, 10);
-    Motor5.configMinOutputs(-10, 10);
-    Motor6.configMinOutputs(-10, 10);
-    Motor7.configMinOutputs(-10, 10);
-    Motor8.configMinOutputs(-10, 10);
-    Motor9.configMinOutputs(-10, 10);
-    Motor10.configMinOutputs(-10, 10);
-
-    // Config motor ramp rates
-    Motor1.configRampRate(10000);
-    Motor2.configRampRate(10000);
-    Motor3.configRampRate(10000);
-    Motor4.configRampRate(10000);
-    Motor5.configRampRate(10000);
-    Motor6.configRampRate(10000);
-    Motor7.configRampRate(10000);
-    Motor8.configRampRate(10000);
-    Motor9.configRampRate(10000);
-    Motor10.configRampRate(10000);
-
-
+    //Now references X.Encoder() rather than Encoder 1 which is attached to X
     // Attach encoders
     X.attachEncoder(&Encoder1);
     Y1.attachEncoder(&Encoder2);
@@ -107,6 +37,83 @@ void setup() {
     Y2.attachHardLimits(&LS5, &LS6);
     Z.attachHardLimits(&LS7, &LS8);
     Pitch.attachHardLimits(&LS9, &LS10);
+
+
+    // Configure encoder inverts
+    X.Encoder()->configInvert(false);
+    Y1.Encoder()->configInvert(false);
+    Y2.Encoder()->configInvert(false);
+    Z.Encoder()->configInvert(false);
+    Pitch.Encoder()->configInvert(false);
+    Roll1.Encoder()->configInvert(false);
+    Roll2.Encoder()->configInvert(false);
+
+    // Configure encoder offsets
+    X.Encoder()->configOffset(0);
+    Y1.Encoder()->configOffset(0);
+    Y2.Encoder()->configOffset(0);
+    Z.Encoder()->configOffset(0);
+    Pitch.Encoder()->configOffset(0);
+    Roll1.Encoder()->configOffset(0);
+    Roll2.Encoder()->configOffset(0);
+
+    // Attach encoder interrupts, leave the same
+    Encoder1.begin([]{Encoder1.handleInterrupt();});
+    Encoder2.begin([]{Encoder2.handleInterrupt();});
+    Encoder3.begin([]{Encoder3.handleInterrupt();});
+    Encoder4.begin([]{Encoder4.handleInterrupt();});
+    Encoder5.begin([]{Encoder2.handleInterrupt();});
+    Encoder6.begin([]{Encoder3.handleInterrupt();});
+    Encoder7.begin([]{Encoder4.handleInterrupt();});
+
+    // Config motor inverts, reference joint
+    X.Motor()->configInvert(false);
+    Y1.Motor()->configInvert(false);
+    Y2.Motor()->configInvert(false);
+    Z.Motor()->configInvert(false);
+    Pitch.Motor()->configInvert(false);
+    Roll1.Motor()->configInvert(false);
+    Roll2.Motor()->configInvert(false);
+    Motor8.configInvert(false); //What to do with gripper motors and spare
+    Motor9.configInvert(false);
+    Motor10.configInvert(false);
+
+
+    // Config motor output limits, reference joint
+    X.Motor()->configMaxOutputs(-900, 900);
+    Y1.Motor()->configMaxOutputs(-900, 900);
+    Y2.Motor()->configMaxOutputs(-900, 900);
+    Z.Motor()->configMaxOutputs(-900, 900);
+    Pitch.Motor()->configMaxOutputs(-900, 900);
+    Roll1.Motor()->configMaxOutputs(-900, 900);
+    Roll2.Motor()->configMaxOutputs(-900, 900);
+    Motor8.configMaxOutputs(-900, 900);
+    Motor9.configMaxOutputs(-900, 900);
+    Motor10.configMaxOutputs(-900, 900);
+
+    // Config motor deadbands, reference joint
+    X.Motor()->configMinOutputs(-10, 10);
+    Y1.Motor()->configMinOutputs(-10, 10);
+    Y2.Motor()->configMinOutputs(-10, 10);
+    Z.Motor()->configMinOutputs(-10, 10);
+    Pitch.Motor()->configMinOutputs(-10, 10);
+    Roll1.Motor()->configMinOutputs(-10, 10);
+    Roll2.Motor()->configMinOutputs(-10, 10);
+    Motor8.configMinOutputs(-10, 10);
+    Motor9.configMinOutputs(-10, 10);
+    Motor10.configMinOutputs(-10, 10);
+
+    // Config motor ramp rates, reference joint
+    X.Motor()->configRampRate(10000);
+    Y1.Motor()->configRampRate(10000);
+    Y2.Motor()->configRampRate(10000);
+    Z.Motor()->configRampRate(10000);
+    Pitch.Motor()->configRampRate(10000);
+    Roll1.Motor()->configRampRate(10000);
+    Roll2.Motor()->configRampRate(10000);
+    Motor8.configRampRate(10000);
+    Motor9.configRampRate(10000);
+    Motor10.configRampRate(10000);
 
 
     Serial.println("RoveComm Initializing...");
@@ -235,7 +242,22 @@ void loop() {
 
         case RC_ARMBOARD_CALIBRATEENCODER_DATA_ID:
         {
-
+            //Calibrate X
+            X_Joint.calibrating = true;
+            while (!X.atForwardHardLimit()) {
+                X.drive(900);
+            }
+            X.drive(0);
+            //Set position to 0 or positive value???
+            X.Motor()->setDegrees(1000)
+            while (!X.atReverseHardLimit()) {
+                X.drive(-900);
+            }
+            X.drive(0);
+            //Set postion to negative value???
+            X.Motor()->setDegrees(-1000)
+            X_Joint.calibrating = false;
+            X_Joint.calibrated = true;
             break;
         }
 

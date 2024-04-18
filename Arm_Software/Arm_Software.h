@@ -100,47 +100,11 @@ bool extendSolenoid = false;
 
 
 //Joint Structs
-struct X_Joint {
+struct Joint {
     float target = 0;
     bool calibrating = false;
     bool calibrated = false;
-}
-
-struct Y1_Joint {
-    float target = 0;
-    bool calibrating = false;
-    bool calibrated = false;
-}
-
-struct Y2_Joint {
-    float target = 0;
-    bool calibrating = false;
-    bool calibrated = false;
-}
-
-struct Z_Joint {
-    float target = 0;
-    bool calibrating = false;
-    bool calibrated = false;
-}
-
-struct Pitch_Joint {
-    float target = 0;
-    bool calibrating = false;
-    bool calibrated = false;
-}
-
-struct Roll1_Joint {
-    float target = 0;
-    bool calibrating = false;
-    bool calibrated = false;
-}
-
-struct Roll2_Joint {
-    float target = 0;
-    bool calibrating = false;
-    bool calibrated = false;
-}
+};
 
 // Methods
 void estop();
