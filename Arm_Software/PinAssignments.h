@@ -18,9 +18,9 @@
 #define M5_FWD      13
 #define M5_RVS      14
 #define M6_FWD      15
-#define M6_RVS      16
+#define M6_RVS      5 // mag wire
 
-#define M7_FWD      17
+#define M7_FWD      33 // mag wire
 #define M7_RVS      22
 #define M8_FWD      2
 #define M8_RVS      6
