@@ -8,6 +8,7 @@
 #include <RoveComm.h>
 #include <RoveHBridge.h>
 #include <MA3PWM.h>
+#include <RoveQuadEncoder.h>
 #include <SoftwareSwitch.h>
 #include <BidirectionalLimitSwitch.h>
 #include <RovePIDController.h>
@@ -30,16 +31,15 @@ uint8_t watchdogStatus = 0;
 bool watchdogOverride = false;
 
 // Telemetry
-#define TELEMETRY_PERIOD 150000
+#define TELEMETRY_PERIOD 200000
 IntervalTimer Telemetry;
 bool telemetryOverride = false;
 
 // IO Expanders
-PCF8574 IOX1(0x38, IOX_TWI);
-PCF8574 IOX2(0x39, IOX_TWI);
+PCF8574 IOX1(0x38, &IOX_TWI);
+PCF8574 IOX2(0x39, &IOX_TWI);
 uint32_t lastIOX_timestamp = 0;
 #define IOX_UPDATE_PERIOD   50
-
 
 // Motors
 RoveHBridge Motor1(M1_FWD, M1_RVS);
@@ -53,7 +53,6 @@ RoveHBridge Motor8(M8_FWD, M8_RVS);
 RoveHBridge Motor9(M9_FWD, M9_RVS);
 RoveHBridge Motor10(M10_FWD, M10_RVS);
 
-
 // Encoders
 RoveQuadEncoder Encoder1(ENC_1A, ENC_1B, 1);
 RoveQuadEncoder Encoder2(ENC_2A, ENC_2B, 1);
@@ -63,17 +62,8 @@ RoveQuadEncoder Encoder5(ENC_5A, ENC_5B, 1);
 RoveQuadEncoder Encoder6(ENC_6A, ENC_6B, 1);
 RoveQuadEncoder Encoder7(ENC_7A, ENC_7B, 1);
 
-//Limit Switches (Needs IO Extender)
-SoftwareSwitch LS1();
-SoftwareSwitch LS2();
-SoftwareSwitch LS3();
-SoftwareSwitch LS4();
-SoftwareSwitch LS5();
-SoftwareSwitch LS6();
-SoftwareSwitch LS7();
-SoftwareSwitch LS9();
-SoftwareSwitch LS10();
-
+// Limit Switches
+SoftwareSwitch LS1, LS2, LS3, LS4, LS5, LS6, LS7, LS8, LS9, LS10;
 
 // Joints
 RoveJoint X(&Motor1);
@@ -86,7 +76,6 @@ RoveJoint Roll2(&Motor7);
 #define Gripper1 (Motor8)
 #define Gripper2 (Motor9)
 #define Spare (Motor10)
-
 
 
 // // Control variables
@@ -106,7 +95,6 @@ bool closedLoopActive = false;
 bool direction = false;
 bool laserOn = false;
 bool extendSolenoid = false;
-
 
 
 //Joint Structs

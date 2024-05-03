@@ -1,7 +1,7 @@
 #ifndef PINASSIGNMENTS_H
 #define PINASSIGNMENTS_H
 
-#include <TWI.h>
+#include <Wire.h>
 
 
 // Motor Pins

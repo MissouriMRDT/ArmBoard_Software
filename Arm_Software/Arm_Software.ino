@@ -16,6 +16,7 @@ void setup() {
     // Initialize IO Expanders
     // 1 for input, 0 for output
     // Defaults to all inputs
+    IOX_TWI.begin();
     IOX1.begin();
     IOX2.begin(~((1<<IOX2_SOLENOID) | (1<<IOX2_LAS)));
 
@@ -106,9 +107,9 @@ void setup() {
     Pitch.Motor()->configRampRate(10000);
     Roll1.Motor()->configRampRate(10000);
     Roll2.Motor()->configRampRate(10000);
-    Motor8.configRampRate(10000);
-    Motor9.configRampRate(10000);
-    Motor10.configRampRate(10000);
+    Gripper1.configRampRate(10000);
+    Gripper2.configRampRate(10000);
+    Spare.configRampRate(10000);
 
     // RoveComm
     Serial.println("RoveComm Initializing...");
@@ -145,6 +146,8 @@ void loop() {
                 Roll2_decipercent = 0;
                 Roll1_decipercent = data[5];
             }
+
+            feedWatchdog();
 
             break;
         }
@@ -253,16 +256,13 @@ void loop() {
             activeGripper = *((uint8_t*) packet.data);
             break;
         }
-
-        // Default
-        default:
-        {
-            break;
-        }
     }
+
 
     // IO Expanders
     if (timestamp - lastIOX_timestamp > IOX_UPDATE_PERIOD) {
+        lastIOX_timestamp = timestamp;
+
         // IO Expander 1
         uint8_t iox1_val = IOX1.read8();
         LS1.set(iox1_val & (1<<IOX1_LIM_1));
@@ -279,11 +279,15 @@ void loop() {
         LS9.set(iox2_val & (1<<IOX2_LIM_9));
         LS10.set(iox2_val & (1<<IOX2_LIM_10));
         direction = iox2_val & (1<<IOX2_DIR_SW);
-        IOX2.write(IOX2_LAS, laserOn);
-        IOX2.write(IOX2_SOLENOID, extendSolenoid);
     }
 
-    if (X_Joint.calibrating) {
+    // Buttons
+    uint8_t buttons = (digitalRead(B_ENC_3)<<3) | (digitalRead(B_ENC_2)<<2) | (digitalRead(B_ENC_1)<<1) | (digitalRead(B_ENC_0)<<0);
+
+    // Motor outputs
+
+    // X
+    /*if (X_Joint.calibrating) {
         X.drive(900);
         if (X.atForwardHardLimit()) {
             X.drive(0);
@@ -292,58 +296,61 @@ void loop() {
             X_Joint.calibrated = true;
         }
     }
-
-
-    // Buttons
-    uint8_t buttons = (digitalRead(B_ENC_3)<<3) | (digitalRead(B_ENC_2)<<2) | (digitalRead(B_ENC_1)<<1) | (digitalRead(B_ENC_0)<<0);
-
-    // Motor outputs
-
-    // X
-    // if calibrating: drive left, if at fwd lim switch, then set calibrating to false and set calibrated to true and also reset position var to 0
-    //Create a struct for each joint: target pos, calibrating, and calibrated
-    if (buttons == BTN_1) X.drive((direction? 900 : -900));
+    else */
+    if (buttons == BTN_1) X.drive((direction? -900 : 900));
     else X.drive(X_decipercent);
 
     // Y1
-    if (buttons == BTN_2) Y1.drive((direction? 900 : -900));
+    if (buttons == BTN_2) Y1.drive((direction? -900 : 900));
     else Y1.drive(Y1_decipercent);
 
     // Y2
-    if (buttons == BTN_3) Y2.drive((direction? 900 : -900));
+    if (buttons == BTN_3) Y2.drive((direction? -900 : 900));
     else Y2.drive(Y2_decipercent);
 
     // Z
-    if (buttons == BTN_4) Z.drive((direction? 900 : -900));
+    if (buttons == BTN_4) Z.drive((direction? -900 : 900));
     else Z.drive(Z_decipercent);
     
     // Pitch
-    if (buttons == BTN_5) Pitch.drive((direction? 900 : -900));
+    if (buttons == BTN_5) Pitch.drive((direction? -900 : 900));
     else Pitch.drive(Pitch_decipercent);
 
     // Roll1
-    if (buttons == BTN_6) Roll1.drive((direction? 900 : -900));
+    if (buttons == BTN_6) Roll1.drive((direction? -900 : 900));
     else Roll1.drive(Roll1_decipercent);
 
     // Roll2
-    if (buttons == BTN_7) Roll2.drive((direction? 900 : -900));
+    if (buttons == BTN_7) Roll2.drive((direction? -900 : 900));
     else Roll2.drive(Roll2_decipercent);
 
     // Gripper1
-    if (buttons == BTN_8) Gripper1.drive((direction? 900 : -900));
+    if (buttons == BTN_8) Gripper1.drive((direction? -900 : 900));
     else Gripper1.drive(Gripper1_decipercent);
 
     // Gripper2
-    if (buttons == BTN_9) Gripper2.drive((direction? 900 : -900));
+    if (buttons == BTN_9) Gripper2.drive((direction? -900 : 900));
     else Gripper2.drive(Gripper2_decipercent);
 
+    // Spare
+    if (buttons == BTN_10) Spare.drive((direction? -900 : 900));
+    else Spare.drive(0);
+
     // Solenoid
-    if (buttons == BTN_10) ;
-    else ;
+    if (buttons == BTN_11) setSolenoid(true);
+    else setSolenoid(extendSolenoid);
 
     // Laser
-    if (buttons == BTN_11) ;
-    else ;
+    setLaser(laserOn);
+}
+
+
+inline void setSolenoid(bool extend) {
+    IOX2.write(IOX2_SOLENOID, extend? HIGH : LOW);
+}
+
+inline void setLaser(bool on) {
+    IOX2.write(IOX2_LAS, on? HIGH : LOW);
 }
 
 
@@ -369,7 +376,8 @@ void telemetry() {
     RoveComm.write(RC_ARMBOARD_WATCHDOGSTATUS_DATA_ID, RC_ARMBOARD_WATCHDOGSTATUS_DATA_COUNT, watchdogStatus);
 
     if (!telemetryOverride) {
-        float positions[7] = {Encoder1.readDegrees(), Encoder2.readDegrees(), Encoder3.readDegrees(), Encoder4.readDegrees(), 0, 0, 0};
+        float positions[7] = {X.Encoder()->readDegrees(), Y1.Encoder()->readDegrees(), Y2.Encoder()->readDegrees(), Z.Encoder()->readDegrees(),
+                                Pitch.Encoder()->readDegrees(), Roll1.Encoder()->readDegrees(), Roll2.Encoder()->readDegrees()};
         RoveComm.write(RC_ARMBOARD_POSITIONS_DATA_ID, RC_ARMBOARD_POSITIONS_DATA_COUNT, positions);
 
         float coordinates[5] = {0, 0, 0, 0, 0};
@@ -377,7 +385,7 @@ void telemetry() {
 
         uint8_t limitSwitches = (X.atForwardHardLimit() << 0) | (X.atReverseHardLimit() << 1) | (Y1.atForwardHardLimit() << 2) | (Y1.atReverseHardLimit() << 3) |
                                 (Y2.atForwardHardLimit() << 4) | (Y2.atReverseHardLimit() << 5) | (Z.atForwardHardLimit() << 6) | (Z.atReverseHardLimit() << 7) | 
-                                (Pitch.atForwardHardLimit() << 8) | (Pitch.atReverseHardLimit() << 9);;
+                                (Pitch.atForwardHardLimit() << 8) | (Pitch.atReverseHardLimit() << 9);
         RoveComm.write(RC_ARMBOARD_LIMITSWITCHTRIGGERED_DATA_ID, RC_ARMBOARD_LIMITSWITCHTRIGGERED_DATA_COUNT, limitSwitches);
     }
 }
