@@ -14,6 +14,8 @@
 #include <RoveJoint.h>
 #include <RoveDifferentialJoint.h>
 
+#include <PCF8574.h>
+
 #include <cstdint>
 
 
@@ -31,6 +33,12 @@ bool watchdogOverride = false;
 #define TELEMETRY_PERIOD 150000
 IntervalTimer Telemetry;
 bool telemetryOverride = false;
+
+// IO Expanders
+PCF8574 IOX1(0x38, IOX_TWI);
+PCF8574 IOX2(0x39, IOX_TWI);
+uint32_t lastIOX_timestamp = 0;
+#define IOX_UPDATE_PERIOD   50
 
 
 // Motors
@@ -80,6 +88,7 @@ RoveJoint Roll2(&Motor7);
 #define Spare (Motor10)
 
 
+
 // // Control variables
 int16_t X_decipercent = 0;
 int16_t Y1_decipercent = 0;
@@ -99,12 +108,21 @@ bool laserOn = false;
 bool extendSolenoid = false;
 
 
+
 //Joint Structs
 struct Joint {
     float target = 0;
     bool calibrating = false;
     bool calibrated = false;
 };
+
+Joint X_Joint;
+Joint Y1_Joint;
+Joint Y2_Joint;
+Joint Z_Joint;
+Joint Pitch_Joint;
+Joint Roll1_Joint;
+Joint Roll2_Joint;
 
 // Methods
 void estop();
