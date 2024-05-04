@@ -66,16 +66,16 @@ RoveQuadEncoder Encoder7(ENC_7A, ENC_7B, 1);
 SoftwareSwitch LS1, LS2, LS3, LS4, LS5, LS6, LS7, LS8, LS9, LS10;
 
 // Joints
-RoveJoint X(&Motor1);
-RoveJoint Y1(&Motor2);
-RoveJoint Y2(&Motor3);
-RoveJoint Z(&Motor4);
-RoveJoint Pitch(&Motor5);
-RoveJoint Roll1(&Motor6);
-RoveJoint Roll2(&Motor7);
-#define Gripper1 (Motor8)
+RoveJoint X(&Motor6);
+RoveJoint Y1(&Motor3);
+RoveJoint Y2(&Motor1);
+RoveJoint Z(&Motor5);
+RoveJoint Pitch(&Motor4);
+RoveJoint Roll1(&Motor8);
+RoveJoint Roll2(&Motor10);
+#define Gripper1 (Motor7)
 #define Gripper2 (Motor9)
-#define Spare (Motor10)
+#define Spare (Motor2)
 
 
 // // Control variables
