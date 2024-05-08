@@ -15,7 +15,7 @@
 #include <RoveJoint.h>
 #include <RoveDifferentialJoint.h>
 
-#include <PCF8574.h>
+#include <PCF8574.h> // Arduino library: download through IDE library manager
 
 #include <cstdint>
 
