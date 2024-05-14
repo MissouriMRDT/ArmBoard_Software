@@ -18,9 +18,9 @@
 #define M5_FWD          13
 #define M5_RVS          14
 #define M6_FWD          15
-#define M6_RVS          5 // mag wire
+#define M6_RVS          5 // maga wire
 
-#define M7_FWD          33 // mag wire
+#define M7_FWD          33 // maga wire
 #define M7_RVS          22
 #define M8_FWD          2
 #define M8_RVS          6
@@ -77,7 +77,7 @@
 #define B_ENC_2         37
 #define B_ENC_3         36
 
-#define BTN_1              11 // mag wire
+#define BTN_1              11 // maga wire
 #define BTN_2              1
 #define BTN_3              2
 #define BTN_4              3

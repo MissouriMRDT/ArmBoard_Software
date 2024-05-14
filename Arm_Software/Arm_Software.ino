@@ -227,7 +227,7 @@ void loop() {
 
             X.overrideForwardHardLimit(data & (1<<0));
             X.overrideReverseHardLimit(data & (1<<1));
-            Y1.overrideForwardHardLimit(data & (1<2));
+            Y1.overrideForwardHardLimit(data & (1<<2));
             Y1.overrideReverseHardLimit(data & (1<<3));
             Y2.overrideForwardHardLimit(data & (1<<4));
             Y2.overrideReverseHardLimit(data & (1<<5));
