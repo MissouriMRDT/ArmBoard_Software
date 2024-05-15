@@ -25,11 +25,10 @@ void setup() {
     Y1.attachEncoder(&Encoder2);
     Y2.attachEncoder(&Encoder3);
     Z.attachEncoder(&Encoder4);
-    Pitch.attachEncoder(&Encoder5);
-    Roll1.attachEncoder(&Encoder6);
-    Roll2.attachEncoder(&Encoder7);
+    Pitch.attachEncoder(&Encoder7);
+    Roll1.attachEncoder(&Encoder5);
+    Roll2.attachEncoder(&Encoder6);
 
-    // TODO: Attach hard limits (Needs lim switches)
     X.attachHardLimits(&LS1, &LS2);
     Y1.attachHardLimits(&LS3, &LS4);
     Y2.attachHardLimits(&LS5, &LS6);
@@ -41,27 +40,18 @@ void setup() {
     Y1.Encoder()->configInvert(false);
     Y2.Encoder()->configInvert(false);
     Z.Encoder()->configInvert(false);
-    Pitch.Encoder()->configInvert(false);
+    Pitch.Encoder()->configInvert(true);
     Roll1.Encoder()->configInvert(false);
-    Roll2.Encoder()->configInvert(false);
-
-    // Configure encoder offsets
-    X.Encoder()->configOffset(0);
-    Y1.Encoder()->configOffset(0);
-    Y2.Encoder()->configOffset(0);
-    Z.Encoder()->configOffset(0);
-    Pitch.Encoder()->configOffset(0);
-    Roll1.Encoder()->configOffset(0);
-    Roll2.Encoder()->configOffset(0);
+    Roll2.Encoder()->configInvert(true);
 
     // Attach encoder interrupts, leave the same
     Encoder1.begin([]{Encoder1.handleInterrupt();});
     Encoder2.begin([]{Encoder2.handleInterrupt();});
     Encoder3.begin([]{Encoder3.handleInterrupt();});
     Encoder4.begin([]{Encoder4.handleInterrupt();});
-    Encoder5.begin([]{Encoder2.handleInterrupt();});
-    Encoder6.begin([]{Encoder3.handleInterrupt();});
-    Encoder7.begin([]{Encoder4.handleInterrupt();});
+    Encoder5.begin([]{Encoder5.handleInterrupt();});
+    Encoder6.begin([]{Encoder6.handleInterrupt();});
+    Encoder7.begin([]{Encoder7.handleInterrupt();});
 
     // Config motor inverts, reference joint
     X.Motor()->configInvert(false);
@@ -70,7 +60,7 @@ void setup() {
     Z.Motor()->configInvert(false);
     Pitch.Motor()->configInvert(false);
     Roll1.Motor()->configInvert(false);
-    Roll2.Motor()->configInvert(false);
+    Roll2.Motor()->configInvert(true);
     Gripper1.configInvert(false);
     Gripper2.configInvert(false);
     Spare.configInvert(false);
@@ -88,16 +78,16 @@ void setup() {
     Spare.configMaxOutputs(-1000, 1000);
 
     // Config motor deadbands, reference joint
-    X.Motor()->configMinOutputs(-10, 10);
-    Y1.Motor()->configMinOutputs(-10, 10);
-    Y2.Motor()->configMinOutputs(-10, 10);
-    Z.Motor()->configMinOutputs(-10, 10);
-    Pitch.Motor()->configMinOutputs(-10, 10);
-    Roll1.Motor()->configMinOutputs(-10, 10);
-    Roll2.Motor()->configMinOutputs(-10, 10);
-    Gripper1.configMinOutputs(-10, 10);
-    Gripper2.configMinOutputs(-10, 10);
-    Spare.configMinOutputs(-10, 10);
+    X.Motor()->configMinOutputs(-200, 200);
+    Y1.Motor()->configMinOutputs(-100, 170);
+    Y2.Motor()->configMinOutputs(-100, 220);
+    Z.Motor()->configMinOutputs(-220, 190);
+    Pitch.Motor()->configMinOutputs(-50, 50);
+    Roll1.Motor()->configMinOutputs(-200, 200);
+    Roll2.Motor()->configMinOutputs(-130, 130);
+    Gripper1.configMinOutputs(-50, 50);
+    Gripper2.configMinOutputs(-50, 50);
+    Spare.configMinOutputs(-50, 50);
 
     // Config motor ramp rates, reference joint
     X.Motor()->configRampRate(10000);
@@ -111,6 +101,46 @@ void setup() {
     Gripper2.configRampRate(10000);
     Spare.configRampRate(10000);
 
+    // X soft limits
+    X.configSoftLimits(0, 11);
+    X.overrideReverseSoftLimit(true);
+    X.overrideForwardSoftLimit(true);
+
+    // Y1 soft limits
+    Y1.configSoftLimits(0, 21.375);
+    Y1.overrideReverseSoftLimit(true);
+    Y1.overrideForwardSoftLimit(true);
+
+    // Y2 soft limits
+    Y2.configSoftLimits(0, 21.125);
+    Y2.overrideReverseSoftLimit(true);
+    Y2.overrideForwardSoftLimit(true);
+
+    // Z soft limits
+    Z.configSoftLimits(0, 7.625);
+    Z.overrideReverseSoftLimit(true);
+    Z.overrideForwardSoftLimit(true);
+
+    // Pitch soft limits
+    Pitch.configForwardSoftLimit(345);
+    Pitch.configReverseSoftLimit(30);
+    // Pitch encoder is absolute, so set predefined offset without calibration
+    Pitch_state.calibrated = true;
+    Pitch.Encoder()->configOffset(174.2);
+
+    // Roll
+    Roll1_PID.enableContinuousFeedback(0, 360);
+    Roll2_PID.enableContinuousFeedback(0, 360);
+
+    // Attach PID
+    X.attachPID(&X_PID);
+    Y1.attachPID(&Y1_PID);
+    Y2.attachPID(&Y2_PID);
+    Z.attachPID(&Z_PID);
+    Pitch.attachPID(&Pitch_PID);
+    Roll1.attachPID(&Roll1_PID);
+    Roll2.attachPID(&Roll2_PID);
+    
     // RoveComm
     Serial.println("RoveComm Initializing...");
     RoveComm.begin(RC_ARMBOARD_FIRSTOCTET, RC_ARMBOARD_SECONDOCTET, RC_ARMBOARD_THIRDOCTET, RC_ARMBOARD_FOURTHOCTET, &TCPServer);
@@ -133,20 +163,21 @@ void loop() {
         {
             int16_t *data = (int16_t*)packet.data;
             
-            X_decipercent = data[0];
-            Y1_decipercent = data[1];
-            Y2_decipercent = data[2];
-            Z_decipercent = data[3];
-            Pitch_decipercent = data[4];
+            X_state.decipercent = data[0];
+            Y1_state.decipercent = data[1];
+            Y2_state.decipercent = data[2];
+            Z_state.decipercent = data[3];
+            Pitch_state.decipercent = data[4];
             
             if (activeGripper) {
-                Roll1_decipercent = 0;
-                Roll2_decipercent = data[5];
+                Roll1_state.decipercent = 0;
+                Roll2_state.decipercent = data[5];
             } else {
-                Roll2_decipercent = 0;
-                Roll1_decipercent = data[5];
+                Roll1_state.decipercent = data[5];
+                Roll2_state.decipercent = 0;
             }
 
+            closedLoopActive = false;
             feedWatchdog();
 
             break;
@@ -154,12 +185,44 @@ void loop() {
 
         case RC_ARMBOARD_SETPOSITION_DATA_ID:
         {
-            
+            float *data = (float*) packet.data;
+
+            X_state.target = data[0];
+            Y1_state.target = data[1];
+            Y2_state.target = data[2];
+            Z_state.target = data[3];
+            Pitch_state.target = data[4];
+
+            if (activeGripper) {
+                Roll2_state.target = data[5];
+            } else {
+                Roll1_state.target = data[5];
+            }
+
+            closedLoopActive = true;
+            feedWatchdog();
+
             break;
         }
 
         case RC_ARMBOARD_INCREMENTPOSITION_DATA_ID:
         {
+            float *data = (float*) packet.data;
+
+            X_state.target += data[0];
+            Y1_state.target += data[1];
+            Y2_state.target += data[2];
+            Z_state.target += data[3];
+            Pitch_state.target += data[4];
+
+            if (activeGripper) {
+                Roll2_state.target += data[5];
+            } else {
+                Roll1_state.target += data[5];
+            }
+
+            closedLoopActive = true;
+            feedWatchdog();
 
             break;
         }
@@ -234,7 +297,9 @@ void loop() {
             Z.overrideForwardHardLimit(data & (1<<6));
             Z.overrideReverseHardLimit(data & (1<<7));
             Pitch.overrideForwardHardLimit(data & (1<<8));
+            Pitch.overrideForwardSoftLimit(data & (1<<8));
             Pitch.overrideReverseHardLimit(data & (1<<9));
+            Pitch.overrideReverseSoftLimit(data & (1<<9));
             break;
         }
 
@@ -243,17 +308,57 @@ void loop() {
         {
             uint8_t data = *((uint8_t*) packet.data);
             
-            X_Joint.calibrating = data & (1<<0);
-            Y1_Joint.calibrating = data & (1<<1);
-            Y2_Joint.calibrating = data & (1<<2);
-            Z_Joint.calibrating = data & (1<<3);
-            Pitch_Joint.calibrating = data & (1<<4);
+            // Linear joints need to calibrate
+            X_state.calibrating = data & (1<<0);
+            Y1_state.calibrating = data & (1<<1);
+            Y2_state.calibrating = data & (1<<2);
+            Z_state.calibrating = data & (1<<3);
+
+            // Pitch joint has no calibration
+
+            // Roll joint calibration is manual
+            if (data & (1<<5)) {
+                Roll1_state.calibrated = true;
+                Roll1.Encoder()->setDegrees(0);
+            }
+            if (data & (1<<6)) {
+                Roll2_state.calibrated = true;
+                Roll2.Encoder()->setDegrees(0);
+            }
+            
             break;
         }
 
         case RC_ARMBOARD_SELECTGRIPPER_DATA_ID:
         {
             activeGripper = *((uint8_t*) packet.data);
+            break;
+        }
+
+        case 8069:
+        {
+            // data[0]: joint to use
+            // data[1-3]: kP, kI, kD
+            float *data = (float*) packet.data;
+
+            // RoveComm only allows packets of one data type, so round float to nearest integer
+            uint8_t jointId = (uint8_t) (data[0] + 0.5);
+
+            RovePIDController *pid = nullptr;
+            switch (jointId) {
+                case 1: pid = &X_PID; break;
+                case 2: pid = &Y1_PID; break;
+                case 3: pid = &Y2_PID; break;
+                case 4: pid = &Z_PID; break;
+                case 5: pid = &Pitch_PID; break;
+                case 6: pid = &Roll1_PID; break;
+                case 7: pid = &Roll2_PID; break;
+            }
+
+            if (pid != nullptr) {
+                pid->configPID(data[1], data[2], data[3]);
+            }
+
             break;
         }
     }
@@ -282,59 +387,20 @@ void loop() {
     }
 
     // Buttons
-    uint8_t buttons = (digitalRead(B_ENC_3)<<3) | (digitalRead(B_ENC_2)<<2) | (digitalRead(B_ENC_1)<<1) | (digitalRead(B_ENC_0)<<0);
+    buttons = (digitalRead(B_ENC_3)<<3) | (digitalRead(B_ENC_2)<<2) | (digitalRead(B_ENC_1)<<1) | (digitalRead(B_ENC_0)<<0);
 
     // Motor outputs
+    updateJoint(X, X_state, BTN_1);
+    updateJoint(Y1, Y1_state, BTN_2);
+    updateJoint(Y2, Y2_state, BTN_3);
+    updateJoint(Z, Z_state, BTN_4);
+    updateJoint(Pitch, Pitch_state, BTN_5);
+    updateJoint(Roll1, Roll1_state, BTN_6);
+    updateJoint(Roll2, Roll2_state, BTN_7);
 
-    // X
-    /*if (X_Joint.calibrating) {
-        X.drive(900);
-        if (X.atForwardHardLimit()) {
-            X.drive(0);
-            X.Encoder()->setDegrees(0);
-            X_Joint.calibrating = false;
-            X_Joint.calibrated = true;
-        }
-    }
-    else */
-    if (buttons == BTN_1) X.drive((direction? -900 : 900));
-    else X.drive(X_decipercent);
-
-    // Y1
-    if (buttons == BTN_2) Y1.drive((direction? -900 : 900));
-    else Y1.drive(Y1_decipercent);
-
-    // Y2
-    if (buttons == BTN_3) Y2.drive((direction? -900 : 900));
-    else Y2.drive(Y2_decipercent);
-
-    // Z
-    if (buttons == BTN_4) Z.drive((direction? -900 : 900));
-    else Z.drive(Z_decipercent);
-    
-    // Pitch
-    if (buttons == BTN_5) Pitch.drive((direction? -900 : 900));
-    else Pitch.drive(Pitch_decipercent);
-
-    // Roll1
-    if (buttons == BTN_6) Roll1.drive((direction? -900 : 900));
-    else Roll1.drive(Roll1_decipercent);
-
-    // Roll2
-    if (buttons == BTN_7) Roll2.drive((direction? -900 : 900));
-    else Roll2.drive(Roll2_decipercent);
-
-    // Gripper1
-    if (buttons == BTN_8) Gripper1.drive((direction? -900 : 900));
-    else Gripper1.drive(Gripper1_decipercent);
-
-    // Gripper2
-    if (buttons == BTN_9) Gripper2.drive((direction? -900 : 900));
-    else Gripper2.drive(Gripper2_decipercent);
-
-    // Spare
-    if (buttons == BTN_10) Spare.drive((direction? -900 : 900));
-    else Spare.drive(0);
+    updateMotor(Gripper1, Gripper1_decipercent, BTN_8);
+    updateMotor(Gripper2, Gripper2_decipercent, BTN_9);
+    updateMotor(Spare, 0, BTN_10);
 
     // Solenoid
     if (buttons == BTN_11) setSolenoid(true);
@@ -342,6 +408,43 @@ void loop() {
 
     // Laser
     setLaser(laserOn);
+}
+
+
+void updateJoint(RoveJoint &joint, JointState &state, uint8_t button) {
+    if (buttons == button) {
+        joint.drive((direction? -900 : 900));
+    } else if (state.calibrating) {
+        if (joint.atReverseHardLimit()) {
+            joint.overrideReverseSoftLimit(false);
+            joint.overrideForwardSoftLimit(false);
+            joint.drive(0);
+            joint.Encoder()->setDegrees(0);
+            state.calibrating = false;
+            state.calibrated = true;
+        } else {
+            joint.overrideReverseSoftLimit(true);
+            joint.drive(-1000);
+        }
+    } else if (closedLoopActive) {
+        if (state.calibrated) {
+            joint.setAngle(state.target);
+        } else {
+            joint.drive(0);
+        }
+    } else {
+        joint.drive(state.decipercent);
+    }
+}
+
+void updateMotor(RoveMotor &motor, int16_t decipercent, uint8_t button) {
+    uint8_t buttons = (digitalRead(B_ENC_3)<<3) | (digitalRead(B_ENC_2)<<2) | (digitalRead(B_ENC_1)<<1) | (digitalRead(B_ENC_0)<<0);
+
+    if (buttons == button) {
+        motor.drive((direction? -900 : 900));
+    } else {
+        motor.drive(decipercent);
+    }
 }
 
 
@@ -360,13 +463,13 @@ void estop() {
 
         closedLoopActive = false;
 
-        X_decipercent = 0;
-        Y1_decipercent = 0;
-        Y2_decipercent = 0;
-        Z_decipercent = 0;
-        Pitch_decipercent = 0;
-        Roll1_decipercent = 0;
-        Roll2_decipercent = 0;
+        X_state.decipercent = 0;
+        Y1_state.decipercent = 0;
+        Y2_state.decipercent = 0;
+        Z_state.decipercent = 0;
+        Pitch_state.decipercent = 0;
+        Roll1_state.decipercent = 0;
+        Roll2_state.decipercent = 0;
         Gripper1_decipercent = 0;
         Gripper2_decipercent = 0;
     }

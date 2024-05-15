@@ -54,63 +54,66 @@ RoveHBridge Motor9(M9_FWD, M9_RVS);
 RoveHBridge Motor10(M10_FWD, M10_RVS);
 
 // Encoders
-RoveQuadEncoder Encoder1(ENC_1A, ENC_1B, 1);
-RoveQuadEncoder Encoder2(ENC_2A, ENC_2B, 1);
-RoveQuadEncoder Encoder3(ENC_3A, ENC_3B, 1);
-RoveQuadEncoder Encoder4(ENC_4A, ENC_4B, 1);
-RoveQuadEncoder Encoder5(ENC_5A, ENC_5B, 1);
-RoveQuadEncoder Encoder6(ENC_6A, ENC_6B, 1);
-RoveQuadEncoder Encoder7(ENC_7A, ENC_7B, 1);
+RoveQuadEncoder Encoder1(ENC_1A, ENC_1B, 360 * 30000 / 11.0);
+RoveQuadEncoder Encoder2(ENC_2A, ENC_2B, 360 * 101000 / 21.375);
+RoveQuadEncoder Encoder3(ENC_3A, ENC_3B, 360 * 62134 / 21.125);
+RoveQuadEncoder Encoder4(ENC_4A, ENC_4B, 360 * 46642 / 7.625);
+RoveQuadEncoder Encoder5(ENC_5A, ENC_5B, 4808);
+RoveQuadEncoder Encoder6(ENC_6A, ENC_6B, 7945);
+MA3PWM Encoder7(ENC_7A);
 
 // Limit Switches
 SoftwareSwitch LS1, LS2, LS3, LS4, LS5, LS6, LS7, LS8, LS9, LS10;
 
 // Joints
 RoveJoint X(&Motor6);
-RoveJoint Y1(&Motor3);
-RoveJoint Y2(&Motor1);
+RoveJoint Y1(&Motor1);
+RoveJoint Y2(&Motor2);
 RoveJoint Z(&Motor5);
 RoveJoint Pitch(&Motor4);
 RoveJoint Roll1(&Motor8);
 RoveJoint Roll2(&Motor10);
 #define Gripper1 (Motor7)
 #define Gripper2 (Motor9)
-#define Spare (Motor2)
+#define Spare (Motor3)
+
+// PID Controllers
+RovePIDController X_PID(5000, 0, 0);
+RovePIDController Y1_PID(4000, 0, 0);
+RovePIDController Y2_PID(4000, 0, 0);
+RovePIDController Z_PID(4000, 0, 0);
+RovePIDController Pitch_PID(35, 0, 0);
+RovePIDController Roll1_PID(60, 0, 2000);
+RovePIDController Roll2_PID(50, 0, 1000);
 
 
-// // Control variables
-int16_t X_decipercent = 0;
-int16_t Y1_decipercent = 0;
-int16_t Y2_decipercent = 0;
-int16_t Z_decipercent = 0;
-int16_t Pitch_decipercent = 0;
-int16_t Roll1_decipercent = 0;
-int16_t Roll2_decipercent = 0;
+// Control variables
+uint8_t activeGripper = 0;
 int16_t Gripper1_decipercent = 0;
 int16_t Gripper2_decipercent = 0;
 
-uint8_t activeGripper = 0;
-
-bool closedLoopActive = false;
 bool direction = false;
+uint8_t buttons = 0;
 bool laserOn = false;
 bool extendSolenoid = false;
 
+bool closedLoopActive = false;
 
-//Joint Structs
-struct Joint {
+
+struct JointState {
     float target = 0;
+    int16_t decipercent = 0;
     bool calibrating = false;
     bool calibrated = false;
 };
 
-Joint X_Joint;
-Joint Y1_Joint;
-Joint Y2_Joint;
-Joint Z_Joint;
-Joint Pitch_Joint;
-Joint Roll1_Joint;
-Joint Roll2_Joint;
+JointState X_state;
+JointState Y1_state;
+JointState Y2_state;
+JointState Z_state;
+JointState Pitch_state;
+JointState Roll1_state;
+JointState Roll2_state;
 
 // Methods
 void estop();
