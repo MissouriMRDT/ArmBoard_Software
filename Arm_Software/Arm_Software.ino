@@ -36,7 +36,7 @@ void setup() {
     Pitch.attachHardLimits(&LS9, &LS10);
 
     // Configure encoder inverts
-    X.Encoder()->configInvert(false);
+    X.Encoder()->configInvert(true);
     Y1.Encoder()->configInvert(false);
     Y2.Encoder()->configInvert(false);
     Z.Encoder()->configInvert(false);
@@ -409,11 +409,17 @@ void loop() {
     // Laser
     setLaser(laserOn);
 
-    //Update X Soft Limits based off of Y1 Y2 height
-    if ((((Y1.Encoder()->readDegrees()) + (Y2.Encoder()->readDegrees())) > SOMETHING) && (((Y1.Encoder()->readDegrees()) + (Y2.Encoder()->readDegrees())) < SOMETHING)) {
-        X.configSoftLimits(4, 11); 
-    } else {
+    // Update X and Y Soft Limits to prevent Z axis from smashing
+    if (((Y1.Encoder()->readDegrees()) + (Y2.Encoder()->readDegrees())) < 1) {
         X.configSoftLimits(0, 11); 
+        if ((X.Encoder()->readDegrees()) < 2) {
+            //Set Y soft limits to be 0-1 in 
+        }
+    } else if (((Y1.Encoder()->readDegrees()) + (Y2.Encoder()->readDegrees())) > 1) && (((Y1.Encoder()->readDegrees()) + (Y2.Encoder()->readDegrees())) < 10) {
+        X.configSoftLimits(2, 11);
+        if ((X.Encoder()->readDegrees()) < 2) {
+            //Set Y soft limits to be 10-21 in
+        }
     }
 }
 
