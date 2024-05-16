@@ -120,4 +120,8 @@ void estop();
 void telemetry();
 void feedWatchdog();
 
+// Constants
+const float Y1_MAX = 21.375
+const float Y2_MAX = 21.125
+
 #endif

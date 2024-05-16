@@ -102,17 +102,17 @@ void setup() {
     Spare.configRampRate(10000);
 
     // X soft limits
-    X.configSoftLimits(0, 11);
+    X.configSoftLimits(0, 11); 
     X.overrideReverseSoftLimit(true);
     X.overrideForwardSoftLimit(true);
 
     // Y1 soft limits
-    Y1.configSoftLimits(0, 21.375);
+    Y1.configSoftLimits(0, Y1_MAX);
     Y1.overrideReverseSoftLimit(true);
     Y1.overrideForwardSoftLimit(true);
 
     // Y2 soft limits
-    Y2.configSoftLimits(0, 21.125);
+    Y2.configSoftLimits(0, Y2_MAX);
     Y2.overrideReverseSoftLimit(true);
     Y2.overrideForwardSoftLimit(true);
 
@@ -391,8 +391,8 @@ void loop() {
 
     // Motor outputs
     updateJoint(X, X_state, BTN_1);
-    updateJoint(Y1, Y1_state, BTN_2);
-    updateJoint(Y2, Y2_state, BTN_3);
+    updateJoint(Y1, Y1_state, BTN_2, true, Y1_MAX);
+    updateJoint(Y2, Y2_state, BTN_3, true, Y2_MAX);
     updateJoint(Z, Z_state, BTN_4);
     updateJoint(Pitch, Pitch_state, BTN_5);
     updateJoint(Roll1, Roll1_state, BTN_6);
@@ -408,23 +408,31 @@ void loop() {
 
     // Laser
     setLaser(laserOn);
+
+    //Update X Soft Limits based off of Y1 Y2 height
+    if ((((Y1.Encoder()->readDegrees()) + (Y2.Encoder()->readDegrees())) > SOMETHING) && (((Y1.Encoder()->readDegrees()) + (Y2.Encoder()->readDegrees())) < SOMETHING)) {
+        X.configSoftLimits(4, 11); 
+    } else {
+        X.configSoftLimits(0, 11); 
+    }
 }
 
 
-void updateJoint(RoveJoint &joint, JointState &state, uint8_t button) {
+void updateJoint(RoveJoint &joint, JointState &state, uint8_t button, bool calibrateUp=false, float position=0) {
     if (buttons == button) {
         joint.drive((direction? -900 : 900));
     } else if (state.calibrating) {
-        if (joint.atReverseHardLimit()) {
+        if (joint.atReverseHardLimit() || joint.atForwardHardLimit()) {
             joint.overrideReverseSoftLimit(false);
             joint.overrideForwardSoftLimit(false);
             joint.drive(0);
-            joint.Encoder()->setDegrees(0);
+            joint.Encoder()->setDegrees(position);
             state.calibrating = false;
             state.calibrated = true;
         } else {
             joint.overrideReverseSoftLimit(true);
-            joint.drive(-1000);
+            joint.overrideForwardSoftLimit(true);
+            calibrateUp? joint.drive(1000) : joint.drive(-1000)
         }
     } else if (closedLoopActive) {
         if (state.calibrated) {
@@ -437,7 +445,7 @@ void updateJoint(RoveJoint &joint, JointState &state, uint8_t button) {
     }
 }
 
-void updateMotor(RoveMotor &motor, int16_t decipercent, uint8_t button) {
+void updateMotor(RoveMotor &motor, int16_t decipercent, uint8_t button,) {
     uint8_t buttons = (digitalRead(B_ENC_3)<<3) | (digitalRead(B_ENC_2)<<2) | (digitalRead(B_ENC_1)<<1) | (digitalRead(B_ENC_0)<<0);
 
     if (buttons == button) {
