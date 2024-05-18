@@ -119,9 +119,11 @@ JointState Roll2_state;
 void estop();
 void telemetry();
 void feedWatchdog();
+void updateJoint(RoveJoint &joint, JointState &state, uint8_t button, bool calibrateUp=false, float position=0);
+void updateMotor(RoveMotor &motor, int16_t decipercent, uint8_t button);
 
 // Constants
-const float Y1_MAX = 21.375
-const float Y2_MAX = 21.125
+const float Y1_MAX = 21.375;
+const float Y2_MAX = 21.125;
 
 #endif
