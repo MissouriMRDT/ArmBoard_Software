@@ -122,11 +122,11 @@ void setup() {
     Z.overrideForwardSoftLimit(true);
 
     // Pitch soft limits
-    Pitch.configForwardSoftLimit(345);
-    Pitch.configReverseSoftLimit(30);
+    Pitch.configForwardSoftLimit(310);
+    Pitch.configReverseSoftLimit(0);
     // Pitch encoder is absolute, so set predefined offset without calibration
     Pitch_state.calibrated = true;
-    Pitch.Encoder()->configOffset(174.2);
+    Pitch.Encoder()->configOffset(0);
 
     // Roll
     Roll1_PID.enableContinuousFeedback(0, 360);
@@ -425,6 +425,12 @@ void loop() {
   //           }
   //       }
   //  }
+
+    //Zero Pitch when lemon switch is pressed
+    if (Pitch.atReverseHardLimit()) {
+      Pitch.Encoder()->setDegrees(0);
+    }
+
 }
 
 
