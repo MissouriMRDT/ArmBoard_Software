@@ -102,7 +102,7 @@ void setup() {
     Spare.configRampRate(10000);
 
     // X soft limits
-    //X.configSoftLimits(0, 11); 
+    //X.configSoftLimits(0, 8); 
     X.overrideReverseSoftLimit(true);
     X.overrideForwardSoftLimit(true);
 
@@ -286,7 +286,7 @@ void loop() {
 
         case RC_ARMBOARD_LIMITSWITCHOVERRIDE_DATA_ID:
         {
-            uint8_t data = *((uint8_t*) packet.data);
+            uint16_t data = *((uint16_t*) packet.data);
 
             X.overrideForwardHardLimit(data & (1<<0));
             X.overrideReverseHardLimit(data & (1<<1));
@@ -361,6 +361,22 @@ void loop() {
 
             break;
         }
+
+        case RC_ARMBOARD_SOFTLIMITOVERRIDE_DATA_ID:
+        {
+            uint16_t data = *((uint16_t*) packet.data);
+
+            X.overrideForwardSoftLimit(data & (1<<0));
+            X.overrideReverseSoftLimit(data & (1<<1));
+            Y1.overrideForwardSoftLimit(data & (1<<2));
+            Y1.overrideReverseSoftLimit(data & (1<<3));
+            Y2.overrideForwardSoftLimit(data & (1<<4));
+            Y2.overrideReverseSoftLimit(data & (1<<5));
+            Z.overrideForwardSoftLimit(data & (1<<6));
+            Z.overrideReverseSoftLimit(data & (1<<7));
+            Pitch.overrideForwardSoftLimit(data & (1<<8));
+            Pitch.overrideReverseSoftLimit(data & (1<<9));
+        }
     }
 
 
@@ -410,21 +426,29 @@ void loop() {
     setLaser(laserOn);
 
     // Update X and Y Soft Limits to prevent Z axis from smashing
-  //   if (X_state.calibrated && Y1_state.calibrated && Y2_state.calibrated) {
-  //       if (((Y1.Encoder()->readDegrees()) + (Y2.Encoder()->readDegrees())) < 1) {
-  //           X.configSoftLimits(0, 11); 
-  //           if ((X.Encoder()->readDegrees()) < 2) {
-  //               //Set Y soft limits to be 0-1 in
-  //               Y1.configSoftLimits(0, 1 - (Y2.Encoder()->readDegrees()));
-  //           }
-  //       } else if ((((Y1.Encoder()->readDegrees()) + (Y2.Encoder()->readDegrees())) > 1) && (((Y1.Encoder()->readDegrees()) + (Y2.Encoder()->readDegrees())) < 10)) {
-  //           X.configSoftLimits(2, 11);
-  //           if ((X.Encoder()->readDegrees()) < 2) {
-  //               //Set Y soft limits to be 10-21 in
-  //               Y1.configSoftLimits(10, 21 - (Y2.Encoder()->readDegrees()));
-  //           }
-  //       }
-  //  }
+    if (X_state.calibrated && Y1_state.calibrated && Y2_state.calibrated) {
+        if (((Y1.Encoder()->readDegrees()) + (Y2.Encoder()->readDegrees())) < 10) {
+            X.configSoftLimits(3, 8); 
+            Y1.configSoftLimits(0, Y1_MAX); 
+            Y2.configSoftLimits(0, Y2_MAX); 
+        } else if (((Y1.Encoder()->readDegrees()) + (Y2.Encoder()->readDegrees())) > 10) {
+            X.configSoftLimits(0, 8);
+            if ((X.Encoder()->readDegrees()) < 3) {
+                //Set Y soft limits to be 10-21 in
+                Y2.configSoftLimits(10 - (Y1.Encoder()->readDegrees()), Y2_MAX);
+                Y1.configSoftLimits((Y1.Encoder()->readDegrees()), Y1_MAX);
+            }
+            else {
+                Y1.configSoftLimits(0, Y1_MAX); 
+                Y2.configSoftLimits(0, Y2_MAX); 
+            }
+        }
+        else {
+            X.configSoftLimits(0, 8);
+            Y1.configSoftLimits(0, Y1_MAX); 
+            Y2.configSoftLimits(0, Y2_MAX); 
+        }
+   }
 
     //Zero Pitch when lemon switch is pressed
     if (Pitch.atReverseHardLimit()) {
@@ -448,7 +472,7 @@ void updateJoint(RoveJoint &joint, JointState &state, uint8_t button, bool calib
         } else {
             joint.overrideReverseSoftLimit(true);
             joint.overrideForwardSoftLimit(true);
-            calibrateUp? joint.drive(1000) : joint.drive(-1000);
+            calibrateUp? joint.drive(500) : joint.drive(-500);
         }
     } else if (closedLoopActive) {
         if (state.calibrated) {

@@ -123,7 +123,7 @@ void updateJoint(RoveJoint &joint, JointState &state, uint8_t button, bool calib
 void updateMotor(RoveMotor &motor, int16_t decipercent, uint8_t button);
 
 // Constants
-const float Y1_MAX = 21.375;
+const float Y1_MAX = 16.375;
 const float Y2_MAX = 21.125;
 
 #endif
