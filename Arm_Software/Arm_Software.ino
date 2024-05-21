@@ -122,8 +122,8 @@ void setup() {
     Z.overrideForwardSoftLimit(true);
 
     // Pitch soft limits
-    Pitch.configForwardSoftLimit(310);
-    Pitch.configReverseSoftLimit(0);
+    // Pitch.configForwardSoftLimit(310);
+    // Pitch.configReverseSoftLimit(0);
     // Pitch encoder is absolute, so set predefined offset without calibration
     Pitch_state.calibrated = true;
     Pitch.Encoder()->configOffset(0);
