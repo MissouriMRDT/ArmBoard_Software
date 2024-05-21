@@ -460,7 +460,11 @@ void loop() {
 
 void updateJoint(RoveJoint &joint, JointState &state, uint8_t button, bool calibrateUp=false, float position=0) {
     if (buttons == button) {
+        joint.overrideReverseSoftLimit(true);
+        joint.overrideForwardSoftLimit(true);
         joint.drive((direction? -900 : 900));
+        joint.overrideReverseSoftLimit(false);
+        joint.overrideForwardSoftLimit(false);
     } else if (state.calibrating) {
         if (joint.atForwardHardLimit() || joint.atReverseHardLimit()) {
             joint.overrideReverseSoftLimit(false);
