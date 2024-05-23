@@ -425,28 +425,23 @@ void loop() {
     // Laser
     setLaser(laserOn);
 
+    float ZHeight = ((Y1.Encoder()->readDegrees()) + (Y2.Encoder()->readDegrees()));
+
     // Update X and Y Soft Limits to prevent Z axis from smashing
     if (X_state.calibrated && Y1_state.calibrated && Y2_state.calibrated) {
-        if (((Y1.Encoder()->readDegrees()) + (Y2.Encoder()->readDegrees())) < 10) {
-            X.configSoftLimits(3, 8); 
-            Y1.configSoftLimits(0, Y1_MAX); 
-            Y2.configSoftLimits(0, Y2_MAX); 
-        } else if (((Y1.Encoder()->readDegrees()) + (Y2.Encoder()->readDegrees())) > 10) {
-            X.configSoftLimits(0, 8);
-            if ((X.Encoder()->readDegrees()) < 3) {
-                //Set Y soft limits to be 10-21 in
-                Y2.configSoftLimits(10 - (Y1.Encoder()->readDegrees()), Y2_MAX);
-                Y1.configSoftLimits((Y1.Encoder()->readDegrees()), Y1_MAX);
-            }
-            else {
-                Y1.configSoftLimits(0, Y1_MAX); 
-                Y2.configSoftLimits(0, Y2_MAX); 
-            }
-        }
-        else {
-            X.configSoftLimits(0, 8);
-            Y1.configSoftLimits(0, Y1_MAX); 
-            Y2.configSoftLimits(0, Y2_MAX); 
+        if (ZHeight > 14.5) {
+          X.configSoftLimits(0, 8);
+          if ((ZHeight < 15) && ((X.Encoder()->readDegrees()) < 3)) {
+            Y1.configSoftLimits(Y1.Encoder()->readDegrees(), Y1_MAX);
+            Y2.configSoftLimits(Y2.Encoder()->readDegrees(), Y2_MAX);
+          } else {
+            Y1.configSoftLimits(0, Y1_MAX);
+            Y2.configSoftLimits(0, Y2_MAX);
+          }
+        } else {
+          X.configSoftLimits(3, 8);
+          Y1.configSoftLimits(0, Y1_MAX);
+          Y2.configSoftLimits(0, Y2_MAX);
         }
    }
 
