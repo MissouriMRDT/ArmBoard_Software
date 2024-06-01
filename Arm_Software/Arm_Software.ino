@@ -453,7 +453,7 @@ void loop() {
 }
 
 
-void updateJoint(RoveJoint &joint, JointState &state, uint8_t button, bool calibrateUp=false, float position=0) {
+void updateJoint(RoveJoint &joint, JointState &state, uint8_t button, bool calibrateUp, float position) {
     if (buttons == button) {
         joint.overrideReverseSoftLimit(true);
         joint.overrideForwardSoftLimit(true);
