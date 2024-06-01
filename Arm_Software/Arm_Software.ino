@@ -425,7 +425,7 @@ void loop() {
     // Laser
     setLaser(laserOn);
 
-    float ZHeight = ((Y1.Encoder()->readDegrees()) + (Y2.Encoder()->readDegrees()));
+    float ZHeight = ((Y1.Encoder()->readDegrees()) + ((Y2.Encoder()->readDegrees()) - 4));
 
     // Update X and Y Soft Limits to prevent Z axis from smashing
     if (X_state.calibrated && Y1_state.calibrated && Y2_state.calibrated) {
@@ -525,18 +525,20 @@ void estop() {
 void telemetry() {
     RoveComm.write(RC_ARMBOARD_WATCHDOGSTATUS_DATA_ID, RC_ARMBOARD_WATCHDOGSTATUS_DATA_COUNT, watchdogStatus);
 
+    RoveComm.write(69, 1, ZHeight);
+
     if (!telemetryOverride) {
         float positions[7] = {X.Encoder()->readDegrees(), Y1.Encoder()->readDegrees(), Y2.Encoder()->readDegrees(), Z.Encoder()->readDegrees(),
                                 Pitch.Encoder()->readDegrees(), Roll1.Encoder()->readDegrees(), Roll2.Encoder()->readDegrees()};
         RoveComm.write(RC_ARMBOARD_POSITIONS_DATA_ID, RC_ARMBOARD_POSITIONS_DATA_COUNT, positions);
 
-        float coordinates[5] = {0, 0, 0, 0, 0};
-        RoveComm.write(RC_ARMBOARD_COORDINATES_DATA_ID, RC_ARMBOARD_COORDINATES_DATA_COUNT, coordinates);
+        // float coordinates[5] = {0, 0, 0, 0, 0};
+        // RoveComm.write(RC_ARMBOARD_COORDINATES_DATA_ID, RC_ARMBOARD_COORDINATES_DATA_COUNT, coordinates);
 
-        uint8_t limitSwitches = (X.atForwardHardLimit() << 0) | (X.atReverseHardLimit() << 1) | (Y1.atForwardHardLimit() << 2) | (Y1.atReverseHardLimit() << 3) |
-                                (Y2.atForwardHardLimit() << 4) | (Y2.atReverseHardLimit() << 5) | (Z.atForwardHardLimit() << 6) | (Z.atReverseHardLimit() << 7) | 
-                                (Pitch.atForwardHardLimit() << 8) | (Pitch.atReverseHardLimit() << 9);
-        RoveComm.write(RC_ARMBOARD_LIMITSWITCHTRIGGERED_DATA_ID, RC_ARMBOARD_LIMITSWITCHTRIGGERED_DATA_COUNT, limitSwitches);
+        // uint8_t limitSwitches = (X.atForwardHardLimit() << 0) | (X.atReverseHardLimit() << 1) | (Y1.atForwardHardLimit() << 2) | (Y1.atReverseHardLimit() << 3) |
+        //                         (Y2.atForwardHardLimit() << 4) | (Y2.atReverseHardLimit() << 5) | (Z.atForwardHardLimit() << 6) | (Z.atReverseHardLimit() << 7) | 
+        //                         (Pitch.atForwardHardLimit() << 8) | (Pitch.atReverseHardLimit() << 9);
+        // RoveComm.write(RC_ARMBOARD_LIMITSWITCHTRIGGERED_DATA_ID, RC_ARMBOARD_LIMITSWITCHTRIGGERED_DATA_COUNT, limitSwitches);
     }
 }
 
