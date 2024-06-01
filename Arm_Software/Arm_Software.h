@@ -99,6 +99,8 @@ bool extendSolenoid = false;
 
 bool closedLoopActive = false;
 
+float ZHeight = 0;
+
 
 struct JointState {
     float target = 0;
@@ -123,7 +125,7 @@ void updateJoint(RoveJoint &joint, JointState &state, uint8_t button, bool calib
 void updateMotor(RoveMotor &motor, int16_t decipercent, uint8_t button);
 
 // Constants
-const float Y1_MAX = 21.150;
-const float Y2_MAX = 21.035;
+const float Y1_MAX = 21.1;
+const float Y2_MAX = 21.2;
 
 #endif
