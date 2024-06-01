@@ -471,7 +471,7 @@ void updateJoint(RoveJoint &joint, JointState &state, uint8_t button, bool calib
         } else {
             joint.overrideReverseSoftLimit(true);
             joint.overrideForwardSoftLimit(true);
-            calibrateUp? joint.drive(500) : joint.drive(-500);
+            calibrateUp? joint.drive(900) : joint.drive(-900);
         }
     } else if (closedLoopActive) {
         if (state.calibrated) {
