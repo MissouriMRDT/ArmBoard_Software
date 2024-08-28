@@ -95,7 +95,9 @@ int16_t Gripper2_decipercent = 0;
 bool direction = false;
 uint8_t buttons = 0;
 bool laserOn = false;
+void setLaser(bool on);
 bool extendSolenoid = false;
+void setSolenoid(bool extend);
 
 bool closedLoopActive = false;
 
