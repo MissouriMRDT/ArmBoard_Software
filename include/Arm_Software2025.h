@@ -95,9 +95,9 @@ struct JointState {
 };
 
 JointState X_state;
-JointState Y1_state;
-JointState Y2_state;
-JointState Z_state;
+JointState J2_state;
+JointState J3_state;
+JointState J4_state;
 JointState Pitch_state;
 JointState Roll1_state;
 JointState Roll2_state;
