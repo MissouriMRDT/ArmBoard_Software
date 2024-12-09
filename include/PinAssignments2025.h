@@ -9,6 +9,7 @@
 #define DIR_SW          33
 
 // Motor Pins
+
 #define M8_FWD          11
 #define M8_RVS          4
 
@@ -24,11 +25,12 @@
 #define M2_CS           15
 #define M3_CS           16
 #define M4_CS           17
-#define M6_CS           20
 #define M5_CS           23
+#define M6_CS           20
 #define M7_CS           21
 #define M8_CS           22
 
+#define M1_FWD          2
 
 // Laser and Solenoid
 #define LAS             13
@@ -50,12 +52,28 @@
 
 #define IOX2_LIM_9      0
 #define IOX2_LIM_10     1
+#define IOX2_FWD_1      2
+#define IOX2_RVS_1      3
+#define IOX2_FWD_2      4
+#define IOX2_RVS_2      5
+#define IOX2_FWD_3      6
+#define IOX2_RVS_3      7
+
+#define IOX3_FWD_4      0
+#define IOX3_RVS_4      1
+#define IOX3_FWD_5      2
+#define IOX3_RVS_5      3
+#define IOX3_FWD_6      4
+#define IOX3_RVS_6      5
+#define IOX3_FWD_7      6
+#define IOX3_RVS_7      7
+
 
 // Encoders
 #define ENC_1A          41
 #define ENC_1B          40
 #define ENC_2A          39
-#define ENC_1B          38
+#define ENC_2B          38
 #define ABS_1           27
 #define ABS_2           26
 #define ABS_3           25
@@ -78,7 +96,7 @@
 #define BTN_LAS         10
 #define BTN_SOL         11
 
-// Can Transceiver
+// Can Transceiver, ask Adam again if this is how we assign pin for CAN rx and tx
 #define CANRX           0
 #define CANTX           1
 
