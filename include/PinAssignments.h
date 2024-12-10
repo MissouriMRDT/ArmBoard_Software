@@ -1,34 +1,40 @@
 #ifndef PINASSIGNMENTS_H
 #define PINASSIGNMENTS_H
 
+//2025 REV 1
+
 #include <Wire.h>
 
+// Switch Pin
+#define DIR_SW          33
 
 // Motor Pins
-#define M1_FWD          0
-#define M1_RVS          1
-#define M2_FWD          7
-#define M2_RVS          8
 
-#define M3_FWD          28
-#define M3_RVS          29
-#define M4_FWD          3
-#define M4_RVS          4
+#define M8_FWD          11
+#define M8_RVS          4
 
-#define M5_FWD          13
-#define M5_RVS          14
-#define M6_FWD          15
-#define M6_RVS          5 // maga wire
+#define M6_PWM          7
+#define M7_PWM          8
+#define M2_PWM          3
+#define M3_PWM          4
+#define M1_PWM          2
+#define M5_PWM          6
+#define M8_PWM          36
 
-#define M7_FWD          33 // maga wire
-#define M7_RVS          22
-#define M8_FWD          2
-#define M8_RVS          6
-#define M9_FWD          9
-#define M9_RVS          10
-#define M10_FWD         12
-#define M10_RVS         11
+#define M1_CS           14
+#define M2_CS           15
+#define M3_CS           16
+#define M4_CS           17
+#define M5_CS           23
+#define M6_CS           20
+#define M7_CS           21
+#define M8_CS           22
 
+#define M1_FWD          2
+
+// Laser and Solenoid
+#define LAS             13
+#define Solenoid        10
 
 // I/O Expander
 #define SDA             18
@@ -46,9 +52,21 @@
 
 #define IOX2_LIM_9      0
 #define IOX2_LIM_10     1
-#define IOX2_LAS        2
-#define IOX2_SOLENOID   3
-#define IOX2_DIR_SW     4
+#define IOX2_FWD_1      2
+#define IOX2_RVS_1      3
+#define IOX2_FWD_2      4
+#define IOX2_RVS_2      5
+#define IOX2_FWD_3      6
+#define IOX2_RVS_3      7
+
+#define IOX3_FWD_4      0
+#define IOX3_RVS_4      1
+#define IOX3_FWD_5      2
+#define IOX3_RVS_5      3
+#define IOX3_FWD_6      4
+#define IOX3_RVS_6      5
+#define IOX3_FWD_7      6
+#define IOX3_RVS_7      7
 
 
 // Encoders
@@ -56,38 +74,31 @@
 #define ENC_1B          40
 #define ENC_2A          39
 #define ENC_2B          38
-
-#define ENC_3A          27
-#define ENC_3B          26
-#define ENC_4A          25
-#define ENC_4B          24
-
-#define ENC_5A          30
-#define ENC_5B          31
-#define ENC_6A          32
-#define ENC_6B          23
-
-#define ENC_7A          34
-#define ENC_7B          35
-
+#define ABS_1           27
+#define ABS_2           26
+#define ABS_3           25
+#define ABS_4           24
 
 // Buttons
-#define B_ENC_0         20
-#define B_ENC_1         21
-#define B_ENC_2         37
-#define B_ENC_3         36
+#define B_ENC_0         28
+#define B_ENC_1         29
+#define B_ENC_2         34
+#define B_ENC_3         35
 
-#define BTN_1              11 // maga wire
-#define BTN_2              1
-#define BTN_3              2
-#define BTN_4              3
-#define BTN_5              4
-#define BTN_6              5
-#define BTN_7              6
-#define BTN_8              7
-#define BTN_9              8
-#define BTN_10             9
-#define BTN_11             10
+#define BTN_1           10
+#define BTN_2           11
+#define BTN_3           12
+#define BTN_4           13
+#define BTN_5           1
+#define BTN_6           2
+#define BTN_7           3
+#define BTN_8           4
+#define BTN_LAS         10
+#define BTN_SOL         11
+
+// Can Transceiver, ask Adam again if this is how we assign pin for CAN rx and tx
+#define CANRX           0
+#define CANTX           1
 
 
 
