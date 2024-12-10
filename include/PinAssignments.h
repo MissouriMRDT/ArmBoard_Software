@@ -11,14 +11,16 @@
 // Motor Pins
 
 #define M8_FWD          11
-#define M8_RVS          4
+#define M8_RVS          12
 
-#define M6_PWM          7
-#define M7_PWM          8
+
+#define M1_PWM          2
 #define M2_PWM          3
 #define M3_PWM          4
-#define M1_PWM          2
+#define M4_PWM          5
 #define M5_PWM          6
+#define M6_PWM          7
+#define M7_PWM          8
 #define M8_PWM          36
 
 #define M1_CS           14
@@ -29,8 +31,6 @@
 #define M6_CS           20
 #define M7_CS           21
 #define M8_CS           22
-
-#define M1_FWD          2
 
 // Laser and Solenoid
 #define LAS             13
@@ -85,16 +85,16 @@
 #define B_ENC_2         34
 #define B_ENC_3         35
 
-#define BTN_1           10
-#define BTN_2           11
-#define BTN_3           12
-#define BTN_4           13
-#define BTN_5           1
-#define BTN_6           2
-#define BTN_7           3
-#define BTN_8           4
-#define BTN_LAS         10
-#define BTN_SOL         11
+#define BTN_1           10 // mag wire i fink
+#define BTN_2           1
+#define BTN_3           2
+#define BTN_4           3
+#define BTN_5           4
+#define BTN_6           5
+#define BTN_7           6
+#define BTN_8           7
+#define BTN_LAS         8
+#define BTN_SOL         9
 
 // Can Transceiver, ask Adam again if this is how we assign pin for CAN rx and tx
 #define CANRX           0

@@ -39,12 +39,12 @@ void setup() {
 
 
     // Attach encoder inverts
-    X.Encoder()->configinvert(true);
-    J2.Encoder()->configinvert(true);
-    J3.Encoder()->configinvert(true);
-    J4.Encoder()->configinvert(true);
-    Pitch.Encoder()->configinvert(true);
-    Roll.Encoder()->configinvert(true);
+    X.Encoder()->configInvert(true);
+    J2.Encoder()->configInvert(true);
+    J3.Encoder()->configInvert(true);
+    J4.Encoder()->configInvert(true);
+    Pitch.Encoder()->configInvert(true);
+    Roll.Encoder()->configInvert(true);
 
     // Configrue encoder interupts
     Encoder1.begin([]{Encoder1.handleInterupt();});

@@ -13,6 +13,7 @@
 #include <BidirectionalLimitSwitch.h>
 #include <RovePIDController.h>
 #include <RoveJoint.h>
+#include <RoveVNH.h>
 
 #include <PCF8574.h> // Arduino library: download through IDE library manager
 
@@ -34,7 +35,13 @@ IntervalTimer Telemetry;
 bool telemetryOverride = false;
 
 // Motor
-RoveHBridge MotorRoll(M8_FWD, M8_RVS);
+RoveVNH XMotor(M1_PWM,IOX2_FWD_1,IOX2_RVS_1);
+RoveVNH J2Motor(M2_PWM,IOX2_FWD_2,IOX2_RVS_2);
+RoveVNH J3Motor(M3_PWM,IOX2_FWD_3,IOX2_RVS_3);
+RoveVNH J4Motor(M4_PWM,IOX3_FWD_4,IOX3_RVS_4);
+RoveVNH PitchMotor(M5_PWM,IOX3_FWD_5,IOX3_RVS_5);
+RoveVNH RollMotor(M6_PWM,IOX3_FWD_6,IOX3_RVS_6);
+RoveVNH GripperMotor(M7_PWM,IOX3_FWD_7,IOX3_RVS_7);
 
 // IO Expanders
 PCF8574 IOX1(0x38, &IOX_TWI);
