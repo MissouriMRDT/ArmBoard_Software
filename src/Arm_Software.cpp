@@ -28,15 +28,19 @@ void setup() {
     IOX3.begin(~((1<<IOX3_FWD_7) | (1<<IOX3_RVS_7)));
 
     // Attach encoders
-    X.attachEncoder(&Encoder1);
-    J2.attachEncoder(&Encoder3);
-    J3.attachEncoder(&Encoder4);
-    J4.attachEncoder(&Encoder5);
-    Pitch.attachEncoder(&Encoder6);
-    Roll.attachEncoder(&Encoder2);
+    X.attachEncoder(&XEncoder);
+    J2.attachEncoder(&J2Encoder);
+    J3.attachEncoder(&J3Encoder);
+    J4.attachEncoder(&J4Encoder);
+    Pitch.attachEncoder(&PitchEncoder);
+    Roll.attachEncoder(&RollEncoder);
 
     //Attach hard limits
-
+    X.attachHardLimits(&LS1,&LS2);
+    J2.attachHardLimits(&LS3,&LS4);
+    J3.attachHardLimits(&LS5,&LS6);
+    J4.attachHardLimits(&LS7,&LS8);
+    Pitch.attachHardLimits(&LS9,&LS10);
 
     // Attach encoder inverts
     X.Encoder()->configInvert(true);
@@ -47,15 +51,15 @@ void setup() {
     Roll.Encoder()->configInvert(true);
 
     // Configrue encoder interupts
-    Encoder1.begin([]{Encoder1.handleInterupt();});
-    Encoder2.begin([]{Encoder2.handleInterupt();});
-    Encoder3.begin([]{Encoder3.handleInterupt();});
-    Encoder4.begin([]{Encoder4.handleInterupt();});
-    Encoder5.begin([]{Encoder5.handleInterupt();});
-    Encoder6.begin([]{Encoder6.handleInterupt();});
+    XEncoder.begin([]{XEncoder.handleInterrupt();});
+    J2Encoder.begin([]{J2Encoder.handleInterrupt();});
+    J3Encoder.begin([]{J3Encoder.handleInterrupt();});
+    J4Encoder.begin([]{J4Encoder.handleInterrupt();});
+    PitchEncoder.begin([]{PitchEncoder.handleInterrupt();});
+    RollEncoder.begin([]{RollEncoder.handleInterrupt();});
 
     // Config motor inverts, reference joint
-    X.Motor()->configinvert(false);
+    X.Motor()->configInvert(false);
     J2.Motor()->configInvert(false);
     J3.Motor()->configInvert(false);
     J4.Motor()->configInvert(false);
@@ -86,29 +90,29 @@ void setup() {
     J4.Motor()->configRampRate(10000);
     Pitch.Motor()->configRampRate(10000);
     Roll.Motor()->configRampRate(10000);
-    Gripper.Motor()->configRampRate(10000);
+    Gripper.configRampRate(10000);
 
      // X soft limits
     X.overrideReverseSoftLimit(true);
     X.overrideForwardSoftLimit(true);
 
      // J2 soft limits
-    J2.configSoftLimits(0, J2.qMax);
+    J2.configSoftLimits(0, J2State.qMax);
     J2.overrideReverseSoftLimit(true);
     J2.overrideForwardSoftLimit(true);
 
      // J3 soft limits
-    J3.configSoftLimit(J3.qMin, J3.qMax);
+    J3.configSoftLimits(J3State.qMin, J3State.qMax);
     J3.overrideReverseSoftLimit(true);
     J3.overrideForwardSoftLimit(true);
 
      // J4 soft limits
-    J4.configSoftLimits(J4.qMin, J4.qMax);
+    J4.configSoftLimits(J4State.qMin, J4State.qMax);
     J4.overrideReverseSoftLimit(true);
     J4.overrideForwardSoftLimit(true);
 
     // Pitch soft limits
-    Pitch.configSoftLimits(Pitch.qMin, Pitch.qMax);
+    Pitch.configSoftLimits(PitchState.qMin, PitchState.qMax);
     Pitch.overrideReverseSoftLimit(true);
     Pitch.overrideForwardSoftLimit(true);
 
@@ -125,7 +129,7 @@ void setup() {
     
     // RoveComm
     Serial.println("RoveComm Initializing...");
-    RoveComm.begin(RC_ARMBOARD_FIRSTOCTET, RC_ARMBOARD_SECONDOCTET, RC_ARMBOARD_THIRDOCTET, RC_ARMBOARD_FOURTHOCTET, &TCPServer);
+    RoveComm.begin(RC_ARMBOARD_IPADDRESS);
     Serial.println("Complete");
     
     feedWatchdog();
@@ -136,10 +140,23 @@ void loop() {
      uint32_t timestamp = millis();
 
     // Parse RoveComm packets
-    rovecomm_packet packet = RoveComm.read();
-    switch (packet.data_id) {
+    RoveCommPacket packet = RoveComm.read();
+    switch (packet.dataId) {
         case RC_ARMBOARD_OPENLOOP_DATA_ID:{
             // initlaize openlood data
         }
     }
+}
+
+void estop(){
+
+}
+void telemetry(){
+
+}
+void updateJoint(RoveJoint &joint, JointState &state, uint8_t button, bool calibrateUp=false, float position=0){
+
+}
+void updateMotor(RoveMotor &motor, int16_t decipercent, uint8_t button){
+
 }

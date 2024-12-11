@@ -85,7 +85,7 @@
 #define B_ENC_2         34
 #define B_ENC_3         35
 
-#define BTN_1           10 // mag wire i fink
+#define BTN_1           10 // mag wire
 #define BTN_2           1
 #define BTN_3           2
 #define BTN_4           3

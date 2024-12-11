@@ -51,24 +51,24 @@ uint32_t lastIOX_timestamp = 0;
 #define IOX_UPDATE_PERIOD   50
 
 // Encoders
-RoveQuadEncoder Encoder1(ENC_1A, ENC_1B, 360 * 30000 / 11.0); // change values when testing
-RoveQuadEncoder Encoder2(ENC_2A, ENC_2B, 360 * 101000 / 21.375); // change values when testing
-MA3PWM Encoder3(ABS_1);
-MA3PWM Encoder4(ABS_2);
-MA3PWM Encoder5(ABS_3);
-MA3PWM Encoder6(ABS_4);
+RoveQuadEncoder XEncoder(ENC_1A, ENC_1B, 360 * 30000 / 11.0); // change values when testing
+RoveQuadEncoder RollEncoder(ENC_2A, ENC_2B, 360 * 101000 / 21.375); // change values when testing
+MA3PWM J2Encoder(ABS_1);
+MA3PWM J3Encoder(ABS_2);
+MA3PWM J4Encoder(ABS_3);
+MA3PWM PitchEncoder(ABS_4);
 
 // Limit Switches
 SoftwareSwitch LS1, LS2, LS3, LS4, LS5, LS6, LS7, LS8, LS9, LS10;
 
 // Joints
-RoveJoint X(&Encoder1);
-RoveJoint J2(&Encoder3);
-RoveJoint J3(&Encoder4);
-RoveJoint J4(&Encoder5);
-RoveJoint Pitch(&Encoder6);
-RoveJoint Roll(&Encoder2);
-#define Gripper1 (Motor7)
+RoveJoint X(&XMotor);
+RoveJoint J2(&J2Motor);
+RoveJoint J3(&J3Motor);
+RoveJoint J4(&J4Motor);
+RoveJoint Pitch(&PitchMotor);
+RoveJoint Roll(&RollMotor);
+#define Gripper (GripperMotor)
 
 // PID Controllers 
 //TODO: TUNE
@@ -82,7 +82,7 @@ RovePIDController Wrist_PID(60, 0, 2000);
 
 
 // Control variables
-int16_t Gripper1_decipercent = 0;
+int16_t GripperDecipercent = 0;
 
 bool direction = false;
 uint8_t buttons = 0;
@@ -104,12 +104,12 @@ struct JointState {
 };
 
 //TODO: construct each joint
-JointState X_state = {0, 0, 0, 18, 0, false, false};
-JointState J2_state;
-JointState J3_state;
-JointState J4_state;
-JointState Pitch_state;
-JointState Roll_state;
+JointState XState;
+JointState J2State;
+JointState J3State;
+JointState J4State;
+JointState PitchState;
+JointState RollState;
 
 // Methods
 void estop();
@@ -118,6 +118,5 @@ void feedWatchdog();
 void updateJoint(RoveJoint &joint, JointState &state, uint8_t button, bool calibrateUp=false, float position=0);
 void updateMotor(RoveMotor &motor, int16_t decipercent, uint8_t button);
 
-#define J3_MAX 234
 
 #endif
