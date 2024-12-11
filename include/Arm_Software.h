@@ -20,7 +20,7 @@
 #include <cstdint>
 
 // RoveComm
-EthernetServer TCPServer(RC_ROVECOMM_ETHERNET_TCP_PORT);
+EthernetServer TCPServer(RC_ROVECOMM_ETHERNET_TCP_PORT); //?
 RoveCommEthernet RoveComm;
 
 // Watchdog
@@ -42,6 +42,7 @@ RoveVNH J4Motor(M4_PWM,IOX3_FWD_4,IOX3_RVS_4);
 RoveVNH PitchMotor(M5_PWM,IOX3_FWD_5,IOX3_RVS_5);
 RoveVNH RollMotor(M6_PWM,IOX3_FWD_6,IOX3_RVS_6);
 RoveVNH GripperMotor(M7_PWM,IOX3_FWD_7,IOX3_RVS_7);
+RoveVNH SpareMotor(M8_PWM, M8_FWD,M8_RVS);
 
 // IO Expanders
 PCF8574 IOX1(0x38, &IOX_TWI);

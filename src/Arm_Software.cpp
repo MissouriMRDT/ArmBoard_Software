@@ -14,6 +14,8 @@ void setup() {
     pinMode(B_ENC_2, INPUT);
     pinMode(B_ENC_3, INPUT);
 
+    pinMode(DIR_SW,INPUT); // pullup or pulldown needed?
+
     // IO expander pins
     IOX_TWI.begin();
     IOX1.begin();
@@ -142,21 +144,196 @@ void loop() {
     // Parse RoveComm packets
     RoveCommPacket packet = RoveComm.read();
     switch (packet.dataId) {
-        case RC_ARMBOARD_OPENLOOP_DATA_ID:{
-            // initlaize openlood data
+        case RC_ARMBOARD_OPENLOOP_DATA_ID:
+        {
+            int16_t *data = (int16_t*)packet.data;
+            XState.decipercent = data[0];
+            J2State.decipercent = data[1];
+            J3State.decipercent = data[2];
+            J4State.decipercent = data[3];
+            PitchState.decipercent = data[4];
+            RollState.decipercent = data[5];
+
+            // TODO: last year: activeGripper control variable status determines Roll1 and Roll2 decipercent (either 0 or )
+
+            closedLoopActive = false;
+            feedWatchdog();
+            break;
+        }
+        case RC_ARMBOARD_SETPOSITION_DATA_ID:
+        {
+            // since polar coordinates, setting position way different?
+            /*float *data = (float*) packet.data;
+            XState.target = data[0];
+            J2State.target = data[1];
+            tate.target = data[2];
+            Z_state.target = data[3];
+            Pitch_state.target = data[4]; */
+
+            // TODO: last year: activeGripper control variable status determines Roll1 or Roll2 state target
+            closedLoopActive = true;
+            feedWatchdog();
+            break;
+
+        }
+        case RC_ARMBOARD_INCREMENTPOSITION_DATA_ID:
+        {
+            // same as above except increment angle?
+
+            closedLoopActive = false;
+            feedWatchdog();
+            break;
+        }
+        case RC_ARMBOARD_LASER_DATA_ID:
+        {
+            uint8_t data = *((uint8_t*) packet.data);
+            laserOn = (data == 0)? false : true;
+            break;
+
+        }
+        case RC_ARMBOARD_SOLENOID_DATA_ID:
+        {
+            uint8_t data = *((uint8_t*) packet.data);
+
+            extendSolenoid = (data == 0)? false: true;
+            break;
+        }
+        case RC_ARMBOARD_GRIPPER_DATA_ID:
+        {
+
+        }
+        case RC_ARMBOARD_WATCHDOGOVERRIDE_DATA_ID:
+        {
+            watchdogOverride = *((uint8_t*) packet.data);
+            break;
+        }
+        case RC_ARMBOARD_LIMITSWITCHOVERRIDE_DATA_ID:
+        {
+            uint16_t data = *((uint16_t*) packet.data);
+
+            X.overrideForwardHardLimit(data & (1<<0));
+            X.overrideReverseHardLimit(data & (1<<1));
+            J2.overrideForwardHardLimit(data & (1<<2));
+            J2.overrideReverseHardLimit(data & (1<<3));
+            J3.overrideForwardHardLimit(data & (1<<4));
+            J3.overrideReverseHardLimit(data & (1<<5));
+            J4.overrideForwardHardLimit(data & (1<<6));
+            J4.overrideReverseHardLimit(data & (1<<7));
+            // Soft limit override in here (from last years)?
+            Pitch.overrideForwardHardLimit(data & (1<<8));
+            Pitch.overrideForwardSoftLimit(data & (1<<8));
+            Pitch.overrideReverseHardLimit(data & (1<<9));
+            Pitch.overrideReverseSoftLimit(data & (1<<9));
+            break;
+
+        }
+        case RC_ARMBOARD_SOFTLIMITOVERRIDE_DATA_ID:
+        {
+            uint16_t data = *((uint16_t*)packet.data);
+
+            // Order which each bit represents which limit uhh
+            X.overrideForwardSoftLimit(data & (1<<0));
+            X.overrideReverseSoftLimit(data & (1<<1));
+            J2.overrideForwardSoftLimit(data & (1<<2));
+            J2.overrideReverseSoftLimit(data & (1<<3));
+            J3.overrideForwardSoftLimit(data & (1<<4));
+            J3.overrideReverseSoftLimit(data & (1<<5));
+            J4.overrideForwardSoftLimit(data & (1<<6));
+            J4.overrideReverseSoftLimit(data & (1<<7));
+            Pitch.overrideForwardSoftLimit(data & (1<<8));
+            Pitch.overrideReverseSoftLimit(data & (1<<9));
+
+        }
+        case RC_ARMBOARD_CALIBRATEENCODER_DATA_ID:
+        {
+            uint8_t data = *((uint8_t*) packet.data);
+
+            XState.calibrating = data & (1<<0);
+            RollState.calibrating = data & (1<<1);
+
+            // roll joint calibration different?
+
+
         }
     }
+
+    //IO Expander 1
+    if (timestamp - lastIOX_timestamp > IOX_UPDATE_PERIOD) {
+        lastIOX_timestamp = timestamp;
+
+        // IO Expander 1
+        uint8_t iox1_val = IOX1.read8();
+        LS1.set(iox1_val & (1<<IOX1_LIM_1));
+        LS2.set(iox1_val & (1<<IOX1_LIM_2));
+        LS3.set(iox1_val & (1<<IOX1_LIM_3));
+        LS4.set(iox1_val & (1<<IOX1_LIM_4));
+        LS5.set(iox1_val & (1<<IOX1_LIM_5));
+        LS6.set(iox1_val & (1<<IOX1_LIM_6));
+        LS7.set(iox1_val & (1<<IOX1_LIM_7));
+        LS8.set(iox1_val & (1<<IOX1_LIM_8));
+
+        // IO Expander 2
+        uint8_t iox2_val = IOX2.read8();
+        LS9.set(iox2_val & (1<<IOX2_LIM_9));
+        LS10.set(iox2_val & (1<<IOX2_LIM_10));
+        // dir switch straight into teensy; iox not needed?
+        //direction = iox2_val & (1<<IOX2_DIR_SW);
+        direction = digitalRead(DIR_SW);
+
+    }
+
+    buttons = (digitalRead(B_ENC_3)<<3) | (digitalRead(B_ENC_2)<<2) | (digitalRead(B_ENC_1)<<1) | (digitalRead(B_ENC_0)<<0);
+
+    // Motor Outputs
+    
+    /*updateJoint(X,XState,BTN_2);
+    updateJoint(J2,J2State,BTN_3);
+    updateJoint(J3,J3State,BTN_4);
+    updateJoint(J4,J4State,BTN_5);
+    updateJoint(Pitch,PitchState,BTN_6);
+    updateJoint(Roll,RollState,BTN_7);
+
+
+    updateMotor(Gripper,GripperDecipercent,BTN_8);*/
+
+
+
+
+    
 }
 
 void estop(){
+    if(!watchdogOverride){
+        watchdogStatus = 1;
+
+        closedLoopActive = false;
+
+        XState.decipercent = 0;
+        J2State.decipercent = 0;
+        J3State.decipercent = 0;
+        J4State.decipercent = 0;
+        PitchState.decipercent = 0;
+        RollState.decipercent = 0;
+        GripperDecipercent = 0;
+    }
 
 }
 void telemetry(){
 
 }
+// calibrateUp parameter?
 void updateJoint(RoveJoint &joint, JointState &state, uint8_t button, bool calibrateUp=false, float position=0){
 
 }
 void updateMotor(RoveMotor &motor, int16_t decipercent, uint8_t button){
+    uint8_t buttons = (digitalRead(B_ENC_3)<<3) | (digitalRead(B_ENC_2)<<2) | (digitalRead(B_ENC_1)<<1) | (digitalRead(B_ENC_0)<<0);
+
+    if(buttons == button){
+        motor.drive((direction? -900: 900));
+    } else{
+        motor.drive(decipercent);
+    }
+
+
 
 }
