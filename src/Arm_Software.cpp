@@ -1,10 +1,11 @@
 #include "Arm_Software.h"
 
-//2025 REV 1
+// 2025 REV 1
 
 #include <cmath>
 
-void setup() {
+void setup()
+{
     Serial.begin(115200);
     Serial.println("Setup");
 
@@ -14,20 +15,20 @@ void setup() {
     pinMode(B_ENC_2, INPUT);
     pinMode(B_ENC_3, INPUT);
 
-    pinMode(DIR_SW,INPUT); // pullup or pulldown needed?
+    pinMode(DIR_SW, INPUT); // pullup or pulldown needed?
 
     // IO expander pins
     IOX_TWI.begin();
     IOX1.begin();
 
-    IOX2.begin(~((1<<IOX2_FWD_1) | (1<<IOX2_RVS_1)));
-    IOX2.begin(~((1<<IOX2_FWD_2) | (1<<IOX2_RVS_2)));
-    IOX2.begin(~((1<<IOX2_FWD_3) | (1<<IOX2_RVS_3)));
+    IOX2.begin(~((1 << IOX2_FWD_1) | (1 << IOX2_RVS_1)));
+    IOX2.begin(~((1 << IOX2_FWD_2) | (1 << IOX2_RVS_2)));
+    IOX2.begin(~((1 << IOX2_FWD_3) | (1 << IOX2_RVS_3)));
 
-    IOX3.begin(~((1<<IOX3_FWD_4) | (1<<IOX3_RVS_4)));
-    IOX3.begin(~((1<<IOX3_FWD_5) | (1<<IOX3_RVS_5)));
-    IOX3.begin(~((1<<IOX3_FWD_6) | (1<<IOX3_RVS_6)));
-    IOX3.begin(~((1<<IOX3_FWD_7) | (1<<IOX3_RVS_7)));
+    IOX3.begin(~((1 << IOX3_FWD_4) | (1 << IOX3_RVS_4)));
+    IOX3.begin(~((1 << IOX3_FWD_5) | (1 << IOX3_RVS_5)));
+    IOX3.begin(~((1 << IOX3_FWD_6) | (1 << IOX3_RVS_6)));
+    IOX3.begin(~((1 << IOX3_FWD_7) | (1 << IOX3_RVS_7)));
 
     // Attach encoders
     X.attachEncoder(&XEncoder);
@@ -37,12 +38,12 @@ void setup() {
     Pitch.attachEncoder(&PitchEncoder);
     Roll.attachEncoder(&RollEncoder);
 
-    //Attach hard limits
-    X.attachHardLimits(&LS1,&LS2);
-    J2.attachHardLimits(&LS3,&LS4);
-    J3.attachHardLimits(&LS5,&LS6);
-    J4.attachHardLimits(&LS7,&LS8);
-    Pitch.attachHardLimits(&LS9,&LS10);
+    // Attach hard limits
+    X.attachHardLimits(&LS1, &LS2);
+    J2.attachHardLimits(&LS3, &LS4);
+    J3.attachHardLimits(&LS5, &LS6);
+    J4.attachHardLimits(&LS7, &LS8);
+    Pitch.attachHardLimits(&LS9, &LS10);
 
     // Attach encoder inverts
     X.Encoder()->configInvert(true);
@@ -53,12 +54,18 @@ void setup() {
     Roll.Encoder()->configInvert(true);
 
     // Configrue encoder interupts
-    XEncoder.begin([]{XEncoder.handleInterrupt();});
-    J2Encoder.begin([]{J2Encoder.handleInterrupt();});
-    J3Encoder.begin([]{J3Encoder.handleInterrupt();});
-    J4Encoder.begin([]{J4Encoder.handleInterrupt();});
-    PitchEncoder.begin([]{PitchEncoder.handleInterrupt();});
-    RollEncoder.begin([]{RollEncoder.handleInterrupt();});
+    XEncoder.begin([]
+                   { XEncoder.handleInterrupt(); });
+    J2Encoder.begin([]
+                    { J2Encoder.handleInterrupt(); });
+    J3Encoder.begin([]
+                    { J3Encoder.handleInterrupt(); });
+    J4Encoder.begin([]
+                    { J4Encoder.handleInterrupt(); });
+    PitchEncoder.begin([]
+                       { PitchEncoder.handleInterrupt(); });
+    RollEncoder.begin([]
+                      { RollEncoder.handleInterrupt(); });
 
     // Config motor inverts, reference joint
     X.Motor()->configInvert(false);
@@ -76,17 +83,17 @@ void setup() {
     J4.Motor()->configMaxOutputs(-1000, 1000);
     Pitch.Motor()->configMaxOutputs(-1000, 1000);
 
-     // Config motor deadbands, reference joint
-     X.Motor()->configMinOutputs(-200, 200); // change the values when testing
-    J2.Motor()->configMinOutputs(-100, 170); // change the values when testing
-    J3.Motor()->configMinOutputs(-100, 220); // change the values when testing
-    J4.Motor()->configMinOutputs(-220, 190); // change the values when testing
-    Pitch.Motor()->configMinOutputs(-50, 50); // change the values when testing
+    // Config motor deadbands, reference joint
+    X.Motor()->configMinOutputs(-200, 200);    // change the values when testing
+    J2.Motor()->configMinOutputs(-100, 170);   // change the values when testing
+    J3.Motor()->configMinOutputs(-100, 220);   // change the values when testing
+    J4.Motor()->configMinOutputs(-220, 190);   // change the values when testing
+    Pitch.Motor()->configMinOutputs(-50, 50);  // change the values when testing
     Roll.Motor()->configMinOutputs(-200, 200); // change the values when testing
-    Gripper.configMinOutputs(-50, 50); // change the values when testing
+    Gripper.configMinOutputs(-50, 50);         // change the values when testing
 
-     // Config motor ramp rates, reference joint , change value when testing
-    X.Motor()->configRampRate(10000); 
+    // Config motor ramp rates, reference joint , change value when testing
+    X.Motor()->configRampRate(10000);
     J2.Motor()->configRampRate(10000);
     J3.Motor()->configRampRate(10000);
     J4.Motor()->configRampRate(10000);
@@ -94,21 +101,21 @@ void setup() {
     Roll.Motor()->configRampRate(10000);
     Gripper.configRampRate(10000);
 
-     // X soft limits
+    // X soft limits
     X.overrideReverseSoftLimit(true);
     X.overrideForwardSoftLimit(true);
 
-     // J2 soft limits
+    // J2 soft limits
     J2.configSoftLimits(0, J2State.qMax);
     J2.overrideReverseSoftLimit(true);
     J2.overrideForwardSoftLimit(true);
 
-     // J3 soft limits
+    // J3 soft limits
     J3.configSoftLimits(J3State.qMin, J3State.qMax);
     J3.overrideReverseSoftLimit(true);
     J3.overrideForwardSoftLimit(true);
 
-     // J4 soft limits
+    // J4 soft limits
     J4.configSoftLimits(J4State.qMin, J4State.qMax);
     J4.overrideReverseSoftLimit(true);
     J4.overrideForwardSoftLimit(true);
@@ -128,164 +135,160 @@ void setup() {
     J4.attachPID(&J4_PID);
     Pitch.attachPID(&Pitch_PID);
     Roll.attachPID(&Roll_PID);
-    
+
     // RoveComm
     Serial.println("RoveComm Initializing...");
     RoveComm.begin(RC_ARMBOARD_IPADDRESS);
     Serial.println("Complete");
-    
+
     feedWatchdog();
     Telemetry.begin(telemetry, TELEMETRY_PERIOD);
 }
 
-void loop() {
-     uint32_t timestamp = millis();
+void loop()
+{
+    uint32_t timestamp = millis();
 
     // Parse RoveComm packets
     RoveCommPacket packet = RoveComm.read();
-    switch (packet.dataId) {
-        case RC_ARMBOARD_OPENLOOP_DATA_ID:
-        {
-            int16_t *data = (int16_t*)packet.data;
-            XState.decipercent = data[0];
-            J2State.decipercent = data[1];
-            J3State.decipercent = data[2];
-            J4State.decipercent = data[3];
-            PitchState.decipercent = data[4];
-            RollState.decipercent = data[5];
+    switch (packet.dataId)
+    {
+    case RC_ARMBOARD_OPENLOOP_DATA_ID:
+    {
+        int16_t *data = (int16_t *)packet.data;
+        XState.decipercent = data[0];
+        J2State.decipercent = data[1];
+        J3State.decipercent = data[2];
+        J4State.decipercent = data[3];
+        PitchState.decipercent = data[4];
+        RollState.decipercent = data[5];
 
-            // TODO: last year: activeGripper control variable status determines Roll1 and Roll2 decipercent (either 0 or )
+        // TODO: last year: activeGripper control variable status determines Roll1 and Roll2 decipercent (either 0 or )
 
-            closedLoopActive = false;
-            feedWatchdog();
-            break;
-        }
-        case RC_ARMBOARD_SETPOSITION_DATA_ID:
-        {
-            // since polar coordinates, setting position way different?
-            /*float *data = (float*) packet.data;
-            XState.target = data[0];
-            J2State.target = data[1];
-            tate.target = data[2];
-            Z_state.target = data[3];
-            Pitch_state.target = data[4]; */
+        closedLoopActive = false;
+        feedWatchdog();
+        break;
+    }
+    case RC_ARMBOARD_SETPOSITION_DATA_ID:
+    {
+        // since polar coordinates, setting position way different?
+        /*float *data = (float*) packet.data;
+        XState.target = data[0];
+        J2State.target = data[1];
+        tate.target = data[2];
+        Z_state.target = data[3];
+        Pitch_state.target = data[4]; */
 
-            // TODO: last year: activeGripper control variable status determines Roll1 or Roll2 state target
-            closedLoopActive = true;
-            feedWatchdog();
-            break;
+        // TODO: last year: activeGripper control variable status determines Roll1 or Roll2 state target
+        closedLoopActive = true;
+        feedWatchdog();
+        break;
+    }
+    case RC_ARMBOARD_INCREMENTPOSITION_DATA_ID:
+    {
+        // same as above except increment angle?
 
-        }
-        case RC_ARMBOARD_INCREMENTPOSITION_DATA_ID:
-        {
-            // same as above except increment angle?
+        closedLoopActive = false;
+        feedWatchdog();
+        break;
+    }
+    case RC_ARMBOARD_LASER_DATA_ID:
+    {
+        uint8_t data = *((uint8_t *)packet.data);
+        laserOn = (data == 0) ? false : true;
+        break;
+    }
+    case RC_ARMBOARD_SOLENOID_DATA_ID:
+    {
+        uint8_t data = *((uint8_t *)packet.data);
+        extendSolenoid = (data == 0) ? false : true;
+        break;
+    }
+    case RC_ARMBOARD_GRIPPER_DATA_ID:
+    {
+        // one gripper this year how uerm
 
-            closedLoopActive = false;
-            feedWatchdog();
-            break;
-        }
-        case RC_ARMBOARD_LASER_DATA_ID:
-        {
-            uint8_t data = *((uint8_t*) packet.data);
-            laserOn = (data == 0)? false : true;
-            break;
+    }
+    case RC_ARMBOARD_WATCHDOGOVERRIDE_DATA_ID:
+    {
+        watchdogOverride = *((uint8_t *)packet.data);
+        break;
+    }
+    case RC_ARMBOARD_LIMITSWITCHOVERRIDE_DATA_ID:
+    {
+        uint16_t data = *((uint16_t *)packet.data);
 
-        }
-        case RC_ARMBOARD_SOLENOID_DATA_ID:
-        {
-            uint8_t data = *((uint8_t*) packet.data);
+        X.overrideForwardHardLimit(data & (1 << 0));
+        X.overrideReverseHardLimit(data & (1 << 1));
+        J2.overrideForwardHardLimit(data & (1 << 2));
+        J2.overrideReverseHardLimit(data & (1 << 3));
+        J3.overrideForwardHardLimit(data & (1 << 4));
+        J3.overrideReverseHardLimit(data & (1 << 5));
+        J4.overrideForwardHardLimit(data & (1 << 6));
+        J4.overrideReverseHardLimit(data & (1 << 7));
+        // Soft limit override in here (from last years)?
+        Pitch.overrideForwardHardLimit(data & (1 << 8));
+        Pitch.overrideForwardSoftLimit(data & (1 << 8));
+        Pitch.overrideReverseHardLimit(data & (1 << 9));
+        Pitch.overrideReverseSoftLimit(data & (1 << 9));
+        break;
+    }
+    case RC_ARMBOARD_SOFTLIMITOVERRIDE_DATA_ID:
+    {
+        uint16_t data = *((uint16_t *)packet.data);
 
-            extendSolenoid = (data == 0)? false: true;
-            break;
-        }
-        case RC_ARMBOARD_GRIPPER_DATA_ID:
-        {
+        // Order which each bit represents which limit uhh
+        X.overrideForwardSoftLimit(data & (1 << 0));
+        X.overrideReverseSoftLimit(data & (1 << 1));
+        J2.overrideForwardSoftLimit(data & (1 << 2));
+        J2.overrideReverseSoftLimit(data & (1 << 3));
+        J3.overrideForwardSoftLimit(data & (1 << 4));
+        J3.overrideReverseSoftLimit(data & (1 << 5));
+        J4.overrideForwardSoftLimit(data & (1 << 6));
+        J4.overrideReverseSoftLimit(data & (1 << 7));
+        Pitch.overrideForwardSoftLimit(data & (1 << 8));
+        Pitch.overrideReverseSoftLimit(data & (1 << 9));
+    }
+    case RC_ARMBOARD_CALIBRATEENCODER_DATA_ID:
+    {
+        uint8_t data = *((uint8_t *)packet.data);
 
-        }
-        case RC_ARMBOARD_WATCHDOGOVERRIDE_DATA_ID:
-        {
-            watchdogOverride = *((uint8_t*) packet.data);
-            break;
-        }
-        case RC_ARMBOARD_LIMITSWITCHOVERRIDE_DATA_ID:
-        {
-            uint16_t data = *((uint16_t*) packet.data);
+        XState.calibrating = data & (1 << 0);
+        RollState.calibrating = data & (1 << 1);
 
-            X.overrideForwardHardLimit(data & (1<<0));
-            X.overrideReverseHardLimit(data & (1<<1));
-            J2.overrideForwardHardLimit(data & (1<<2));
-            J2.overrideReverseHardLimit(data & (1<<3));
-            J3.overrideForwardHardLimit(data & (1<<4));
-            J3.overrideReverseHardLimit(data & (1<<5));
-            J4.overrideForwardHardLimit(data & (1<<6));
-            J4.overrideReverseHardLimit(data & (1<<7));
-            // Soft limit override in here (from last years)?
-            Pitch.overrideForwardHardLimit(data & (1<<8));
-            Pitch.overrideForwardSoftLimit(data & (1<<8));
-            Pitch.overrideReverseHardLimit(data & (1<<9));
-            Pitch.overrideReverseSoftLimit(data & (1<<9));
-            break;
-
-        }
-        case RC_ARMBOARD_SOFTLIMITOVERRIDE_DATA_ID:
-        {
-            uint16_t data = *((uint16_t*)packet.data);
-
-            // Order which each bit represents which limit uhh
-            X.overrideForwardSoftLimit(data & (1<<0));
-            X.overrideReverseSoftLimit(data & (1<<1));
-            J2.overrideForwardSoftLimit(data & (1<<2));
-            J2.overrideReverseSoftLimit(data & (1<<3));
-            J3.overrideForwardSoftLimit(data & (1<<4));
-            J3.overrideReverseSoftLimit(data & (1<<5));
-            J4.overrideForwardSoftLimit(data & (1<<6));
-            J4.overrideReverseSoftLimit(data & (1<<7));
-            Pitch.overrideForwardSoftLimit(data & (1<<8));
-            Pitch.overrideReverseSoftLimit(data & (1<<9));
-
-        }
-        case RC_ARMBOARD_CALIBRATEENCODER_DATA_ID:
-        {
-            uint8_t data = *((uint8_t*) packet.data);
-
-            XState.calibrating = data & (1<<0);
-            RollState.calibrating = data & (1<<1);
-
-            // roll joint calibration different?
-
-
-        }
+        // roll joint calibration different?
+    }
     }
 
-    //IO Expander 1
-    if (timestamp - lastIOX_timestamp > IOX_UPDATE_PERIOD) {
+    // IO Expander 1
+    if (timestamp - lastIOX_timestamp > IOX_UPDATE_PERIOD)
+    {
         lastIOX_timestamp = timestamp;
 
         // IO Expander 1
         uint8_t iox1_val = IOX1.read8();
-        LS1.set(iox1_val & (1<<IOX1_LIM_1));
-        LS2.set(iox1_val & (1<<IOX1_LIM_2));
-        LS3.set(iox1_val & (1<<IOX1_LIM_3));
-        LS4.set(iox1_val & (1<<IOX1_LIM_4));
-        LS5.set(iox1_val & (1<<IOX1_LIM_5));
-        LS6.set(iox1_val & (1<<IOX1_LIM_6));
-        LS7.set(iox1_val & (1<<IOX1_LIM_7));
-        LS8.set(iox1_val & (1<<IOX1_LIM_8));
+        LS1.set(iox1_val & (1 << IOX1_LIM_1));
+        LS2.set(iox1_val & (1 << IOX1_LIM_2));
+        LS3.set(iox1_val & (1 << IOX1_LIM_3));
+        LS4.set(iox1_val & (1 << IOX1_LIM_4));
+        LS5.set(iox1_val & (1 << IOX1_LIM_5));
+        LS6.set(iox1_val & (1 << IOX1_LIM_6));
+        LS7.set(iox1_val & (1 << IOX1_LIM_7));
+        LS8.set(iox1_val & (1 << IOX1_LIM_8));
 
         // IO Expander 2
         uint8_t iox2_val = IOX2.read8();
-        LS9.set(iox2_val & (1<<IOX2_LIM_9));
-        LS10.set(iox2_val & (1<<IOX2_LIM_10));
+        LS9.set(iox2_val & (1 << IOX2_LIM_9));
+        LS10.set(iox2_val & (1 << IOX2_LIM_10));
         // dir switch straight into teensy; iox not needed?
-        //direction = iox2_val & (1<<IOX2_DIR_SW);
+        // direction = iox2_val & (1<<IOX2_DIR_SW);
         direction = digitalRead(DIR_SW);
-
     }
 
-    buttons = (digitalRead(B_ENC_3)<<3) | (digitalRead(B_ENC_2)<<2) | (digitalRead(B_ENC_1)<<1) | (digitalRead(B_ENC_0)<<0);
+    buttons = (digitalRead(B_ENC_3) << 3) | (digitalRead(B_ENC_2) << 2) | (digitalRead(B_ENC_1) << 1) | (digitalRead(B_ENC_0) << 0);
 
     // Motor Outputs
-    
+
     /*updateJoint(X,XState,BTN_2);
     updateJoint(J2,J2State,BTN_3);
     updateJoint(J3,J3State,BTN_4);
@@ -296,14 +299,24 @@ void loop() {
 
     updateMotor(Gripper,GripperDecipercent,BTN_8);*/
 
+    // Solenoid
+    if (buttons == BTN_SOL)
+    {
+        setSolenoid(true);
+    }
+    else
+    {
+        setSolenoid(extendSolenoid);
+    }
 
-
-
-    
+    // Laser
+    setLaser(laserOn);
 }
 
-void estop(){
-    if(!watchdogOverride){
+void estop()
+{
+    if (!watchdogOverride)
+    {
         watchdogStatus = 1;
 
         closedLoopActive = false;
@@ -316,24 +329,38 @@ void estop(){
         RollState.decipercent = 0;
         GripperDecipercent = 0;
     }
+}
+void telemetry()
+{
+    float positions[6] = {X.Encoder()->readDegrees(), J2.Encoder()->readDegrees(), J3.Encoder()->readDegrees(), J4.Encoder()->readDegrees(), Pitch.Encoder()->readDegrees(), Roll.Encoder()->readDegrees()};
+
+    RoveComm.write(RC_ARMBOARD_POSITIONS_DATA_ID, RC_ARMBOARD_POSITIONS_DATA_COUNT, positions);
+
+    // also write which limit switches triggered?
+}
+void setSolenoid(bool extend){
+    digitalWrite(Solenoid, extend? HIGH:LOW);
+}
+void setLaser(bool on){
+    digitalWrite(LAS,on? HIGH:LOW);
+
 
 }
-void telemetry(){
 
-}
 // calibrateUp parameter?
-void updateJoint(RoveJoint &joint, JointState &state, uint8_t button, bool calibrateUp=false, float position=0){
-
+void updateJoint(RoveJoint &joint, JointState &state, uint8_t button, bool calibrateUp = false, float position = 0)
+{
 }
-void updateMotor(RoveMotor &motor, int16_t decipercent, uint8_t button){
-    uint8_t buttons = (digitalRead(B_ENC_3)<<3) | (digitalRead(B_ENC_2)<<2) | (digitalRead(B_ENC_1)<<1) | (digitalRead(B_ENC_0)<<0);
+void updateMotor(RoveMotor &motor, int16_t decipercent, uint8_t button)
+{
+    uint8_t buttons = (digitalRead(B_ENC_3) << 3) | (digitalRead(B_ENC_2) << 2) | (digitalRead(B_ENC_1) << 1) | (digitalRead(B_ENC_0) << 0);
 
-    if(buttons == button){
-        motor.drive((direction? -900: 900));
-    } else{
+    if (buttons == button)
+    {
+        motor.drive((direction ? -900 : 900));
+    }
+    else
+    {
         motor.drive(decipercent);
     }
-
-
-
 }
