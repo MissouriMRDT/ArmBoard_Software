@@ -54,18 +54,12 @@ void setup()
     Roll.Encoder()->configInvert(true);
 
     // Configrue encoder interupts
-    XEncoder.begin([]
-                   { XEncoder.handleInterrupt(); });
-    J2Encoder.begin([]
-                    { J2Encoder.handleInterrupt(); });
-    J3Encoder.begin([]
-                    { J3Encoder.handleInterrupt(); });
-    J4Encoder.begin([]
-                    { J4Encoder.handleInterrupt(); });
-    PitchEncoder.begin([]
-                       { PitchEncoder.handleInterrupt(); });
-    RollEncoder.begin([]
-                      { RollEncoder.handleInterrupt(); });
+    XEncoder.begin([]{XEncoder.handleInterrupt();});
+    J2Encoder.begin([]{J2Encoder.handleInterrupt();});
+    J3Encoder.begin([]{J3Encoder.handleInterrupt();});
+    J4Encoder.begin([]{J4Encoder.handleInterrupt();});
+    PitchEncoder.begin([]{PitchEncoder.handleInterrupt();});
+    RollEncoder.begin([]{RollEncoder.handleInterrupt();});
 
     // Config motor inverts, reference joint
     X.Motor()->configInvert(false);
@@ -172,22 +166,30 @@ void loop()
     case RC_ARMBOARD_SETPOSITION_DATA_ID:
     {
         // since polar coordinates, setting position way different?
-        /*float *data = (float*) packet.data;
-        XState.target = data[0];
-        J2State.target = data[1];
-        tate.target = data[2];
-        Z_state.target = data[3];
-        Pitch_state.target = data[4]; */
+        float *data = (float*) packet.data;
+        XState.qTarget = data[0];
+        J2State.qTarget = data[1];
+        J3State.qTarget = data[2];
+        J4State.qTarget = data[3];
+        PitchState.qTarget = data[4];
+        RollState.qTarget = data[5];
+        GripperState.qTarget =data[6];
 
-        // TODO: last year: activeGripper control variable status determines Roll1 or Roll2 state target
         closedLoopActive = true;
         feedWatchdog();
         break;
     }
     case RC_ARMBOARD_INCREMENTPOSITION_DATA_ID:
     {
-        // same as above except increment angle?
+        float *data = (float*) packet.data;
+        XState.qTarget += data[0];
+        J2State.qTarget += data[1];
+        J3State.qTarget += data[2];
+        J4State.qTarget += data[3];
+        PitchState.qTarget += data[4];
+        RollState.qTarget += data[5];
 
+        GripperState.qTarget +=data[6];
         closedLoopActive = false;
         feedWatchdog();
         break;
@@ -206,17 +208,18 @@ void loop()
     }
     case RC_ARMBOARD_GRIPPER_DATA_ID:
     {
-        // one gripper this year how uerm
+        int16_t data = *((int16_t*) packet.data);
+        GripperDecipercent = data;
 
     }
     case RC_ARMBOARD_WATCHDOGOVERRIDE_DATA_ID:
     {
-        watchdogOverride = *((uint8_t *)packet.data);
+        watchdogOverride = *((uint8_t*) packet.data);
         break;
     }
     case RC_ARMBOARD_LIMITSWITCHOVERRIDE_DATA_ID:
     {
-        uint16_t data = *((uint16_t *)packet.data);
+        uint16_t data = *((uint16_t*) packet.data);
 
         X.overrideForwardHardLimit(data & (1 << 0));
         X.overrideReverseHardLimit(data & (1 << 1));
@@ -235,7 +238,7 @@ void loop()
     }
     case RC_ARMBOARD_SOFTLIMITOVERRIDE_DATA_ID:
     {
-        uint16_t data = *((uint16_t *)packet.data);
+        uint16_t data = *((uint16_t*) packet.data);
 
         // Order which each bit represents which limit uhh
         X.overrideForwardSoftLimit(data & (1 << 0));
@@ -251,12 +254,10 @@ void loop()
     }
     case RC_ARMBOARD_CALIBRATEENCODER_DATA_ID:
     {
-        uint8_t data = *((uint8_t *)packet.data);
+        uint8_t data = *((uint8_t*) packet.data);
 
         XState.calibrating = data & (1 << 0);
-        RollState.calibrating = data & (1 << 1);
-
-        // roll joint calibration different?
+        RollState.calibrating = data & (1 << 1); // how calibrate if no limit
     }
     }
 
@@ -343,7 +344,6 @@ void setSolenoid(bool extend){
 }
 void setLaser(bool on){
     digitalWrite(LAS,on? HIGH:LOW);
-
 
 }
 

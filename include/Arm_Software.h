@@ -14,6 +14,7 @@
 #include <RovePIDController.h>
 #include <RoveJoint.h>
 #include <RoveVNH.h>
+#include <vector>
 
 #include <PCF8574.h> // Arduino library: download through IDE library manager
 
@@ -22,6 +23,7 @@
 // RoveComm
 EthernetServer TCPServer(RC_ROVECOMM_ETHERNET_TCP_PORT); //?
 RoveCommEthernet RoveComm;
+
 
 // Watchdog
 #define WATCHDOG_TIMEOUT 300000
@@ -104,6 +106,10 @@ struct JointState {
     bool calibrated = false;
 };
 
+
+std::vector<uint8_t> wristPosition;
+std::vector<u_int8_t> gripperPosition;
+
 //TODO: construct each joint
 JointState XState;
 JointState J2State;
@@ -111,6 +117,7 @@ JointState J3State;
 JointState J4State;
 JointState PitchState;
 JointState RollState;
+JointState GripperState;
 
 // Methods
 void estop();
