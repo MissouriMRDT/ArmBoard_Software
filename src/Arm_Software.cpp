@@ -303,14 +303,8 @@ void loop()
     updateMotor(Gripper,GripperDecipercent,BTN_8);*/
 
     // Solenoid
-    if (buttonInput == BTN_SOL)
-    {
-        setSolenoid(true);
-    }
-    else
-    {
-        setSolenoid(extendSolenoid);
-    }
+    if (buttonInput == BTN_SOL) setSolenoid(true);
+    else setSolenoid(extendSolenoid);
 
     // Laser
     setLaser(laserOn);
