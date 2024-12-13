@@ -49,7 +49,7 @@ void setup()
     J3.Encoder()->configInvert(false);
     J4.Encoder()->configInvert(false);
     Pitch.Encoder()->configInvert(false);
-    Roll.Encoder()->configInvert(false); //Change to false, and change later based on testing
+    Roll.Encoder()->configInvert(false); //change later based on testing
 
     // Configrue encoder interupts
     XEncoder.begin([]{XEncoder.handleInterrupt();});
@@ -67,6 +67,7 @@ void setup()
     Pitch.Motor()->configInvert(false);
     Roll.Motor()->configInvert(false);
     Gripper.configInvert(false);
+    Spare.configInvert(false);
 
     // Config motor output limits, reference joint
     X.Motor()->configMaxOutputs(-1000, 1000);
@@ -75,15 +76,17 @@ void setup()
     J4.Motor()->configMaxOutputs(-1000, 1000);
     Pitch.Motor()->configMaxOutputs(-1000, 1000);
     Gripper.configMaxOutputs(-1000, 1000);
+    Spare.configMaxOutputs(-1000, 1000);
 
     // Config motor deadbands, reference joint
     X.Motor()->configMinOutputs(-200, 200);    // change the values when testing
-    J2.Motor()->configMinOutputs(-100, 170);   // change the values when testing
-    J3.Motor()->configMinOutputs(-100, 220);   // change the values when testing
-    J4.Motor()->configMinOutputs(-220, 190);   // change the values when testing
-    Pitch.Motor()->configMinOutputs(-50, 50);  // change the values when testing
-    Roll.Motor()->configMinOutputs(-200, 200); // change the values when testing
-    Gripper.configMinOutputs(-50, 50);         // change the values when testing
+    J2.Motor()->configMinOutputs(-100, 170);  
+    J3.Motor()->configMinOutputs(-100, 220);  
+    J4.Motor()->configMinOutputs(-220, 190);  
+    Pitch.Motor()->configMinOutputs(-50, 50); 
+    Roll.Motor()->configMinOutputs(-200, 200);
+    Gripper.configMinOutputs(-50, 50);       
+    Spare.configMinOutputs(-50, 50);  
 
     // Config motor ramp rates, reference joint , change value when testing
     X.Motor()->configRampRate(10000);
@@ -93,28 +96,30 @@ void setup()
     Pitch.Motor()->configRampRate(10000);
     Roll.Motor()->configRampRate(10000);
     Gripper.configRampRate(10000);
+    Spare.configRampRate(10000);
 
     // X soft limits
+    X.configSoftLimits(X_REV_LIM, X_FWD_LIM);
     X.overrideReverseSoftLimit(true);
     X.overrideForwardSoftLimit(true);
 
     // J2 soft limits
-    J2.configSoftLimits(0, J2State.qMax);
+    J2.configSoftLimits(J2_REV_LIM, J2_FWD_LIM);
     J2.overrideReverseSoftLimit(true);
     J2.overrideForwardSoftLimit(true);
 
     // J3 soft limits
-    J3.configSoftLimits(J3State.qMin, J3State.qMax);
+    J3.configSoftLimits(J3_REV_LIM, J3_FWD_LIM);
     J3.overrideReverseSoftLimit(true);
     J3.overrideForwardSoftLimit(true);
 
     // J4 soft limits
-    J4.configSoftLimits(J4State.qMin, J4State.qMax);
+    J4.configSoftLimits(J4_REV_LIM, J4_FWD_LIM);
     J4.overrideReverseSoftLimit(true);
     J4.overrideForwardSoftLimit(true);
 
     // Pitch soft limits
-    Pitch.configSoftLimits(PitchState.qMin, PitchState.qMax);
+    Pitch.configSoftLimits(PITCH_REV_LIM, PITCH_FWD_LIM);
     Pitch.overrideReverseSoftLimit(true);
     Pitch.overrideForwardSoftLimit(true);
 
@@ -255,7 +260,7 @@ void loop()
     }
     }
 
-    // IO Expander 1
+    // IO Expanders
     if (timestamp - lastIOX_timestamp > IOX_UPDATE_PERIOD)
     {
         lastIOX_timestamp = timestamp;
@@ -275,13 +280,15 @@ void loop()
         uint8_t iox2_val = IOX2.read8();
         LS9.set(iox2_val & (1 << IOX2_LIM_9));
         LS10.set(iox2_val & (1 << IOX2_LIM_10));
-        // dir switch straight into teensy; iox not needed?
-        // direction = iox2_val & (1<<IOX2_DIR_SW);
+
     }
+
+    //Need to write to IOX for fwd and rev
+
     direction = digitalRead(DIR_SW);
 
 
-    buttons = (digitalRead(B_ENC_3) << 3) | (digitalRead(B_ENC_2) << 2) | (digitalRead(B_ENC_1) << 1) | (digitalRead(B_ENC_0) << 0);
+    buttonInput = (digitalRead(B_ENC_3) << 3) | (digitalRead(B_ENC_2) << 2) | (digitalRead(B_ENC_1) << 1) | (digitalRead(B_ENC_0) << 0);
 
     // Motor Outputs
 
@@ -296,7 +303,7 @@ void loop()
     updateMotor(Gripper,GripperDecipercent,BTN_8);*/
 
     // Solenoid
-    if (buttons == BTN_SOL)
+    if (buttonInput == BTN_SOL)
     {
         setSolenoid(true);
     }
@@ -345,7 +352,7 @@ void setLaser(bool on){
 
 // calibrateUp parameter?
 void updateJoint(RoveJoint &joint, JointState &state, uint8_t button, bool calibrateUp = false, float position = 0) {
-    if(buttons == button){
+    if(buttonInput == button){
         // override soft limits; drive joint @ default decipercent, turn soft limits back on
 
     }
@@ -358,9 +365,9 @@ void updateJoint(RoveJoint &joint, JointState &state, uint8_t button, bool calib
 }
 void updateMotor(RoveMotor &motor, int16_t decipercent, uint8_t button)
 {
-    uint8_t buttons = (digitalRead(B_ENC_3) << 3) | (digitalRead(B_ENC_2) << 2) | (digitalRead(B_ENC_1) << 1) | (digitalRead(B_ENC_0) << 0);
+    uint8_t buttonInput = (digitalRead(B_ENC_3) << 3) | (digitalRead(B_ENC_2) << 2) | (digitalRead(B_ENC_1) << 1) | (digitalRead(B_ENC_0) << 0);
 
-    if (buttons == button)
+    if (buttonInput == button)
     {
         motor.drive((direction ? -900 : 900));
     }

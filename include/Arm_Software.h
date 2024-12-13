@@ -44,7 +44,7 @@ RoveVNH J4Motor(M4_PWM,IOX3_FWD_4,IOX3_RVS_4);
 RoveVNH PitchMotor(M5_PWM,IOX3_FWD_5,IOX3_RVS_5);
 RoveVNH RollMotor(M6_PWM,IOX3_FWD_6,IOX3_RVS_6);
 RoveVNH GripperMotor(M7_PWM,IOX3_FWD_7,IOX3_RVS_7);
-RoveVNH SpareMotor(M8_PWM, M8_FWD,M8_RVS);
+RoveVNH SpareMotor(M8_PWM,M8_FWD,M8_RVS);
 
 // IO Expanders
 PCF8574 IOX1(0x38, &IOX_TWI);
@@ -56,7 +56,7 @@ uint32_t lastIOX_timestamp = 0;
 // Encoders
 RoveQuadEncoder XEncoder(ENC_1A, ENC_1B, 360 * 30000 / 11.0); // change values when testing
 RoveQuadEncoder RollEncoder(ENC_2A, ENC_2B, 360 * 101000 / 21.375); // change values when testing
-MA3PWM J2Encoder(ABS_1);
+MA3PWM J2Encoder(ABS_1); //Need to calibrate initially
 MA3PWM J3Encoder(ABS_2);
 MA3PWM J4Encoder(ABS_3);
 MA3PWM PitchEncoder(ABS_4);
@@ -72,6 +72,7 @@ RoveJoint J4(&J4Motor);
 RoveJoint Pitch(&PitchMotor);
 RoveJoint Roll(&RollMotor);
 #define Gripper (GripperMotor)
+#define Spare (SpareMotor)
 
 // PID Controllers 
 //TODO: TUNE
@@ -81,14 +82,12 @@ RovePIDController J3_PID(4000, 0, 0);
 RovePIDController J4_PID(4000, 0, 0);
 RovePIDController Pitch_PID(35, 0, 0);
 RovePIDController Roll_PID(60, 0, 2000);
-RovePIDController Wrist_PID(60, 0, 2000);
-
 
 // Control variables
 int16_t GripperDecipercent = 0;
 
 bool direction = false;
-uint8_t buttons = 0;
+uint8_t buttonInput = 0;
 bool laserOn = false;
 void setLaser(bool on);
 bool extendSolenoid = false;
@@ -100,23 +99,31 @@ enum controlMode {
     INVERSE_KINEMATICS
 };
 
+//Limits
+#define X_REV_LIM 0
+#define X_FWD_LIM 12.6
+#define J2_REV_LIM -54
+#define J2_FWD_LIM 164
+#define J3_REV_LIM -116.8
+#define J3_FWD_LIM 90
+#define J4_REV_LIM 0
+#define J4_FWD_LIM 350
+#define PITCH_REV_LIM 0
+#define PITCH_FWD_LIM 355
+
 struct JointState {
     float qMotor = 0;
     float qTarget = 0; //in degrees
     float qApparent = 0;
     int16_t decipercent = 0;
-    float qMax = 0;
-    float qMin = 0;
 };
 
 bool Xcalibrating = false;
 bool Xcalibrated = false;
 
-
 std::vector<uint8_t> wristPosition = {0,0,0};
 std::vector<u_int8_t> gripperPosition = {0,0,0};
 
-//TODO: construct each joint
 JointState XState;
 JointState J2State;
 JointState J3State;
