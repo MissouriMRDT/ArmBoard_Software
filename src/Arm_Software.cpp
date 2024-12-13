@@ -21,14 +21,12 @@ void setup()
     IOX_TWI.begin();
     IOX1.begin();
 
-    IOX2.begin(~((1 << IOX2_FWD_1) | (1 << IOX2_RVS_1)));
-    IOX2.begin(~((1 << IOX2_FWD_2) | (1 << IOX2_RVS_2)));
-    IOX2.begin(~((1 << IOX2_FWD_3) | (1 << IOX2_RVS_3)));
+    IOX2.begin(~((1 << IOX2_FWD_1) | (1 << IOX2_RVS_1) | (1 << IOX2_FWD_2) | 
+                (1 << IOX2_RVS_2) | (1 << IOX2_FWD_3) | (1 << IOX2_RVS_3)));
 
-    IOX3.begin(~((1 << IOX3_FWD_4) | (1 << IOX3_RVS_4)));
-    IOX3.begin(~((1 << IOX3_FWD_5) | (1 << IOX3_RVS_5)));
-    IOX3.begin(~((1 << IOX3_FWD_6) | (1 << IOX3_RVS_6)));
-    IOX3.begin(~((1 << IOX3_FWD_7) | (1 << IOX3_RVS_7)));
+    IOX3.begin(~((1 << IOX3_FWD_4) | (1 << IOX3_RVS_4) | (1 << IOX3_FWD_5) | 
+                 (1 << IOX3_RVS_5) | (1 << IOX3_FWD_6) | (1 << IOX3_RVS_6) | 
+                 (1 << IOX3_FWD_7) | (1 << IOX3_RVS_7)));
 
     // Attach encoders
     X.attachEncoder(&XEncoder);
@@ -46,12 +44,12 @@ void setup()
     Pitch.attachHardLimits(&LS9, &LS10);
 
     // Attach encoder inverts
-    X.Encoder()->configInvert(true);
-    J2.Encoder()->configInvert(true);
-    J3.Encoder()->configInvert(true);
-    J4.Encoder()->configInvert(true);
-    Pitch.Encoder()->configInvert(true);
-    Roll.Encoder()->configInvert(true);
+    X.Encoder()->configInvert(false);
+    J2.Encoder()->configInvert(false);
+    J3.Encoder()->configInvert(false);
+    J4.Encoder()->configInvert(false);
+    Pitch.Encoder()->configInvert(false);
+    Roll.Encoder()->configInvert(false); //Change to false, and change later based on testing
 
     // Configrue encoder interupts
     XEncoder.begin([]{XEncoder.handleInterrupt();});
@@ -76,6 +74,7 @@ void setup()
     J3.Motor()->configMaxOutputs(-1000, 1000);
     J4.Motor()->configMaxOutputs(-1000, 1000);
     Pitch.Motor()->configMaxOutputs(-1000, 1000);
+    Gripper.configMaxOutputs(-1000, 1000);
 
     // Config motor deadbands, reference joint
     X.Motor()->configMinOutputs(-200, 200);    // change the values when testing
@@ -130,6 +129,9 @@ void setup()
     Pitch.attachPID(&Pitch_PID);
     Roll.attachPID(&Roll_PID);
 
+    // ControlMode variable
+    enum controlMode currentMode = OPEN_LOOP;
+
     // RoveComm
     Serial.println("RoveComm Initializing...");
     RoveComm.begin(RC_ARMBOARD_IPADDRESS);
@@ -149,6 +151,7 @@ void loop()
     {
     case RC_ARMBOARD_OPENLOOP_DATA_ID:
     {
+        // Set joint decipercent
         int16_t *data = (int16_t *)packet.data;
         XState.decipercent = data[0];
         J2State.decipercent = data[1];
@@ -156,16 +159,12 @@ void loop()
         J4State.decipercent = data[3];
         PitchState.decipercent = data[4];
         RollState.decipercent = data[5];
-
-        // TODO: last year: activeGripper control variable status determines Roll1 and Roll2 decipercent (either 0 or )
-
-        closedLoopActive = false;
+        //currentMode = OPEN_LOOP;
         feedWatchdog();
         break;
     }
     case RC_ARMBOARD_SETPOSITION_DATA_ID:
     {
-        // since polar coordinates, setting position way different?
         float *data = (float*) packet.data;
         XState.qTarget = data[0];
         J2State.qTarget = data[1];
@@ -173,9 +172,7 @@ void loop()
         J4State.qTarget = data[3];
         PitchState.qTarget = data[4];
         RollState.qTarget = data[5];
-        GripperState.qTarget =data[6];
-
-        closedLoopActive = true;
+        //currentMode = CLOSED_LOOP;
         feedWatchdog();
         break;
     }
@@ -188,9 +185,7 @@ void loop()
         J4State.qTarget += data[3];
         PitchState.qTarget += data[4];
         RollState.qTarget += data[5];
-
-        GripperState.qTarget +=data[6];
-        closedLoopActive = false;
+        //currentMode = CLOSED_LOOP;
         feedWatchdog();
         break;
     }
@@ -255,9 +250,8 @@ void loop()
     case RC_ARMBOARD_CALIBRATEENCODER_DATA_ID:
     {
         uint8_t data = *((uint8_t*) packet.data);
-
-        XState.calibrating = data & (1 << 0);
-        RollState.calibrating = data & (1 << 1); // how calibrate if no limit
+        if(data & (1<<1)) Roll.Encoder()->setDegrees(0);
+        Xcalibrating = data & (1 << 0);
     }
     }
 
@@ -283,8 +277,9 @@ void loop()
         LS10.set(iox2_val & (1 << IOX2_LIM_10));
         // dir switch straight into teensy; iox not needed?
         // direction = iox2_val & (1<<IOX2_DIR_SW);
-        direction = digitalRead(DIR_SW);
     }
+    direction = digitalRead(DIR_SW);
+
 
     buttons = (digitalRead(B_ENC_3) << 3) | (digitalRead(B_ENC_2) << 2) | (digitalRead(B_ENC_1) << 1) | (digitalRead(B_ENC_0) << 0);
 
@@ -320,7 +315,7 @@ void estop()
     {
         watchdogStatus = 1;
 
-        closedLoopActive = false;
+        //currentMode = OPEN_LOOP;
 
         XState.decipercent = 0;
         J2State.decipercent = 0;
@@ -333,7 +328,8 @@ void estop()
 }
 void telemetry()
 {
-    float positions[6] = {X.Encoder()->readDegrees(), J2.Encoder()->readDegrees(), J3.Encoder()->readDegrees(), J4.Encoder()->readDegrees(), Pitch.Encoder()->readDegrees(), Roll.Encoder()->readDegrees()};
+    float positions[6] = {X.Encoder()->readDegrees(), J2.Encoder()->readDegrees(), J3.Encoder()->readDegrees(), J4.Encoder()->readDegrees(), 
+                          Pitch.Encoder()->readDegrees(), Roll.Encoder()->readDegrees()};
 
     RoveComm.write(RC_ARMBOARD_POSITIONS_DATA_ID, RC_ARMBOARD_POSITIONS_DATA_COUNT, positions);
 
@@ -348,8 +344,17 @@ void setLaser(bool on){
 }
 
 // calibrateUp parameter?
-void updateJoint(RoveJoint &joint, JointState &state, uint8_t button, bool calibrateUp = false, float position = 0)
-{
+void updateJoint(RoveJoint &joint, JointState &state, uint8_t button, bool calibrateUp = false, float position = 0) {
+    if(buttons == button){
+        // override soft limits; drive joint @ default decipercent, turn soft limits back on
+
+    }
+    else if (Xcalibrating){
+        // calibrates x joint only
+
+    }
+    // priority modes: IK, CLOSED_LOOP (set joint angles or increment joint angles), OPEN_LOOP?
+
 }
 void updateMotor(RoveMotor &motor, int16_t decipercent, uint8_t button)
 {

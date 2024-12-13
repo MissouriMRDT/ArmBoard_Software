@@ -94,21 +94,27 @@ void setLaser(bool on);
 bool extendSolenoid = false;
 void setSolenoid(bool extend);
 
-bool closedLoopActive = false;
+enum controlMode {
+    OPEN_LOOP,
+    CLOSED_LOOP,
+    INVERSE_KINEMATICS
+};
 
 struct JointState {
+    float qMotor = 0;
     float qTarget = 0; //in degrees
     float qApparent = 0;
     int16_t decipercent = 0;
     float qMax = 0;
     float qMin = 0;
-    bool calibrating = false;
-    bool calibrated = false;
 };
 
+bool Xcalibrating = false;
+bool Xcalibrated = false;
 
-std::vector<uint8_t> wristPosition;
-std::vector<u_int8_t> gripperPosition;
+
+std::vector<uint8_t> wristPosition = {0,0,0};
+std::vector<u_int8_t> gripperPosition = {0,0,0};
 
 //TODO: construct each joint
 JointState XState;
