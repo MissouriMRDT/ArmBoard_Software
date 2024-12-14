@@ -329,10 +329,14 @@ void estop()
 }
 void telemetry()
 {
+    RoveComm.write(RC_ARMBOARD_WATCHDOGSTATUS_DATA_ID, RC_ARMBOARD_COORDINATES_DATA_COUNT, watchdogStatus);
+    
+    if(!telemetryOverride) {
     float positions[6] = {X.Encoder()->readDegrees(), J2.Encoder()->readDegrees(), J3.Encoder()->readDegrees(), J4.Encoder()->readDegrees(), 
                           Pitch.Encoder()->readDegrees(), Roll.Encoder()->readDegrees()};
 
     RoveComm.write(RC_ARMBOARD_POSITIONS_DATA_ID, RC_ARMBOARD_POSITIONS_DATA_COUNT, positions);
+    }
 
     // also write which limit switches triggered?
 }
@@ -369,4 +373,9 @@ void updateMotor(RoveMotor &motor, int16_t decipercent, uint8_t button)
     {
         motor.drive(decipercent);
     }
+}
+
+void feedWatchdog() {
+    watchdogStatus = 0;
+    Watchdog.begin(estop, WATCHDOG_TIMEOUT);
 }
