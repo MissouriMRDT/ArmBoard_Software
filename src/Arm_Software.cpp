@@ -349,7 +349,7 @@ void setLaser(bool on){
 }
 
 // calibrateUp parameter?
-void updateJoint(RoveJoint &joint, JointState &state, uint8_t button, bool calibrateUp = false, float position = 0) {
+void updateJoint(RoveJoint &joint, JointState &state, uint8_t button) {
     if(buttonInput == button){
         // override soft limits; drive joint @ default decipercent, turn soft limits back on
 
