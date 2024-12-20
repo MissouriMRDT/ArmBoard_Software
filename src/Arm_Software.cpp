@@ -134,9 +134,6 @@ void setup()
     Pitch.attachPID(&Pitch_PID);
     Roll.attachPID(&Roll_PID);
 
-    // ControlMode variable
-    enum controlMode currentMode = OPEN_LOOP;
-
     // RoveComm
     Serial.println("RoveComm Initializing...");
     RoveComm.begin(RC_ARMBOARD_IPADDRESS);
@@ -164,7 +161,8 @@ void loop()
         J4State.decipercent = data[3];
         PitchState.decipercent = data[4];
         RollState.decipercent = data[5];
-        //currentMode = OPEN_LOOP;
+
+        currentMode = OPEN_LOOP;
         feedWatchdog();
         break;
     }
@@ -177,7 +175,8 @@ void loop()
         J4State.qTarget = data[3];
         PitchState.qTarget = data[4];
         RollState.qTarget = data[5];
-        //currentMode = CLOSED_LOOP;
+
+        currentMode = CLOSED_LOOP;
         feedWatchdog();
         break;
     }
@@ -190,7 +189,8 @@ void loop()
         J4State.qTarget += data[3];
         PitchState.qTarget += data[4];
         RollState.qTarget += data[5];
-        //currentMode = CLOSED_LOOP;
+        
+        currentMode = CLOSED_LOOP;
         feedWatchdog();
         break;
     }
@@ -292,15 +292,15 @@ void loop()
 
     // Motor Outputs
 
-    /*updateJoint(X,XState,BTN_2);
-    updateJoint(J2,J2State,BTN_3);
-    updateJoint(J3,J3State,BTN_4);
-    updateJoint(J4,J4State,BTN_5);
-    updateJoint(Pitch,PitchState,BTN_6);
-    updateJoint(Roll,RollState,BTN_7);
+    /*updateJoint(X,XState,BTN_1);
+    updateJoint(J2,J2State,BTN_2);
+    updateJoint(J3,J3State,BTN_3);
+    updateJoint(J4,J4State,BTN_4);
+    updateJoint(Pitch,PitchState,BTN_5);
+    updateJoint(Roll,RollState,BTN_6);*/
 
-
-    updateMotor(Gripper,GripperDecipercent,BTN_8);*/
+    updateMotor(Gripper,GripperDecipercent,BTN_7);
+    updateMotor(Spare,SpareDecipercent,BTN_8);
 
     // Solenoid
     if (buttonInput == BTN_SOL) setSolenoid(true);
@@ -329,7 +329,7 @@ void estop()
 }
 void telemetry()
 {
-    RoveComm.write(RC_ARMBOARD_WATCHDOGSTATUS_DATA_ID, RC_ARMBOARD_COORDINATES_DATA_COUNT, watchdogStatus);
+    RoveComm.write(RC_ARMBOARD_WATCHDOGSTATUS_DATA_ID, watchdogStatus);
     
     if(!telemetryOverride) {
     float positions[6] = {X.Encoder()->readDegrees(), J2.Encoder()->readDegrees(), J3.Encoder()->readDegrees(), J4.Encoder()->readDegrees(), 

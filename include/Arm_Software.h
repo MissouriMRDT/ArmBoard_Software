@@ -85,6 +85,7 @@ RovePIDController Roll_PID(60, 0, 2000);
 
 // Control variables
 int16_t GripperDecipercent = 0;
+int16_t SpareDecipercent = 0; 
 
 bool direction = false;
 uint8_t buttonInput = 0;
@@ -98,6 +99,7 @@ enum controlMode {
     CLOSED_LOOP,
     INVERSE_KINEMATICS
 };
+controlMode currentMode = OPEN_LOOP;
 
 //Limits
 #define X_REV_LIM 0
