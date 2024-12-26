@@ -350,6 +350,7 @@ void setLaser(bool on){
 
 // calibrateUp parameter?
 void updateJoint(RoveJoint &joint, JointState &state, uint8_t button) {
+
     if(buttonInput == button){
         // override soft limits; drive joint @ default decipercent, turn soft limits back on
 
@@ -363,8 +364,6 @@ void updateJoint(RoveJoint &joint, JointState &state, uint8_t button) {
 }
 void updateMotor(RoveMotor &motor, int16_t decipercent, uint8_t button)
 {
-    uint8_t buttonInput = (digitalRead(B_ENC_3) << 3) | (digitalRead(B_ENC_2) << 2) | (digitalRead(B_ENC_1) << 1) | (digitalRead(B_ENC_0) << 0);
-
     if (buttonInput == button)
     {
         motor.drive((direction ? -900 : 900));
