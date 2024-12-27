@@ -309,20 +309,12 @@ void loop() {
 
     // Laser
     setLaser(laserOn);
-
-    // uhhh maybe
-    J4State.qTarget = 0;
-    PitchState.qTarget = wrist.valkyrie - (J2State.qTarget + J3State.qTarget);
-    GripperState.qTarget = wrist.valkyrie;
-    
 }
 
 void estop() {
     if (!watchdogOverride)
     {
         watchdogStatus = 1;
-
-        //currentMode = OPEN_LOOP;
 
         XState.decipercent = 0;
         J2State.decipercent = 0;
@@ -362,7 +354,7 @@ void updateJoint(RoveJoint &joint, JointState &state, uint8_t button) {
         joint.overrideForwardSoftLimit(false);
     } else if (Xcalibrating){
         // calibrates x joint only
-        if(joint.atForwardHardLimit() || joint.atReverseHardLimit()) {
+        if(joint.atReverseHardLimit()) {
             joint.overrideReverseSoftLimit(false);
             joint.overrideForwardSoftLimit(false);
             joint.drive(0);
@@ -372,8 +364,7 @@ void updateJoint(RoveJoint &joint, JointState &state, uint8_t button) {
         } else {
             joint.overrideReverseSoftLimit(true);
             joint.overrideForwardSoftLimit(true);
-            // matters whether you calibrate @ forward or reverse hard limit?
-            joint.drive(900);
+            joint.drive(-900);
         }
     } else if (currentMode == CLOSED_LOOP || currentMode == INVERSE_KINEMATICS) {
         if (Xcalibrated) joint.setAngle(state.qTarget);
