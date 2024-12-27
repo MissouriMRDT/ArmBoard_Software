@@ -4,8 +4,7 @@
 
 #include <cmath>
 
-void setup()
-{
+void setup() {
     Serial.begin(115200);
     Serial.println("Setup");
 
@@ -143,14 +142,12 @@ void setup()
     Telemetry.begin(telemetry, TELEMETRY_PERIOD);
 }
 
-void loop()
-{
+void loop() {
     uint32_t timestamp = millis();
 
     // Parse RoveComm packets
     RoveCommPacket packet = RoveComm.read();
-    switch (packet.dataId)
-    {
+    switch (packet.dataId) {
     case RC_ARMBOARD_OPENLOOP_DATA_ID:
     {
         // Set joint decipercent
@@ -198,23 +195,27 @@ void loop()
     {
         uint8_t data = *((uint8_t *)packet.data);
         laserOn = (data == 0) ? false : true;
+        feedWatchdog();
         break;
     }
     case RC_ARMBOARD_SOLENOID_DATA_ID:
     {
         uint8_t data = *((uint8_t *)packet.data);
         extendSolenoid = (data == 0) ? false : true;
+        feedWatchdog();
         break;
     }
     case RC_ARMBOARD_GRIPPER_DATA_ID:
     {
         int16_t data = *((int16_t*) packet.data);
         GripperDecipercent = data;
-
+        feedWatchdog();
+        break;
     }
     case RC_ARMBOARD_WATCHDOGOVERRIDE_DATA_ID:
     {
         watchdogOverride = *((uint8_t*) packet.data);
+        feedWatchdog();
         break;
     }
     case RC_ARMBOARD_LIMITSWITCHOVERRIDE_DATA_ID:
@@ -229,18 +230,15 @@ void loop()
         J3.overrideReverseHardLimit(data & (1 << 5));
         J4.overrideForwardHardLimit(data & (1 << 6));
         J4.overrideReverseHardLimit(data & (1 << 7));
-        // Soft limit override in here (from last years)?
         Pitch.overrideForwardHardLimit(data & (1 << 8));
-        Pitch.overrideForwardSoftLimit(data & (1 << 8));
         Pitch.overrideReverseHardLimit(data & (1 << 9));
-        Pitch.overrideReverseSoftLimit(data & (1 << 9));
+        feedWatchdog();
         break;
     }
     case RC_ARMBOARD_SOFTLIMITOVERRIDE_DATA_ID:
     {
         uint16_t data = *((uint16_t*) packet.data);
 
-        // Order which each bit represents which limit uhh
         X.overrideForwardSoftLimit(data & (1 << 0));
         X.overrideReverseSoftLimit(data & (1 << 1));
         J2.overrideForwardSoftLimit(data & (1 << 2));
@@ -251,18 +249,21 @@ void loop()
         J4.overrideReverseSoftLimit(data & (1 << 7));
         Pitch.overrideForwardSoftLimit(data & (1 << 8));
         Pitch.overrideReverseSoftLimit(data & (1 << 9));
+        feedWatchdog();
+        break;
     }
     case RC_ARMBOARD_CALIBRATEENCODER_DATA_ID:
     {
         uint8_t data = *((uint8_t*) packet.data);
         if(data & (1<<1)) Roll.Encoder()->setDegrees(0);
         Xcalibrating = data & (1 << 0);
+        feedWatchdog();
+        break;
     }
     }
 
     // IO Expanders
-    if (timestamp - lastIOX_timestamp > IOX_UPDATE_PERIOD)
-    {
+    if (timestamp - lastIOX_timestamp > IOX_UPDATE_PERIOD) {
         lastIOX_timestamp = timestamp;
 
         // IO Expander 1
@@ -283,7 +284,7 @@ void loop()
 
     }
 
-    //Need to write to IOX for fwd and rev
+    //Need to write to IOX for fwd and rev (waiting for adam ohhhh)
 
     direction = digitalRead(DIR_SW);
 
@@ -292,12 +293,12 @@ void loop()
 
     // Motor Outputs
 
-    /*updateJoint(X,XState,BTN_1);
+    updateJoint(X,XState,BTN_1);
     updateJoint(J2,J2State,BTN_2);
     updateJoint(J3,J3State,BTN_3);
     updateJoint(J4,J4State,BTN_4);
     updateJoint(Pitch,PitchState,BTN_5);
-    updateJoint(Roll,RollState,BTN_6);*/
+    updateJoint(Roll,RollState,BTN_6);
 
     updateMotor(Gripper,GripperDecipercent,BTN_7);
     updateMotor(Spare,SpareDecipercent,BTN_8);
@@ -308,10 +309,15 @@ void loop()
 
     // Laser
     setLaser(laserOn);
+
+    // uhhh maybe
+    J4State.qTarget = 0;
+    PitchState.qTarget = wrist.valkyrie - (J2State.qTarget + J3State.qTarget);
+    GripperState.qTarget = wrist.valkyrie;
+    
 }
 
-void estop()
-{
+void estop() {
     if (!watchdogOverride)
     {
         watchdogStatus = 1;
@@ -327,8 +333,7 @@ void estop()
         GripperDecipercent = 0;
     }
 }
-void telemetry()
-{
+void telemetry() {
     RoveComm.write(RC_ARMBOARD_WATCHDOGSTATUS_DATA_ID, watchdogStatus);
     
     if(!telemetryOverride) {
@@ -345,35 +350,43 @@ void setSolenoid(bool extend){
 }
 void setLaser(bool on){
     digitalWrite(LAS,on? HIGH:LOW);
-
 }
-
-// calibrateUp parameter?
 void updateJoint(RoveJoint &joint, JointState &state, uint8_t button) {
 
     if(buttonInput == button){
         // override soft limits; drive joint @ default decipercent, turn soft limits back on
-
-    }
-    else if (Xcalibrating){
+        joint.overrideReverseSoftLimit(true);
+        joint.overrideForwardSoftLimit(true);
+        joint.drive((direction? -900 : 900));
+        joint.overrideReverseSoftLimit(false);
+        joint.overrideForwardSoftLimit(false);
+    } else if (Xcalibrating){
         // calibrates x joint only
-
+        if(joint.atForwardHardLimit() || joint.atReverseHardLimit()) {
+            joint.overrideReverseSoftLimit(false);
+            joint.overrideForwardSoftLimit(false);
+            joint.drive(0);
+            joint.Encoder()->setDegrees(0);
+            Xcalibrating = false;
+            Xcalibrated = true;
+        } else {
+            joint.overrideReverseSoftLimit(true);
+            joint.overrideForwardSoftLimit(true);
+            // matters whether you calibrate @ forward or reverse hard limit?
+            joint.drive(900);
+        }
+    } else if (currentMode == CLOSED_LOOP || currentMode == INVERSE_KINEMATICS) {
+        if (Xcalibrated) joint.setAngle(state.qTarget);
+        else joint.drive(0);
+    } else {
+        joint.drive(state.decipercent);
     }
-    // priority modes: IK, CLOSED_LOOP (set joint angles or increment joint angles), OPEN_LOOP?
 
 }
-void updateMotor(RoveMotor &motor, int16_t decipercent, uint8_t button)
-{
-    if (buttonInput == button)
-    {
-        motor.drive((direction ? -900 : 900));
-    }
-    else
-    {
-        motor.drive(decipercent);
-    }
+void updateMotor(RoveMotor &motor, int16_t decipercent, uint8_t button) {
+    if (buttonInput == button) motor.drive((direction ? -900 : 900));
+    else motor.drive(decipercent);
 }
-
 void feedWatchdog() {
     watchdogStatus = 0;
     Watchdog.begin(estop, WATCHDOG_TIMEOUT);

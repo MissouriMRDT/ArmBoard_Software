@@ -21,7 +21,6 @@
 #include <cstdint>
 
 // RoveComm
-EthernetServer TCPServer(RC_ROVECOMM_ETHERNET_TCP_PORT); //?
 RoveCommEthernet RoveComm;
 
 
@@ -116,7 +115,6 @@ controlMode currentMode = OPEN_LOOP;
 struct JointState {
     float qMotor = 0;
     float qTarget = 0; //in degrees
-    float qApparent = 0;
     int16_t decipercent = 0;
 };
 
@@ -125,6 +123,14 @@ bool Xcalibrated = false;
 
 std::vector<uint8_t> wristPosition = {0,0,0};
 std::vector<u_int8_t> gripperPosition = {0,0,0};
+
+struct sphericalWrist {
+    float J4;
+    float pitch;
+    float valkyrie;
+};
+
+sphericalWrist wrist;
 
 JointState XState;
 JointState J2State;
@@ -138,7 +144,7 @@ JointState GripperState;
 void estop();
 void telemetry();
 void feedWatchdog();
-void updateJoint(RoveJoint &joint, JointState &state, uint8_t button, bool calibrateUp=false, float position=0);
+void updateJoint(RoveJoint &joint, JointState &state, uint8_t button);
 void updateMotor(RoveMotor &motor, int16_t decipercent, uint8_t button);
 
 
