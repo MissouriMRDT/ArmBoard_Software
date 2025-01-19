@@ -18,7 +18,7 @@ void setup() {
     IOX_TWI.begin();
     IOX1.begin();
 
-    IOX2.begin(~((1 << IOX2_FWD_1) | (1 << IOX2_RVS_1) | (1 << IOX2_FWD_2) | 
+    IOX2.begin(~uint8_t((1 << IOX2_FWD_1) | (1 << IOX2_RVS_1) | (1 << IOX2_FWD_2) | 
                 (1 << IOX2_RVS_2) | (1 << IOX2_FWD_3) | (1 << IOX2_RVS_3)));
 
     IOX3.begin(~((1 << IOX3_FWD_4) | (1 << IOX3_RVS_4) | (1 << IOX3_FWD_5) | 
@@ -144,7 +144,8 @@ void loop() {
     uint32_t timestamp = millis();
 
     // Parse RoveComm packets
-    RoveCommPacket packet = RoveComm.read();
+    static RoveCommPacket packet;
+    RoveComm.read(packet);
     switch (packet.dataId) {
     case RC_ARMBOARD_OPENLOOP_DATA_ID:
     {
@@ -282,10 +283,7 @@ void loop() {
 
     }
 
-    //Need to write to IOX for fwd and rev (waiting for adam ohhhh)
-
     direction = digitalRead(DIR_SW);
-
     buttonInput = (digitalRead(B_ENC_3) << 3) | (digitalRead(B_ENC_2) << 2) | (digitalRead(B_ENC_1) << 1) | (digitalRead(B_ENC_0) << 0);
 
     //Set motor angles read from encoders

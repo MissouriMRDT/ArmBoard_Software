@@ -13,7 +13,8 @@
 #include <BidirectionalLimitSwitch.h>
 #include <RovePIDController.h>
 #include <RoveJoint.h>
-#include <RoveVNH.h>
+// #include <RoveVNH.h>
+#include <ArmVNH.h>
 #include <vector>
 #include <cmath>
 
@@ -36,22 +37,22 @@ bool watchdogOverride = false;
 IntervalTimer Telemetry;
 bool telemetryOverride = false;
 
-// Motor
-RoveVNH XMotor(M1_PWM,IOX2_FWD_1,IOX2_RVS_1);
-RoveVNH J2Motor(M2_PWM,IOX2_FWD_2,IOX2_RVS_2);
-RoveVNH J3Motor(M3_PWM,IOX2_FWD_3,IOX2_RVS_3);
-RoveVNH J4Motor(M4_PWM,IOX3_FWD_4,IOX3_RVS_4);
-RoveVNH PitchMotor(M5_PWM,IOX3_FWD_5,IOX3_RVS_5);
-RoveVNH RollMotor(M6_PWM,IOX3_FWD_6,IOX3_RVS_6);
-RoveVNH GripperMotor(M7_PWM,IOX3_FWD_7,IOX3_RVS_7);
-RoveVNH SpareMotor(M8_PWM,M8_FWD,M8_RVS);
-
 // IO Expanders
 PCF8574 IOX1(0x38, &IOX_TWI);
 PCF8574 IOX2(0x39, &IOX_TWI);
 PCF8574 IOX3(0x3A, &IOX_TWI);
 uint32_t lastIOX_timestamp = 0;
 #define IOX_UPDATE_PERIOD   50
+
+// Motor
+ArmVNH XMotor       (M1_PWM, IOX2_FWD_1, IOX2_RVS_1, &IOX2);
+ArmVNH J2Motor      (M2_PWM, IOX2_FWD_2, IOX2_RVS_2, &IOX2);
+ArmVNH J3Motor      (M3_PWM, IOX2_FWD_3, IOX2_RVS_3, &IOX2);
+ArmVNH J4Motor      (M4_PWM, IOX3_FWD_4, IOX3_RVS_4, &IOX2);
+ArmVNH PitchMotor   (M5_PWM, IOX3_FWD_5, IOX3_RVS_5, &IOX3);
+ArmVNH RollMotor    (M6_PWM, IOX3_FWD_6, IOX3_RVS_6, &IOX3);
+ArmVNH GripperMotor (M7_PWM, IOX3_FWD_7, IOX3_RVS_7, &IOX3);
+ArmVNH SpareMotor   (M8_PWM, M8_FWD,     M8_RVS,     &IOX3);
 
 // Encoders
 RoveQuadEncoder XEncoder(ENC_1A, ENC_1B, 360 * 30000 / 11.0); // change values when testing
