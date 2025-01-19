@@ -15,6 +15,7 @@
 #include <RoveJoint.h>
 #include <RoveVNH.h>
 #include <vector>
+#include <cmath>
 
 #include <PCF8574.h> // Arduino library: download through IDE library manager
 
@@ -55,7 +56,7 @@ uint32_t lastIOX_timestamp = 0;
 // Encoders
 RoveQuadEncoder XEncoder(ENC_1A, ENC_1B, 360 * 30000 / 11.0); // change values when testing
 RoveQuadEncoder RollEncoder(ENC_2A, ENC_2B, 360 * 101000 / 21.375); // change values when testing
-MA3PWM J2Encoder(ABS_1); //Need to calibrate initially
+MA3PWM J2Encoder(ABS_1); //Need to calibrate initially!!! Set offsets if needed
 MA3PWM J3Encoder(ABS_2);
 MA3PWM J4Encoder(ABS_3);
 MA3PWM PitchEncoder(ABS_4);
@@ -103,17 +104,21 @@ controlMode currentMode = OPEN_LOOP;
 //Limits
 #define X_REV_LIM 0
 #define X_FWD_LIM 12.6
+
 #define J2_REV_LIM -54
 #define J2_FWD_LIM 164
+
 #define J3_REV_LIM -116.8
 #define J3_FWD_LIM 90
-#define J4_REV_LIM 0
-#define J4_FWD_LIM 350
-#define PITCH_REV_LIM 0
-#define PITCH_FWD_LIM 355
+
+#define J4_REV_LIM -260
+#define J4_FWD_LIM 90
+
+#define PITCH_REV_LIM 10
+#define PITCH_FWD_LIM 350
 
 struct JointState {
-    float qMotor = 0;
+    float qMotor = 0; //in degrees
     float qTarget = 0; //in degrees
     int16_t decipercent = 0;
 };
@@ -124,13 +129,13 @@ bool Xcalibrated = false;
 std::vector<uint8_t> wristPosition = {0,0,0};
 std::vector<u_int8_t> gripperPosition = {0,0,0};
 
-struct sphericalWrist {
+struct SphericalWrist {
     float J4;
-    float pitch;
-    float valkyrie;
+    float Pitch;
+    float Valkyrie;
 };
 
-sphericalWrist wrist;
+SphericalWrist Wrist;
 
 JointState XState;
 JointState J2State;
@@ -146,6 +151,7 @@ void telemetry();
 void feedWatchdog();
 void updateJoint(RoveJoint &joint, JointState &state, uint8_t button);
 void updateMotor(RoveMotor &motor, int16_t decipercent, uint8_t button);
+void HoldCurrentPosition();
 
 
-#endif
+#endif /*ARMBOARD_SOFTWARE_2025_H*/

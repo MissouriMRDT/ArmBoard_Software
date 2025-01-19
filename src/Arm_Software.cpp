@@ -2,8 +2,6 @@
 
 // 2025 REV 1
 
-#include <cmath>
-
 void setup() {
     Serial.begin(115200);
     Serial.println("Setup");
@@ -288,8 +286,9 @@ void loop() {
 
     direction = digitalRead(DIR_SW);
 
-
     buttonInput = (digitalRead(B_ENC_3) << 3) | (digitalRead(B_ENC_2) << 2) | (digitalRead(B_ENC_1) << 1) | (digitalRead(B_ENC_0) << 0);
+
+    //Set motor angles read from encoders
 
     // Motor Outputs
 
@@ -308,7 +307,9 @@ void loop() {
     else setSolenoid(extendSolenoid);
 
     // Laser
-    setLaser(laserOn);
+    if (buttonInput == BTN_LAS) setLaser(true);
+    else setLaser(laserOn);
+    
 }
 
 void estop() {
@@ -344,6 +345,7 @@ void setLaser(bool on){
     digitalWrite(LAS,on? HIGH:LOW);
 }
 void updateJoint(RoveJoint &joint, JointState &state, uint8_t button) {
+    state.qMotor = joint.Encoder()->readDegrees();
 
     if(buttonInput == button){
         // override soft limits; drive joint @ default decipercent, turn soft limits back on
@@ -352,6 +354,7 @@ void updateJoint(RoveJoint &joint, JointState &state, uint8_t button) {
         joint.drive((direction? -900 : 900));
         joint.overrideReverseSoftLimit(false);
         joint.overrideForwardSoftLimit(false);
+        state.qTarget = state.qMotor; //update targets based on real motor
     } else if (Xcalibrating){
         // calibrates x joint only
         if(joint.atReverseHardLimit()) {
@@ -366,13 +369,14 @@ void updateJoint(RoveJoint &joint, JointState &state, uint8_t button) {
             joint.overrideForwardSoftLimit(true);
             joint.drive(-900);
         }
+        state.qTarget = state.qMotor; //update targets based on real motor
     } else if (currentMode == CLOSED_LOOP || currentMode == INVERSE_KINEMATICS) {
         if (Xcalibrated) joint.setAngle(state.qTarget);
         else joint.drive(0);
     } else {
         joint.drive(state.decipercent);
+        state.qTarget = state.qMotor; //update targets based on real motor
     }
-
 }
 void updateMotor(RoveMotor &motor, int16_t decipercent, uint8_t button) {
     if (buttonInput == button) motor.drive((direction ? -900 : 900));
@@ -381,4 +385,11 @@ void updateMotor(RoveMotor &motor, int16_t decipercent, uint8_t button) {
 void feedWatchdog() {
     watchdogStatus = 0;
     Watchdog.begin(estop, WATCHDOG_TIMEOUT);
+}
+
+void HoldCurrentPosition() {
+    //Calculate wristPos
+    //Calculate gripperPos
+    //Calculate target angles???
+    //Calculate spherical wrist pos
 }
