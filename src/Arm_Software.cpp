@@ -2,7 +2,8 @@
 
 // 2025 REV 1
 
-void setup() {
+void setup() 
+{
     Serial.begin(115200);
     Serial.println("Setup");
 
@@ -19,9 +20,9 @@ void setup() {
     IOX1.begin();
 
     IOX2.begin(~uint8_t((1 << IOX2_FWD_1) | (1 << IOX2_RVS_1) | (1 << IOX2_FWD_2) | 
-                (1 << IOX2_RVS_2) | (1 << IOX2_FWD_3) | (1 << IOX2_RVS_3)));
+                        (1 << IOX2_RVS_2) | (1 << IOX2_FWD_3) | (1 << IOX2_RVS_3)));
 
-    IOX3.begin(~((1 << IOX3_FWD_4) | (1 << IOX3_RVS_4) | (1 << IOX3_FWD_5) | 
+    IOX3.begin(~uint8_t((1 << IOX3_FWD_4) | (1 << IOX3_RVS_4) | (1 << IOX3_FWD_5) | 
                  (1 << IOX3_RVS_5) | (1 << IOX3_FWD_6) | (1 << IOX3_RVS_6) | 
                  (1 << IOX3_FWD_7) | (1 << IOX3_RVS_7)));
 
@@ -34,40 +35,46 @@ void setup() {
     Roll.attachEncoder(&RollEncoder);
 
     // Attach hard limits
-    X.attachHardLimits(&LS1, &LS2);
-    J2.attachHardLimits(&LS3, &LS4);
-    J3.attachHardLimits(&LS5, &LS6);
-    J4.attachHardLimits(&LS7, &LS8);
-    Pitch.attachHardLimits(&LS9, &LS10);
+    X.attachHardLimits(&LS6, &LS9);
+    J2.attachHardLimits(&LS10, &LS2);
+    J3.attachHardLimits(&LS3, &LS8);
+    J4.attachHardLimits(&LS5, &LS7);
+    Pitch.attachHardLimits(&LS4, &LS4); //CHANGE which is fwd/rvs based on direction
 
     // Attach encoder inverts
-    X.Encoder()->configInvert(false);
-    J2.Encoder()->configInvert(false);
-    J3.Encoder()->configInvert(false);
+    X.Encoder()->configInvert(false); //CHANGE
+    J2.Encoder()->configInvert(true);
+    J3.Encoder()->configInvert(true);
     J4.Encoder()->configInvert(false);
     Pitch.Encoder()->configInvert(false);
-    Roll.Encoder()->configInvert(false); //change later based on testing
+    Roll.Encoder()->configInvert(false);
+
+    // Attach encoder offsets
+    J2.Encoder()->configOffset(-121.82); //Subtract 360 if greater than 180
+    J3.Encoder()->configOffset(346.03); //Subtract 360 if greater than 180
+    J4.Encoder()->configOffset(280.46);
+    Pitch.Encoder()->configOffset(262.44);
 
     // Configrue encoder interupts
-    XEncoder.begin([]{XEncoder.handleInterrupt();});
     J2Encoder.begin([]{J2Encoder.handleInterrupt();});
     J3Encoder.begin([]{J3Encoder.handleInterrupt();});
     J4Encoder.begin([]{J4Encoder.handleInterrupt();});
     PitchEncoder.begin([]{PitchEncoder.handleInterrupt();});
+    XEncoder.begin([]{XEncoder.handleInterrupt();});
     RollEncoder.begin([]{RollEncoder.handleInterrupt();});
 
     // Config motor inverts, reference joint
-    X.Motor()->configInvert(false);
+    X.Motor()->configInvert(false); //CHANGE
     J2.Motor()->configInvert(false);
     J3.Motor()->configInvert(false);
     J4.Motor()->configInvert(false);
     Pitch.Motor()->configInvert(false);
-    Roll.Motor()->configInvert(false);
+    Roll.Motor()->configInvert(true);
     Gripper.configInvert(false);
     Spare.configInvert(false);
 
     // Config motor output limits, reference joint
-    X.Motor()->configMaxOutputs(-1000, 1000);
+    X.Motor()->configMaxOutputs(-1000, 1000); //CHANGE
     J2.Motor()->configMaxOutputs(-1000, 1000);
     J3.Motor()->configMaxOutputs(-1000, 1000);
     J4.Motor()->configMaxOutputs(-1000, 1000);
@@ -76,7 +83,7 @@ void setup() {
     Spare.configMaxOutputs(-1000, 1000);
 
     // Config motor deadbands, reference joint
-    X.Motor()->configMinOutputs(-200, 200);    // change the values when testing
+    X.Motor()->configMinOutputs(-200, 200);    //CHANGE: PID deci% floor depending on arm config to prevent arm falling because of gravity
     J2.Motor()->configMinOutputs(-100, 170);  
     J3.Motor()->configMinOutputs(-100, 220);  
     J4.Motor()->configMinOutputs(-220, 190);  
@@ -85,8 +92,8 @@ void setup() {
     Gripper.configMinOutputs(-50, 50);       
     Spare.configMinOutputs(-50, 50);  
 
-    // Config motor ramp rates, reference joint , change value when testing
-    X.Motor()->configRampRate(10000);
+    // Config motor ramp rates, reference joint
+    X.Motor()->configRampRate(10000); //CHANGE
     J2.Motor()->configRampRate(10000);
     J3.Motor()->configRampRate(10000);
     J4.Motor()->configRampRate(10000);
@@ -140,7 +147,11 @@ void setup() {
     Telemetry.begin(telemetry, TELEMETRY_PERIOD);
 }
 
-void loop() {
+void loop() 
+{
+    // currentMode = CLOSED_LOOP;
+    // RollState.qTarget = 90;
+
     uint32_t timestamp = millis();
 
     // Parse RoveComm packets
@@ -286,19 +297,23 @@ void loop() {
     direction = digitalRead(DIR_SW);
     buttonInput = (digitalRead(B_ENC_3) << 3) | (digitalRead(B_ENC_2) << 2) | (digitalRead(B_ENC_1) << 1) | (digitalRead(B_ENC_0) << 0);
 
-    //Set motor angles read from encoders
-
     // Motor Outputs
+    Serial.println();
+    Serial.printf("X: ");
+    updateJoint(X,XState,BTN_X);
+    Serial.printf("J2: ");
+    updateJoint(J2,J2State,BTN_J2);
+    Serial.printf("J3: ");
+    updateJoint(J3,J3State,BTN_J3);
+    Serial.printf("J4: ");
+    updateJoint(J4,J4State,BTN_J4);
+    Serial.printf("Pt: ");
+    updateJoint(Pitch,PitchState,BTN_PITCH);
+    Serial.printf("Rl: ");
+    updateJoint(Roll,RollState,BTN_ROLL);
 
-    updateJoint(X,XState,BTN_1);
-    updateJoint(J2,J2State,BTN_2);
-    updateJoint(J3,J3State,BTN_3);
-    updateJoint(J4,J4State,BTN_4);
-    updateJoint(Pitch,PitchState,BTN_5);
-    updateJoint(Roll,RollState,BTN_6);
-
-    updateMotor(Gripper,GripperDecipercent,BTN_7);
-    updateMotor(Spare,SpareDecipercent,BTN_8);
+    updateMotor(Gripper,GripperDecipercent,BTN_GRIPPER);
+    updateMotor(Spare,SpareDecipercent,BTN_SPARE);
 
     // Solenoid
     if (buttonInput == BTN_SOL) setSolenoid(true);
@@ -310,7 +325,8 @@ void loop() {
     
 }
 
-void estop() {
+void estop() 
+{
     if (!watchdogOverride)
     {
         watchdogStatus = 1;
@@ -324,7 +340,9 @@ void estop() {
         GripperDecipercent = 0;
     }
 }
-void telemetry() {
+
+void telemetry() 
+{
     RoveComm.write(RC_ARMBOARD_WATCHDOGSTATUS_DATA_ID, watchdogStatus);
     
     if(!telemetryOverride) {
@@ -334,16 +352,25 @@ void telemetry() {
     RoveComm.write(RC_ARMBOARD_POSITIONS_DATA_ID, RC_ARMBOARD_POSITIONS_DATA_COUNT, positions);
     }
 
-    // also write which limit switches triggered?
+    //Add telemetry data as needed
 }
-void setSolenoid(bool extend){
+
+void setSolenoid(bool extend)
+{
     digitalWrite(Solenoid, extend? HIGH:LOW);
 }
-void setLaser(bool on){
+
+void setLaser(bool on)
+{
     digitalWrite(LAS,on? HIGH:LOW);
 }
-void updateJoint(RoveJoint &joint, JointState &state, uint8_t button) {
+
+void updateJoint(RoveJoint &joint, JointState &state, uint8_t button) 
+{
     state.qMotor = joint.Encoder()->readDegrees();
+
+    Serial.print(state.qMotor, 2);
+    Serial.printf("    ");
 
     if(buttonInput == button){
         // override soft limits; drive joint @ default decipercent, turn soft limits back on
@@ -352,42 +379,44 @@ void updateJoint(RoveJoint &joint, JointState &state, uint8_t button) {
         joint.drive((direction? -900 : 900));
         joint.overrideReverseSoftLimit(false);
         joint.overrideForwardSoftLimit(false);
-        state.qTarget = state.qMotor; //update targets based on real motor
     } else if (Xcalibrating){
         // calibrates x joint only
-        if(joint.atReverseHardLimit()) {
-            joint.overrideReverseSoftLimit(false);
-            joint.overrideForwardSoftLimit(false);
-            joint.drive(0);
-            joint.Encoder()->setDegrees(0);
+        if(X.atReverseHardLimit()) {
+            X.overrideReverseSoftLimit(false);
+            X.overrideForwardSoftLimit(false);
+            X.drive(0);
+            X.Encoder()->setDegrees(0);
             Xcalibrating = false;
             Xcalibrated = true;
         } else {
-            joint.overrideReverseSoftLimit(true);
-            joint.overrideForwardSoftLimit(true);
-            joint.drive(-900);
+            X.overrideReverseSoftLimit(true);
+            X.overrideForwardSoftLimit(true);
+            X.drive(-900);
         }
-        state.qTarget = state.qMotor; //update targets based on real motor
     } else if (currentMode == CLOSED_LOOP || currentMode == INVERSE_KINEMATICS) {
         if (Xcalibrated) joint.setAngle(state.qTarget);
-        else joint.drive(0);
+        else joint.drive(0); //When drive(0), drive at floor deci% instead, make func, or just add to base deci%
     } else {
         joint.drive(state.decipercent);
-        state.qTarget = state.qMotor; //update targets based on real motor
     }
 }
-void updateMotor(RoveMotor &motor, int16_t decipercent, uint8_t button) {
+
+void updateMotor(RoveMotor &motor, int16_t decipercent, uint8_t button) 
+{
     if (buttonInput == button) motor.drive((direction ? -900 : 900));
     else motor.drive(decipercent);
 }
-void feedWatchdog() {
+
+void feedWatchdog() 
+{
     watchdogStatus = 0;
     Watchdog.begin(estop, WATCHDOG_TIMEOUT);
 }
 
-void HoldCurrentPosition() {
+void HoldCurrentPosition() 
+{
     //Calculate wristPos
     //Calculate gripperPos
-    //Calculate target angles???
+    //Calculate target angles
     //Calculate spherical wrist pos
 }

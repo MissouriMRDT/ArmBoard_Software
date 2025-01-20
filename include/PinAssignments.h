@@ -85,16 +85,16 @@
 #define B_ENC_2         34
 #define B_ENC_3         35
 
-#define BTN_1           10 // mag wire
-#define BTN_2           1
-#define BTN_3           2
-#define BTN_4           3
-#define BTN_5           4
-#define BTN_6           5
-#define BTN_7           6
-#define BTN_8           7
-#define BTN_LAS         8
-#define BTN_SOL         9
+#define BTN_X           10 // mag wire
+#define BTN_J2           1
+#define BTN_J3           2
+#define BTN_J4           3
+#define BTN_PITCH        7
+#define BTN_ROLL         6
+#define BTN_GRIPPER      4
+#define BTN_SPARE        5
+#define BTN_LAS          8
+#define BTN_SOL          9
 
 // Can Transceiver, ask Adam again if this is how we assign pin for CAN rx and tx
 #define CANRX           0
