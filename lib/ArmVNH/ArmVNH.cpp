@@ -64,8 +64,9 @@ void ArmVNH::drive(int16_t decipercent) const {
         m_iox->write(m_forwardPin, LOW);
         m_iox->write(m_reversePin, HIGH);
     } else {
-        m_iox->write(m_forwardPin, LOW);
-        m_iox->write(m_reversePin, LOW);
+        m_iox->write(m_forwardPin, HIGH);
+        m_iox->write(m_reversePin, HIGH);
+        return;
     }
 
     analogWrite(m_pwmPin, pwm);

@@ -49,7 +49,7 @@ ArmVNH  XMotor       (M3_PWM, IOX2_FWD_3, IOX2_RVS_3, &IOX2);
 RoveVNH J2Motor      (M8_PWM, M8_FWD,     M8_RVS); //Through Teensy
 ArmVNH  J3Motor      (M6_PWM, IOX3_FWD_6, IOX3_RVS_6, &IOX3);
 ArmVNH  J4Motor      (M1_PWM, IOX2_FWD_1, IOX2_RVS_1, &IOX2);
-ArmVNH  PitchMotor   (M5_PWM, IOX3_FWD_5, IOX3_RVS_5, &IOX3);
+ArmVNH  PitchMotor   (M5_PWM, IOX3_FWD_5, IOX3_RVS_5, M5_CS, &IOX3);
 ArmVNH  RollMotor    (M7_PWM, IOX3_FWD_7, IOX3_RVS_7, &IOX3);
 ArmVNH  GripperMotor (M2_PWM, IOX2_FWD_2, IOX2_RVS_2, &IOX2);
 ArmVNH  SpareMotor   (M4_PWM, IOX3_FWD_4, IOX3_RVS_4, &IOX3);
@@ -76,12 +76,12 @@ RoveJoint Roll  (&RollMotor);
 #define Spare   (SpareMotor)
 
 // PID Controllers
-RovePIDController X_PID     (0, 0, 0); //CHANGE
-RovePIDController J2_PID    (0, 0, 0);
-RovePIDController J3_PID    (0, 0, 0);
-RovePIDController J4_PID    (0, 0, 0);
-RovePIDController Pitch_PID (0, 0, 0);
-RovePIDController Roll_PID  (0, 0, 0);
+RovePIDController X_PID     (100, 0, 0);
+RovePIDController J2_PID    (100, 0, 50);
+RovePIDController J3_PID    (100, 0, 50);
+RovePIDController J4_PID    (50, 0.2, 70);
+RovePIDController Pitch_PID (50, 0.2, 10);
+RovePIDController Roll_PID  (50, 0, 1000);
 
 // Control variables
 int16_t GripperDecipercent = 0;
@@ -111,16 +111,17 @@ controlMode currentMode = OPEN_LOOP;
 #define J3_REV_LIM      -116.8
 #define J3_FWD_LIM      90
 
-#define J4_REV_LIM      -260
-#define J4_FWD_LIM      90
+#define J4_REV_LIM      290
+#define J4_FWD_LIM      250
 
-#define PITCH_REV_LIM   10
-#define PITCH_FWD_LIM   350
+#define PITCH_REV_LIM   110
+#define PITCH_FWD_LIM   70
 
 struct JointState {
     float qMotor = 0; //in degrees
     float qTarget = 0; //in degrees
     int16_t decipercent = 0;
+    controlMode currentMode = OPEN_LOOP;
 };
 
 bool Xcalibrating = false;

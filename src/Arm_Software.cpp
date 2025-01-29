@@ -35,25 +35,28 @@ void setup()
     Roll.attachEncoder(&RollEncoder);
 
     // Attach hard limits
-    X.attachHardLimits(&LS6, &LS9);
-    J2.attachHardLimits(&LS10, &LS2);
-    J3.attachHardLimits(&LS3, &LS8);
-    J4.attachHardLimits(&LS5, &LS7);
-    Pitch.attachHardLimits(&LS4, &LS4); //CHANGE which is fwd/rvs based on direction
+    X.attachHardLimits(&LS9, &LS6);
+    J2.attachHardLimits(&LS2, &LS10);
+    J3.attachHardLimits(&LS8, &LS3);
+    J4.attachHardLimits(&LS7, &LS5);
+    Pitch.attachHardLimits(&LS4, &LS4);
 
     // Attach encoder inverts
-    X.Encoder()->configInvert(false); //CHANGE
+    X.Encoder()->configInvert(false);
     J2.Encoder()->configInvert(true);
     J3.Encoder()->configInvert(true);
     J4.Encoder()->configInvert(false);
     Pitch.Encoder()->configInvert(false);
     Roll.Encoder()->configInvert(false);
 
+    J2.Encoder()->configNegativeDegrees(true);
+    J3.Encoder()->configNegativeDegrees(true);
+
     // Attach encoder offsets
-    J2.Encoder()->configOffset(-121.82); //Subtract 360 if greater than 180
-    J3.Encoder()->configOffset(346.03); //Subtract 360 if greater than 180
-    J4.Encoder()->configOffset(280.46);
-    Pitch.Encoder()->configOffset(262.44);
+    J2.Encoder()->configOffset(-121.82);
+    J3.Encoder()->configOffset(346.03);
+    J4.Encoder()->configOffset(280.46); //280.46
+    Pitch.Encoder()->configOffset(98.44); //262.44 //82.44
 
     // Configrue encoder interupts
     J2Encoder.begin([]{J2Encoder.handleInterrupt();});
@@ -64,17 +67,17 @@ void setup()
     RollEncoder.begin([]{RollEncoder.handleInterrupt();});
 
     // Config motor inverts, reference joint
-    X.Motor()->configInvert(false); //CHANGE
-    J2.Motor()->configInvert(false);
-    J3.Motor()->configInvert(false);
-    J4.Motor()->configInvert(false);
-    Pitch.Motor()->configInvert(false);
-    Roll.Motor()->configInvert(true);
-    Gripper.configInvert(false);
-    Spare.configInvert(false);
+    X.Motor()->configInvert(true);
+    J2.Motor()->configInvert(true);
+    J3.Motor()->configInvert(true);
+    J4.Motor()->configInvert(true);
+    Pitch.Motor()->configInvert(true);
+    Roll.Motor()->configInvert(false);
+    Gripper.configInvert(true);
+    Spare.configInvert(true);
 
     // Config motor output limits, reference joint
-    X.Motor()->configMaxOutputs(-1000, 1000); //CHANGE
+    X.Motor()->configMaxOutputs(-1000, 1000);
     J2.Motor()->configMaxOutputs(-1000, 1000);
     J3.Motor()->configMaxOutputs(-1000, 1000);
     J4.Motor()->configMaxOutputs(-1000, 1000);
@@ -88,12 +91,12 @@ void setup()
     J3.Motor()->configMinOutputs(-100, 220);  
     J4.Motor()->configMinOutputs(-220, 190);  
     Pitch.Motor()->configMinOutputs(-50, 50); 
-    Roll.Motor()->configMinOutputs(-200, 200);
+    Roll.Motor()->configMinOutputs(-50, 50);
     Gripper.configMinOutputs(-50, 50);       
     Spare.configMinOutputs(-50, 50);  
 
     // Config motor ramp rates, reference joint
-    X.Motor()->configRampRate(10000); //CHANGE
+    X.Motor()->configRampRate(10000);
     J2.Motor()->configRampRate(10000);
     J3.Motor()->configRampRate(10000);
     J4.Motor()->configRampRate(10000);
@@ -119,16 +122,21 @@ void setup()
 
     // J4 soft limits
     J4.configSoftLimits(J4_REV_LIM, J4_FWD_LIM);
-    J4.overrideReverseSoftLimit(true);
-    J4.overrideForwardSoftLimit(true);
+    J4.overrideReverseSoftLimit(false);
+    J4.overrideForwardSoftLimit(false);
 
     // Pitch soft limits
     Pitch.configSoftLimits(PITCH_REV_LIM, PITCH_FWD_LIM);
-    Pitch.overrideReverseSoftLimit(true);
-    Pitch.overrideForwardSoftLimit(true);
+    Pitch.overrideReverseSoftLimit(false);
+    Pitch.overrideForwardSoftLimit(false);
 
-    // Roll
     Roll_PID.enableContinuousFeedback(0, 360);
+    J4_PID.configOutputLimits(-1023, 1023); //PID can calculate a too high deci%, limit deci% to +/-1023
+    J4_PID.configIZone(10);
+    Pitch_PID.configIZone(10);
+
+    J4_PID.configOffset(-90);
+    Pitch_PID.configOffset(90);
 
     // Attach PID
     X.attachPID(&X_PID);
@@ -145,12 +153,22 @@ void setup()
 
     feedWatchdog();
     Telemetry.begin(telemetry, TELEMETRY_PERIOD);
+
+    // J4.overrideForwardHardLimit(true);
+    // J4.overrideReverseHardLimit(true);
 }
 
 void loop() 
-{
-    // currentMode = CLOSED_LOOP;
-    // RollState.qTarget = 90;
+{   
+    Xcalibrated = true;
+
+    if ((PitchState.qMotor < 270) && (PitchState.qMotor > 90)) {
+        Pitch.overrideForwardHardLimit(true);
+        Pitch.overrideReverseHardLimit(false);
+    } else {
+        Pitch.overrideForwardHardLimit(false);
+        Pitch.overrideReverseHardLimit(true);
+    }
 
     uint32_t timestamp = millis();
 
@@ -169,7 +187,6 @@ void loop()
         PitchState.decipercent = data[4];
         RollState.decipercent = data[5];
 
-        currentMode = OPEN_LOOP;
         feedWatchdog();
         break;
     }
@@ -183,7 +200,6 @@ void loop()
         PitchState.qTarget = data[4];
         RollState.qTarget = data[5];
 
-        currentMode = CLOSED_LOOP;
         feedWatchdog();
         break;
     }
@@ -197,7 +213,6 @@ void loop()
         PitchState.qTarget += data[4];
         RollState.qTarget += data[5];
         
-        currentMode = CLOSED_LOOP;
         feedWatchdog();
         break;
     }
@@ -299,18 +314,18 @@ void loop()
 
     // Motor Outputs
     Serial.println();
-    Serial.printf("X: ");
-    updateJoint(X,XState,BTN_X);
-    Serial.printf("J2: ");
-    updateJoint(J2,J2State,BTN_J2);
-    Serial.printf("J3: ");
-    updateJoint(J3,J3State,BTN_J3);
+    // Serial.printf("X: ");
+    // updateJoint(X,XState,BTN_X);
+    // Serial.printf("J2: ");
+    // updateJoint(J2,J2State,BTN_J2);
+    // Serial.printf("J3: ");
+    // updateJoint(J3,J3State,BTN_J3);
     Serial.printf("J4: ");
     updateJoint(J4,J4State,BTN_J4);
     Serial.printf("Pt: ");
     updateJoint(Pitch,PitchState,BTN_PITCH);
-    Serial.printf("Rl: ");
-    updateJoint(Roll,RollState,BTN_ROLL);
+    // Serial.printf("Rl: ");
+    // updateJoint(Roll,RollState,BTN_ROLL);
 
     updateMotor(Gripper,GripperDecipercent,BTN_GRIPPER);
     updateMotor(Spare,SpareDecipercent,BTN_SPARE);
@@ -369,18 +384,19 @@ void updateJoint(RoveJoint &joint, JointState &state, uint8_t button)
 {
     state.qMotor = joint.Encoder()->readDegrees();
 
+    bool isMoving = true;
+
+    Serial.printf(" m: ");
     Serial.print(state.qMotor, 2);
-    Serial.printf("    ");
+    Serial.printf(" t: ");
+    Serial.print(state.qTarget, 2);
+    Serial.printf(" d: ");
+    Serial.print(state.decipercent, 10);
+    
 
     if(buttonInput == button){
-        // override soft limits; drive joint @ default decipercent, turn soft limits back on
-        joint.overrideReverseSoftLimit(true);
-        joint.overrideForwardSoftLimit(true);
-        joint.drive((direction? -900 : 900));
-        joint.overrideReverseSoftLimit(false);
-        joint.overrideForwardSoftLimit(false);
+        joint.drive((direction? 900 : -900));
     } else if (Xcalibrating){
-        // calibrates x joint only
         if(X.atReverseHardLimit()) {
             X.overrideReverseSoftLimit(false);
             X.overrideForwardSoftLimit(false);
@@ -393,12 +409,30 @@ void updateJoint(RoveJoint &joint, JointState &state, uint8_t button)
             X.overrideForwardSoftLimit(true);
             X.drive(-900);
         }
-    } else if (currentMode == CLOSED_LOOP || currentMode == INVERSE_KINEMATICS) {
-        if (Xcalibrated) joint.setAngle(state.qTarget);
-        else joint.drive(0); //When drive(0), drive at floor deci% instead, make func, or just add to base deci%
-    } else {
+    } else if ((currentMode == CLOSED_LOOP || currentMode == INVERSE_KINEMATICS) && Xcalibrated) {
+        joint.setAngle(state.qTarget);
+    } else if (state.decipercent != 0) {
         joint.drive(state.decipercent);
+    } else {
+        isMoving = false;
     }
+
+    if (!overrideGravityFighting) {
+        if (isMoving) {
+            state.hasMoved = true;
+            state.qHold = state.qMotor;
+        } else {
+            if (state.hasMoved) {
+                joint.setAngle(state.qHold);
+                // Serial.printf(" h: ");
+                // Serial.print(state.qHold, 2);
+            }
+        }
+    }
+    // Serial.printf(" SL: ");
+    // Serial.print(joint.atForwardSoftLimit(), 1);
+    // Serial.print(joint.atReverseSoftLimit(), 1);
+    // Serial.printf("    ");
 }
 
 void updateMotor(RoveMotor &motor, int16_t decipercent, uint8_t button) 
@@ -419,4 +453,11 @@ void HoldCurrentPosition()
     //Calculate gripperPos
     //Calculate target angles
     //Calculate spherical wrist pos
+
+    XState.qTarget = XState.qMotor;
+    J2State.qTarget = J2State.qMotor;
+    J3State.qTarget = J3State.qMotor;
+    J4State.qTarget = J4State.qMotor;
+    PitchState.qTarget = PitchState.qMotor;
+    RollState.qTarget = RollState.qMotor;
 }
