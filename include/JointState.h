@@ -40,6 +40,7 @@ class JointState
         void setTarget(float qTarget) { m_qTarget = qTarget; }
         void incrementTarget(float qTarget) { m_qTarget += qTarget; }
         void overrideClosedLoop(bool overrideClosedLoop) { m_overrideClosedLoop = overrideClosedLoop; }
+        void setControlMode(ControlMode mode) { m_currentMode = mode; }
 
 };
 

@@ -110,6 +110,7 @@ void setSolenoid(bool extend);
 
 bool Xcalibrating = false;
 bool Xcalibrated = true;
+bool firstLoop = true;
 
 Vector wristPosition = {0,0,0};
 Vector gripperPosition = {0,0,0};
@@ -137,5 +138,10 @@ void updateMotor(RoveMotor &motor, int16_t decipercent, uint8_t button);
 void setSolenoid(bool extend);
 void setLaser(bool on);
 void CalibrateX();
+void InitiallySyncTargets();
+void SetPitchLimitSwitchSide();
+void UpdateFromRoveComm();
+void UpdateFromIOX();
+void UpdateArm();
 
 #endif /*ARMBOARD_SOFTWARE_2025_H*/
