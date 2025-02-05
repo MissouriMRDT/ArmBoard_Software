@@ -1,10 +1,10 @@
 #include "Arm_Software.h"
 
 // 2025 REV 1
-// IP: 192.168.2.107
 
 void setup() 
 {
+
     Serial.begin(115200);
     Serial.println("Setup");
 
@@ -13,16 +13,13 @@ void setup()
     pinMode(B_ENC_1, INPUT);
     pinMode(B_ENC_2, INPUT);
     pinMode(B_ENC_3, INPUT);
-
     pinMode(DIR_SW, INPUT); // pullup or pulldown needed?
 
     // IO expander pins
     IOX_TWI.begin();
     IOX1.begin();
-
     IOX2.begin(~uint8_t((1 << IOX2_FWD_1) | (1 << IOX2_RVS_1) | (1 << IOX2_FWD_2) | 
                         (1 << IOX2_RVS_2) | (1 << IOX2_FWD_3) | (1 << IOX2_RVS_3)));
-
     IOX3.begin(~uint8_t((1 << IOX3_FWD_4) | (1 << IOX3_RVS_4) | (1 << IOX3_FWD_5) | 
                  (1 << IOX3_RVS_5) | (1 << IOX3_FWD_6) | (1 << IOX3_RVS_6) | 
                  (1 << IOX3_FWD_7) | (1 << IOX3_RVS_7)));
@@ -188,6 +185,7 @@ void estop()
         PitchState.setDecipercent(0);
         RollState.setDecipercent(0);
         GripperDecipercent = 0;
+        SpareDecipercent = 0;
     }
 }
 
@@ -551,6 +549,8 @@ void UpdateFromRoveComm()
         case RC_ARMBOARD_ESTOP_DATA_ID: //Add
         {
             estop();
+
+            feedWatchdog();
             break;
         }
     }
@@ -559,7 +559,7 @@ void UpdateFromRoveComm()
 
 void UpdateFromIOX()
 {
-    
+
     uint32_t timestamp = millis();
 
     if (timestamp - lastIOX_timestamp > IOX_UPDATE_PERIOD) {

@@ -2,6 +2,7 @@
 #define ARMBOARD_SOFTWARE_2025_H
 
 //2025 REV 1
+// IP: 192.168.2.107
 
 #include "PinAssignments.h"
 
@@ -16,10 +17,11 @@
 #include <RoveVNH.h>
 #include <ArmVNH.h>
 #include <cmath>
+#include <PCF8574.h>
+#include <cstdint>
+
 #include "RoveMatrix.h"
 #include "JointState.h"
-#include <PCF8574.h> // Arduino library: download through IDE library manager
-#include <cstdint>
 
 // RoveComm
 RoveCommEthernet RoveComm;
@@ -54,7 +56,7 @@ ArmVNH  SpareMotor   (M4_PWM, IOX3_FWD_4, IOX3_RVS_4, &IOX3);
 
 // Encoders
 RoveQuadEncoder XEncoder    (ENC_1A, ENC_1B, 14103720.0 / 360.0); // CHANGE Quad encoder broken?
-RoveQuadEncoder RollEncoder (ENC_2A, ENC_2B, 14103720.0 / 360.0); // CHANGE
+RoveQuadEncoder RollEncoder (ENC_2A, ENC_2B, 14103720.0 / 360.0);
 MA3PWM          J2Encoder   (ABS_4);
 MA3PWM          J3Encoder   (ABS_3);
 MA3PWM          J4Encoder   (ABS_1);
@@ -62,35 +64,6 @@ MA3PWM          PitchEncoder(ABS_2);
 
 // Limit Switches
 SoftwareSwitch LS1, LS2, LS3, LS4, LS5, LS6, LS7, LS8, LS9, LS10;
-
-// Joints
-RoveJoint XJoint     (&XMotor);
-RoveJoint J2Joint    (&J2Motor);
-RoveJoint J3Joint    (&J3Motor);
-RoveJoint J4Joint    (&J4Motor);
-RoveJoint PitchJoint (&PitchMotor);
-RoveJoint RollJoint  (&RollMotor);
-#define Gripper      (GripperMotor)
-#define Spare        (SpareMotor)
-
-// PID Controllers
-RovePIDController XPID     (100, 0, 0);
-RovePIDController J2PID    (100, 0, 50);
-RovePIDController J3PID    (100, 0, 50);
-RovePIDController J4PID    (50, 0.2, 70);
-RovePIDController PitchPID (50, 0.2, 10);
-RovePIDController RollPID  (50, 0, 1000);
-
-// Control variables
-int16_t GripperDecipercent = 0;
-int16_t SpareDecipercent = 0; 
-
-bool direction = false;
-uint8_t buttonInput = 0;
-bool laserOn = false;
-void setLaser(bool on);
-bool extendSolenoid = false;
-void setSolenoid(bool extend);
 
 //Limits
 #define X_REV_LIM       0
@@ -108,6 +81,43 @@ void setSolenoid(bool extend);
 #define PITCH_REV_LIM   110
 #define PITCH_FWD_LIM   70
 
+// PID Controllers
+RovePIDController XPID     (100, 0, 0);
+RovePIDController J2PID    (100, 0, 50);
+RovePIDController J3PID    (100, 0, 50);
+RovePIDController J4PID    (50, 0.2, 70);
+RovePIDController PitchPID (50, 0.2, 10);
+RovePIDController RollPID  (50, 0, 1000);
+
+// Joints
+RoveJoint XJoint     (&XMotor);
+RoveJoint J2Joint    (&J2Motor);
+RoveJoint J3Joint    (&J3Motor);
+RoveJoint J4Joint    (&J4Motor);
+RoveJoint PitchJoint (&PitchMotor);
+RoveJoint RollJoint  (&RollMotor);
+#define Gripper      (GripperMotor)
+#define Spare        (SpareMotor)
+
+// States
+JointState XState       (&XJoint,       X_FWD_LIM,      X_REV_LIM,      BTN_X);
+JointState J2State      (&J2Joint,      J2_FWD_LIM,     J2_REV_LIM,     BTN_J2);
+JointState J3State      (&J3Joint,      J3_FWD_LIM,     J3_REV_LIM,     BTN_J3);
+JointState J4State      (&J4Joint,      J4_FWD_LIM,     J4_REV_LIM,     BTN_J4);
+JointState PitchState   (&PitchJoint,   PITCH_FWD_LIM,  PITCH_REV_LIM,  BTN_PITCH);
+JointState RollState    (&RollJoint,    0,              0,              BTN_ROLL);
+
+// Control variables
+int16_t GripperDecipercent = 0;
+int16_t SpareDecipercent = 0; 
+
+bool direction = false;
+uint8_t buttonInput = 0;
+bool laserOn = false;
+void setLaser(bool on);
+bool extendSolenoid = false;
+void setSolenoid(bool extend);
+
 bool Xcalibrating = false;
 bool Xcalibrated = true;
 bool firstLoop = true;
@@ -122,13 +132,6 @@ struct SphericalWrist {
 };
 
 SphericalWrist Wrist;
-
-JointState XState       (&XJoint,       X_FWD_LIM,      X_REV_LIM,      BTN_X);
-JointState J2State      (&J2Joint,      J2_FWD_LIM,     J2_REV_LIM,     BTN_J2);
-JointState J3State      (&J3Joint,      J3_FWD_LIM,     J3_REV_LIM,     BTN_J3);
-JointState J4State      (&J4Joint,      J4_FWD_LIM,     J4_REV_LIM,     BTN_J4);
-JointState PitchState   (&PitchJoint,   PITCH_FWD_LIM,  PITCH_REV_LIM,  BTN_PITCH);
-JointState RollState    (&RollJoint,    0,              0,              BTN_ROLL);
 
 // Methods
 void estop();

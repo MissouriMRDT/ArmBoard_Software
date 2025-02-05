@@ -9,10 +9,8 @@
 #define DIR_SW          33
 
 // Motor Pins
-
 #define M8_FWD          11
 #define M8_RVS          12
-
 
 #define M1_PWM          2
 #define M2_PWM          3
@@ -68,7 +66,6 @@
 #define IOX3_FWD_7      6
 #define IOX3_RVS_7      7
 
-
 // Encoders
 #define ENC_1A          41
 #define ENC_1B          40
@@ -96,10 +93,9 @@
 #define BTN_LAS          8
 #define BTN_SOL          9
 
-// Can Transceiver, ask Adam again if this is how we assign pin for CAN rx and tx
+// Can Transceiver
 #define CANRX           0
 #define CANTX           1
-
 
 
 #endif
