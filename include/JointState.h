@@ -2,6 +2,7 @@
 #define JOINTSTATE_H
 
 #include <cstdint>
+#include <cmath>
 #include <RoveJoint.h>
 
 class JointState 
@@ -15,7 +16,9 @@ class JointState
 
         float m_forwardLimit;
         float m_reverseLimit;
-        const uint8_t m_assignedButton;
+        uint8_t m_assignedButton;
+
+        bool m_boundTo360 = false;
 
         float m_qMotor = 0; //in degrees
         float m_qTarget = 0; //in degrees
@@ -40,7 +43,16 @@ class JointState
         void setTarget(float qTarget) { m_qTarget = qTarget; }
         void incrementTarget(float qTarget) { m_qTarget += qTarget; }
         void overrideClosedLoop(bool overrideClosedLoop) { m_overrideClosedLoop = overrideClosedLoop; }
-        void setControlMode(ControlMode mode) { m_currentMode = mode; }
+        void setControlMode(uint8_t mode) { m_currentMode = mode; }
+        void setBoundTo360(bool enable) { m_boundTo360 = enable; }
+
+        float getMotorAngle() { return m_qMotor; }
+        float getTargetAngle() { return m_qTarget; }
+        uint8_t getControlMode() { return (uint8_t)m_currentMode; }
+
+        bool isInSafeZone(float degrees) const ;
+        float distanceBetweenAngles(float fromAngle, float toAngle) const ;
+        float bound360Degrees(float degrees) const;
 
 };
 

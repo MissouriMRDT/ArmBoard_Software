@@ -144,6 +144,10 @@ void setup()
     PitchJoint.attachPID(&PitchPID);
     RollJoint.attachPID(&RollPID);
 
+    J4State.setBoundTo360(true);
+    PitchState.setBoundTo360(true);
+    RollState.setBoundTo360(true);
+
     // RoveComm
     Serial.println("RoveComm Initializing...");
     RoveComm.begin(RC_ARMBOARD_IPADDRESS);
@@ -156,7 +160,7 @@ void setup()
 
 void loop() 
 {   
-
+    feedWatchdog(); //REMOVE
     InitiallySyncTargets();
     SetPitchLimitSwitchSide();
     UpdateFromRoveComm();
@@ -191,14 +195,14 @@ void estop()
 
 void telemetry() 
 {
-    RoveComm.write(RC_ARMBOARD_WATCHDOGSTATUS_DATA_ID, watchdogStatus);
+    // RoveComm.write(RC_ARMBOARD_WATCHDOGSTATUS_DATA_ID, watchdogStatus);
     
-    if(!telemetryOverride) {
-    float positions[6] = {XJoint.Encoder()->readDegrees(), J2Joint.Encoder()->readDegrees(), J3Joint.Encoder()->readDegrees(), J4Joint.Encoder()->readDegrees(), 
-                          PitchJoint.Encoder()->readDegrees(), RollJoint.Encoder()->readDegrees()};
+    // if(!telemetryOverride) {
+    // float positions[6] = {XJoint.Encoder()->readDegrees(), J2Joint.Encoder()->readDegrees(), J3Joint.Encoder()->readDegrees(), J4Joint.Encoder()->readDegrees(), 
+    //                       PitchJoint.Encoder()->readDegrees(), RollJoint.Encoder()->readDegrees()};
 
-    RoveComm.write(RC_ARMBOARD_POSITIONS_DATA_ID, RC_ARMBOARD_POSITIONS_DATA_COUNT, positions);
-    }
+    // RoveComm.write(RC_ARMBOARD_POSITIONS_DATA_ID, RC_ARMBOARD_POSITIONS_DATA_COUNT, positions);
+    // }
 
     //Add telemetry data as needed
 }
@@ -239,7 +243,7 @@ void CalibrateX()
 
 }
 
-void InitiallySyncTargets()
+void InitiallySyncTargets() //Also calc xyz
 {
 
     if (firstLoop)
@@ -258,7 +262,7 @@ void InitiallySyncTargets()
 void SetPitchLimitSwitchSide()
 {
 
-    if ((PitchState.qMotor < 270) && (PitchState.qMotor > 90)) {
+    if ((PitchState.getMotorAngle() < 270) && (PitchState.getMotorAngle() > 90)) {
         PitchJoint.overrideForwardHardLimit(true);
         PitchJoint.overrideReverseHardLimit(false);
     } else {
@@ -267,12 +271,11 @@ void SetPitchLimitSwitchSide()
     }
 
 }
-
 void UpdateFromRoveComm()
 {
-
     static RoveCommPacket packet;
     RoveComm.read(packet);
+
     switch (packet.dataId) {
         case RC_ARMBOARD_SETINDIVIDUALSPEEDS_DATA_ID: //done
         {
@@ -285,12 +288,12 @@ void UpdateFromRoveComm()
             PitchState.setDecipercent(data[4]);
             RollState.setDecipercent(data[5]);
 
-            XState.setControlMode(OPEN_LOOP);
-            J2State.setControlMode(OPEN_LOOP);
-            J3State.setControlMode(OPEN_LOOP);
-            J4State.setControlMode(OPEN_LOOP);
-            PitchState.setControlMode(OPEN_LOOP);
-            RollState.setControlMode(OPEN_LOOP);
+            XState.setControlMode(0);
+            J2State.setControlMode(0);
+            J3State.setControlMode(0);
+            J4State.setControlMode(0);
+            PitchState.setControlMode(0);
+            RollState.setControlMode(0);
 
             feedWatchdog();
             break;
@@ -302,27 +305,27 @@ void UpdateFromRoveComm()
             {
                 case X:
                     XState.setDecipercent(data[1]);
-                    XState.setControlMode(OPEN_LOOP);
+                    XState.setControlMode(0);
                     break;
                 case J2:
                     J2State.setDecipercent(data[1]);
-                    J2State.setControlMode(OPEN_LOOP);
+                    J2State.setControlMode(0);
                     break;
                 case J3:
                     J3State.setDecipercent(data[1]);
-                    J3State.setControlMode(OPEN_LOOP);
+                    J3State.setControlMode(0);
                     break;
                 case J4:
                     J4State.setDecipercent(data[1]);
-                    J4State.setControlMode(OPEN_LOOP);
+                    J4State.setControlMode(0);
                     break;
                 case PITCH:
                     PitchState.setDecipercent(data[1]);
-                    PitchState.setControlMode(OPEN_LOOP);
+                    PitchState.setControlMode(0);
                     break;
                 case ROLL:
                     RollState.setDecipercent(data[1]);
-                    RollState.setControlMode(OPEN_LOOP);
+                    RollState.setControlMode(0);
                     break;
             }
 
@@ -339,12 +342,12 @@ void UpdateFromRoveComm()
             PitchState.setTarget(data[4]);
             RollState.setTarget(data[5]);
 
-            XState.setControlMode(CLOSED_LOOP);
-            J2State.setControlMode(CLOSED_LOOP);
-            J3State.setControlMode(CLOSED_LOOP);
-            J4State.setControlMode(CLOSED_LOOP);
-            PitchState.setControlMode(CLOSED_LOOP);
-            RollState.setControlMode(CLOSED_LOOP);
+            XState.setControlMode(1);
+            J2State.setControlMode(1);
+            J3State.setControlMode(1);
+            J4State.setControlMode(1);
+            PitchState.setControlMode(1);
+            RollState.setControlMode(1);
             
             feedWatchdog();
             break;
@@ -353,31 +356,36 @@ void UpdateFromRoveComm()
         {
             float *data = (float*) packet.data;
 
-            switch (data[0])
+            Serial.println("Packet got");
+
+            switch (uint8_t(data[0]))
             {
                 case X:
                     XState.setTarget(data[1]);
-                    XState.setControlMode(CLOSED_LOOP);
+                    XState.setControlMode(1);
                     break;
                 case J2:
                     J2State.setTarget(data[1]);
-                    J2State.setControlMode(CLOSED_LOOP);
+                    J2State.setControlMode(1);
                     break;
                 case J3:
                     J3State.setTarget(data[1]);
-                    J3State.setControlMode(CLOSED_LOOP);
+                    J3State.setControlMode(1);
+                    Serial.println(data[1]);
                     break;
                 case J4:
                     J4State.setTarget(data[1]);
-                    J4State.setControlMode(CLOSED_LOOP);
+                    J4State.setControlMode(1);
+                    Serial.println(data[1]);
                     break;
                 case PITCH:
                     PitchState.setTarget(data[1]);
-                    PitchState.setControlMode(CLOSED_LOOP);
+                    PitchState.setControlMode(1);
+                    Serial.println(data[1]);
                     break;
                 case ROLL:
                     RollState.setTarget(data[1]);
-                    RollState.setControlMode(CLOSED_LOOP);
+                    RollState.setControlMode(1);
                     break;
             }
 
@@ -395,12 +403,12 @@ void UpdateFromRoveComm()
             PitchState.incrementTarget(data[4]);
             RollState.incrementTarget(data[5]);
 
-            XState.setControlMode(CLOSED_LOOP);
-            J2State.setControlMode(CLOSED_LOOP);
-            J3State.setControlMode(CLOSED_LOOP);
-            J4State.setControlMode(CLOSED_LOOP);
-            PitchState.setControlMode(CLOSED_LOOP);
-            RollState.setControlMode(CLOSED_LOOP);
+            XState.setControlMode(1);
+            J2State.setControlMode(1);
+            J3State.setControlMode(1);
+            J4State.setControlMode(1);
+            PitchState.setControlMode(1);
+            RollState.setControlMode(1);
             
             feedWatchdog();
             break;
@@ -408,31 +416,31 @@ void UpdateFromRoveComm()
         case RC_ARMBOARD_INCREMENTJOINTTARGETANGLE_DATA_ID:
         {
             float *data = (float*) packet.data;
-            switch (data[0])
+            switch (uint8_t(data[0]))
             {
                 case X:
                     XState.incrementTarget(data[1]);
-                    XState.setControlMode(CLOSED_LOOP);
+                    XState.setControlMode(1);
                     break;
                 case J2:
                     J2State.incrementTarget(data[1]);
-                    J2State.setControlMode(CLOSED_LOOP);
+                    J2State.setControlMode(1);
                     break;
                 case J3:
                     J3State.incrementTarget(data[1]);
-                    J3State.setControlMode(CLOSED_LOOP);
+                    J3State.setControlMode(1);
                     break;
                 case J4:
                     J4State.incrementTarget(data[1]);
-                    J4State.setControlMode(CLOSED_LOOP);
+                    J4State.setControlMode(1);
                     break;
                 case PITCH:
                     PitchState.incrementTarget(data[1]);
-                    PitchState.setControlMode(CLOSED_LOOP);
+                    PitchState.setControlMode(1);
                     break;
                 case ROLL:
                     RollState.incrementTarget(data[1]);
-                    RollState.setControlMode(CLOSED_LOOP);
+                    RollState.setControlMode(1);
                     break;
             }
 
@@ -506,14 +514,14 @@ void UpdateFromRoveComm()
         }
         case RC_ARMBOARD_CLOSEDLOOPOVERRIDE_DATA_ID:
         {
-            uint8_t data = *((uint8_t*) packet.data);
+            uint8_t *data = ((uint8_t*) packet.data);
 
-            XState.overrideClosedLoop(data[0]);
-            J2State.overrideClosedLoop(data[1]);
-            J3State.overrideClosedLoop(data[2]);
-            J4State.overrideClosedLoop(data[3]);
-            PitchState.overrideClosedLoop(data[4]);
-            RollState.overrideClosedLoop(data[5]);
+            XState.overrideClosedLoop((bool)data[0]);
+            J2State.overrideClosedLoop((bool)data[1]);
+            J3State.overrideClosedLoop((bool)data[2]);
+            J4State.overrideClosedLoop((bool)data[3]);
+            PitchState.overrideClosedLoop((bool)data[4]);
+            RollState.overrideClosedLoop((bool)data[5]);
 
             feedWatchdog();
             break;
@@ -546,7 +554,7 @@ void UpdateFromRoveComm()
             feedWatchdog();
             break;
         }
-        case RC_ARMBOARD_ESTOP_DATA_ID: //Add
+        case RC_ARMBOARD_ESTOP_DATA_ID:
         {
             estop();
 
@@ -591,7 +599,7 @@ void UpdateArm()
     buttonInput = (digitalRead(B_ENC_3) << 3) | (digitalRead(B_ENC_2) << 2) | (digitalRead(B_ENC_1) << 1) | (digitalRead(B_ENC_0) << 0);
 
     // Motor Outputs
-    Serial.println();
+    // Serial.println();
 
     if (Xcalibrating) CalibrateX();
     else XState.updateJoint(buttonInput, direction);
