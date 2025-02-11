@@ -65,7 +65,7 @@ void setup()
     RollEncoder.begin([]{RollEncoder.handleInterrupt();});
 
     // Config motor inverts, reference joint
-    XJoint.Motor()->configInvert(true);
+    XJoint.Motor()->configInvert(false);
     J2Joint.Motor()->configInvert(true);
     J3Joint.Motor()->configInvert(true);
     J4Joint.Motor()->configInvert(true);
@@ -148,6 +148,10 @@ void setup()
     PitchState.setBoundTo360(true);
     RollState.setBoundTo360(true);
 
+    XState.overrideClosedLoop(true); //DELETE
+    XJoint.overrideForwardSoftLimit(true);
+    XJoint.overrideReverseSoftLimit(true);
+
     // RoveComm
     Serial.println("RoveComm Initializing...");
     RoveComm.begin(RC_ARMBOARD_IPADDRESS);
@@ -166,6 +170,8 @@ void loop()
     UpdateFromRoveComm();
     UpdateFromIOX();
     UpdateArm();
+
+    Serial.println(XState.getMotorAngle());
     
 }
 
@@ -234,6 +240,7 @@ void CalibrateX()
         Xcalibrating = false;
         Xcalibrated = true;
         Serial.printf("X Calibrated!");
+        XState.overrideClosedLoop(false);
     } else {
         XJoint.overrideReverseSoftLimit(true);
         XJoint.overrideForwardSoftLimit(true);
@@ -599,7 +606,8 @@ void UpdateArm()
     buttonInput = (digitalRead(B_ENC_3) << 3) | (digitalRead(B_ENC_2) << 2) | (digitalRead(B_ENC_1) << 1) | (digitalRead(B_ENC_0) << 0);
 
     // Motor Outputs
-    // Serial.println();
+    Serial.println(XState.getMotorAngle());
+    if (!Xcalibrated) XState.overrideClosedLoop(true);
 
     if (Xcalibrating) CalibrateX();
     else XState.updateJoint(buttonInput, direction);

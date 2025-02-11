@@ -55,7 +55,7 @@ ArmVNH  GripperMotor (M2_PWM, IOX2_FWD_2, IOX2_RVS_2, &IOX2);
 ArmVNH  SpareMotor   (M4_PWM, IOX3_FWD_4, IOX3_RVS_4, &IOX3);
 
 // Encoders
-RoveQuadEncoder XEncoder    (ENC_1A, ENC_1B, 14103720.0 / 360.0); // CHANGE Quad encoder broken?
+RoveQuadEncoder XEncoder    (ENC_1A, ENC_1B, (1000000.0 * 37.66) / 12.6);
 RoveQuadEncoder RollEncoder (ENC_2A, ENC_2B, 14103720.0 / 360.0);
 MA3PWM          J2Encoder   (ABS_4);
 MA3PWM          J3Encoder   (ABS_3);
@@ -119,7 +119,7 @@ bool extendSolenoid = false;
 void setSolenoid(bool extend);
 
 bool Xcalibrating = false;
-bool Xcalibrated = true;
+bool Xcalibrated = false;
 bool firstLoop = true;
 
 Vector wristPosition = {0,0,0};
