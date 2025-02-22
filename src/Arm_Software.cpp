@@ -204,13 +204,36 @@ void telemetry()
     
     if(!telemetryOverride) {
 
-        float positions[6] = {XJoint.Encoder()->readDegrees(), J2Joint.Encoder()->readDegrees(), J3Joint.Encoder()->readDegrees(), J4Joint.Encoder()->readDegrees(), 
-                            PitchJoint.Encoder()->readDegrees(), RollJoint.Encoder()->readDegrees()};
+        float positions[6] = {
+            XJoint.Encoder()->readDegrees(),
+            J2Joint.Encoder()->readDegrees(),
+            J3Joint.Encoder()->readDegrees(),
+            J4Joint.Encoder()->readDegrees(),
+            PitchJoint.Encoder()->readDegrees(),
+            RollJoint.Encoder()->readDegrees()
+        };
         RoveComm.write(RC_ARMBOARD_POSITIONS_DATA_ID, RC_ARMBOARD_POSITIONS_DATA_COUNT, positions);
 
-        float coords[6] = {CartesianCoords.x, CartesianCoords.y, CartesianCoords.z, J4Joint.Encoder()->readDegrees(), PitchJoint.Encoder()->readDegrees()};
+        float coords[6] = {
+            CartesianCoords.x,
+            CartesianCoords.y,
+            CartesianCoords.z,
+            J4Joint.Encoder()->readDegrees(),
+            PitchJoint.Encoder()->readDegrees()
+        };
         RoveComm.write(RC_ARMBOARD_COORDINATES_DATA_ID, RC_ARMBOARD_COORDINATES_DATA_COUNT, coords);
     
+        uint16_t limitsTriggered = 0;
+        if (XJoint.atForwardHardLimit()) limitsTriggered |= (1 << 0);
+        if (XJoint.atReverseHardLimit()) limitsTriggered |= (1 << 1);
+        if (J2Joint.atForwardHardLimit()) limitsTriggered |= (1 << 2);
+        if (J2Joint.atReverseHardLimit()) limitsTriggered |= (1 << 3);
+        if (J3Joint.atForwardHardLimit()) limitsTriggered |= (1 << 4);
+        if (J3Joint.atReverseHardLimit()) limitsTriggered |= (1 << 5);
+        if (J4Joint.atForwardHardLimit()) limitsTriggered |= (1 << 6);
+        if (J4Joint.atReverseHardLimit()) limitsTriggered |= (1 << 8);
+        if (PitchJoint.atForwardHardLimit()) limitsTriggered |= (1 << 9);
+        RoveComm.write(RC_ARMBOARD_LIMITSWITCHTRIGGERED_DATA_ID, limitsTriggered);
     }
 
     //Add telemetry data as needed
@@ -556,14 +579,14 @@ void UpdateFromRoveComm()
         }
         case RC_ARMBOARD_CLOSEDLOOPOVERRIDE_DATA_ID:
         {
-            uint8_t *data = ((uint8_t*) packet.data);
+            uint8_t data = *((uint8_t*) packet.data);
 
-            XState.overrideClosedLoop((bool)data[0]);
-            J2State.overrideClosedLoop((bool)data[1]);
-            J3State.overrideClosedLoop((bool)data[2]);
-            J4State.overrideClosedLoop((bool)data[3]);
-            PitchState.overrideClosedLoop((bool)data[4]);
-            RollState.overrideClosedLoop((bool)data[5]);
+            XState.overrideClosedLoop(data & (1 << 0));
+            J2State.overrideClosedLoop(data & (1 << 1));
+            J3State.overrideClosedLoop(data & (1 << 2));
+            J4State.overrideClosedLoop(data & (1 << 3));
+            PitchState.overrideClosedLoop(data & (1 << 4));
+            RollState.overrideClosedLoop(data & (1 << 5));
 
             feedWatchdog();
             break;
