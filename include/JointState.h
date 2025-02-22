@@ -41,14 +41,19 @@ class JointState
         void updateJoint(uint8_t buttonInput, bool direction);
         void setDecipercent(int16_t decipercent) { m_decipercent = decipercent; } 
         void setTarget(float qTarget) { m_qTarget = qTarget; }
+        void setMotor() { m_qMotor = m_joint->Encoder()->readDegrees(); }
         void incrementTarget(float qTarget) { m_qTarget += qTarget; }
         void overrideClosedLoop(bool overrideClosedLoop) { m_overrideClosedLoop = overrideClosedLoop; }
         void setControlMode(uint8_t mode) { m_currentMode = mode; }
         void setBoundTo360(bool enable) { m_boundTo360 = enable; }
+        void setReverseLimit(float angle) { m_reverseLimit = angle; }
+        void setForwardLimit(float angle) { m_forwardLimit = angle; }
 
         float getMotorAngle() { return m_qMotor; }
         float getTargetAngle() { return m_qTarget; }
         uint8_t getControlMode() { return (uint8_t)m_currentMode; }
+        float getForwardLimit() { return m_forwardLimit; }
+        float getReverseLimit() { return m_reverseLimit; }
 
         bool isInSafeZone(float degrees) const ;
         float distanceBetweenAngles(float fromAngle, float toAngle) const ;

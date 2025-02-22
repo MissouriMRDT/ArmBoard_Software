@@ -73,6 +73,7 @@ SoftwareSwitch LS1, LS2, LS3, LS4, LS5, LS6, LS7, LS8, LS9, LS10;
 #define J2_FWD_LIM      164
 
 #define J3_REV_LIM      -116.8
+#define J3_MID_LIM      15
 #define J3_FWD_LIM      90
 
 #define J4_REV_LIM      290
@@ -81,8 +82,31 @@ SoftwareSwitch LS1, LS2, LS3, LS4, LS5, LS6, LS7, LS8, LS9, LS10;
 #define PITCH_REV_LIM   110
 #define PITCH_FWD_LIM   70
 
+#define RAD2DEG (180.0f / M_PI)
+#define DEG2RAD (M_PI / 180.0f)
+
+#define J2_LENGTH           18
+#define J3_LENGTH           18.5
+#define WRIST_RAD           2.887499685
+#define SHOULDER_LENGTH     7.328739921
+#define VALK_LENGTH         6.24943834646
+
+#define INTOPIXELS 12.7
+#define PIXELSTOIN (1/12.7)
+
+Vector CartesianCoords = {0,0,0};
+Vector GripperPosition = {0,0,0};
+
+struct SphericalWrist {
+    float J4;
+    float Pitch;
+    float Valkyrie;
+};
+
+SphericalWrist WristControl;
+
 // PID Controllers
-RovePIDController XPID     (100, 0, 0);
+RovePIDController XPID     (20000, 0, 0);
 RovePIDController J2PID    (100, 0, 50);
 RovePIDController J3PID    (100, 0, 50);
 RovePIDController J4PID    (50, 0.2, 70);
@@ -121,17 +145,7 @@ void setSolenoid(bool extend);
 bool Xcalibrating = false;
 bool Xcalibrated = false;
 bool firstLoop = true;
-
-Vector wristPosition = {0,0,0};
-Vector gripperPosition = {0,0,0};
-
-struct SphericalWrist {
-    float J4;
-    float Pitch;
-    float Valkyrie;
-};
-
-SphericalWrist Wrist;
+bool underMode = false;
 
 // Methods
 void estop();
@@ -142,9 +156,14 @@ void setSolenoid(bool extend);
 void setLaser(bool on);
 void CalibrateX();
 void InitiallySyncTargets();
-void SetPitchLimitSwitchSide();
 void UpdateFromRoveComm();
 void UpdateFromIOX();
 void UpdateArm();
+
+void CalculateInverseKinematics();
+void UpdateLimits();
+void HoldCurrentPosition();
+
+
 
 #endif /*ARMBOARD_SOFTWARE_2025_H*/
