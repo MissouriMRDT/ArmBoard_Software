@@ -33,11 +33,11 @@ void setup()
     RollJoint.attachEncoder(&RollEncoder);
 
     // Attach hard limits
-    XJoint.attachHardLimits(&LS9, &LS6);
-    J2Joint.attachHardLimits(&LS2, &LS10);
-    J3Joint.attachHardLimits(&LS8, &LS3);
-    J4Joint.attachHardLimits(&LS7, &LS5);
-    PitchJoint.attachHardLimits(&LS4, &LS4);
+    XJoint.attachHardLimits(&LS3, &LS4);
+    J2Joint.attachHardLimits(&LS10, &LS9);
+    J3Joint.attachHardLimits(&LS8, &LS7);
+    J4Joint.attachHardLimits(&LS6, &LS5);
+    PitchJoint.attachHardLimits(&LS2, &LS2);
 
     // Attach encoder inverts
     XJoint.Encoder()->configInvert(false);
@@ -148,7 +148,6 @@ void setup()
     PitchState.setBoundTo360(true);
     RollState.setBoundTo360(true);
 
-    XState.overrideClosedLoop(true); //DELETE
     XJoint.overrideForwardSoftLimit(true);
     XJoint.overrideReverseSoftLimit(true);
 
