@@ -45,14 +45,14 @@ uint32_t lastIOX_timestamp = 0;
 #define IOX_UPDATE_PERIOD   50
 
 // Motor
-ArmVNH  XMotor       (M8_PWM, M8_FWD,     M8_RVS); //Through Teensy
-RoveVNH J2Motor      (M1_PWM, IOX2_FWD_1, IOX2_RVS_1, &IOX2);
-ArmVNH  J3Motor      (M4_PWM, IOX3_FWD_4, IOX3_RVS_4, &IOX3);
-ArmVNH  J4Motor      (M3_PWM, IOX2_FWD_3, IOX2_RVS_3, &IOX2);  
-ArmVNH  PitchMotor   (M7_PWM, IOX3_FWD_7, IOX3_RVS_7, &IOX3);
-ArmVNH  RollMotor    (M5_PWM, IOX3_FWD_5, IOX3_RVS_5, &IOX3);
-ArmVNH  GripperMotor (M2_PWM, IOX2_FWD_2, IOX2_RVS_2, &IOX2);
-ArmVNH  SpareMotor   (M6_PWM, IOX3_FWD_6, IOX3_RVS_6, &IOX3);
+RoveVNH  XMotor       (M8_PWM, M8_FWD,     M8_RVS); //Through Teensy
+ArmVNH   J2Motor      (M1_PWM, IOX2_FWD_1, IOX2_RVS_1, &IOX2);
+ArmVNH   J3Motor      (M4_PWM, IOX3_FWD_4, IOX3_RVS_4, &IOX3);
+ArmVNH   J4Motor      (M3_PWM, IOX2_FWD_3, IOX2_RVS_3, &IOX2);  
+ArmVNH   PitchMotor   (M7_PWM, IOX3_FWD_7, IOX3_RVS_7, &IOX3);
+ArmVNH   RollMotor    (M5_PWM, IOX3_FWD_5, IOX3_RVS_5, &IOX3);
+ArmVNH   GripperMotor (M2_PWM, IOX2_FWD_2, IOX2_RVS_2, &IOX2);
+ArmVNH   SpareMotor   (M6_PWM, IOX3_FWD_6, IOX3_RVS_6, &IOX3);
 
 // Encoders
 RoveQuadEncoder XEncoder    (ENC_2A, ENC_2B, (1000000.0 * 37.66) / 12.6);
