@@ -51,10 +51,10 @@ void setup()
     J3Joint.Encoder()->configNegativeDegrees(true);
 
     // Attach encoder offsets
-    J2Joint.Encoder()->configOffset(54.76);
-    J3Joint.Encoder()->configOffset(346.03);
-    J4Joint.Encoder()->configOffset(280.46); //280.46
-    PitchJoint.Encoder()->configOffset(98.44); //262.44 //82.44
+    J2Joint.Encoder()->configOffset(-177.89); //125.94
+    J3Joint.Encoder()->configOffset(45.53); //346.03
+    J4Joint.Encoder()->configOffset(265.46); //280.46
+    PitchJoint.Encoder()->configOffset(52.44); //98.44
 
     // Configrue encoder interupts
     J2Encoder.begin([]{J2Encoder.handleInterrupt();});
@@ -689,8 +689,8 @@ void UpdateArm()
     updateMotor(Gripper,GripperDecipercent,BTN_GRIPPER);
     updateMotor(Spare,SpareDecipercent,BTN_SPARE);
 
-    Serial.println();
-    Serial.print(XState.getMotorAngle());
+    // Serial.println();
+    // Serial.print(J2State.getMotorAngle());
 
     // Solenoid
     if (buttonInput == BTN_SOL) setSolenoid(true);

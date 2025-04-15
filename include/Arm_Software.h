@@ -58,9 +58,9 @@ ArmVNH   SpareMotor   (M6_PWM, IOX3_FWD_6, IOX3_RVS_6, &IOX3);
 RoveQuadEncoder XEncoder    (ENC_2A, ENC_2B, (1000000.0 * 37.66) / 12.6);
 RoveQuadEncoder RollEncoder (ENC_1A, ENC_1B, 14103720.0 / 360.0);
 MA3PWM          J2Encoder   (ABS_1);
-MA3PWM          J3Encoder   (ABS_3);
+MA3PWM          J3Encoder   (ABS_4);
 MA3PWM          J4Encoder   (ABS_2);
-MA3PWM          PitchEncoder(ABS_4);
+MA3PWM          PitchEncoder(ABS_3);
 
 // Limit Switches
 SoftwareSwitch LS1, LS2, LS3, LS4, LS5, LS6, LS7, LS8, LS9, LS10;
@@ -107,10 +107,10 @@ SphericalWrist WristControl;
 
 // PID Controllers
 RovePIDController XPID     (20000, 0, 0);
-RovePIDController J2PID    (50, 0, 150);
-RovePIDController J3PID    (100, 0, 50);
-RovePIDController J4PID    (50, 0.2, 70);
-RovePIDController PitchPID (50, 0.2, 10);
+RovePIDController J2PID    (150, 0.0001, 50);
+RovePIDController J3PID    (150, 0.0001, 50); //(100, 0, 50)
+RovePIDController J4PID    (50, 0, 800); //(50, 0.2, 70)
+RovePIDController PitchPID (50, 0, 20); //(50, 0.2, 10)
 RovePIDController RollPID  (50, 0, 1000);
 
 // Joints
