@@ -110,7 +110,7 @@ RovePIDController XPID     (20000, 0, 0);
 RovePIDController J2PID    (150, 0.0001, 50);
 RovePIDController J3PID    (150, 0.0001, 50); //(100, 0, 50)
 RovePIDController J4PID    (50, 0, 800); //(50, 0.2, 70)
-RovePIDController PitchPID (50, 0, 20); //(50, 0.2, 10)
+RovePIDController PitchPID (100, 0, 0); //(50, 0.2, 10)
 RovePIDController RollPID  (50, 0, 1000);
 
 // Joints
@@ -146,6 +146,7 @@ bool Xcalibrating = false;
 bool Xcalibrated = false;
 bool firstLoop = true;
 bool underMode = false;
+bool IKMode = false;
 
 // Methods
 void estop();
@@ -162,7 +163,7 @@ void UpdateArm();
 
 void CalculateInverseKinematics();
 void UpdateLimits();
-void HoldCurrentPosition();
+void CalculateForwardKinematics();
 
 
 

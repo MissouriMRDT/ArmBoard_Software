@@ -16,7 +16,7 @@ void JointState::updateJoint(uint8_t buttonInput, bool direction)
 
     if(buttonInput == m_assignedButton){
         m_currentMode = OPEN_LOOP;
-        m_joint->drive((direction? 900 : -900));
+        m_joint->drive((direction? 500 : -500));
     } else if ((m_currentMode == CLOSED_LOOP) && (!m_overrideClosedLoop)) { 
         m_joint->setAngle(m_qTarget);
     } else if (m_currentMode == OPEN_LOOP) {

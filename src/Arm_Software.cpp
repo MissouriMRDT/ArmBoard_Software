@@ -54,7 +54,7 @@ void setup()
     J2Joint.Encoder()->configOffset(-177.89); //125.94
     J3Joint.Encoder()->configOffset(45.53); //346.03
     J4Joint.Encoder()->configOffset(265.46); //280.46
-    PitchJoint.Encoder()->configOffset(52.44); //98.44
+    PitchJoint.Encoder()->configOffset(249.44); //98.44 197.43
 
     // Configrue encoder interupts
     J2Encoder.begin([]{J2Encoder.handleInterrupt();});
@@ -66,7 +66,7 @@ void setup()
 
     // Config motor inverts, reference joint
     XJoint.Motor()->configInvert(false);
-    J2Joint.Motor()->configInvert(true);
+    J2Joint.Motor()->configInvert(false);
     J3Joint.Motor()->configInvert(true);
     J4Joint.Motor()->configInvert(true);
     PitchJoint.Motor()->configInvert(true);
@@ -186,6 +186,15 @@ void estop()
         PitchState.overrideClosedLoop(true);
         RollState.overrideClosedLoop(true);
 
+        IKMode = false;
+
+        XState.setTarget(XState.getMotorAngle());
+        J2State.setTarget(J2State.getMotorAngle());
+        J3State.setTarget(J3State.getMotorAngle());
+        J4State.setTarget(J4State.getMotorAngle());
+        PitchState.setTarget(PitchState.getMotorAngle());
+        RollState.setTarget(RollState.getMotorAngle());
+
         XState.setDecipercent(0);
         J2State.setDecipercent(0);
         J3State.setDecipercent(0);
@@ -203,14 +212,17 @@ void telemetry()
     
     if(!telemetryOverride) {
 
-        float positions[6] = {
+        float positions[7] = {
             XJoint.Encoder()->readDegrees(),
             J2Joint.Encoder()->readDegrees(),
             J3Joint.Encoder()->readDegrees(),
             J4Joint.Encoder()->readDegrees(),
             PitchJoint.Encoder()->readDegrees(),
-            RollJoint.Encoder()->readDegrees()
+            RollJoint.Encoder()->readDegrees(),
+            (PitchJoint.Encoder()->readDegrees() * cosf(J4Joint.Encoder()->readDegrees()*DEG2RAD)) + (J2Joint.Encoder()->readDegrees() + J3Joint.Encoder()->readDegrees())
         };
+        // Serial.println();
+        // Serial.print(positions[6]);
         RoveComm.write(RC_ARMBOARD_POSITIONS_DATA_ID, RC_ARMBOARD_POSITIONS_DATA_COUNT, positions);
 
         float coords[6] = {
@@ -296,7 +308,7 @@ void InitiallySyncTargets() //Also calc xyz
         PitchState.setTarget(PitchState.getMotorAngle());
         RollState.setTarget(RollState.getMotorAngle());
 
-        HoldCurrentPosition();
+        CalculateForwardKinematics();
         
     }
     firstLoop = false;
@@ -327,7 +339,7 @@ void UpdateFromRoveComm()
             PitchState.setControlMode(0);
             RollState.setControlMode(0);
 
-            HoldCurrentPosition();
+            IKMode = false;
 
             feedWatchdog();
             break;
@@ -363,7 +375,7 @@ void UpdateFromRoveComm()
                     break;
             }
 
-            HoldCurrentPosition();
+            IKMode = false;
 
             feedWatchdog();
             break;
@@ -385,7 +397,7 @@ void UpdateFromRoveComm()
             PitchState.setControlMode(1);
             RollState.setControlMode(1);
 
-            HoldCurrentPosition();
+            IKMode = false;
             
             feedWatchdog();
             break;
@@ -422,7 +434,7 @@ void UpdateFromRoveComm()
                     break;
             }
 
-            HoldCurrentPosition();
+            IKMode = false;
 
             feedWatchdog();
             break;
@@ -445,7 +457,7 @@ void UpdateFromRoveComm()
             PitchState.setControlMode(1);
             RollState.setControlMode(1);
 
-            HoldCurrentPosition();
+            IKMode = false;
             
             feedWatchdog();
             break;
@@ -481,13 +493,19 @@ void UpdateFromRoveComm()
                     break;
             }
 
-            HoldCurrentPosition();
+            IKMode = false;
 
             feedWatchdog();
             break;
         }
         case RC_ARMBOARD_SETIKPOSITION_DATA_ID:
         {
+            if (!IKMode)
+            {
+                IKMode = true;
+                CalculateForwardKinematics();
+            }
+
             float *data = (float*) packet.data;
 
             CartesianCoords.x = data[0];
@@ -505,6 +523,11 @@ void UpdateFromRoveComm()
         }
         case RC_ARMBOARD_INCREMENTIKPOSITION_DATA_ID:
         {
+            if (!IKMode)
+            {
+                IKMode = true;
+                CalculateForwardKinematics();
+            }
 
             float *data = (float*) packet.data;
 
@@ -587,6 +610,15 @@ void UpdateFromRoveComm()
             PitchState.overrideClosedLoop(data & (1 << 4));
             RollState.overrideClosedLoop(data & (1 << 5));
 
+            IKMode = false;
+
+            XState.setTarget(XState.getMotorAngle());
+            J2State.setTarget(J2State.getMotorAngle());
+            J3State.setTarget(J3State.getMotorAngle());
+            J4State.setTarget(J4State.getMotorAngle());
+            PitchState.setTarget(PitchState.getMotorAngle());
+            RollState.setTarget(RollState.getMotorAngle());
+
             feedWatchdog();
             break;
         }
@@ -665,32 +697,19 @@ void UpdateArm()
     buttonInput = (digitalRead(B_ENC_3) << 3) | (digitalRead(B_ENC_2) << 2) | (digitalRead(B_ENC_1) << 1) | (digitalRead(B_ENC_0) << 0);
 
     // Motor Outputs
-    // Serial.println(XState.getMotorAngle());
     if (!Xcalibrated) XState.overrideClosedLoop(true);
 
     if (Xcalibrating) CalibrateX();
     else XState.updateJoint(buttonInput, direction);
 
-    // Serial.printf("J2: ");
     J2State.updateJoint(buttonInput, direction);
-
-    // Serial.printf("J3: ");
     J3State.updateJoint(buttonInput, direction);
-
-    // Serial.printf("J4: ");
     J4State.updateJoint(buttonInput, direction);
-
-    // Serial.printf("Pt: ");
     PitchState.updateJoint(buttonInput, direction);
-
-    // Serial.printf("Rl: ");
     RollState.updateJoint(buttonInput, direction);
 
     updateMotor(Gripper,GripperDecipercent,BTN_GRIPPER);
     updateMotor(Spare,SpareDecipercent,BTN_SPARE);
-
-    // Serial.println();
-    // Serial.print(J2State.getMotorAngle());
 
     // Solenoid
     if (buttonInput == BTN_SOL) setSolenoid(true);
@@ -723,13 +742,14 @@ void CalculateInverseKinematics()
 	
 	q3 = underMode? q3 : -q3;
 
-    qP = WristControl.Pitch - (q2 + q3); 
     qV = WristControl.Valkyrie;
-    q4 = 0; //Lock J4
+    q4 = WristControl.J4;
+    qP = WristControl.Pitch - (q2 + q3) * cosf(q4*DEG2RAD);
+    qP = PitchState.bound360Degrees(qP);
 
 	// Check if calculated angle is invalid and limit movement (ADD J4)
-	if (!(XState.isInSafeZone(q1) && J2State.isInSafeZone(q2) && J3State.isInSafeZone(q3) && PitchState.isInSafeZone(qP) && Xcalibrated)) {
-        HoldCurrentPosition();
+	if (!(J2State.isInSafeZone(q2) && J3State.isInSafeZone(q3) && PitchState.isInSafeZone(qP) && Xcalibrated)) {
+        CalculateForwardKinematics();
         return;
     }
 
@@ -739,17 +759,6 @@ void CalculateInverseKinematics()
     J4State.setTarget(q4);
     PitchState.setTarget(qP);
     RollState.setTarget(qV);
-
-    // Serial.println();
-    // Serial.print("NEW IK:     ");
-    // Serial.print("X: ");
-    // Serial.print(CartesianCoords.x);
-    // Serial.print("  Y: ");
-    // Serial.print(CartesianCoords.y);
-    // Serial.print("  Z: ");
-    // Serial.print(CartesianCoords.z);
-    // Serial.print("  P: ");
-    // Serial.print(PitchState.getTargetAngle());
 
 }
 
@@ -772,7 +781,7 @@ void UpdateLimits()
 
 }
 
-void HoldCurrentPosition()
+void CalculateForwardKinematics()
 {
 
     J3State.setReverseLimit(J3_REV_LIM);
@@ -783,15 +792,7 @@ void HoldCurrentPosition()
     CartesianCoords.y *= -1;
 
     WristControl.J4 = J4State.getMotorAngle();
-    WristControl.Pitch = PitchState.getMotorAngle() + J2State.getMotorAngle() + J3State.getMotorAngle();
+    WristControl.Pitch = PitchState.getMotorAngle() + ((J2State.getMotorAngle() + J3State.getMotorAngle()) * cosf(J4State.getMotorAngle()*DEG2RAD));
     WristControl.Valkyrie = RollState.getMotorAngle();
-
-    Serial.println();
-    Serial.print("X: ");
-    Serial.print(CartesianCoords.x);
-    Serial.print("  Y: ");
-    Serial.print(CartesianCoords.y);
-    Serial.print("  Z: ");
-    Serial.print(CartesianCoords.z);
 
 }
