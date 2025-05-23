@@ -16,6 +16,8 @@ class JointState
 
         float m_forwardLimit;
         float m_reverseLimit;
+        float m_forwardHardLimit;
+        float m_reverseHardLimit;
         uint8_t m_assignedButton;
 
         bool m_boundTo360 = false;
@@ -26,6 +28,8 @@ class JointState
 
         ControlMode m_currentMode = OPEN_LOOP;
         bool m_overrideClosedLoop = false;
+        bool m_overrideForwardSoftLimit = false;
+        bool m_overrideReverseSoftLimit = false;
 
         RoveJoint *m_joint;
 
@@ -35,6 +39,8 @@ class JointState
             m_joint = joint;
             m_forwardLimit = forwardLimit;
             m_reverseLimit = reverseLimit;
+            m_forwardHardLimit = forwardLimit;
+            m_reverseHardLimit = reverseLimit;
             m_assignedButton = assignedButton;
         }
 
@@ -46,8 +52,10 @@ class JointState
         void overrideClosedLoop(bool overrideClosedLoop) { m_overrideClosedLoop = overrideClosedLoop; }
         void setControlMode(uint8_t mode) { m_currentMode = mode; }
         void setBoundTo360(bool enable) { m_boundTo360 = enable; }
-        void setReverseLimit(float angle) { m_reverseLimit = angle; }
-        void setForwardLimit(float angle) { m_forwardLimit = angle; }
+        void setReverseLimit(float angle) { if (!m_overrideReverseSoftLimit) m_reverseLimit = angle; }
+        void setForwardLimit(float angle) { if (!m_overrideForwardSoftLimit) m_forwardLimit = angle; }
+        void overrideForwardSoftLimit(bool override) { m_overrideForwardSoftLimit = override; }
+        void overrideReverseSoftLimit(bool override) { m_overrideReverseSoftLimit = override; }
 
         float getMotorAngle() { return m_qMotor; }
         float getTargetAngle() { return m_qTarget; }

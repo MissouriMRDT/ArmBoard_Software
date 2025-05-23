@@ -70,10 +70,10 @@ SoftwareSwitch LS1, LS2, LS3, LS4, LS5, LS6, LS7, LS8, LS9, LS10;
 #define X_FWD_LIM       12.6
 
 #define J2_REV_LIM      -54
-#define J2_FWD_LIM      164
+#define J2_FWD_LIM      140
 
 #define J3_REV_LIM      -116.8
-#define J3_MID_LIM      15
+#define J3_MID_LIM      30
 #define J3_FWD_LIM      90
 
 #define J4_REV_LIM      290
@@ -97,19 +97,13 @@ SoftwareSwitch LS1, LS2, LS3, LS4, LS5, LS6, LS7, LS8, LS9, LS10;
 Vector CartesianCoords = {0,0,0};
 Vector GripperPosition = {0,0,0};
 
-struct SphericalWrist {
-    float J4;
-    float Pitch;
-    float Valkyrie;
-};
-
-SphericalWrist WristControl;
+float PitchControl;
 
 // PID Controllers
 RovePIDController XPID     (20000, 0, 0);
 RovePIDController J2PID    (150, 0.0001, 50);
 RovePIDController J3PID    (150, 0.0001, 50); //(100, 0, 50)
-RovePIDController J4PID    (50, 0, 800); //(50, 0.2, 70)
+RovePIDController J4PID    (100, 0, 80); //(50, 0.2, 70)
 RovePIDController PitchPID (100, 0, 0); //(50, 0.2, 10)
 RovePIDController RollPID  (50, 0, 1000);
 

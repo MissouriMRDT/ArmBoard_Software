@@ -103,30 +103,15 @@ void setup()
     Gripper.configRampRate(10000);
     Spare.configRampRate(10000);
 
-    // XJoint soft limits
-    XJoint.configSoftLimits(X_REV_LIM, X_FWD_LIM);
-    XJoint.overrideReverseSoftLimit(true);
-    XJoint.overrideForwardSoftLimit(true);
 
-    // J2Joint soft limits
-    J2Joint.configSoftLimits(J2_REV_LIM, J2_FWD_LIM);
-    J2Joint.overrideReverseSoftLimit(true);
-    J2Joint.overrideForwardSoftLimit(true);
+    XState.overrideForwardSoftLimit(true);
+    XState.overrideReverseSoftLimit(true);
 
-    // J3Joint soft limits
-    J3Joint.configSoftLimits(J3_REV_LIM, J3_FWD_LIM);
-    J3Joint.overrideReverseSoftLimit(true);
-    J3Joint.overrideForwardSoftLimit(true);
+    PitchState.overrideReverseSoftLimit(true);
+    PitchState.overrideForwardSoftLimit(true);
 
-    // J4Joint soft limits
-    J4Joint.configSoftLimits(J4_REV_LIM, J4_FWD_LIM);
-    J4Joint.overrideReverseSoftLimit(false);
-    J4Joint.overrideForwardSoftLimit(false);
-
-    // PitchJoint soft limits
-    PitchJoint.configSoftLimits(PITCH_REV_LIM, PITCH_FWD_LIM);
-    PitchJoint.overrideReverseSoftLimit(false);
-    PitchJoint.overrideForwardSoftLimit(false);
+    RollState.overrideReverseSoftLimit(true);
+    RollState.overrideForwardSoftLimit(true);
 
     RollPID.enableContinuousFeedback(0, 360);
     J4PID.configOutputLimits(-1023, 1023); //PID can calculate a too high deci%, limit deci% to +/-1023
@@ -147,9 +132,6 @@ void setup()
     J4State.setBoundTo360(true);
     PitchState.setBoundTo360(true);
     RollState.setBoundTo360(true);
-
-    XJoint.overrideForwardSoftLimit(true);
-    XJoint.overrideReverseSoftLimit(true);
 
     // RoveComm
     Serial.println("RoveComm Initializing...");
@@ -188,21 +170,6 @@ void estop()
 
         IKMode = false;
 
-        XState.setTarget(XState.getMotorAngle());
-        J2State.setTarget(J2State.getMotorAngle());
-        J3State.setTarget(J3State.getMotorAngle());
-        J4State.setTarget(J4State.getMotorAngle());
-        PitchState.setTarget(PitchState.getMotorAngle());
-        RollState.setTarget(RollState.getMotorAngle());
-
-        XState.setDecipercent(0);
-        J2State.setDecipercent(0);
-        J3State.setDecipercent(0);
-        J4State.setDecipercent(0);
-        PitchState.setDecipercent(0);
-        RollState.setDecipercent(0);
-        GripperDecipercent = 0;
-        SpareDecipercent = 0;
     }
 }
 
@@ -270,8 +237,8 @@ void CalibrateX()
 {
 
     if(XJoint.atReverseHardLimit()) {
-        // XJoint.overrideReverseSoftLimit(false);
-        // XJoint.overrideForwardSoftLimit(false);
+        XState.overrideReverseSoftLimit(false);
+        XState.overrideForwardSoftLimit(false);
         XJoint.drive(0);
         XJoint.Encoder()->setDegrees(0.01);
         Xcalibrating = false;
@@ -280,8 +247,8 @@ void CalibrateX()
         Serial.printf("X Calibrated!");
         XState.overrideClosedLoop(false);
     } else {
-        XJoint.overrideReverseSoftLimit(true);
-        XJoint.overrideForwardSoftLimit(true);
+        XState.overrideReverseSoftLimit(true);
+        XState.overrideForwardSoftLimit(true);
         XJoint.drive(-900);
         Serial.printf("X Calibrating...");
     }
@@ -512,9 +479,9 @@ void UpdateFromRoveComm()
             CartesianCoords.y = data[1];
             CartesianCoords.z = data[2];
 
-            WristControl.J4 = data[3];
-            WristControl.Pitch = data[4];
-            WristControl.Valkyrie = data[5];
+            J4State.setTarget(data[3]);
+            PitchControl = data[4];
+            RollState.setTarget(data[5]);
 
             CalculateInverseKinematics();
             
@@ -535,9 +502,9 @@ void UpdateFromRoveComm()
             CartesianCoords.y += data[1];
             CartesianCoords.z += data[2];
 
-            WristControl.J4 += data[3];
-            WristControl.Pitch += data[4];
-            WristControl.Valkyrie += data[5];
+            J4State.incrementTarget(data[3]);
+            PitchControl += data[4];
+            RollState.incrementTarget(data[5]);
 
             CalculateInverseKinematics();
 
@@ -570,8 +537,9 @@ void UpdateFromRoveComm()
         }
         case RC_ARMBOARD_SETGRIPPERSPEED_DATA_ID: //done
         {
-            int16_t data = *((int16_t*) packet.data);
-            GripperDecipercent = data;
+            int16_t *data = (int16_t*) packet.data;
+            GripperDecipercent = data[0];
+            SpareDecipercent = data[1];
             feedWatchdog();
             break;
         }
@@ -612,13 +580,6 @@ void UpdateFromRoveComm()
 
             IKMode = false;
 
-            XState.setTarget(XState.getMotorAngle());
-            J2State.setTarget(J2State.getMotorAngle());
-            J3State.setTarget(J3State.getMotorAngle());
-            J4State.setTarget(J4State.getMotorAngle());
-            PitchState.setTarget(PitchState.getMotorAngle());
-            RollState.setTarget(RollState.getMotorAngle());
-
             feedWatchdog();
             break;
         }
@@ -627,7 +588,7 @@ void UpdateFromRoveComm()
             uint8_t data = *((uint8_t*) packet.data);
 
             if(data & (1<<1)) RollJoint.Encoder()->setDegrees(0);
-            Xcalibrating = data & (1 << 0);
+            if (J2State.getMotorAngle() < 90.0) Xcalibrating = data & (1 << 0);
 
             feedWatchdog();
             break;
@@ -636,16 +597,16 @@ void UpdateFromRoveComm()
         {
             uint16_t data = *((uint16_t*) packet.data);
 
-            XJoint.overrideForwardSoftLimit(data & (1 << 0));
-            XJoint.overrideReverseSoftLimit(data & (1 << 1));
-            J2Joint.overrideForwardSoftLimit(data & (1 << 2));
-            J2Joint.overrideReverseSoftLimit(data & (1 << 3));
-            J3Joint.overrideForwardSoftLimit(data & (1 << 4));
-            J3Joint.overrideReverseSoftLimit(data & (1 << 5));
-            J4Joint.overrideForwardSoftLimit(data & (1 << 6));
-            J4Joint.overrideReverseSoftLimit(data & (1 << 7));
-            PitchJoint.overrideForwardSoftLimit(data & (1 << 8));
-            PitchJoint.overrideReverseSoftLimit(data & (1 << 9));
+            XState.overrideForwardSoftLimit(data & (1 << 0));
+            XState.overrideReverseSoftLimit(data & (1 << 1));
+            J2State.overrideForwardSoftLimit(data & (1 << 2));
+            J2State.overrideReverseSoftLimit(data & (1 << 3));
+            J3State.overrideForwardSoftLimit(data & (1 << 4));
+            J3State.overrideReverseSoftLimit(data & (1 << 5));
+            J4State.overrideForwardSoftLimit(data & (1 << 6));
+            J4State.overrideReverseSoftLimit(data & (1 << 7));
+            PitchState.overrideForwardSoftLimit(data & (1 << 8));
+            PitchState.overrideReverseSoftLimit(data & (1 << 9));
 
             feedWatchdog();
             break;
@@ -691,19 +652,24 @@ void UpdateFromIOX()
 void UpdateArm() 
 {
 
-    underMode = J3State.getMotorAngle() > 0;
+    underMode = false; //J3State.getMotorAngle() > 0;
 
     direction = digitalRead(DIR_SW);
     buttonInput = (digitalRead(B_ENC_3) << 3) | (digitalRead(B_ENC_2) << 2) | (digitalRead(B_ENC_1) << 1) | (digitalRead(B_ENC_0) << 0);
 
+    if (Xcalibrating || buttonInput) IKMode = false;
+
     // Motor Outputs
     if (!Xcalibrated) XState.overrideClosedLoop(true);
-
     if (Xcalibrating) CalibrateX();
     else XState.updateJoint(buttonInput, direction);
 
     J2State.updateJoint(buttonInput, direction);
     J3State.updateJoint(buttonInput, direction);
+
+    Serial.println();
+    Serial.print(J3State.getTargetAngle());
+
     J4State.updateJoint(buttonInput, direction);
     PitchState.updateJoint(buttonInput, direction);
     RollState.updateJoint(buttonInput, direction);
@@ -723,15 +689,7 @@ void UpdateArm()
 
 void CalculateInverseKinematics() 
 {
-    float q1, q2, q3, q4, qP, qV;
-
-    if (underMode) {
-        J3State.setForwardLimit(J3_FWD_LIM);
-        J3State.setReverseLimit(J3_MID_LIM);
-    } else {
-        J3State.setForwardLimit(-J3_MID_LIM);
-        J3State.setReverseLimit(J3_REV_LIM);
-    }
+    float q1, q2, q3, qP;
 
 	//Calculate target angles using IK
 	q1 = CartesianCoords.x;
@@ -742,13 +700,11 @@ void CalculateInverseKinematics()
 	
 	q3 = underMode? q3 : -q3;
 
-    qV = WristControl.Valkyrie;
-    q4 = WristControl.J4;
-    qP = WristControl.Pitch - (q2 + q3) * cosf(q4*DEG2RAD);
+    qP = PitchControl - (q2 + q3) * cosf(J4State.getMotorAngle()*DEG2RAD);
     qP = PitchState.bound360Degrees(qP);
 
-	// Check if calculated angle is invalid and limit movement (ADD J4)
-	if (!(J2State.isInSafeZone(q2) && J3State.isInSafeZone(q3) && PitchState.isInSafeZone(qP) && Xcalibrated)) {
+	// Check if calculated angle is invalid and limit movement
+	if (!(XState.isInSafeZone(q1) && J2State.isInSafeZone(q2) && J3State.isInSafeZone(q3) && PitchState.isInSafeZone(qP) && Xcalibrated)) {
         CalculateForwardKinematics();
         return;
     }
@@ -756,20 +712,67 @@ void CalculateInverseKinematics()
     XState.setTarget(q1);
     J2State.setTarget(q2);
     J3State.setTarget(q3);
-    J4State.setTarget(q4);
     PitchState.setTarget(qP);
-    RollState.setTarget(qV);
 
 }
 
 void UpdateLimits()
 {
+    if (Xcalibrated)
+    {
+        //Gimbal Masts
+        if ((XState.getMotorAngle() < 2.0) && (J2State.getMotorAngle() < 92.0)  && (J2State.getMotorAngle() > 90.0)) {
+            J2State.setForwardLimit(J2State.getMotorAngle());
+            XState.setForwardLimit(X_FWD_LIM);
+            XState.setReverseLimit(X_REV_LIM);
+        } else if ((XState.getMotorAngle() > 6.0) && (J2State.getMotorAngle() < 92.0) && (J2State.getMotorAngle() > 90.0)) {
+            J2State.setForwardLimit(J2State.getMotorAngle());
+            XState.setForwardLimit(X_FWD_LIM);
+            XState.setReverseLimit(X_REV_LIM);
+        } else if ((J2State.getMotorAngle() > 90.0) && (XState.getMotorAngle() < 2.0) && (XState.getMotorAngle() > 1.8)) {
+            XState.setReverseLimit(XState.getMotorAngle());
+            J2State.setForwardLimit(J2_FWD_LIM);
+        } else if ((J2State.getMotorAngle() > 90.0) && (XState.getMotorAngle() > 6.0) && (XState.getMotorAngle() < 6.2)) {
+            XState.setForwardLimit(XState.getMotorAngle());
+            J2State.setForwardLimit(J2_FWD_LIM);
+        } else {
+            XState.setForwardLimit(X_FWD_LIM);
+            XState.setReverseLimit(X_REV_LIM);
+            J2State.setForwardLimit(J2_FWD_LIM);
+        }
 
-    XJoint.configSoftLimits(XState.getReverseLimit(), XState.getForwardLimit());
-    J2Joint.configSoftLimits(J2State.getReverseLimit(), J2State.getForwardLimit());
-    J3Joint.configSoftLimits(J3State.getReverseLimit(), J3State.getForwardLimit());
-    J4Joint.configSoftLimits(J4State.getReverseLimit(), J4State.getForwardLimit());
-    PitchJoint.configSoftLimits(PitchState.getReverseLimit(), PitchState.getForwardLimit());
+        // BUG: THESE LIMITS OVERRIDE GIMBAL MAST LIMITS, chase doesnt need these
+        //Wheels
+        // float yPos = (J2_LENGTH * sin(J2State.getMotorAngle()*DEG2RAD)) + (J3_LENGTH * sin((J3State.getMotorAngle() + J2State.getMotorAngle())*DEG2RAD));
+        // if ((yPos < -100.0) && (XState.getMotorAngle() < 2.0) && (XState.getMotorAngle() > 1.8))
+        // {
+        //     XState.setReverseLimit(XState.getMotorAngle());
+        // }
+        // else if ((yPos < -100.0) && (XState.getMotorAngle() > 6.0) && (XState.getMotorAngle() < 6.2))
+        // {
+        //     XState.setForwardLimit(XState.getMotorAngle());
+        // }
+        // else
+        // {
+        //     XState.setForwardLimit(X_FWD_LIM);
+        //     XState.setReverseLimit(X_REV_LIM);
+        // }
+
+    }
+
+    if (IKMode)
+    {
+        if (underMode) {
+            J3State.setForwardLimit(J3_FWD_LIM);
+            J3State.setReverseLimit(J3_MID_LIM);
+        } else {
+            J3State.setForwardLimit(-J3_MID_LIM);
+            J3State.setReverseLimit(J3_REV_LIM);
+        }
+    } else {
+        J3State.setForwardLimit(J3_FWD_LIM);
+        J3State.setReverseLimit(J3_REV_LIM);
+    }
 
     if ((PitchState.getMotorAngle() < 270) && (PitchState.getMotorAngle() > 90)) {
         PitchJoint.overrideForwardHardLimit(true);
@@ -784,15 +787,10 @@ void UpdateLimits()
 void CalculateForwardKinematics()
 {
 
-    J3State.setReverseLimit(J3_REV_LIM);
-    J3State.setForwardLimit(J3_FWD_LIM);
-
     CartesianCoords = {0,0,0};
 	CartesianCoords = CartesianCoords * (Translate(0, 0, J3_LENGTH) * Rotate(J3State.getMotorAngle()*DEG2RAD, 0, 0) * Translate(0, 0, J2_LENGTH) * Rotate(J2State.getMotorAngle()*DEG2RAD, 0, 0) * Translate(XState.getMotorAngle(), 0, 0));
     CartesianCoords.y *= -1;
 
-    WristControl.J4 = J4State.getMotorAngle();
-    WristControl.Pitch = PitchState.getMotorAngle() + ((J2State.getMotorAngle() + J3State.getMotorAngle()) * cosf(J4State.getMotorAngle()*DEG2RAD));
-    WristControl.Valkyrie = RollState.getMotorAngle();
+    PitchControl = PitchState.getMotorAngle() + ((J2State.getMotorAngle() + J3State.getMotorAngle()) * cosf(J4State.getMotorAngle()*DEG2RAD));
 
 }
