@@ -652,7 +652,8 @@ void UpdateFromIOX()
 void UpdateArm() 
 {
 
-    underMode = false; //J3State.getMotorAngle() > 0;
+    // underMode = false; //J3State.getMotorAngle() > 0;
+    if (J3State.getMotorAngle() >= 0) IKMode = false; // dont put it out of IK mode if pos, IK will throw out invalid solution bc of IK J3 soft limits (so remove this line)
 
     direction = digitalRead(DIR_SW);
     buttonInput = (digitalRead(B_ENC_3) << 3) | (digitalRead(B_ENC_2) << 2) | (digitalRead(B_ENC_1) << 1) | (digitalRead(B_ENC_0) << 0);
@@ -666,9 +667,6 @@ void UpdateArm()
 
     J2State.updateJoint(buttonInput, direction);
     J3State.updateJoint(buttonInput, direction);
-
-    Serial.println();
-    Serial.print(J3State.getTargetAngle());
 
     J4State.updateJoint(buttonInput, direction);
     PitchState.updateJoint(buttonInput, direction);
@@ -695,10 +693,13 @@ void CalculateInverseKinematics()
 	q1 = CartesianCoords.x;
 	q3 = RAD2DEG*acos((pow(CartesianCoords.z,2)+pow(CartesianCoords.y,2)-pow(J2_LENGTH,2)-pow(J3_LENGTH,2))/(2*J2_LENGTH*J3_LENGTH));
 
-	if (underMode) q2 = RAD2DEG*(atan2(CartesianCoords.y, CartesianCoords.z) - atan2(J3_LENGTH*sin(q3*DEG2RAD),J2_LENGTH+(J3_LENGTH*cos(q3*DEG2RAD))));
-	else q2 = RAD2DEG*(atan2(CartesianCoords.y, CartesianCoords.z) + atan2(J3_LENGTH*sin(q3*DEG2RAD),J2_LENGTH+(J3_LENGTH*cos(q3*DEG2RAD))));
+	// if (underMode) q2 = RAD2DEG*(atan2(CartesianCoords.y, CartesianCoords.z) - atan2(J3_LENGTH*sin(q3*DEG2RAD),J2_LENGTH+(J3_LENGTH*cos(q3*DEG2RAD))));
+	// else q2 = RAD2DEG*(atan2(CartesianCoords.y, CartesianCoords.z) + atan2(J3_LENGTH*sin(q3*DEG2RAD),J2_LENGTH+(J3_LENGTH*cos(q3*DEG2RAD))));
 	
-	q3 = underMode? q3 : -q3;
+    q2 = RAD2DEG*(atan2(CartesianCoords.y, CartesianCoords.z) + atan2(J3_LENGTH*sin(q3*DEG2RAD),J2_LENGTH+(J3_LENGTH*cos(q3*DEG2RAD))));
+
+	// q3 = underMode? q3 : -q3;
+	q3 = -q3;
 
     qP = PitchControl - (q2 + q3) * cosf(J4State.getMotorAngle()*DEG2RAD);
     qP = PitchState.bound360Degrees(qP);
@@ -762,13 +763,16 @@ void UpdateLimits()
 
     if (IKMode)
     {
-        if (underMode) {
-            J3State.setForwardLimit(J3_FWD_LIM);
-            J3State.setReverseLimit(J3_MID_LIM);
-        } else {
-            J3State.setForwardLimit(-J3_MID_LIM);
-            J3State.setReverseLimit(J3_REV_LIM);
-        }
+        // if (underMode) {
+        //     J3State.setForwardLimit(J3_FWD_LIM);
+        //     J3State.setReverseLimit(J3_MID_LIM);
+        // } else {
+        //     J3State.setForwardLimit(-J3_MID_LIM);
+        //     J3State.setReverseLimit(J3_REV_LIM);
+        // }
+
+        J3State.setForwardLimit(-J3_MID_LIM);
+        J3State.setReverseLimit(J3_REV_LIM);
     } else {
         J3State.setForwardLimit(J3_FWD_LIM);
         J3State.setReverseLimit(J3_REV_LIM);
