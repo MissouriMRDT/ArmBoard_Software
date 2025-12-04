@@ -1,7 +1,7 @@
 #ifndef ARMBOARD_SOFTWARE_2025_H
 #define ARMBOARD_SOFTWARE_2025_H
 
-//2025 REV 1
+//2026 DEV
 // IP: 192.168.2.107
 
 #include "PinAssignments.h"

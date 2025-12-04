@@ -1,7 +1,7 @@
 #ifndef PINASSIGNMENTS_H
 #define PINASSIGNMENTS_H
 
-//2025 REV 1
+//2026 DEV
 
 #include <Wire.h>
 
