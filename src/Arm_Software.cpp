@@ -9,129 +9,53 @@ void setup()
     Serial.println("Setup");
 
     // Button pins
-    pinMode(B_ENC_0, INPUT);
-    pinMode(B_ENC_1, INPUT);
-    pinMode(B_ENC_2, INPUT);
-    pinMode(B_ENC_3, INPUT);
-    pinMode(DIR_SW, INPUT); // pullup or pulldown needed?
+    pinMode(BTN_1, INPUT_PULLUP);
+    pinMode(BTN_2, INPUT_PULLUP);
+    pinMode(BTN_3, INPUT_PULLUP);
+    pinMode(BTN_4, INPUT_PULLUP);
+    pinMode(BTN_5, INPUT_PULLUP);
+    pinMode(BTN_6, INPUT_PULLUP);
+    pinMode(BTN_7, INPUT_PULLUP);
+    pinMode(BTN_8, INPUT_PULLUP);
+    pinMode(BTN_1_SERVO, INPUT_PULLUP);
+    pinMode(BTN_2_SERVO, INPUT_PULLUP);
+    pinMode(BTN_3_SERVO, INPUT_PULLUP);
+    pinMode(BTN_4_SERVO, INPUT_PULLUP);
+    pinMode(BTN_LASER, INPUT_PULLUP);
+    pinMode(BTN_LIN_SERVO, INPUT_PULLUP);
+    pinMode(DIR_SW, INPUT_PULLUP);
 
-    // IO expander pins
-    IOX_TWI.begin();
-    IOX1.begin();
-    IOX2.begin(~uint8_t((1 << IOX2_FWD_1) | (1 << IOX2_RVS_1) | (1 << IOX2_FWD_2) | 
-                        (1 << IOX2_RVS_2) | (1 << IOX2_FWD_3) | (1 << IOX2_RVS_3)));
-    IOX3.begin(~uint8_t((1 << IOX3_FWD_4) | (1 << IOX3_RVS_4) | (1 << IOX3_FWD_5) | 
-                 (1 << IOX3_RVS_5) | (1 << IOX3_FWD_6) | (1 << IOX3_RVS_6) | 
-                 (1 << IOX3_FWD_7) | (1 << IOX3_RVS_7)));
+    ACAN_T4_Settings settings(125000); //I think i'm missing things
 
-    // Attach encoders
-    XJoint.attachEncoder(&XEncoder);
-    J2Joint.attachEncoder(&J2Encoder);
-    J3Joint.attachEncoder(&J3Encoder);
-    J4Joint.attachEncoder(&J4Encoder);
-    PitchJoint.attachEncoder(&PitchEncoder);
-    RollJoint.attachEncoder(&RollEncoder);
+    //Set Low pass smoothing factor
+    xMotor.setLowPassSmoothingFactor(INT16_MAX);
+    J2Motor.setLowPassSmoothingFactor(INT16_MAX);
+    J3Motor.setLowPassSmoothingFactor(INT16_MAX);
+    J4Motor.setLowPassSmoothingFactor(INT16_MAX);
+    PitchMotor.setLowPassSmoothingFactor(INT16_MAX);
+    RollMotor.setLowPassSmoothingFactor(INT16_MAX);
+    GripperMotor.setLowPassSmoothingFactor(INT16_MAX);
+    SpareMotor.setLowPassSmoothingFactor(INT16_MAX);
 
-    // Attach hard limits
-    XJoint.attachHardLimits(&LS3, &LS4);
-    J2Joint.attachHardLimits(&LS10, &LS9);
-    J3Joint.attachHardLimits(&LS8, &LS7);
-    J4Joint.attachHardLimits(&LS6, &LS5);
-    PitchJoint.attachHardLimits(&LS2, &LS2);
+    //Set PID gains, Need to make gains vars or store somewhere
+    xMotor.setPID(1, 0, 0);
+    J2Motor.setPID(1, 0, 0);
+    J3Motor.setPID(1, 0, 0);
+    J4Motor.setPID(1, 0, 0);
+    PitchMotor.setPID(1, 0, 0);
+    RollMotor.setPID(1, 0, 0);
+    GripperMotor.setPID(1, 0, 0);
+    SpareMotor.setPID(1, 0, 0);
 
-    // Attach encoder inverts
-    XJoint.Encoder()->configInvert(false);
-    J2Joint.Encoder()->configInvert(true);
-    J3Joint.Encoder()->configInvert(true);
-    J4Joint.Encoder()->configInvert(false);
-    PitchJoint.Encoder()->configInvert(false);
-    RollJoint.Encoder()->configInvert(false);
-
-    J2Joint.Encoder()->configNegativeDegrees(true);
-    J3Joint.Encoder()->configNegativeDegrees(true);
-
-    // Attach encoder offsets
-    J2Joint.Encoder()->configOffset(-177.89); //125.94
-    J3Joint.Encoder()->configOffset(45.53); //346.03
-    J4Joint.Encoder()->configOffset(265.46); //280.46
-    PitchJoint.Encoder()->configOffset(249.44); //98.44 197.43
-
-    // Configrue encoder interupts
-    J2Encoder.begin([]{J2Encoder.handleInterrupt();});
-    J3Encoder.begin([]{J3Encoder.handleInterrupt();});
-    J4Encoder.begin([]{J4Encoder.handleInterrupt();});
-    PitchEncoder.begin([]{PitchEncoder.handleInterrupt();});
-    XEncoder.begin([]{XEncoder.handleInterrupt();});
-    RollEncoder.begin([]{RollEncoder.handleInterrupt();});
-
-    // Config motor inverts, reference joint
-    XJoint.Motor()->configInvert(false);
-    J2Joint.Motor()->configInvert(false);
-    J3Joint.Motor()->configInvert(true);
-    J4Joint.Motor()->configInvert(true);
-    PitchJoint.Motor()->configInvert(true);
-    RollJoint.Motor()->configInvert(false);
-    Gripper.configInvert(true);
-    Spare.configInvert(true);
-
-    // Config motor output limits, reference joint
-    XJoint.Motor()->configMaxOutputs(-1000, 1000);
-    J2Joint.Motor()->configMaxOutputs(-1000, 1000);
-    J3Joint.Motor()->configMaxOutputs(-1000, 1000);
-    J4Joint.Motor()->configMaxOutputs(-1000, 1000);
-    PitchJoint.Motor()->configMaxOutputs(-1000, 1000);
-    Gripper.configMaxOutputs(-1000, 1000);
-    Spare.configMaxOutputs(-1000, 1000);
-
-    // Config motor deadbands, reference joint
-    XJoint.Motor()->configMinOutputs(-200, 200);    //CHANGE: PID deci% floor depending on arm config to prevent arm falling because of gravity
-    J2Joint.Motor()->configMinOutputs(-100, 170);  
-    J3Joint.Motor()->configMinOutputs(-100, 220);  
-    J4Joint.Motor()->configMinOutputs(-220, 190);  
-    PitchJoint.Motor()->configMinOutputs(-50, 50); 
-    RollJoint.Motor()->configMinOutputs(-50, 50);
-    Gripper.configMinOutputs(-50, 50);       
-    Spare.configMinOutputs(-50, 50);  
-
-    // Config motor ramp rates, reference joint
-    XJoint.Motor()->configRampRate(10000);
-    J2Joint.Motor()->configRampRate(10000);
-    J3Joint.Motor()->configRampRate(10000);
-    J4Joint.Motor()->configRampRate(10000);
-    PitchJoint.Motor()->configRampRate(10000);
-    RollJoint.Motor()->configRampRate(10000);
-    Gripper.configRampRate(10000);
-    Spare.configRampRate(10000);
-
-
-    XState.overrideForwardSoftLimit(true);
-    XState.overrideReverseSoftLimit(true);
-
-    PitchState.overrideReverseSoftLimit(true);
-    PitchState.overrideForwardSoftLimit(true);
-
-    RollState.overrideReverseSoftLimit(true);
-    RollState.overrideForwardSoftLimit(true);
-
-    RollPID.enableContinuousFeedback(0, 360);
-    J4PID.configOutputLimits(-1023, 1023); //PID can calculate a too high deci%, limit deci% to +/-1023
-    J4PID.configIZone(10);
-    PitchPID.configIZone(10);
-
-    J4PID.configOffset(-90);
-    PitchPID.configOffset(90);
-
-    // Attach PID
-    XJoint.attachPID(&XPID);
-    J2Joint.attachPID(&J2PID);
-    J3Joint.attachPID(&J3PID);
-    J4Joint.attachPID(&J4PID);
-    PitchJoint.attachPID(&PitchPID);
-    RollJoint.attachPID(&RollPID);
-
-    J4State.setBoundTo360(true);
-    PitchState.setBoundTo360(true);
-    RollState.setBoundTo360(true);
+    //Set soft limits
+    xMotor.setSoftLimitPosition(INT32_MIN, INT32_MAX);
+    J2Motor.setSoftLimitPosition(INT32_MIN, INT32_MAX);
+    J3Motor.setSoftLimitPosition(INT32_MIN, INT32_MAX);
+    J4Motor.setSoftLimitPosition(INT32_MIN, INT32_MAX);
+    PitchMotor.setSoftLimitPosition(INT32_MIN, INT32_MAX);
+    RollMotor.setSoftLimitPosition(INT32_MIN, INT32_MAX);
+    GripperMotor.setSoftLimitPosition(INT32_MIN, INT32_MAX);
+    SpareMotor.setSoftLimitPosition(INT32_MIN, INT32_MAX); 
 
     // RoveComm
     Serial.println("RoveComm Initializing...");
