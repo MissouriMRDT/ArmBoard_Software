@@ -64,7 +64,6 @@ void setup()
 
     feedWatchdog();
     Telemetry.begin(telemetry, TELEMETRY_PERIOD);
-
 }
 
 void loop() 
@@ -74,7 +73,6 @@ void loop()
     InitiallySyncTargets();
     UpdateLimits();
     UpdateFromRoveComm();
-    UpdateFromIOX();
     UpdateArm();
     
 }
@@ -85,12 +83,13 @@ void estop()
     {
         watchdogStatus = 1;
 
-        XState.overrideClosedLoop(true);
-        J2State.overrideClosedLoop(true);
-        J3State.overrideClosedLoop(true);
-        J4State.overrideClosedLoop(true);
-        PitchState.overrideClosedLoop(true);
-        RollState.overrideClosedLoop(true);
+        xMotor.openLoopDrive(0, false);    //Stop and reset?
+        J2Motor.openLoopDrive(0, false);
+        J3Motor.openLoopDrive(0, false);
+        J4Motor.openLoopDrive(0, false);
+        PitchMotor.openLoopDrive(0, false);
+        RollMotor.openLoopDrive(0, false);
+        GripperMotor.openLoopDrive(0, false);
 
         IKMode = false;
 
@@ -99,6 +98,7 @@ void estop()
 
 void telemetry() 
 {
+    // :(
     // RoveComm.write(RC_ARMBOARD_WATCHDOGSTATUS_DATA_ID, watchdogStatus);
     
     if(!telemetryOverride) {
@@ -143,7 +143,7 @@ void telemetry()
 
 void setSolenoid(bool extend) { digitalWrite(Solenoid, extend? HIGH:LOW); }
 
-void setLaser(bool on) { digitalWrite(LAS,on? HIGH:LOW); }
+void setLaser(bool on) { digitalWrite(LASER,on? HIGH:LOW); }
 
 void updateMotor(RoveMotor &motor, int16_t decipercent, uint8_t button) 
 {
@@ -212,226 +212,132 @@ void UpdateFromRoveComm()
     RoveComm.read(packet);
 
     switch (packet.dataId) {
-        case RC_ARMBOARD_SETINDIVIDUALSPEEDS_DATA_ID: //done
-        {
-            // Set joint decipercent
-            int16_t *data = (int16_t *)packet.data;
-            XState.setDecipercent(data[0]);
-            J2State.setDecipercent(data[1]);
-            J3State.setDecipercent(data[2]);
-            J4State.setDecipercent(data[3]);
-            PitchState.setDecipercent(data[4]);
-            RollState.setDecipercent(data[5]);
-
-            XState.setControlMode(0);
-            J2State.setControlMode(0);
-            J3State.setControlMode(0);
-            J4State.setControlMode(0);
-            PitchState.setControlMode(0);
-            RollState.setControlMode(0);
-
-            IKMode = false;
-
-            feedWatchdog();
-            break;
-        }
-        case RC_ARMBOARD_SETJOINTSPEED_DATA_ID: //done
+        case RC_ARMBOARD_SETINDIVIDUALSPEEDS_DATA_ID:
         {
             int16_t *data = (int16_t*) packet.data;
-            switch (data[0])
-            {
-                case X:
-                    XState.setDecipercent(data[1]);
-                    XState.setControlMode(0);
-                    break;
-                case J2:
-                    J2State.setDecipercent(data[1]);
-                    J2State.setControlMode(0);
-                    break;
-                case J3:
-                    J3State.setDecipercent(data[1]);
-                    J3State.setControlMode(0);
-                    break;
-                case J4:
-                    J4State.setDecipercent(data[1]);
-                    J4State.setControlMode(0);
-                    break;
-                case PITCH:
-                    PitchState.setDecipercent(data[1]);
-                    PitchState.setControlMode(0);
-                    break;
-                case ROLL:
-                    RollState.setDecipercent(data[1]);
-                    RollState.setControlMode(0);
-                    break;
-            }
-
-            IKMode = false;
+            xMotor.openLoopDrive(data[0], false); //limit switch comes from basestation
+            J2Motor.openLoopDrive(data[1], false);
+            J3Motor.openLoopDrive(data[2], false);
+            J4Motor.openLoopDrive(data[3], false);
+            PitchMotor.openLoopDrive(data[4], false);
+            RollMotor.openLoopDrive(data[5], false);
 
             feedWatchdog();
             break;
         }
-        case RC_ARMBOARD_SETINDIVIDUALTARGETANGLES_DATA_ID: //done
+        case RC_ARMBOARD_SETJOINTSPEED_DATA_ID:
         {
-            float *data = (float*) packet.data;
-            XState.setTarget(data[0]);
-            J2State.setTarget(data[1]);
-            J3State.setTarget(data[2]);
-            J4State.setTarget(data[3]);
-            PitchState.setTarget(data[4]);
-            RollState.setTarget(data[5]);
+            int16_t *data = (int16_t*) packet.data;
+            switch (data[0]) {
+                case X:
+                    xMotor.openLoopDrive(data[1], false); //limit switch comes from basestation
+                    break;
+                case J2:
+                    J2Motor.openLoopDrive(data[1], false);
+                    break;
+                case J3:
+                    J3Motor.openLoopDrive(data[1], false);
+                    break;
+                case J4:
+                    J4Motor.openLoopDrive(data[1], false);
+                    break;
+                case PITCH:
+                    PitchMotor.openLoopDrive(data[1], false);
+                    break;
+                case ROLL:
+                    RollMotor.openLoopDrive(data[1], false);
+                    break;
+            }
+            feedWatchdog();
+            break;
+        }
+        case RC_ARMBOARD_SETINDIVIDUALTARGETANGLES_DATA_ID:
+        {
+            float *data = (float*) packet.data; //Float not i32?
+            xMotor.setJointAngle(data[0], 1, false); //limit switch comes from basestation
+            J2Motor.setJointAngle(data[1], 1, false);
+            J3Motor.setJointAngle(data[2], 1, false);
+            J4Motor.setJointAngle(data[3], 1, false);
+            PitchMotor.setJointAngle(data[4], 1, false);
+            RollMotor.setJointAngle(data[5], 1, false);
 
-            XState.setControlMode(1);
-            J2State.setControlMode(1);
-            J3State.setControlMode(1);
-            J4State.setControlMode(1);
-            PitchState.setControlMode(1);
-            RollState.setControlMode(1);
-
-            IKMode = false;
-            
             feedWatchdog();
             break;
         }
         case RC_ARMBOARD_SETJOINTTARGETANGLE_DATA_ID: //done
         {
-            float *data = (float*) packet.data;
-
-            switch (uint8_t(data[0]))
-            {
+            float *data = (float*) packet.data; //Float not i32?
+            switch ((uint8_t)data[0]) {
                 case X:
-                    XState.setTarget(data[1]);
-                    XState.setControlMode(1);
+                    xMotor.setJointAngle(data[1], 1, false); //limit switch comes from basestation
                     break;
                 case J2:
-                    J2State.setTarget(data[1]);
-                    J2State.setControlMode(1);
+                    J2Motor.setJointAngle(data[1], 1, false);
                     break;
                 case J3:
-                    J3State.setTarget(data[1]);
-                    J3State.setControlMode(1);
+                    J3Motor.setJointAngle(data[1], 1, false);
                     break;
                 case J4:
-                    J4State.setTarget(data[1]);
-                    J4State.setControlMode(1);
+                    J4Motor.setJointAngle(data[1], 1, false);
                     break;
                 case PITCH:
-                    PitchState.setTarget(data[1]);
-                    PitchState.setControlMode(1);
+                    PitchMotor.setJointAngle(data[1], 1, false);
                     break;
                 case ROLL:
-                    RollState.setTarget(data[1]);
-                    RollState.setControlMode(1);
+                    RollMotor.setJointAngle(data[1], 1, false);
                     break;
             }
-
-            IKMode = false;
-
             feedWatchdog();
             break;
         }
         case RC_ARMBOARD_INCREMENTINDIVIDUALTARGETANGLES_DATA_ID:
-        {
-            float *data = (float*) packet.data;
+        {   
+            //currentAngle is a placeholder, need to get current angle from motor
+            float *data = (float*) packet.data; //Float not i32?
+            xMotor.setJointAngle(currentAngle+data[0], 1, false); //limit switch comes from basestation
+            J2Motor.setJointAngle(currentAngle+data[1], 1, false);
+            J3Motor.setJointAngle(currentAngle+data[2], 1, false);
+            J4Motor.setJointAngle(currentAngle+data[3], 1, false);
+            PitchMotor.setJointAngle(currentAngle+data[4], 1, false);
+            RollMotor.setJointAngle(currentAngle+data[5], 1, false);
 
-            XState.incrementTarget(data[0]);
-            J2State.incrementTarget(data[1]);
-            J3State.incrementTarget(data[2]);
-            J4State.incrementTarget(data[3]);
-            PitchState.incrementTarget(data[4]);
-            RollState.incrementTarget(data[5]);
-
-            XState.setControlMode(1);
-            J2State.setControlMode(1);
-            J3State.setControlMode(1);
-            J4State.setControlMode(1);
-            PitchState.setControlMode(1);
-            RollState.setControlMode(1);
-
-            IKMode = false;
-            
             feedWatchdog();
             break;
         }
         case RC_ARMBOARD_INCREMENTJOINTTARGETANGLE_DATA_ID:
         {
-            float *data = (float*) packet.data;
-            switch (uint8_t(data[0]))
-            {
+            //currentAngle is a placeholder, need to get current angle from motor
+            float *data = (float*) packet.data; //Float not i32?
+            switch ((uint8_t)data[0]) {
                 case X:
-                    XState.incrementTarget(data[1]);
-                    XState.setControlMode(1);
+                    xMotor.setJointAngle(currentAngle+data[1], 1, false); //limit switch comes from basestation
                     break;
                 case J2:
-                    J2State.incrementTarget(data[1]);
-                    J2State.setControlMode(1);
+                    J2Motor.setJointAngle(currentAngle+data[1], 1, false);
                     break;
                 case J3:
-                    J3State.incrementTarget(data[1]);
-                    J3State.setControlMode(1);
+                    J3Motor.setJointAngle(currentAngle+data[1], 1, false);
                     break;
                 case J4:
-                    J4State.incrementTarget(data[1]);
-                    J4State.setControlMode(1);
+                    J4Motor.setJointAngle(currentAngle+data[1], 1, false);
                     break;
                 case PITCH:
-                    PitchState.incrementTarget(data[1]);
-                    PitchState.setControlMode(1);
+                    PitchMotor.setJointAngle(currentAngle+data[1], 1, false);
                     break;
                 case ROLL:
-                    RollState.incrementTarget(data[1]);
-                    RollState.setControlMode(1);
+                    RollMotor.setJointAngle(currentAngle+data[1], 1, false);
                     break;
             }
-
-            IKMode = false;
-
             feedWatchdog();
             break;
         }
         case RC_ARMBOARD_SETIKPOSITION_DATA_ID:
-        {
-            if (!IKMode)
-            {
-                IKMode = true;
-                CalculateForwardKinematics();
-            }
-
-            float *data = (float*) packet.data;
-
-            CartesianCoords.x = data[0];
-            CartesianCoords.y = data[1];
-            CartesianCoords.z = data[2];
-
-            J4State.setTarget(data[3]);
-            PitchControl = data[4];
-            RollState.setTarget(data[5]);
-
-            CalculateInverseKinematics();
-            
+        {           
             feedWatchdog();
             break;
         }
         case RC_ARMBOARD_INCREMENTIKPOSITION_DATA_ID:
         {
-            if (!IKMode)
-            {
-                IKMode = true;
-                CalculateForwardKinematics();
-            }
-
-            float *data = (float*) packet.data;
-
-            CartesianCoords.x += data[0];
-            CartesianCoords.y += data[1];
-            CartesianCoords.z += data[2];
-
-            J4State.incrementTarget(data[3]);
-            PitchControl += data[4];
-            RollState.incrementTarget(data[5]);
-
-            CalculateInverseKinematics();
-
             feedWatchdog();
             break;      
         }
@@ -445,93 +351,53 @@ void UpdateFromRoveComm()
             feedWatchdog();
             break;
         }
-        case RC_ARMBOARD_LASER_DATA_ID: //done
+        case RC_ARMBOARD_LASER_DATA_ID: 
         {
             uint8_t data = *((uint8_t *)packet.data);
             laserOn = (data == 0) ? false : true;
             feedWatchdog();
             break;
         }
-        case RC_ARMBOARD_SOLENOID_DATA_ID: //done
+        case RC_ARMBOARD_SOLENOID_DATA_ID: 
         {
             uint8_t data = *((uint8_t *)packet.data);
             extendSolenoid = (data == 0) ? false : true;
             feedWatchdog();
             break;
         }
-        case RC_ARMBOARD_SETGRIPPERSPEED_DATA_ID: //done
+        case RC_ARMBOARD_SETGRIPPERSPEED_DATA_ID: 
         {
             int16_t *data = (int16_t*) packet.data;
-            GripperDecipercent = data[0];
-            SpareDecipercent = data[1];
+            GripperMotor.drive(data[0]);
             feedWatchdog();
             break;
         }
-        case RC_ARMBOARD_WATCHDOGOVERRIDE_DATA_ID: //done
+        case RC_ARMBOARD_WATCHDOGOVERRIDE_DATA_ID: 
         {
             watchdogOverride = *((uint8_t*) packet.data);
             feedWatchdog();
             break;
         }
-        case RC_ARMBOARD_LIMITSWITCHOVERRIDE_DATA_ID: //done
+        case RC_ARMBOARD_LIMITSWITCHOVERRIDE_DATA_ID: 
         {
-            uint16_t data = *((uint16_t*) packet.data);
-
-            XJoint.overrideForwardHardLimit(data & (1 << 0));
-            XJoint.overrideReverseHardLimit(data & (1 << 1));
-            J2Joint.overrideForwardHardLimit(data & (1 << 2));
-            J2Joint.overrideReverseHardLimit(data & (1 << 3));
-            J3Joint.overrideForwardHardLimit(data & (1 << 4));
-            J3Joint.overrideReverseHardLimit(data & (1 << 5));
-            J4Joint.overrideForwardHardLimit(data & (1 << 6));
-            J4Joint.overrideReverseHardLimit(data & (1 << 7));
-            PitchJoint.overrideForwardHardLimit(data & (1 << 8));
-            PitchJoint.overrideReverseHardLimit(data & (1 << 8));
 
             feedWatchdog();
             break;
         }
         case RC_ARMBOARD_CLOSEDLOOPOVERRIDE_DATA_ID:
         {
-            uint8_t data = *((uint8_t*) packet.data);
-
-            XState.overrideClosedLoop(data & (1 << 0));
-            J2State.overrideClosedLoop(data & (1 << 1));
-            J3State.overrideClosedLoop(data & (1 << 2));
-            J4State.overrideClosedLoop(data & (1 << 3));
-            PitchState.overrideClosedLoop(data & (1 << 4));
-            RollState.overrideClosedLoop(data & (1 << 5));
-
-            IKMode = false;
 
             feedWatchdog();
             break;
         }
         case RC_ARMBOARD_CALIBRATEENCODER_DATA_ID:
         {
-            uint8_t data = *((uint8_t*) packet.data);
-
-            if(data & (1<<1)) RollJoint.Encoder()->setDegrees(0);
-            if (J2State.getMotorAngle() < 90.0) Xcalibrating = data & (1 << 0);
 
             feedWatchdog();
             break;
         }
         case RC_ARMBOARD_SOFTLIMITOVERRIDE_DATA_ID:
         {
-            uint16_t data = *((uint16_t*) packet.data);
-
-            XState.overrideForwardSoftLimit(data & (1 << 0));
-            XState.overrideReverseSoftLimit(data & (1 << 1));
-            J2State.overrideForwardSoftLimit(data & (1 << 2));
-            J2State.overrideReverseSoftLimit(data & (1 << 3));
-            J3State.overrideForwardSoftLimit(data & (1 << 4));
-            J3State.overrideReverseSoftLimit(data & (1 << 5));
-            J4State.overrideForwardSoftLimit(data & (1 << 6));
-            J4State.overrideReverseSoftLimit(data & (1 << 7));
-            PitchState.overrideForwardSoftLimit(data & (1 << 8));
-            PitchState.overrideReverseSoftLimit(data & (1 << 9));
-
             feedWatchdog();
             break;
         }
@@ -546,34 +412,7 @@ void UpdateFromRoveComm()
 
 }
 
-void UpdateFromIOX()
-{
-
-    uint32_t timestamp = millis();
-
-    if (timestamp - lastIOX_timestamp > IOX_UPDATE_PERIOD) {
-        lastIOX_timestamp = timestamp;
-
-        // IO Expander 1
-        uint8_t iox1_val = IOX1.read8();
-        LS1.set(iox1_val & (1 << IOX1_LIM_1));
-        LS2.set(iox1_val & (1 << IOX1_LIM_2));
-        LS3.set(iox1_val & (1 << IOX1_LIM_3));
-        LS4.set(iox1_val & (1 << IOX1_LIM_4));
-        LS5.set(iox1_val & (1 << IOX1_LIM_5));
-        LS6.set(iox1_val & (1 << IOX1_LIM_6));
-        LS7.set(iox1_val & (1 << IOX1_LIM_7));
-        LS8.set(iox1_val & (1 << IOX1_LIM_8));
-
-        // IO Expander 2
-        uint8_t iox2_val = IOX2.read8();
-        LS9.set(iox2_val & (1 << IOX2_LIM_9));
-        LS10.set(iox2_val & (1 << IOX2_LIM_10));
-    }
-
-}
-
-void UpdateArm() 
+void UpdateArm() //Only used for buttons
 {
 
     // underMode = false; //J3State.getMotorAngle() > 0;
