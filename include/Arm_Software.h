@@ -4,17 +4,15 @@
 //2026 DEV
 // IP: 192.168.2.107
 
+//Servos???????
+
 #include "PinAssignments.h"
 
 #include <RoveComm.h>
-#include <RoveHBridge.h>
+#include <Smoco.h>
 #include <MA3PWM.h>
-#include <RoveQuadEncoder.h>
+#include <ACAN_T4.h>
 #include <SoftwareSwitch.h>
-#include <BidirectionalLimitSwitch.h>
-#include <RovePIDController.h>
-#include <RoveJoint.h>
-#include <RoveVNH.h>
 #include <ArmVNH.h>
 #include <cmath>
 #include <PCF8574.h>
@@ -37,33 +35,19 @@ bool watchdogOverride = false;
 IntervalTimer Telemetry;
 bool telemetryOverride = false;
 
-// IO Expanders
-PCF8574 IOX1(0x38, &IOX_TWI);
-PCF8574 IOX2(0x39, &IOX_TWI);
-PCF8574 IOX3(0x3A, &IOX_TWI);
-uint32_t lastIOX_timestamp = 0;
-#define IOX_UPDATE_PERIOD   50
+//CAN 
+#define CAN_CHANNEL ACAN_T4::can1
 
 // Motor
-RoveVNH  XMotor       (M8_PWM, M8_FWD,     M8_RVS); //Through Teensy
-ArmVNH   J2Motor      (M1_PWM, IOX2_FWD_1, IOX2_RVS_1, &IOX2);
-ArmVNH   J3Motor      (M4_PWM, IOX3_FWD_4, IOX3_RVS_4, &IOX3);
-ArmVNH   J4Motor      (M3_PWM, IOX2_FWD_3, IOX2_RVS_3, &IOX2);  
-ArmVNH   PitchMotor   (M7_PWM, IOX3_FWD_7, IOX3_RVS_7, &IOX3);
-ArmVNH   RollMotor    (M5_PWM, IOX3_FWD_5, IOX3_RVS_5, &IOX3);
-ArmVNH   GripperMotor (M2_PWM, IOX2_FWD_2, IOX2_RVS_2, &IOX2);
-ArmVNH   SpareMotor   (M6_PWM, IOX3_FWD_6, IOX3_RVS_6, &IOX3);
+Smoco xMotor       (CAN_CHANNEL, 1);
+Smoco J2Motor      (CAN_CHANNEL, 2);
+Smoco J3Motor      (CAN_CHANNEL, 3);
+Smoco J4Motor      (CAN_CHANNEL, 4);
+Smoco PitchMotor   (CAN_CHANNEL, 5);
+Smoco RollMotor    (CAN_CHANNEL, 6);
+Smoco GripperMotor (CAN_CHANNEL, 7);
+Smoco SpareMotor   (CAN_CHANNEL, 8);
 
-// Encoders
-RoveQuadEncoder XEncoder    (ENC_2A, ENC_2B, (1000000.0 * 37.66) / 12.6);
-RoveQuadEncoder RollEncoder (ENC_1A, ENC_1B, 14103720.0 / 360.0);
-MA3PWM          J2Encoder   (ABS_1);
-MA3PWM          J3Encoder   (ABS_4);
-MA3PWM          J4Encoder   (ABS_2);
-MA3PWM          PitchEncoder(ABS_3);
-
-// Limit Switches
-SoftwareSwitch LS1, LS2, LS3, LS4, LS5, LS6, LS7, LS8, LS9, LS10;
 
 //Limits
 #define X_REV_LIM       0
@@ -97,34 +81,6 @@ SoftwareSwitch LS1, LS2, LS3, LS4, LS5, LS6, LS7, LS8, LS9, LS10;
 Vector CartesianCoords = {0,0,0};
 Vector GripperPosition = {0,0,0};
 
-float PitchControl;
-
-// PID Controllers
-RovePIDController XPID     (20000, 0, 0);
-RovePIDController J2PID    (150, 0.0001, 50);
-RovePIDController J3PID    (150, 0.0001, 50); //(100, 0, 50)
-RovePIDController J4PID    (100, 0, 80); //(50, 0.2, 70)
-RovePIDController PitchPID (100, 0, 0); //(50, 0.2, 10)
-RovePIDController RollPID  (50, 0, 1000);
-
-// Joints
-RoveJoint XJoint     (&XMotor);
-RoveJoint J2Joint    (&J2Motor);
-RoveJoint J3Joint    (&J3Motor);
-RoveJoint J4Joint    (&J4Motor);
-RoveJoint PitchJoint (&PitchMotor);
-RoveJoint RollJoint  (&RollMotor);
-#define Gripper      (GripperMotor)
-#define Spare        (SpareMotor)
-
-// States
-JointState XState       (&XJoint,       X_FWD_LIM,      X_REV_LIM,      BTN_X);
-JointState J2State      (&J2Joint,      J2_FWD_LIM,     J2_REV_LIM,     BTN_J2);
-JointState J3State      (&J3Joint,      J3_FWD_LIM,     J3_REV_LIM,     BTN_J3);
-JointState J4State      (&J4Joint,      J4_FWD_LIM,     J4_REV_LIM,     BTN_J4);
-JointState PitchState   (&PitchJoint,   PITCH_FWD_LIM,  PITCH_REV_LIM,  BTN_PITCH);
-JointState RollState    (&RollJoint,    0,              0,              BTN_ROLL);
-
 // Control variables
 int16_t GripperDecipercent = 0;
 int16_t SpareDecipercent = 0; 
@@ -152,13 +108,10 @@ void setLaser(bool on);
 void CalibrateX();
 void InitiallySyncTargets();
 void UpdateFromRoveComm();
-void UpdateFromIOX();
 void UpdateArm();
 
 void CalculateInverseKinematics();
 void UpdateLimits();
 void CalculateForwardKinematics();
-
-
 
 #endif /*ARMBOARD_SOFTWARE_2025_H*/
