@@ -212,7 +212,7 @@ void UpdateFromRoveComm()
     RoveComm.read(packet);
 
     switch (packet.dataId) {
-        case RC_ARMBOARD_SETINDIVIDUALSPEEDS_DATA_ID:
+        case RC_ARMBOARD_OPENLOOP_DATA_ID:
         {
             int16_t *data = (int16_t*) packet.data;
             xMotor.openLoopDrive(data[0], false); //limit switch comes from basestation
@@ -225,33 +225,7 @@ void UpdateFromRoveComm()
             feedWatchdog();
             break;
         }
-        case RC_ARMBOARD_SETJOINTSPEED_DATA_ID:
-        {
-            int16_t *data = (int16_t*) packet.data;
-            switch (data[0]) {
-                case X:
-                    xMotor.openLoopDrive(data[1], false); //limit switch comes from basestation
-                    break;
-                case J2:
-                    J2Motor.openLoopDrive(data[1], false);
-                    break;
-                case J3:
-                    J3Motor.openLoopDrive(data[1], false);
-                    break;
-                case J4:
-                    J4Motor.openLoopDrive(data[1], false);
-                    break;
-                case PITCH:
-                    PitchMotor.openLoopDrive(data[1], false);
-                    break;
-                case ROLL:
-                    RollMotor.openLoopDrive(data[1], false);
-                    break;
-            }
-            feedWatchdog();
-            break;
-        }
-        case RC_ARMBOARD_SETINDIVIDUALTARGETANGLES_DATA_ID:
+        case RC_ARMBOARD_TARGETANGLE_DATA_ID:
         {
             float *data = (float*) packet.data; //Float not i32?
             xMotor.setJointAngle(data[0], 1, false); //limit switch comes from basestation
@@ -264,90 +238,21 @@ void UpdateFromRoveComm()
             feedWatchdog();
             break;
         }
-        case RC_ARMBOARD_SETJOINTTARGETANGLE_DATA_ID: //done
+        case RC_ARMBOARD_GRIPPEROPENLOOP_DATA_ID: 
         {
-            float *data = (float*) packet.data; //Float not i32?
-            switch ((uint8_t)data[0]) {
-                case X:
-                    xMotor.setJointAngle(data[1], 1, false); //limit switch comes from basestation
-                    break;
-                case J2:
-                    J2Motor.setJointAngle(data[1], 1, false);
-                    break;
-                case J3:
-                    J3Motor.setJointAngle(data[1], 1, false);
-                    break;
-                case J4:
-                    J4Motor.setJointAngle(data[1], 1, false);
-                    break;
-                case PITCH:
-                    PitchMotor.setJointAngle(data[1], 1, false);
-                    break;
-                case ROLL:
-                    RollMotor.setJointAngle(data[1], 1, false);
-                    break;
-            }
+            int16_t *data = (int16_t*) packet.data;
+            GripperMotor.drive(data[0]);
             feedWatchdog();
             break;
         }
-        case RC_ARMBOARD_INCREMENTINDIVIDUALTARGETANGLES_DATA_ID:
-        {   
-            //currentAngle is a placeholder, need to get current angle from motor
-            float *data = (float*) packet.data; //Float not i32?
-            xMotor.setJointAngle(currentAngle+data[0], 1, false); //limit switch comes from basestation
-            J2Motor.setJointAngle(currentAngle+data[1], 1, false);
-            J3Motor.setJointAngle(currentAngle+data[2], 1, false);
-            J4Motor.setJointAngle(currentAngle+data[3], 1, false);
-            PitchMotor.setJointAngle(currentAngle+data[4], 1, false);
-            RollMotor.setJointAngle(currentAngle+data[5], 1, false);
-
-            feedWatchdog();
-            break;
-        }
-        case RC_ARMBOARD_INCREMENTJOINTTARGETANGLE_DATA_ID:
-        {
-            //currentAngle is a placeholder, need to get current angle from motor
-            float *data = (float*) packet.data; //Float not i32?
-            switch ((uint8_t)data[0]) {
-                case X:
-                    xMotor.setJointAngle(currentAngle+data[1], 1, false); //limit switch comes from basestation
-                    break;
-                case J2:
-                    J2Motor.setJointAngle(currentAngle+data[1], 1, false);
-                    break;
-                case J3:
-                    J3Motor.setJointAngle(currentAngle+data[1], 1, false);
-                    break;
-                case J4:
-                    J4Motor.setJointAngle(currentAngle+data[1], 1, false);
-                    break;
-                case PITCH:
-                    PitchMotor.setJointAngle(currentAngle+data[1], 1, false);
-                    break;
-                case ROLL:
-                    RollMotor.setJointAngle(currentAngle+data[1], 1, false);
-                    break;
-            }
-            feedWatchdog();
-            break;
-        }
-        case RC_ARMBOARD_SETIKPOSITION_DATA_ID:
+        case RC_ARMBOARD_IKPOSITION_DATA_ID:
         {           
             feedWatchdog();
             break;
         }
-        case RC_ARMBOARD_INCREMENTIKPOSITION_DATA_ID:
+        case RC_ARMBOARD_LINEARSERVO_DATA_ID:
         {
-            feedWatchdog();
-            break;      
-        }
-        case RC_ARMBOARD_SETLOCKMODEPOSITION_DATA_ID:
-        {
-            feedWatchdog();
-            break;
-        }
-        case RC_ARMBOARD_INCREMENTLOCKMODEPOSITION_DATA_ID:
-        {
+            uint8_t data = *((uint8_t *)packet.data);
             feedWatchdog();
             break;
         }
@@ -358,20 +263,12 @@ void UpdateFromRoveComm()
             feedWatchdog();
             break;
         }
-        case RC_ARMBOARD_SOLENOID_DATA_ID: 
+        case RC_ARMBOARD_CACHE_DATA_ID:
         {
-            uint8_t data = *((uint8_t *)packet.data);
-            extendSolenoid = (data == 0) ? false : true;
             feedWatchdog();
             break;
         }
-        case RC_ARMBOARD_SETGRIPPERSPEED_DATA_ID: 
-        {
-            int16_t *data = (int16_t*) packet.data;
-            GripperMotor.drive(data[0]);
-            feedWatchdog();
-            break;
-        }
+
         case RC_ARMBOARD_WATCHDOGOVERRIDE_DATA_ID: 
         {
             watchdogOverride = *((uint8_t*) packet.data);
@@ -401,13 +298,17 @@ void UpdateFromRoveComm()
             feedWatchdog();
             break;
         }
-        case RC_ARMBOARD_ESTOP_DATA_ID:
+        case RC_ARMBOARD_ARMGIMBAL1_DATA_ID:
         {
-            estop();
-
             feedWatchdog();
             break;
         }
+        case RC_ARMBOARD_ARMGIMBAL2_DATA_ID:
+        {
+            feedWatchdog();
+            break;
+        }
+        
     }
 
 }
