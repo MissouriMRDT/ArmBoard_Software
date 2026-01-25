@@ -41,7 +41,6 @@ void setup()
     PitchMotor.setLowPassSmoothingFactor(INT16_MAX);
     RollMotor.setLowPassSmoothingFactor(INT16_MAX);
     GripperMotor.setLowPassSmoothingFactor(INT16_MAX);
-    SpareMotor.setLowPassSmoothingFactor(INT16_MAX);
 
     //Set PID gains, Need to make gains vars or store somewhere
     xMotor.setPID(1, 0, 0);
@@ -51,7 +50,6 @@ void setup()
     PitchMotor.setPID(1, 0, 0);
     RollMotor.setPID(1, 0, 0);
     GripperMotor.setPID(1, 0, 0);
-    SpareMotor.setPID(1, 0, 0);
 
     //Set soft limits
     xMotor.setSoftLimitPosition(INT32_MIN, INT32_MAX);
@@ -61,7 +59,6 @@ void setup()
     PitchMotor.setSoftLimitPosition(INT32_MIN, INT32_MAX);
     RollMotor.setSoftLimitPosition(INT32_MIN, INT32_MAX);
     GripperMotor.setSoftLimitPosition(INT32_MIN, INT32_MAX);
-    SpareMotor.setSoftLimitPosition(INT32_MIN, INT32_MAX); 
 
     // RoveComm
     Serial.println("RoveComm Initializing...");
