@@ -52,11 +52,11 @@ void setup()
     GripperMotor.setPID(1, 0, 0);
 
     //Set soft limits
-    xMotor.setSoftLimitPosition(INT32_MIN, INT32_MAX);
-    J2Motor.setSoftLimitPosition(INT32_MIN, INT32_MAX);
-    J3Motor.setSoftLimitPosition(INT32_MIN, INT32_MAX);
-    J4Motor.setSoftLimitPosition(INT32_MIN, INT32_MAX);
-    PitchMotor.setSoftLimitPosition(INT32_MIN, INT32_MAX);
+    xMotor.setSoftLimitPosition(X_REV_LIM, X_FWD_LIM);
+    J2Motor.setSoftLimitPosition(J2_REV_LIM, J2_FWD_LIM);
+    J3Motor.setSoftLimitPosition(J3_REV_LIM, J3_FWD_LIM);
+    J4Motor.setSoftLimitPosition(J4_REV_LIM, J4_FWD_LIM);
+    PitchMotor.setSoftLimitPosition(PITCH_REV_LIM, PITCH_FWD_LIM);
     RollMotor.setSoftLimitPosition(INT32_MIN, INT32_MAX);
     GripperMotor.setSoftLimitPosition(INT32_MIN, INT32_MAX);
 
@@ -101,7 +101,6 @@ void estop()
 
 void telemetry() 
 {
-    // :(
     // RoveComm.write(RC_ARMBOARD_WATCHDOGSTATUS_DATA_ID, watchdogStatus);
     
     if(!telemetryOverride) {
@@ -255,7 +254,8 @@ void UpdateFromRoveComm()
         }
         case RC_ARMBOARD_LINEARSERVO_DATA_ID:
         {
-            uint8_t data = *((uint8_t *)packet.data);
+            uint8_t *data = *((uint8_t *)packet.data);
+            LinearServo.write(data);
             feedWatchdog();
             break;
         }
@@ -268,50 +268,101 @@ void UpdateFromRoveComm()
         }
         case RC_ARMBOARD_CACHE_DATA_ID:
         {
+            uint8_t data = *((uint8_t *)packet.data);
+            
             feedWatchdog();
             break;
         }
-
         case RC_ARMBOARD_WATCHDOGOVERRIDE_DATA_ID: 
         {
             watchdogOverride = *((uint8_t*) packet.data);
+            
             feedWatchdog();
             break;
         }
         case RC_ARMBOARD_LIMITSWITCHOVERRIDE_DATA_ID: 
         {
+            uint16_t data = *((uint16_t *)packet.data);
+            
+            //x+ data & (1 << 0) 
+            //x- data & (1 << 1)
+            //j2+ data & (1 << 2)
+            //j2- data & (1 << 3)
+            //j3+ data & (1 << 4)
+            //j3- data & (1 << 5)
+            //j4+ data & (1 << 6)
+            //j4- data & (1 << 7)
+            //p+ data & (1 << 8)
+            //p- data & (1 << 9)
 
             feedWatchdog();
             break;
         }
         case RC_ARMBOARD_CLOSEDLOOPOVERRIDE_DATA_ID:
         {
+            uint8_t data = *((uint8_t *)packet.data);
+
+            //x data & (1 << 0)
+            //j2 data & (1 << 1)
+            //j3 data & (1 << 2)
+            //j4 data & (1 << 3)
+            //p data & (1 << 4)
+            //r data & (1 << 5)
 
             feedWatchdog();
             break;
         }
         case RC_ARMBOARD_CALIBRATEENCODER_DATA_ID:
         {
+            uint8_t data = *((uint8_t *)packet.data);
+
+            //x data & (1 << 0)
+            //roll data & (1 << 1)
 
             feedWatchdog();
             break;
         }
         case RC_ARMBOARD_SOFTLIMITOVERRIDE_DATA_ID:
         {
+            uint16_t data = *((uint16_t *)packet.data);
+
+            
+            //x+ data & (1 << 0) 
+            //x- data & (1 << 1)
+            //j2+ data & (1 << 2)
+            //j2- data & (1 << 3)
+            //j3+ data & (1 << 4)
+            //j3- data & (1 << 5)
+            //j4+ data & (1 << 6)
+            //j4- data & (1 << 7)
+            //p+ data & (1 << 8)
+            //p- data & (1 << 9)
+
+
             feedWatchdog();
             break;
         }
         case RC_ARMBOARD_ARMGIMBAL1_DATA_ID:
         {
+            int16_t *data = (int16_t*) packet.data;
+
+            CameraOnePan.write(data[0]);
+            CameraOneTilt.write(data[1]);
+
             feedWatchdog();
             break;
         }
         case RC_ARMBOARD_ARMGIMBAL2_DATA_ID:
         {
+            int16_t *data = (int16_t*) packet.data;
+
+            CameraTwoPan.write(data[0]);
+            CameraTwoTilt.write(data[1]);
+
             feedWatchdog();
             break;
         }
-        
+
     }
 
 }
