@@ -4,7 +4,7 @@
 //Switch Pin 
 #define DIR_SW 35
 
-//Buttons
+//Buttons Rename to match function
 #define BTN_1 21
 #define BTN_2 20
 #define BTN_3 19
@@ -23,7 +23,7 @@
 //Laser
 #define LASER 7
 
-//Servos
+//Servos Rename to match fucntion
 #define SERVO_1 2
 #define SERVO_2 3
 #define SERVO_3 4

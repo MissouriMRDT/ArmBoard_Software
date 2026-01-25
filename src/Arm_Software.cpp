@@ -25,6 +25,12 @@ void setup()
     pinMode(BTN_LIN_SERVO, INPUT_PULLUP);
     pinMode(DIR_SW, INPUT_PULLUP);
 
+    LinearServo.attach(LINEAR_SERVO);
+    CameraOnePan.attach(SERVO_1);
+    CameraOneTilt.attach(SERVO_2);
+    CameraTwoPan.attach(SERVO_3);
+    CameraTwoTilt.attach(SERVO_4);
+
     ACAN_T4_Settings settings(125000); //I think i'm missing things
 
     //Set Low pass smoothing factor

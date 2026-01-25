@@ -10,12 +10,9 @@
 
 #include <RoveComm.h>
 #include <Smoco.h>
-#include <MA3PWM.h>
+#include <Servo.h>
 #include <ACAN_T4.h>
-#include <SoftwareSwitch.h>
-#include <ArmVNH.h>
 #include <cmath>
-#include <PCF8574.h>
 #include <cstdint>
 
 #include "RoveMatrix.h"
@@ -48,6 +45,10 @@ Smoco RollMotor    (CAN_CHANNEL, 6);
 Smoco GripperMotor (CAN_CHANNEL, 7);
 Smoco SpareMotor   (CAN_CHANNEL, 8);
 
+// Servos
+Servo LinearServo;
+Servo CameraOnePan, CameraOneTilt;
+Servo CameraTwoPan, CameraTwoTilt;
 
 //Limits
 #define X_REV_LIM       0
