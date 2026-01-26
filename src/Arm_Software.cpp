@@ -71,12 +71,13 @@ void setup()
 
 void loop() 
 {   
-
+    /*
     feedWatchdog(); //REMOVE
     InitiallySyncTargets();
     UpdateLimits();
     UpdateFromRoveComm();
     UpdateArm();
+    */
     
 }
 
@@ -216,34 +217,34 @@ void UpdateFromRoveComm()
     switch (packet.dataId) {
         case RC_ARMBOARD_OPENLOOP_DATA_ID:
         {
-            int16_t *data = (int16_t*) packet.data;
-            xMotor.openLoopDrive(data[0], false); //limit switch comes from basestation
-            J2Motor.openLoopDrive(data[1], false);
-            J3Motor.openLoopDrive(data[2], false);
-            J4Motor.openLoopDrive(data[3], false);
-            PitchMotor.openLoopDrive(data[4], false);
-            RollMotor.openLoopDrive(data[5], false);
+            int16_t *packetData = (int16_t*) packet.data;
+            xMotor.openLoopDrive(packetData[0], false); //limit switch comes from basestation
+            J2Motor.openLoopDrive(packetData[1], false);
+            J3Motor.openLoopDrive(packetData[2], false);
+            J4Motor.openLoopDrive(packetData[3], false);
+            PitchMotor.openLoopDrive(packetData[4], false);
+            RollMotor.openLoopDrive(packetData[5], false);
 
             feedWatchdog();
             break;
         }
         case RC_ARMBOARD_TARGETANGLE_DATA_ID:
         {
-            float *data = (float*) packet.data; //Float not i32?
-            xMotor.setJointAngle(data[0], 1, false); //limit switch comes from basestation
-            J2Motor.setJointAngle(data[1], 1, false);
-            J3Motor.setJointAngle(data[2], 1, false);
-            J4Motor.setJointAngle(data[3], 1, false);
-            PitchMotor.setJointAngle(data[4], 1, false);
-            RollMotor.setJointAngle(data[5], 1, false);
+            float *packetData = (float*) packet.data; //Float not i32?
+            xMotor.setJointAngle(packetData[0], 1, false); //limit switch comes from basestation
+            J2Motor.setJointAngle(packetData[1], 1, false);
+            J3Motor.setJointAngle(packetData[2], 1, false);
+            J4Motor.setJointAngle(packetData[3], 1, false);
+            PitchMotor.setJointAngle(packetData[4], 1, false);
+            RollMotor.setJointAngle(packetData[5], 1, false);
 
             feedWatchdog();
             break;
         }
         case RC_ARMBOARD_GRIPPEROPENLOOP_DATA_ID: 
         {
-            int16_t *data = (int16_t*) packet.data;
-            GripperMotor.drive(data[0]);
+            int16_t *packetData = (int16_t*) packet.data;
+            GripperMotor.drive(packetData[0]);
             feedWatchdog();
             break;
         }
@@ -254,21 +255,21 @@ void UpdateFromRoveComm()
         }
         case RC_ARMBOARD_LINEARSERVO_DATA_ID:
         {
-            uint8_t *data = *((uint8_t *)packet.data);
-            LinearServo.write(data);
+            uint8_t *packetData = *((uint8_t *)packet.data);
+            LinearServo.write(packetData);
             feedWatchdog();
             break;
         }
         case RC_ARMBOARD_LASER_DATA_ID: 
         {
-            uint8_t data = *((uint8_t *)packet.data);
-            laserOn = (data == 0) ? false : true;
+            uint8_t packetData = *((uint8_t *)packet.data);
+            laserOn = (packetData == 0) ? false : true;
             feedWatchdog();
             break;
         }
         case RC_ARMBOARD_CACHE_DATA_ID:
         {
-            uint8_t data = *((uint8_t *)packet.data);
+            uint8_t packetData = *((uint8_t *)packet.data);
             
             feedWatchdog();
             break;
@@ -282,7 +283,7 @@ void UpdateFromRoveComm()
         }
         case RC_ARMBOARD_LIMITSWITCHOVERRIDE_DATA_ID: 
         {
-            uint16_t data = *((uint16_t *)packet.data);
+            uint16_t packetData = *((uint16_t *)packet.data);
             
             //x+ data & (1 << 0) 
             //x- data & (1 << 1)
@@ -300,7 +301,7 @@ void UpdateFromRoveComm()
         }
         case RC_ARMBOARD_CLOSEDLOOPOVERRIDE_DATA_ID:
         {
-            uint8_t data = *((uint8_t *)packet.data);
+            uint8_t packetData = *((uint8_t *)packet.data);
 
             //x data & (1 << 0)
             //j2 data & (1 << 1)
@@ -314,7 +315,7 @@ void UpdateFromRoveComm()
         }
         case RC_ARMBOARD_CALIBRATEENCODER_DATA_ID:
         {
-            uint8_t data = *((uint8_t *)packet.data);
+            uint8_t packetData = *((uint8_t *)packet.data);
 
             //x data & (1 << 0)
             //roll data & (1 << 1)
@@ -324,7 +325,7 @@ void UpdateFromRoveComm()
         }
         case RC_ARMBOARD_SOFTLIMITOVERRIDE_DATA_ID:
         {
-            uint16_t data = *((uint16_t *)packet.data);
+            uint16_t packetData = *((uint16_t *)packet.data);
 
             
             //x+ data & (1 << 0) 
@@ -344,22 +345,41 @@ void UpdateFromRoveComm()
         }
         case RC_ARMBOARD_ARMGIMBAL1_DATA_ID:
         {
-            int16_t *data = (int16_t*) packet.data;
+            int16_t *packetData = (int16_t*) packet.data;
 
-            CameraOnePan.write(data[0]);
-            CameraOneTilt.write(data[1]);
+            CameraOnePan.write(packetData[0]);
+            CameraOneTilt.write(packetData[1]);
 
             feedWatchdog();
             break;
         }
         case RC_ARMBOARD_ARMGIMBAL2_DATA_ID:
         {
-            int16_t *data = (int16_t*) packet.data;
+            int16_t *packetData = (int16_t*) packet.data;
 
-            CameraTwoPan.write(data[0]);
-            CameraTwoTilt.write(data[1]);
+            CameraTwoPan.write(packetData[0]);
+            CameraTwoTilt.write(packetData[1]);
 
             feedWatchdog();
+            break;
+        }
+
+        // Telemetry packets
+        case RC_ARMBOARD_POSITION_DATA_ID:
+        {
+
+            break;
+        }
+        case RC_ARMBOARD_LIMITSWITCH_DATA_ID:
+        {
+            break;
+        }
+        case RC_ARMBOARD_SOFTLIMIT_DATA_ID:
+        {
+            break;
+        }
+        case RC_ARMBOARD_SMOCOPING_DATA_ID:
+        {
             break;
         }
 
