@@ -78,7 +78,6 @@ void loop()
     UpdateFromRoveComm();
     UpdateArm();
     */
-    
 }
 
 void estop() 
@@ -421,6 +420,37 @@ void UpdateArm() //Only used for buttons
     if (buttonInput == BTN_LAS) setLaser(true);
     else setLaser(laserOn);
 
+}
+
+void receiveCANMessages() {
+    CANMessage receivedMessage;
+    CAN_CHANNEL.receive(receivedMessage);
+
+    switch (receivedMessage.id()) {
+        case X_ID:
+            xMotor.readIncomingMessage(receivedMessage);
+            break;
+        case J2_ID:
+            J2Motor.readIncomingMessage(receivedMessage);
+            break;
+        case J3_ID:
+            J3Motor.readIncomingMessage(receivedMessage);
+            break;
+        case J4_ID:
+            J4Motor.readIncomingMessage(receivedMessage);
+            break;
+        case PITCH_ID:
+            PitchMotor.readIncomingMessage(receivedMessage);
+            break;
+        case ROLL_ID:
+            RollMotor.readIncomingMessage(receivedMessage);
+            break;
+        case GRIPPER_ID:
+            GripperMotor.readIncomingMessage(receivedMessage);
+            break;
+        default:
+            break;
+    }
 }
 
 void CalculateInverseKinematics() 

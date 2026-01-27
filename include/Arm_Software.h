@@ -35,14 +35,23 @@ bool telemetryOverride = false;
 //CAN 
 #define CAN_CHANNEL ACAN_T4::can1
 
+// SMoco IDS
+#define X_ID        1
+#define J2_ID       2
+#define J3_ID       3
+#define J4_ID       4
+#define PITCH_ID    5
+#define ROLL_ID     6
+#define GRIPPER_ID  7
+
 // Motor
-Smoco xMotor       (CAN_CHANNEL, 1);
-Smoco J2Motor      (CAN_CHANNEL, 2);
-Smoco J3Motor      (CAN_CHANNEL, 3);
-Smoco J4Motor      (CAN_CHANNEL, 4);
-Smoco PitchMotor   (CAN_CHANNEL, 5);
-Smoco RollMotor    (CAN_CHANNEL, 6);
-Smoco GripperMotor (CAN_CHANNEL, 7);
+Smoco xMotor       (CAN_CHANNEL, X_ID);
+Smoco J2Motor      (CAN_CHANNEL, J2_ID);
+Smoco J3Motor      (CAN_CHANNEL, J3_ID);
+Smoco J4Motor      (CAN_CHANNEL, J4_ID);
+Smoco PitchMotor   (CAN_CHANNEL, PITCH_ID);
+Smoco RollMotor    (CAN_CHANNEL, ROLL_ID);
+Smoco GripperMotor (CAN_CHANNEL, GRIPPER_ID);
 Smoco SpareMotor   (CAN_CHANNEL, 8);
 
 // Servos
@@ -110,6 +119,7 @@ void CalibrateX();
 void InitiallySyncTargets();
 void UpdateFromRoveComm();
 void UpdateArm();
+void receiveCANMessages();
 
 void CalculateInverseKinematics();
 void UpdateLimits();
