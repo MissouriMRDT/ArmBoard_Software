@@ -31,7 +31,7 @@ void setup()
     CameraTwoPan.attach(SERVO_3);
     CameraTwoTilt.attach(SERVO_4);
 
-    ACAN_T4_Settings settings(125000); //I think i'm missing things
+    ACAN_T4_Settings settings(125000); 
 
     //Set Low pass smoothing factor
     xMotor.setLowPassSmoothingFactor(INT16_MAX);
@@ -42,13 +42,13 @@ void setup()
     RollMotor.setLowPassSmoothingFactor(INT16_MAX);
     GripperMotor.setLowPassSmoothingFactor(INT16_MAX);
 
-    //Set PID gains, Need to make gains vars or store somewhere
+    //Set PID gains
     xMotor.setPID(1, 0, 0);
     J2Motor.setPID(1, 0, 0);
     J3Motor.setPID(1, 0, 0);
     J4Motor.setPID(1, 0, 0);
     PitchMotor.setPID(1, 0, 0);
-    RollMotor.setPID(1, 0, 0);
+    RollMotor.setPID(1, 0, 0); 
     GripperMotor.setPID(1, 0, 0);
 
     //Set soft limits
@@ -86,7 +86,7 @@ void estop()
     {
         watchdogStatus = 1;
 
-        xMotor.openLoopDrive(0, false);    //Stop and reset?
+        xMotor.openLoopDrive(0, false);    
         J2Motor.openLoopDrive(0, false);
         J3Motor.openLoopDrive(0, false);
         J4Motor.openLoopDrive(0, false);
@@ -106,106 +106,62 @@ void telemetry()
     if(!telemetryOverride) {
 
         float positions[7] = {
-            XJoint.Encoder()->readDegrees(),
-            J2Joint.Encoder()->readDegrees(),
-            J3Joint.Encoder()->readDegrees(),
-            J4Joint.Encoder()->readDegrees(),
-            PitchJoint.Encoder()->readDegrees(),
-            RollJoint.Encoder()->readDegrees(),
-            (PitchJoint.Encoder()->readDegrees() * cosf(J4Joint.Encoder()->readDegrees()*DEG2RAD)) + (J2Joint.Encoder()->readDegrees() + J3Joint.Encoder()->readDegrees())
+            xMotor.getAngleVariable(),
+            J2Motor.getAngleVariable(),
+            J3Motor.getAngleVariable(),
+            J4Motor.getAngleVariable(),
+            PitchMotor.getAngleVariable(),
+            RollMotor.getAngleVariable(),
+            (PitchMotor.getAngleVariable() * cosf(J4Motor.getAngleVariable()*DEG2RAD)) + (J2Motor.getAngleVariable() + J3Motor.getAngleVariable())
         };
         // Serial.println();
         // Serial.print(positions[6]);
-        RoveComm.write(RC_ARMBOARD_POSITIONS_DATA_ID, RC_ARMBOARD_POSITIONS_DATA_COUNT, positions);
+        RoveComm.write(RC_ARMBOARD_POSITION_DATA_ID, RC_ARMBOARD_POSITION_DATA_COUNT, positions);
 
-        float coords[6] = {
-            CartesianCoords.x,
-            CartesianCoords.y,
-            CartesianCoords.z,
-            J4Joint.Encoder()->readDegrees(),
-            PitchJoint.Encoder()->readDegrees()
-        };
-        RoveComm.write(RC_ARMBOARD_COORDINATES_DATA_ID, RC_ARMBOARD_COORDINATES_DATA_COUNT, coords);
-    
-        uint16_t limitsTriggered = 0;
-        if (XJoint.atForwardHardLimit()) limitsTriggered |= (1 << 0);
-        if (XJoint.atReverseHardLimit()) limitsTriggered |= (1 << 1);
-        if (J2Joint.atForwardHardLimit()) limitsTriggered |= (1 << 2);
-        if (J2Joint.atReverseHardLimit()) limitsTriggered |= (1 << 3);
-        if (J3Joint.atForwardHardLimit()) limitsTriggered |= (1 << 4);
-        if (J3Joint.atReverseHardLimit()) limitsTriggered |= (1 << 5);
-        if (J4Joint.atForwardHardLimit()) limitsTriggered |= (1 << 6);
-        if (J4Joint.atReverseHardLimit()) limitsTriggered |= (1 << 8);
-        if (PitchJoint.atForwardHardLimit()) limitsTriggered |= (1 << 9);
-        RoveComm.write(RC_ARMBOARD_LIMITSWITCHTRIGGERED_DATA_ID, limitsTriggered);
+        uint16_t limitsTriggeed = 0;
+        if(xMotor.getLimitSwitchAVariable()) limitsTriggeed |= (1 << 0);
+        if(xMotor.getLimitSwitchBVariable()) limitsTriggeed |= (1 << 1);
+
+        if(J2Motor.getLimitSwitchAVariable()) limitsTriggeed |= (1 << 2);
+        if(J2Motor.getLimitSwitchBVariable()) limitsTriggeed |= (1 << 3);
+
+        if(J3Motor.getLimitSwitchAVariable()) limitsTriggeed |= (1 << 4);
+        if(J3Motor.getLimitSwitchBVariable()) limitsTriggeed |= (1 << 5);
+
+        if(J4Motor.getLimitSwitchAVariable()) limitsTriggeed |= (1 << 6);
+        if(J4Motor.getLimitSwitchBVariable()) limitsTriggeed |= (1 << 7);
+
+        if(PitchMotor.getLimitSwitchAVariable()) limitsTriggeed |= (1 << 8);
+        if(PitchMotor.getLimitSwitchBVariable()) limitsTriggeed |= (1 << 9);
+        RoveComm.write(RC_ARMBOARD_LIMITSWITCH_DATA_ID, RC_ARMBOARD_LIMITSWITCH_DATA_COUNT, &limitsTriggeed);
+
+        uint16_t softLimitsTriggeed = 0;
+        if(xMotor.getSoftLimitAVariable()) softLimitsTriggeed |= (1 << 0);
+        if(xMotor.getSoftLimitBVariable()) softLimitsTriggeed |= (1 << 1);
+
+        if(J2Motor.getSoftLimitAVariable()) softLimitsTriggeed |= (1 << 2);
+        if(J2Motor.getSoftLimitBVariable()) softLimitsTriggeed |= (1 << 3);
+
+        if(J3Motor.getSoftLimitAVariable()) softLimitsTriggeed |= (1 << 4);
+        if(J3Motor.getSoftLimitBVariable()) softLimitsTriggeed |= (1 << 5);
+
+        if(J4Motor.getSoftLimitAVariable()) softLimitsTriggeed |= (1 << 6);
+        if(J4Motor.getSoftLimitBVariable()) softLimitsTriggeed |= (1 << 7);
+
+        if(PitchMotor.getSoftLimitAVariable()) softLimitsTriggeed |= (1 << 8);
+        if(PitchMotor.getSoftLimitBVariable()) softLimitsTriggeed |= (1 << 9);
+        RoveComm.write(RC_ARMBOARD_SOFTLIMIT_DATA_ID, RC_ARMBOARD_SOFTLIMIT_DATA_COUNT, &softLimitsTriggeed);
     }
 
     //Add telemetry data as needed
 }
 
-void setSolenoid(bool extend) { digitalWrite(Solenoid, extend? HIGH:LOW); }
-
 void setLaser(bool on) { digitalWrite(LASER,on? HIGH:LOW); }
-
-void updateMotor(RoveMotor &motor, int16_t decipercent, uint8_t button) 
-{
-    if (buttonInput == button) motor.drive((direction ? -900 : 900));
-    else motor.drive(decipercent);
-}
 
 void feedWatchdog() 
 {
     watchdogStatus = 0;
     Watchdog.begin(estop, WATCHDOG_TIMEOUT);
-}
-
-void CalibrateX()
-{
-
-    if(XJoint.atReverseHardLimit()) {
-        XState.overrideReverseSoftLimit(false);
-        XState.overrideForwardSoftLimit(false);
-        XJoint.drive(0);
-        XJoint.Encoder()->setDegrees(0.01);
-        Xcalibrating = false;
-        Xcalibrated = true;
-        XState.setTarget(0);
-        Serial.printf("X Calibrated!");
-        XState.overrideClosedLoop(false);
-    } else {
-        XState.overrideReverseSoftLimit(true);
-        XState.overrideForwardSoftLimit(true);
-        XJoint.drive(-900);
-        Serial.printf("X Calibrating...");
-    }
-
-}
-
-void InitiallySyncTargets() //Also calc xyz
-{
-
-    if (firstLoop)
-    {
-
-        XState.setMotor();
-        J2State.setMotor();
-        J3State.setMotor();
-        J4State.setMotor();
-        PitchState.setMotor();
-        RollState.setMotor();
-
-        XState.setTarget(XState.getMotorAngle());
-        J2State.setTarget(J2State.getMotorAngle());
-        J3State.setTarget(J3State.getMotorAngle());
-        J4State.setTarget(J4State.getMotorAngle());
-        PitchState.setTarget(PitchState.getMotorAngle());
-        RollState.setTarget(RollState.getMotorAngle());
-
-        CalculateForwardKinematics();
-        
-    }
-    firstLoop = false;
-
 }
 
 void UpdateFromRoveComm()
@@ -217,12 +173,26 @@ void UpdateFromRoveComm()
         case RC_ARMBOARD_OPENLOOP_DATA_ID:
         {
             int16_t *packetData = (int16_t*) packet.data;
-            xMotor.openLoopDrive(packetData[0], false); //limit switch comes from basestation
-            J2Motor.openLoopDrive(packetData[1], false);
-            J3Motor.openLoopDrive(packetData[2], false);
-            J4Motor.openLoopDrive(packetData[3], false);
-            PitchMotor.openLoopDrive(packetData[4], false);
-            RollMotor.openLoopDrive(packetData[5], false);
+            // xMotor.openLoopDrive(packetData[0], false); //limit switch comes from basestation
+            // J2Motor.openLoopDrive(packetData[1], false);
+            // J3Motor.openLoopDrive(packetData[2], false);
+            // J4Motor.openLoopDrive(packetData[3], false);
+            // PitchMotor.openLoopDrive(packetData[4], false);
+            // RollMotor.openLoopDrive(packetData[5], false);
+
+            XState.setDutyCycle(packetData[0]);
+            J2State.setDutyCycle(packetData[1]);
+            J3State.setDutyCycle(packetData[2]);
+            J4State.setDutyCycle(packetData[3]);
+            PitchState.setDutyCycle(packetData[4]);
+            RollState.setDutyCycle(packetData[5]);
+
+            XState.setControlMode(0);
+            J2State.setControlMode(0);
+            J3State.setControlMode(0);
+            J4State.setControlMode(0);
+            PitchState.setControlMode(0);
+            RollState.setControlMode(0);
 
             feedWatchdog();
             break;
@@ -230,12 +200,19 @@ void UpdateFromRoveComm()
         case RC_ARMBOARD_TARGETANGLE_DATA_ID:
         {
             float *packetData = (float*) packet.data; //Float not i32?
-            xMotor.setJointAngle(packetData[0], 1, false); //limit switch comes from basestation
-            J2Motor.setJointAngle(packetData[1], 1, false);
-            J3Motor.setJointAngle(packetData[2], 1, false);
-            J4Motor.setJointAngle(packetData[3], 1, false);
-            PitchMotor.setJointAngle(packetData[4], 1, false);
-            RollMotor.setJointAngle(packetData[5], 1, false);
+            XState.setTargetAngle(packetData[0]);
+            J2State.setTargetAngle(packetData[1]);
+            J3State.setTargetAngle(packetData[2]);
+            J4State.setTargetAngle(packetData[3]);
+            PitchState.setTargetAngle(packetData[4]);
+            RollState.setTargetAngle(packetData[5]);
+
+            XState.setControlMode(1);
+            J2State.setControlMode(1);
+            J3State.setControlMode(1);
+            J4State.setControlMode(1);
+            PitchState.setControlMode(1);
+            RollState.setControlMode(1);
 
             feedWatchdog();
             break;
@@ -243,7 +220,8 @@ void UpdateFromRoveComm()
         case RC_ARMBOARD_GRIPPEROPENLOOP_DATA_ID: 
         {
             int16_t *packetData = (int16_t*) packet.data;
-            GripperMotor.drive(packetData[0]);
+            GripperDutyCycle = packetData[0];
+
             feedWatchdog();
             break;
         }
@@ -254,8 +232,8 @@ void UpdateFromRoveComm()
         }
         case RC_ARMBOARD_LINEARSERVO_DATA_ID:
         {
-            uint8_t *packetData = *((uint8_t *)packet.data);
-            LinearServo.write(packetData);
+            uint8_t packetData = *((uint8_t *)packet.data);
+            linearServoTarget = packetData;
             feedWatchdog();
             break;
         }
@@ -294,6 +272,11 @@ void UpdateFromRoveComm()
             //j4- data & (1 << 7)
             //p+ data & (1 << 8)
             //p- data & (1 << 9)
+            XState.sertIgnoreHardLimit(packetData & (1 << 0) || packetData & (1 << 1));
+            J2State.sertIgnoreHardLimit(packetData & (1 << 2) || packetData & (1 << 3));
+            J3State.sertIgnoreHardLimit(packetData & (1 << 4) || packetData & (1 << 5));
+            J4State.sertIgnoreHardLimit(packetData & (1 << 6) ||  packetData & (1 << 7));
+            PitchState.sertIgnoreHardLimit(packetData & (1 << 8) || packetData & (1 << 9));
 
             feedWatchdog();
             break;
@@ -326,7 +309,6 @@ void UpdateFromRoveComm()
         {
             uint16_t packetData = *((uint16_t *)packet.data);
 
-            
             //x+ data & (1 << 0) 
             //x- data & (1 << 1)
             //j2+ data & (1 << 2)
@@ -337,7 +319,20 @@ void UpdateFromRoveComm()
             //j4- data & (1 << 7)
             //p+ data & (1 << 8)
             //p- data & (1 << 9)
+            xMotor.setSoftLimitAVariable(packetData & (1 << 0) ? INT32_MIN : X_REV_LIM);
+            xMotor.setSoftLimitBVariable(packetData & (1 << 1) ? INT32_MAX : X_FWD_LIM);
 
+            J2Motor.setSoftLimitAVariable(packetData & (1 << 2) ? INT32_MIN : J2_REV_LIM);
+            J2Motor.setSoftLimitBVariable(packetData & (1 << 3) ? INT32_MAX : J2_FWD_LIM);
+
+            J3Motor.setSoftLimitAVariable(packetData & (1 << 4) ? INT32_MIN : J3_REV_LIM);
+            J3Motor.setSoftLimitBVariable(packetData & (1 << 5) ? INT32_MAX : J3_FWD_LIM);
+
+            J4Motor.setSoftLimitAVariable(packetData & (1 << 6) ? INT32_MIN : J4_REV_LIM);
+            J4Motor.setSoftLimitBVariable(packetData & (1 << 7) ? INT32_MAX : J4_FWD_LIM);
+
+            PitchMotor.setSoftLimitAVariable(packetData & (1 << 8) ? INT32_MIN : PITCH_REV_LIM);
+            PitchMotor.setSoftLimitBVariable(packetData & (1 << 9) ? INT32_MAX : PITCH_FWD_LIM);
 
             feedWatchdog();
             break;
@@ -386,47 +381,34 @@ void UpdateFromRoveComm()
 
 }
 
-void UpdateArm() //Only used for buttons
+void UpdateArm()
 {
-
-    // underMode = false; //J3State.getMotorAngle() > 0;
-    if (J3State.getMotorAngle() >= 0) IKMode = false; // dont put it out of IK mode if pos, IK will throw out invalid solution bc of IK J3 soft limits (so remove this line)
-
     direction = digitalRead(DIR_SW);
-    buttonInput = (digitalRead(B_ENC_3) << 3) | (digitalRead(B_ENC_2) << 2) | (digitalRead(B_ENC_1) << 1) | (digitalRead(B_ENC_0) << 0);
 
-    if (Xcalibrating || buttonInput) IKMode = false;
+    XState.updateMotor(digitalRead(BTN_1), direction);
+    J2State.updateMotor(digitalRead(BTN_2), direction);
+    J3State.updateMotor(digitalRead(BTN_3), direction);
+    J4State.updateMotor(digitalRead(BTN_4), direction);
+    PitchState.updateMotor(digitalRead(BTN_5), direction);
+    RollState.updateMotor(digitalRead(BTN_6), direction);
 
-    // Motor Outputs
-    if (!Xcalibrated) XState.overrideClosedLoop(true);
-    if (Xcalibrating) CalibrateX();
-    else XState.updateJoint(buttonInput, direction);
+    if(digitalRead(BTN_7)) GripperMotor.openLoopDrive(direction ? -900 : 900, false);
+    else GripperMotor.openLoopDrive(GripperDutyCycle, false);
 
-    J2State.updateJoint(buttonInput, direction);
-    J3State.updateJoint(buttonInput, direction);
-
-    J4State.updateJoint(buttonInput, direction);
-    PitchState.updateJoint(buttonInput, direction);
-    RollState.updateJoint(buttonInput, direction);
-
-    updateMotor(Gripper,GripperDecipercent,BTN_GRIPPER);
-    updateMotor(Spare,SpareDecipercent,BTN_SPARE);
-
-    // Solenoid
-    if (buttonInput == BTN_SOL) setSolenoid(true);
-    else setSolenoid(extendSolenoid);
+    // Linear Servo
+    if (digitalRead(BTN_LIN_SERVO)) LinearServo.write(direction ? 180 : 0);
+    else LinearServo.write(linearServoTarget);
 
     // Laser
-    if (buttonInput == BTN_LAS) setLaser(true);
+    if (digitalRead(BTN_LASER)) setLaser(true);
     else setLaser(laserOn);
-
 }
 
 void receiveCANMessages() {
     CANMessage receivedMessage;
     CAN_CHANNEL.receive(receivedMessage);
 
-    switch (receivedMessage.id()) {
+    switch (receivedMessage.id) {
         case X_ID:
             xMotor.readIncomingMessage(receivedMessage);
             break;
@@ -451,118 +433,4 @@ void receiveCANMessages() {
         default:
             break;
     }
-}
-
-void CalculateInverseKinematics() 
-{
-    float q1, q2, q3, qP;
-
-	//Calculate target angles using IK
-	q1 = CartesianCoords.x;
-	q3 = RAD2DEG*acos((pow(CartesianCoords.z,2)+pow(CartesianCoords.y,2)-pow(J2_LENGTH,2)-pow(J3_LENGTH,2))/(2*J2_LENGTH*J3_LENGTH));
-
-	// if (underMode) q2 = RAD2DEG*(atan2(CartesianCoords.y, CartesianCoords.z) - atan2(J3_LENGTH*sin(q3*DEG2RAD),J2_LENGTH+(J3_LENGTH*cos(q3*DEG2RAD))));
-	// else q2 = RAD2DEG*(atan2(CartesianCoords.y, CartesianCoords.z) + atan2(J3_LENGTH*sin(q3*DEG2RAD),J2_LENGTH+(J3_LENGTH*cos(q3*DEG2RAD))));
-	
-    q2 = RAD2DEG*(atan2(CartesianCoords.y, CartesianCoords.z) + atan2(J3_LENGTH*sin(q3*DEG2RAD),J2_LENGTH+(J3_LENGTH*cos(q3*DEG2RAD))));
-
-	// q3 = underMode? q3 : -q3;
-	q3 = -q3;
-
-    qP = PitchControl - (q2 + q3) * cosf(J4State.getMotorAngle()*DEG2RAD);
-    qP = PitchState.bound360Degrees(qP);
-
-	// Check if calculated angle is invalid and limit movement
-	if (!(XState.isInSafeZone(q1) && J2State.isInSafeZone(q2) && J3State.isInSafeZone(q3) && PitchState.isInSafeZone(qP) && Xcalibrated)) {
-        CalculateForwardKinematics();
-        return;
-    }
-
-    XState.setTarget(q1);
-    J2State.setTarget(q2);
-    J3State.setTarget(q3);
-    PitchState.setTarget(qP);
-
-}
-
-void UpdateLimits()
-{
-    if (Xcalibrated)
-    {
-        //Gimbal Masts
-        if ((XState.getMotorAngle() < 2.0) && (J2State.getMotorAngle() < 92.0)  && (J2State.getMotorAngle() > 90.0)) {
-            J2State.setForwardLimit(J2State.getMotorAngle());
-            XState.setForwardLimit(X_FWD_LIM);
-            XState.setReverseLimit(X_REV_LIM);
-        } else if ((XState.getMotorAngle() > 6.0) && (J2State.getMotorAngle() < 92.0) && (J2State.getMotorAngle() > 90.0)) {
-            J2State.setForwardLimit(J2State.getMotorAngle());
-            XState.setForwardLimit(X_FWD_LIM);
-            XState.setReverseLimit(X_REV_LIM);
-        } else if ((J2State.getMotorAngle() > 90.0) && (XState.getMotorAngle() < 2.0) && (XState.getMotorAngle() > 1.8)) {
-            XState.setReverseLimit(XState.getMotorAngle());
-            J2State.setForwardLimit(J2_FWD_LIM);
-        } else if ((J2State.getMotorAngle() > 90.0) && (XState.getMotorAngle() > 6.0) && (XState.getMotorAngle() < 6.2)) {
-            XState.setForwardLimit(XState.getMotorAngle());
-            J2State.setForwardLimit(J2_FWD_LIM);
-        } else {
-            XState.setForwardLimit(X_FWD_LIM);
-            XState.setReverseLimit(X_REV_LIM);
-            J2State.setForwardLimit(J2_FWD_LIM);
-        }
-
-        // BUG: THESE LIMITS OVERRIDE GIMBAL MAST LIMITS, chase doesnt need these
-        //Wheels
-        // float yPos = (J2_LENGTH * sin(J2State.getMotorAngle()*DEG2RAD)) + (J3_LENGTH * sin((J3State.getMotorAngle() + J2State.getMotorAngle())*DEG2RAD));
-        // if ((yPos < -100.0) && (XState.getMotorAngle() < 2.0) && (XState.getMotorAngle() > 1.8))
-        // {
-        //     XState.setReverseLimit(XState.getMotorAngle());
-        // }
-        // else if ((yPos < -100.0) && (XState.getMotorAngle() > 6.0) && (XState.getMotorAngle() < 6.2))
-        // {
-        //     XState.setForwardLimit(XState.getMotorAngle());
-        // }
-        // else
-        // {
-        //     XState.setForwardLimit(X_FWD_LIM);
-        //     XState.setReverseLimit(X_REV_LIM);
-        // }
-
-    }
-
-    if (IKMode)
-    {
-        // if (underMode) {
-        //     J3State.setForwardLimit(J3_FWD_LIM);
-        //     J3State.setReverseLimit(J3_MID_LIM);
-        // } else {
-        //     J3State.setForwardLimit(-J3_MID_LIM);
-        //     J3State.setReverseLimit(J3_REV_LIM);
-        // }
-
-        J3State.setForwardLimit(-J3_MID_LIM);
-        J3State.setReverseLimit(J3_REV_LIM);
-    } else {
-        J3State.setForwardLimit(J3_FWD_LIM);
-        J3State.setReverseLimit(J3_REV_LIM);
-    }
-
-    if ((PitchState.getMotorAngle() < 270) && (PitchState.getMotorAngle() > 90)) {
-        PitchJoint.overrideForwardHardLimit(true);
-        PitchJoint.overrideReverseHardLimit(false);
-    } else {
-        PitchJoint.overrideForwardHardLimit(false);
-        PitchJoint.overrideReverseHardLimit(true);
-    }
-
-}
-
-void CalculateForwardKinematics()
-{
-
-    CartesianCoords = {0,0,0};
-	CartesianCoords = CartesianCoords * (Translate(0, 0, J3_LENGTH) * Rotate(J3State.getMotorAngle()*DEG2RAD, 0, 0) * Translate(0, 0, J2_LENGTH) * Rotate(J2State.getMotorAngle()*DEG2RAD, 0, 0) * Translate(XState.getMotorAngle(), 0, 0));
-    CartesianCoords.y *= -1;
-
-    PitchControl = PitchState.getMotorAngle() + ((J2State.getMotorAngle() + J3State.getMotorAngle()) * cosf(J4State.getMotorAngle()*DEG2RAD));
-
 }

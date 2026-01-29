@@ -4,8 +4,6 @@
 //2026 DEV
 // IP: 192.168.2.107
 
-//Servos???????
-
 #include "PinAssignments.h"
 
 #include <RoveComm.h>
@@ -16,7 +14,7 @@
 #include <cstdint>
 
 #include "RoveMatrix.h"
-#include "JointState.h"
+#include "MotorState.h"
 
 // RoveComm
 RoveCommEthernet RoveComm;
@@ -45,14 +43,20 @@ bool telemetryOverride = false;
 #define GRIPPER_ID  7
 
 // Motor
-Smoco xMotor       (CAN_CHANNEL, X_ID);
-Smoco J2Motor      (CAN_CHANNEL, J2_ID);
-Smoco J3Motor      (CAN_CHANNEL, J3_ID);
-Smoco J4Motor      (CAN_CHANNEL, J4_ID);
-Smoco PitchMotor   (CAN_CHANNEL, PITCH_ID);
-Smoco RollMotor    (CAN_CHANNEL, ROLL_ID);
-Smoco GripperMotor (CAN_CHANNEL, GRIPPER_ID);
-Smoco SpareMotor   (CAN_CHANNEL, 8);
+Smoco xMotor       (&CAN_CHANNEL, X_ID);
+Smoco J2Motor      (&CAN_CHANNEL, J2_ID);
+Smoco J3Motor      (&CAN_CHANNEL, J3_ID);
+Smoco J4Motor      (&CAN_CHANNEL, J4_ID);
+Smoco PitchMotor   (&CAN_CHANNEL, PITCH_ID);
+Smoco RollMotor    (&CAN_CHANNEL, ROLL_ID);
+Smoco GripperMotor (&CAN_CHANNEL, GRIPPER_ID);
+
+MotorState XState(&xMotor, BTN_1);
+MotorState J2State(&J2Motor, BTN_2);
+MotorState J3State(&J3Motor, BTN_3);
+MotorState J4State(&J4Motor, BTN_4);
+MotorState PitchState(&PitchMotor, BTN_5);
+MotorState RollState(&RollMotor, BTN_6);
 
 // Servos
 Servo LinearServo;
@@ -92,15 +96,13 @@ Vector CartesianCoords = {0,0,0};
 Vector GripperPosition = {0,0,0};
 
 // Control variables
-int16_t GripperDecipercent = 0;
-int16_t SpareDecipercent = 0; 
+int16_t GripperDutyCycle = 0;
+int8_t linearServoTarget = 0;
 
 bool direction = false;
-uint8_t buttonInput = 0;
 bool laserOn = false;
 void setLaser(bool on);
 bool extendSolenoid = false;
-void setSolenoid(bool extend);
 
 bool Xcalibrating = false;
 bool Xcalibrated = false;
@@ -112,11 +114,7 @@ bool IKMode = false;
 void estop();
 void telemetry();
 void feedWatchdog();
-void updateMotor(RoveMotor &motor, int16_t decipercent, uint8_t button);
-void setSolenoid(bool extend);
 void setLaser(bool on);
-void CalibrateX();
-void InitiallySyncTargets();
 void UpdateFromRoveComm();
 void UpdateArm();
 void receiveCANMessages();
