@@ -8,7 +8,7 @@ void MotorState::updateMotor(uint8_t buttonInput, bool direction) {
     if(buttonInput) {
         m_motor->openLoopDrive(direction ? -900 : 900, m_ignoreHardLimit);
     } 
-    else if(m_currentMode == CLOSED_LOOP) {
+    else if(m_currentMode == TARGET_ANGLE) {
         m_motor->setJointAngle(targetAngle, 1, m_ignoreHardLimit);
     }
     else if(m_currentMode== OPEN_LOOP) {
