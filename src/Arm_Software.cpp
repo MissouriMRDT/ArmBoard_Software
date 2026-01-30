@@ -72,13 +72,9 @@ void setup()
 
 void loop() 
 {   
-    /*
-    feedWatchdog(); //REMOVE
-    InitiallySyncTargets();
-    UpdateLimits();
     UpdateFromRoveComm();
     UpdateArm();
-    */
+    receiveCANMessages();
 }
 
 void estop() 
@@ -87,13 +83,13 @@ void estop()
     {
         watchdogStatus = 1;
 
-        xMotor.openLoopDrive(0, false);    
-        J2Motor.openLoopDrive(0, false);
-        J3Motor.openLoopDrive(0, false);
-        J4Motor.openLoopDrive(0, false);
-        PitchMotor.openLoopDrive(0, false);
-        RollMotor.openLoopDrive(0, false);
-        GripperMotor.openLoopDrive(0, false);
+        xMotor.stopAndReset();    
+        J2Motor.stopAndReset();
+        J3Motor.stopAndReset();
+        J4Motor.stopAndReset();
+        PitchMotor.stopAndReset();
+        RollMotor.stopAndReset();
+        GripperMotor.stopAndReset();
 
         IKMode = false;
 
@@ -415,7 +411,7 @@ void receiveCANMessages() {
     CANMessage receivedMessage;
     CAN_CHANNEL.receive(receivedMessage);
 
-    switch (receivedMessage.id) {
+    switch (receivedMessage.id >> 8) {
         case X_ID:
             xMotor.readIncomingMessage(receivedMessage);
             break;
