@@ -62,6 +62,7 @@ MotorState RollState(&RollMotor, BTN_6);
 Servo LinearServo;
 Servo CameraOnePan, CameraOneTilt;
 Servo CameraTwoPan, CameraTwoTilt;
+Servo CacheServo;
 
 //Limits
 #define X_REV_LIM       0

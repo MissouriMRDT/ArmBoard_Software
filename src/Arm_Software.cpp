@@ -30,6 +30,7 @@ void setup()
     CameraOneTilt.attach(SERVO_2);
     CameraTwoPan.attach(SERVO_3);
     CameraTwoTilt.attach(SERVO_4);
+    // CacheServo.attach(nullptr); NOT RIGHT NUMBER
 
     ACAN_T4_Settings settings(125000); 
 
