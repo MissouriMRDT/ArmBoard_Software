@@ -273,11 +273,11 @@ void UpdateFromRoveComm()
             //j4- data & (1 << 7)
             //p+ data & (1 << 8)
             //p- data & (1 << 9)
-            XState.sertIgnoreHardLimit(packetData & (1 << 0) || packetData & (1 << 1));
-            J2State.sertIgnoreHardLimit(packetData & (1 << 2) || packetData & (1 << 3));
-            J3State.sertIgnoreHardLimit(packetData & (1 << 4) || packetData & (1 << 5));
-            J4State.sertIgnoreHardLimit(packetData & (1 << 6) ||  packetData & (1 << 7));
-            PitchState.sertIgnoreHardLimit(packetData & (1 << 8) || packetData & (1 << 9));
+            XState.setIgnoreHardLimit(packetData & (1 << 0) || packetData & (1 << 1));
+            J2State.setIgnoreHardLimit(packetData & (1 << 2) || packetData & (1 << 3));
+            J3State.setIgnoreHardLimit(packetData & (1 << 4) || packetData & (1 << 5));
+            J4State.setIgnoreHardLimit(packetData & (1 << 6) ||  packetData & (1 << 7));
+            PitchState.setIgnoreHardLimit(packetData & (1 << 8) || packetData & (1 << 9));
 
             feedWatchdog();
             break;
@@ -292,6 +292,12 @@ void UpdateFromRoveComm()
             //j4 data & (1 << 3)
             //p data & (1 << 4)
             //r data & (1 << 5)
+            XState.setClosedLoopOverride(packetData & (1 << 0));
+            J2State.setClosedLoopOverride(packetData & (1 << 1));
+            J3State.setClosedLoopOverride(packetData & (1 << 2));
+            J4State.setClosedLoopOverride(packetData & (1 << 3));
+            PitchState.setClosedLoopOverride(packetData & (1 << 4));
+            RollState.setClosedLoopOverride(packetData & (1 << 5));
 
             feedWatchdog();
             break;

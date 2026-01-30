@@ -1,6 +1,10 @@
 #include <MotorState.h>
 
 void MotorState::updateMotor(uint8_t buttonInput, bool direction) {
+    if(closedLoopOverride) {
+        m_currentMode = OPEN_LOOP;
+    }
+
     if(buttonInput) {
         m_motor->openLoopDrive(direction ? -900 : 900, m_ignoreHardLimit);
     } 
