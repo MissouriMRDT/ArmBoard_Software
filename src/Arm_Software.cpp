@@ -119,39 +119,39 @@ void telemetry()
         // Serial.print(positions[6]);
         RoveComm.write(RC_ARMBOARD_POSITION_DATA_ID, RC_ARMBOARD_POSITION_DATA_COUNT, positions);
 
-        uint16_t limitsTriggeed = 0;
-        if(xMotor.getLimitSwitchAVariable()) limitsTriggeed |= (1 << 0);
-        if(xMotor.getLimitSwitchBVariable()) limitsTriggeed |= (1 << 1);
+        uint16_t limitsTriggered = 0;
+        if(xMotor.getLimitSwitchAVariable()) limitsTriggered |= (1 << 0);
+        if(xMotor.getLimitSwitchBVariable()) limitsTriggered |= (1 << 1);
 
-        if(J2Motor.getLimitSwitchAVariable()) limitsTriggeed |= (1 << 2);
-        if(J2Motor.getLimitSwitchBVariable()) limitsTriggeed |= (1 << 3);
+        if(J2Motor.getLimitSwitchAVariable()) limitsTriggered |= (1 << 2);
+        if(J2Motor.getLimitSwitchBVariable()) limitsTriggered |= (1 << 3);
 
-        if(J3Motor.getLimitSwitchAVariable()) limitsTriggeed |= (1 << 4);
-        if(J3Motor.getLimitSwitchBVariable()) limitsTriggeed |= (1 << 5);
+        if(J3Motor.getLimitSwitchAVariable()) limitsTriggered |= (1 << 4);
+        if(J3Motor.getLimitSwitchBVariable()) limitsTriggered |= (1 << 5);
 
-        if(J4Motor.getLimitSwitchAVariable()) limitsTriggeed |= (1 << 6);
-        if(J4Motor.getLimitSwitchBVariable()) limitsTriggeed |= (1 << 7);
+        if(J4Motor.getLimitSwitchAVariable()) limitsTriggered |= (1 << 6);
+        if(J4Motor.getLimitSwitchBVariable()) limitsTriggered |= (1 << 7);
 
-        if(PitchMotor.getLimitSwitchAVariable()) limitsTriggeed |= (1 << 8);
-        if(PitchMotor.getLimitSwitchBVariable()) limitsTriggeed |= (1 << 9);
-        RoveComm.write(RC_ARMBOARD_LIMITSWITCH_DATA_ID, RC_ARMBOARD_LIMITSWITCH_DATA_COUNT, &limitsTriggeed);
+        if(PitchMotor.getLimitSwitchAVariable()) limitsTriggered |= (1 << 8);
+        if(PitchMotor.getLimitSwitchBVariable()) limitsTriggered |= (1 << 9);
+        RoveComm.write(RC_ARMBOARD_LIMITSWITCH_DATA_ID, RC_ARMBOARD_LIMITSWITCH_DATA_COUNT, &limitsTriggered);
 
-        uint16_t softLimitsTriggeed = 0;
-        if(xMotor.getSoftLimitAVariable()) softLimitsTriggeed |= (1 << 0);
-        if(xMotor.getSoftLimitBVariable()) softLimitsTriggeed |= (1 << 1);
+        uint16_t softLimitsTriggered = 0;
+        if(xMotor.getSoftLimitAVariable()) softLimitsTriggered |= (1 << 0);
+        if(xMotor.getSoftLimitBVariable()) softLimitsTriggered |= (1 << 1);
 
-        if(J2Motor.getSoftLimitAVariable()) softLimitsTriggeed |= (1 << 2);
-        if(J2Motor.getSoftLimitBVariable()) softLimitsTriggeed |= (1 << 3);
+        if(J2Motor.getSoftLimitAVariable()) softLimitsTriggered |= (1 << 2);
+        if(J2Motor.getSoftLimitBVariable()) softLimitsTriggered |= (1 << 3);
 
-        if(J3Motor.getSoftLimitAVariable()) softLimitsTriggeed |= (1 << 4);
-        if(J3Motor.getSoftLimitBVariable()) softLimitsTriggeed |= (1 << 5);
+        if(J3Motor.getSoftLimitAVariable()) softLimitsTriggered |= (1 << 4);
+        if(J3Motor.getSoftLimitBVariable()) softLimitsTriggered |= (1 << 5);
 
-        if(J4Motor.getSoftLimitAVariable()) softLimitsTriggeed |= (1 << 6);
-        if(J4Motor.getSoftLimitBVariable()) softLimitsTriggeed |= (1 << 7);
+        if(J4Motor.getSoftLimitAVariable()) softLimitsTriggered |= (1 << 6);
+        if(J4Motor.getSoftLimitBVariable()) softLimitsTriggered |= (1 << 7);
 
-        if(PitchMotor.getSoftLimitAVariable()) softLimitsTriggeed |= (1 << 8);
-        if(PitchMotor.getSoftLimitBVariable()) softLimitsTriggeed |= (1 << 9);
-        RoveComm.write(RC_ARMBOARD_SOFTLIMIT_DATA_ID, RC_ARMBOARD_SOFTLIMIT_DATA_COUNT, &softLimitsTriggeed);
+        if(PitchMotor.getSoftLimitAVariable()) softLimitsTriggered |= (1 << 8);
+        if(PitchMotor.getSoftLimitBVariable()) softLimitsTriggered |= (1 << 9);
+        RoveComm.write(RC_ARMBOARD_SOFTLIMIT_DATA_ID, RC_ARMBOARD_SOFTLIMIT_DATA_COUNT, &softLimitsTriggered);
     }
 
     //Add telemetry data as needed
