@@ -103,50 +103,50 @@ void telemetry()
     if(!telemetryOverride) {
 
         float positions[7] = {
-            xMotor.getAngleVariable(),
-            J2Motor.getAngleVariable(),
-            J3Motor.getAngleVariable(),
-            J4Motor.getAngleVariable(),
-            PitchMotor.getAngleVariable(),
-            RollMotor.getAngleVariable(),
-            (PitchMotor.getAngleVariable() * cosf(J4Motor.getAngleVariable()*DEG2RAD)) + (J2Motor.getAngleVariable() + J3Motor.getAngleVariable())
+            xMotor.m_position,
+            J2Motor.m_position,
+            J3Motor.m_position,
+            J4Motor.m_position,
+            PitchMotor.m_position,
+            RollMotor.m_position,
+            (PitchMotor.m_position * cosf(J4Motor.m_position*DEG2RAD)) + (J2Motor.m_position + J3Motor.m_position)
         };
         // Serial.println();
         // Serial.print(positions[6]);
         RoveComm.write(RC_ARMBOARD_POSITION_DATA_ID, RC_ARMBOARD_POSITION_DATA_COUNT, positions);
 
         uint16_t limitsTriggered = 0;
-        if(xMotor.getLimitSwitchAVariable()) limitsTriggered |= (1 << 0);
-        if(xMotor.getLimitSwitchBVariable()) limitsTriggered |= (1 << 1);
+        if(xMotor.m_limitSwitchA) limitsTriggered |= (1 << 0);
+        if(xMotor.m_limitSwitchB) limitsTriggered |= (1 << 1);
 
-        if(J2Motor.getLimitSwitchAVariable()) limitsTriggered |= (1 << 2);
-        if(J2Motor.getLimitSwitchBVariable()) limitsTriggered |= (1 << 3);
+        if(J2Motor.m_limitSwitchA) limitsTriggered |= (1 << 2);
+        if(J2Motor.m_limitSwitchB) limitsTriggered |= (1 << 3);
 
-        if(J3Motor.getLimitSwitchAVariable()) limitsTriggered |= (1 << 4);
-        if(J3Motor.getLimitSwitchBVariable()) limitsTriggered |= (1 << 5);
+        if(J3Motor.m_limitSwitchA) limitsTriggered |= (1 << 4);
+        if(J3Motor.m_limitSwitchB) limitsTriggered |= (1 << 5);
 
-        if(J4Motor.getLimitSwitchAVariable()) limitsTriggered |= (1 << 6);
-        if(J4Motor.getLimitSwitchBVariable()) limitsTriggered |= (1 << 7);
+        if(J4Motor.m_limitSwitchA) limitsTriggered |= (1 << 6);
+        if(J4Motor.m_limitSwitchB) limitsTriggered |= (1 << 7);
 
-        if(PitchMotor.getLimitSwitchAVariable()) limitsTriggered |= (1 << 8);
-        if(PitchMotor.getLimitSwitchBVariable()) limitsTriggered |= (1 << 9);
+        if(PitchMotor.m_limitSwitchA) limitsTriggered |= (1 << 8);
+        if(PitchMotor.m_limitSwitchB) limitsTriggered |= (1 << 9);
         RoveComm.write(RC_ARMBOARD_LIMITSWITCH_DATA_ID, RC_ARMBOARD_LIMITSWITCH_DATA_COUNT, &limitsTriggered);
 
         uint16_t softLimitsTriggered = 0;
-        if(xMotor.getSoftLimitAVariable()) softLimitsTriggered |= (1 << 0);
-        if(xMotor.getSoftLimitBVariable()) softLimitsTriggered |= (1 << 1);
+        if(xMotor.m_softLimitA) softLimitsTriggered |= (1 << 0);
+        if(xMotor.m_softLimitB) softLimitsTriggered |= (1 << 1);
 
-        if(J2Motor.getSoftLimitAVariable()) softLimitsTriggered |= (1 << 2);
-        if(J2Motor.getSoftLimitBVariable()) softLimitsTriggered |= (1 << 3);
+        if(J2Motor.m_softLimitA) softLimitsTriggered |= (1 << 2);
+        if(J2Motor.m_softLimitB) softLimitsTriggered |= (1 << 3);
 
-        if(J3Motor.getSoftLimitAVariable()) softLimitsTriggered |= (1 << 4);
-        if(J3Motor.getSoftLimitBVariable()) softLimitsTriggered |= (1 << 5);
+        if(J3Motor.m_softLimitA) softLimitsTriggered |= (1 << 4);
+        if(J3Motor.m_softLimitB) softLimitsTriggered |= (1 << 5);
 
-        if(J4Motor.getSoftLimitAVariable()) softLimitsTriggered |= (1 << 6);
-        if(J4Motor.getSoftLimitBVariable()) softLimitsTriggered |= (1 << 7);
+        if(J4Motor.m_softLimitA) softLimitsTriggered |= (1 << 6);
+        if(J4Motor.m_softLimitB) softLimitsTriggered |= (1 << 7);
 
-        if(PitchMotor.getSoftLimitAVariable()) softLimitsTriggered |= (1 << 8);
-        if(PitchMotor.getSoftLimitBVariable()) softLimitsTriggered |= (1 << 9);
+        if(PitchMotor.m_softLimitA) softLimitsTriggered |= (1 << 8);
+        if(PitchMotor.m_softLimitB) softLimitsTriggered |= (1 << 9);
         RoveComm.write(RC_ARMBOARD_SOFTLIMIT_DATA_ID, RC_ARMBOARD_SOFTLIMIT_DATA_COUNT, &softLimitsTriggered);
     }
 
@@ -170,12 +170,12 @@ void UpdateFromRoveComm()
         case RC_ARMBOARD_OPENLOOP_DATA_ID:
         {
             int16_t *packetData = (int16_t*) packet.data;
-            // xMotor.openLoopDrive(packetData[0], false); //limit switch comes from basestation
-            // J2Motor.openLoopDrive(packetData[1], false);
-            // J3Motor.openLoopDrive(packetData[2], false);
-            // J4Motor.openLoopDrive(packetData[3], false);
-            // PitchMotor.openLoopDrive(packetData[4], false);
-            // RollMotor.openLoopDrive(packetData[5], false);
+            // xMotor.driveOpenLoop((packetData[0], false); //limit switch comes from basestation
+            // J2Motor.driveOpenLoop((packetData[1], false);
+            // J3Motor.driveOpenLoop((packetData[2], false);
+            // J4Motor.driveOpenLoop((packetData[3], false);
+            // PitchMotor.driveOpenLoop((packetData[4], false);
+            // RollMotor.driveOpenLoop((packetData[5], false);
 
             XState.setDutyCycle(packetData[0]);
             J2State.setDutyCycle(packetData[1]);
@@ -322,20 +322,20 @@ void UpdateFromRoveComm()
             //j4- data & (1 << 7)
             //p+ data & (1 << 8)
             //p- data & (1 << 9)
-            xMotor.setSoftLimitAVariable(packetData & (1 << 0) ? INT32_MIN : X_REV_LIM);
-            xMotor.setSoftLimitBVariable(packetData & (1 << 1) ? INT32_MAX : X_FWD_LIM);
+            xMotor.m_softLimitA = (packetData & (1 << 0) ? INT32_MIN : X_REV_LIM);
+            xMotor.m_softLimitB = (packetData & (1 << 1) ? INT32_MAX : X_FWD_LIM);
 
-            J2Motor.setSoftLimitAVariable(packetData & (1 << 2) ? INT32_MIN : J2_REV_LIM);
-            J2Motor.setSoftLimitBVariable(packetData & (1 << 3) ? INT32_MAX : J2_FWD_LIM);
+            J2Motor.m_softLimitA = (packetData & (1 << 2) ? INT32_MIN : J2_REV_LIM);
+            J2Motor.m_softLimitB = (packetData & (1 << 3) ? INT32_MAX : J2_FWD_LIM);
 
-            J3Motor.setSoftLimitAVariable(packetData & (1 << 4) ? INT32_MIN : J3_REV_LIM);
-            J3Motor.setSoftLimitBVariable(packetData & (1 << 5) ? INT32_MAX : J3_FWD_LIM);
+            J3Motor.m_softLimitA = (packetData & (1 << 4) ? INT32_MIN : J3_REV_LIM);
+            J3Motor.m_softLimitB = (packetData & (1 << 5) ? INT32_MAX : J3_FWD_LIM);
 
-            J4Motor.setSoftLimitAVariable(packetData & (1 << 6) ? INT32_MIN : J4_REV_LIM);
-            J4Motor.setSoftLimitBVariable(packetData & (1 << 7) ? INT32_MAX : J4_FWD_LIM);
+            J4Motor.m_softLimitA = (packetData & (1 << 6) ? INT32_MIN : J4_REV_LIM);
+            J4Motor.m_softLimitB = (packetData & (1 << 7) ? INT32_MAX : J4_FWD_LIM);
 
-            PitchMotor.setSoftLimitAVariable(packetData & (1 << 8) ? INT32_MIN : PITCH_REV_LIM);
-            PitchMotor.setSoftLimitBVariable(packetData & (1 << 9) ? INT32_MAX : PITCH_FWD_LIM);
+            PitchMotor.m_softLimitA = (packetData & (1 << 8) ? INT32_MIN : PITCH_REV_LIM);
+            PitchMotor.m_softLimitB = (packetData & (1 << 9) ? INT32_MAX : PITCH_FWD_LIM);
 
             feedWatchdog();
             break;
@@ -395,8 +395,8 @@ void UpdateArm()
     PitchState.updateMotor(digitalRead(BTN_5), direction);
     RollState.updateMotor(digitalRead(BTN_6), direction);
 
-    if(digitalRead(BTN_7)) GripperMotor.openLoopDrive(direction ? -900 : 900, false);
-    else GripperMotor.openLoopDrive(GripperDutyCycle, false);
+    if(digitalRead(BTN_7)) GripperMotor.driveOpenLoop(direction ? -900 : 900, false);
+    else GripperMotor.driveOpenLoop(GripperDutyCycle, false);
 
     // Linear Servo
     if (digitalRead(BTN_LIN_SERVO)) LinearServo.write(direction ? 180 : 0);
@@ -413,25 +413,25 @@ void receiveCANMessages() {
 
     switch (receivedMessage.id >> 8) {
         case X_ID:
-            xMotor.readIncomingMessage(receivedMessage);
+            xMotor.sync(receivedMessage);
             break;
         case J2_ID:
-            J2Motor.readIncomingMessage(receivedMessage);
+            J2Motor.sync(receivedMessage);
             break;
         case J3_ID:
-            J3Motor.readIncomingMessage(receivedMessage);
+            J3Motor.sync(receivedMessage);
             break;
         case J4_ID:
-            J4Motor.readIncomingMessage(receivedMessage);
+            J4Motor.sync(receivedMessage);
             break;
         case PITCH_ID:
-            PitchMotor.readIncomingMessage(receivedMessage);
+            PitchMotor.sync(receivedMessage);
             break;
         case ROLL_ID:
-            RollMotor.readIncomingMessage(receivedMessage);
+            RollMotor.sync(receivedMessage);
             break;
         case GRIPPER_ID:
-            GripperMotor.readIncomingMessage(receivedMessage);
+            GripperMotor.sync(receivedMessage);
             break;
         default:
             break;

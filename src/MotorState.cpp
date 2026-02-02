@@ -6,15 +6,15 @@ void MotorState::updateMotor(uint8_t buttonInput, bool direction) {
     }
 
     if(buttonInput) {
-        m_motor->openLoopDrive(direction ? -900 : 900, m_ignoreHardLimit);
+        m_motor->driveOpenLoop(direction ? -900 : 900, m_ignoreHardLimit);
     } 
     else if(m_currentMode == TARGET_ANGLE) {
-        m_motor->setJointAngle(targetAngle, 1, m_ignoreHardLimit);
+        m_motor->driveTargetPosition(targetAngle, 1, m_ignoreHardLimit);
     }
     else if(m_currentMode== OPEN_LOOP) {
-        m_motor->openLoopDrive(m_dutyCycle, m_ignoreHardLimit);
+        m_motor->driveOpenLoop(m_dutyCycle, m_ignoreHardLimit);
     }
     else {
-        m_motor->openLoopDrive(0);
+        m_motor->driveOpenLoop(0);
     }
 }
