@@ -133,20 +133,20 @@ void telemetry()
         RoveComm.write(RC_ARMBOARD_LIMITSWITCH_DATA_ID, RC_ARMBOARD_LIMITSWITCH_DATA_COUNT, &limitsTriggered);
 
         uint16_t softLimitsTriggered = 0;
-        if(xMotor.m_softLimitA) softLimitsTriggered |= (1 << 0);
-        if(xMotor.m_softLimitB) softLimitsTriggered |= (1 << 1);
+        if(xMotor.m_softLimitAPosition) softLimitsTriggered |= (1 << 0);
+        if(xMotor.m_softLimitBPosition) softLimitsTriggered |= (1 << 1);
 
-        if(J2Motor.m_softLimitA) softLimitsTriggered |= (1 << 2);
-        if(J2Motor.m_softLimitB) softLimitsTriggered |= (1 << 3);
+        if(J2Motor.m_softLimitAPosition) softLimitsTriggered |= (1 << 2);
+        if(J2Motor.m_softLimitBPosition) softLimitsTriggered |= (1 << 3);
 
-        if(J3Motor.m_softLimitA) softLimitsTriggered |= (1 << 4);
-        if(J3Motor.m_softLimitB) softLimitsTriggered |= (1 << 5);
+        if(J3Motor.m_softLimitAPosition) softLimitsTriggered |= (1 << 4);
+        if(J3Motor.m_softLimitBPosition) softLimitsTriggered |= (1 << 5);
 
-        if(J4Motor.m_softLimitA) softLimitsTriggered |= (1 << 6);
-        if(J4Motor.m_softLimitB) softLimitsTriggered |= (1 << 7);
+        if(J4Motor.m_softLimitAPosition) softLimitsTriggered |= (1 << 6);
+        if(J4Motor.m_softLimitBPosition) softLimitsTriggered |= (1 << 7);
 
-        if(PitchMotor.m_softLimitA) softLimitsTriggered |= (1 << 8);
-        if(PitchMotor.m_softLimitB) softLimitsTriggered |= (1 << 9);
+        if(PitchMotor.m_softLimitAPosition) softLimitsTriggered |= (1 << 8);
+        if(PitchMotor.m_softLimitBPosition) softLimitsTriggered |= (1 << 9);
         RoveComm.write(RC_ARMBOARD_SOFTLIMIT_DATA_ID, RC_ARMBOARD_SOFTLIMIT_DATA_COUNT, &softLimitsTriggered);
     }
 
@@ -322,20 +322,20 @@ void UpdateFromRoveComm()
             //j4- data & (1 << 7)
             //p+ data & (1 << 8)
             //p- data & (1 << 9)
-            xMotor.m_softLimitA = (packetData & (1 << 0) ? INT32_MIN : X_REV_LIM);
-            xMotor.m_softLimitB = (packetData & (1 << 1) ? INT32_MAX : X_FWD_LIM);
+            xMotor.m_softLimitAPosition = (packetData & (1 << 0) ? INT32_MIN : X_REV_LIM);
+            xMotor.m_softLimitBPosition = (packetData & (1 << 1) ? INT32_MAX : X_FWD_LIM);
 
-            J2Motor.m_softLimitA = (packetData & (1 << 2) ? INT32_MIN : J2_REV_LIM);
-            J2Motor.m_softLimitB = (packetData & (1 << 3) ? INT32_MAX : J2_FWD_LIM);
+            J2Motor.m_softLimitAPosition = (packetData & (1 << 2) ? INT32_MIN : J2_REV_LIM);
+            J2Motor.m_softLimitBPosition = (packetData & (1 << 3) ? INT32_MAX : J2_FWD_LIM);
 
-            J3Motor.m_softLimitA = (packetData & (1 << 4) ? INT32_MIN : J3_REV_LIM);
-            J3Motor.m_softLimitB = (packetData & (1 << 5) ? INT32_MAX : J3_FWD_LIM);
+            J3Motor.m_softLimitAPosition = (packetData & (1 << 4) ? INT32_MIN : J3_REV_LIM);
+            J3Motor.m_softLimitBPosition = (packetData & (1 << 5) ? INT32_MAX : J3_FWD_LIM);
 
-            J4Motor.m_softLimitA = (packetData & (1 << 6) ? INT32_MIN : J4_REV_LIM);
-            J4Motor.m_softLimitB = (packetData & (1 << 7) ? INT32_MAX : J4_FWD_LIM);
+            J4Motor.m_softLimitAPosition = (packetData & (1 << 6) ? INT32_MIN : J4_REV_LIM);
+            J4Motor.m_softLimitBPosition = (packetData & (1 << 7) ? INT32_MAX : J4_FWD_LIM);
 
-            PitchMotor.m_softLimitA = (packetData & (1 << 8) ? INT32_MIN : PITCH_REV_LIM);
-            PitchMotor.m_softLimitB = (packetData & (1 << 9) ? INT32_MAX : PITCH_FWD_LIM);
+            PitchMotor.m_softLimitAPosition = (packetData & (1 << 8) ? INT32_MIN : PITCH_REV_LIM);
+            PitchMotor.m_softLimitBPosition = (packetData & (1 << 9) ? INT32_MAX : PITCH_FWD_LIM);
 
             feedWatchdog();
             break;
