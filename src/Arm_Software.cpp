@@ -73,8 +73,8 @@ void setup()
 void loop() 
 {   
     UpdateFromRoveComm();
-    UpdateArm();
     receiveCANMessages();
+    UpdateArm();
 }
 
 void estop() 
@@ -170,19 +170,19 @@ void UpdateFromRoveComm()
         case RC_ARMBOARD_OPENLOOP_DATA_ID:
         {
             int16_t *packetData = (int16_t*) packet.data;
-            // xMotor.driveOpenLoop((packetData[0], false); //limit switch comes from basestation
-            // J2Motor.driveOpenLoop((packetData[1], false);
-            // J3Motor.driveOpenLoop((packetData[2], false);
-            // J4Motor.driveOpenLoop((packetData[3], false);
-            // PitchMotor.driveOpenLoop((packetData[4], false);
-            // RollMotor.driveOpenLoop((packetData[5], false);
+            xMotor.driveOpenLoop((packetData[0], xMotor.m_ignoreLimit)); //limit switch comes from basestation
+            J2Motor.driveOpenLoop((packetData[1], J2Motor.m_ignoreLimit));
+            J3Motor.driveOpenLoop((packetData[2], J3Motor.m_ignoreLimit));
+            J4Motor.driveOpenLoop((packetData[3], J4Motor.m_ignoreLimit));
+            PitchMotor.driveOpenLoop((packetData[4], PitchMotor.m_ignoreLimit));
+            RollMotor.driveOpenLoop((packetData[5], RollMotor.m_ignoreLimit));
 
-            XState.setDutyCycle(packetData[0]);
-            J2State.setDutyCycle(packetData[1]);
-            J3State.setDutyCycle(packetData[2]);
-            J4State.setDutyCycle(packetData[3]);
-            PitchState.setDutyCycle(packetData[4]);
-            RollState.setDutyCycle(packetData[5]);
+            // XState.setDutyCycle(packetData[0]);
+            // J2State.setDutyCycle(packetData[1]);
+            // J3State.setDutyCycle(packetData[2]);
+            // J4State.setDutyCycle(packetData[3]);
+            // PitchState.setDutyCycle(packetData[4]);
+            // RollState.setDutyCycle(packetData[5]);
 
             XState.setControlMode(0);
             J2State.setControlMode(0);
@@ -269,11 +269,11 @@ void UpdateFromRoveComm()
             //j4- data & (1 << 7)
             //p+ data & (1 << 8)
             //p- data & (1 << 9)
-            XState.setIgnoreHardLimit(packetData & (1 << 0) || packetData & (1 << 1));
-            J2State.setIgnoreHardLimit(packetData & (1 << 2) || packetData & (1 << 3));
-            J3State.setIgnoreHardLimit(packetData & (1 << 4) || packetData & (1 << 5));
-            J4State.setIgnoreHardLimit(packetData & (1 << 6) ||  packetData & (1 << 7));
-            PitchState.setIgnoreHardLimit(packetData & (1 << 8) || packetData & (1 << 9));
+            XState.m_ignoreHardLimit = (packetData & (1 << 0) || packetData & (1 << 1));
+            J2State.m_ignoreHardLimit = (packetData & (1 << 2) || packetData & (1 << 3));
+            J3State.m_ignoreHardLimit = (packetData & (1 << 4) || packetData & (1 << 5));
+            J4State.m_ignoreHardLimit = (packetData & (1 << 6) ||  packetData & (1 << 7));
+            PitchState.m_ignoreHardLimit = (packetData & (1 << 8) || packetData & (1 << 9));
 
             feedWatchdog();
             break;
