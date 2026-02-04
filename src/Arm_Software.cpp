@@ -175,6 +175,16 @@ void UpdateFromRoveComm()
             int16_t *packetData = (int16_t*) packet.data;
 
             // Set motor motorState control mode to open loop
+            // if m_currentMode != OPEN_LOOP m_resendParameters = false;
+
+            XState.m_resendParameters = (XState.m_currentMode  == MotorState::OPEN_LOOP) ? true : false;
+            J2State.m_resendParameters = (J2State.m_currentMode == MotorState::OPEN_LOOP) ? true : false;
+            J3State.m_resendParameters = (J3State.m_currentMode == MotorState::OPEN_LOOP) ? true : false;
+            J4State.m_resendParameters = (J4State.m_currentMode == MotorState::OPEN_LOOP) ? true : false;
+            PitchState.m_resendParameters = (PitchState.m_currentMode == MotorState::OPEN_LOOP) ? true : false;
+            RollState.m_resendParameters = (RollState.m_currentMode == MotorState::OPEN_LOOP) ? true : false;
+
+
             XState.m_currentMode = MotorState::OPEN_LOOP;
             J2State.m_currentMode = MotorState::OPEN_LOOP;
             J3State.m_currentMode = MotorState::OPEN_LOOP;

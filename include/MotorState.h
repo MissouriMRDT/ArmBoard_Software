@@ -10,7 +10,7 @@ class MotorState
         enum ControlMode {
             OPEN_LOOP,
             TARGET_ANGLE,
-            TARGET_VELOCITY
+            TARGET_VELOCITY,
         };
 
         Smoco *m_motor;
@@ -23,6 +23,7 @@ class MotorState
         bool m_ignoreHardLimit = false;
         bool m_allowNegativeDegrees = false;
         bool calibrateNext;
+        bool m_resendParameters = false;
 
     public:
         MotorState(Smoco *motor, uint8_t assignedButton)
