@@ -34,6 +34,9 @@ void setup()
 
     ACAN_T4_Settings settings(125000); 
 
+    // delay(1000); To let settings and serial connect before sending all initial smoco configs over CAN
+    // while(!Serial)
+
     //Set Low pass smoothing factor
     xMotor.setLowPassSmoothingFactor(INT16_MAX);
     J2Motor.setLowPassSmoothingFactor(INT16_MAX);
@@ -170,12 +173,21 @@ void UpdateFromRoveComm()
         case RC_ARMBOARD_OPENLOOP_DATA_ID:
         {
             int16_t *packetData = (int16_t*) packet.data;
-            xMotor.driveOpenLoop((packetData[0], xMotor.m_ignoreLimit)); //limit switch comes from basestation
-            J2Motor.driveOpenLoop((packetData[1], J2Motor.m_ignoreLimit));
-            J3Motor.driveOpenLoop((packetData[2], J3Motor.m_ignoreLimit));
-            J4Motor.driveOpenLoop((packetData[3], J4Motor.m_ignoreLimit));
-            PitchMotor.driveOpenLoop((packetData[4], PitchMotor.m_ignoreLimit));
-            RollMotor.driveOpenLoop((packetData[5], RollMotor.m_ignoreLimit));
+
+            // Set motor motorState control mode to open loop
+            XState.m_currentMode = MotorState::OPEN_LOOP;
+            J2State.m_currentMode = MotorState::OPEN_LOOP;
+            J3State.m_currentMode = MotorState::OPEN_LOOP;
+            J4State.m_currentMode = MotorState::OPEN_LOOP;
+            PitchState.m_currentMode = MotorState::OPEN_LOOP;
+            RollState.m_currentMode = MotorState::OPEN_LOOP;
+
+            xMotor.m_dutyCycle = packetData[0]; //limit switch comes from basestation
+            J2Motor.m_dutyCycle = packetData[1];
+            J3Motor.m_dutyCycle = packetData[2];
+            J4Motor.m_dutyCycle = packetData[3];
+            PitchMotor.m_dutyCycle = packetData[4];
+            RollMotor.m_dutyCycle = packetData[5];
 
             // XState.setDutyCycle(packetData[0]);
             // J2State.setDutyCycle(packetData[1]);
@@ -184,12 +196,12 @@ void UpdateFromRoveComm()
             // PitchState.setDutyCycle(packetData[4]);
             // RollState.setDutyCycle(packetData[5]);
 
-            XState.setControlMode(0);
-            J2State.setControlMode(0);
-            J3State.setControlMode(0);
-            J4State.setControlMode(0);
-            PitchState.setControlMode(0);
-            RollState.setControlMode(0);
+            //XState.setControlMode(0);
+            //J2State.setControlMode(0);
+            //J3State.setControlMode(0);
+            //J4State.setControlMode(0);
+            //PitchState.setControlMode(0);
+            //RollState.setControlMode(0);
 
             feedWatchdog();
             break;
@@ -197,19 +209,26 @@ void UpdateFromRoveComm()
         case RC_ARMBOARD_TARGETANGLE_DATA_ID:
         {
             float *packetData = (float*) packet.data; //Float not i32?
-            XState.setTargetAngle(packetData[0]);
-            J2State.setTargetAngle(packetData[1]);
-            J3State.setTargetAngle(packetData[2]);
-            J4State.setTargetAngle(packetData[3]);
-            PitchState.setTargetAngle(packetData[4]);
-            RollState.setTargetAngle(packetData[5]);
+            //XState.m_targetAng(packetData[0]);
+            //J2State.setTargetAngle(packetData[1]);
+            //J3State.setTargetAngle(packetData[2]);
+            //J4State.setTargetAngle(packetData[3]);
+            //PitchState.setTargetAngle(packetData[4]);
+            //RollState.setTargetAngle(packetData[5]);
 
-            XState.setControlMode(1);
-            J2State.setControlMode(1);
-            J3State.setControlMode(1);
-            J4State.setControlMode(1);
-            PitchState.setControlMode(1);
-            RollState.setControlMode(1);
+            XState.m_currentMode = MotorState::TARGET_ANGLE;
+            J2State.m_currentMode = MotorState::TARGET_ANGLE;
+            J3State.m_currentMode = MotorState::TARGET_ANGLE;
+            J4State.m_currentMode = MotorState::TARGET_ANGLE;
+            PitchState.m_currentMode = MotorState::TARGET_ANGLE;
+            RollState.m_currentMode = MotorState::TARGET_ANGLE;
+
+            XState.m_targetAngleInDegrees = packetData[0];
+            J2State.m_targetAngleInDegrees = packetData[1];
+            J3State.m_targetAngleInDegrees = packetData[2];
+            J4State.m_targetAngleInDegrees = packetData[3];
+            PitchState.m_targetAngleInDegrees = packetData[4];
+            RollState.m_targetAngleInDegrees = packetData[5];
 
             feedWatchdog();
             break;
@@ -269,11 +288,13 @@ void UpdateFromRoveComm()
             //j4- data & (1 << 7)
             //p+ data & (1 << 8)
             //p- data & (1 << 9)
-            XState.m_ignoreHardLimit = (packetData & (1 << 0) || packetData & (1 << 1));
-            J2State.m_ignoreHardLimit = (packetData & (1 << 2) || packetData & (1 << 3));
-            J3State.m_ignoreHardLimit = (packetData & (1 << 4) || packetData & (1 << 5));
-            J4State.m_ignoreHardLimit = (packetData & (1 << 6) ||  packetData & (1 << 7));
-            PitchState.m_ignoreHardLimit = (packetData & (1 << 8) || packetData & (1 << 9));
+
+            // Switch byte order if it doesn't work; pretty sure most-significant bit is X+
+            xMotor.m_ignoreLimit = (packetData & (1 << 0) || packetData & (1 << 1));
+            J2Motor.m_ignoreLimit = (packetData & (1 << 2) || packetData & (1 << 3));
+            J3Motor.m_ignoreLimit = (packetData & (1 << 4) || packetData & (1 << 5));
+            J4Motor.m_ignoreLimit = (packetData & (1 << 6) ||  packetData & (1 << 7));
+            PitchMotor.m_ignoreLimit = (packetData & (1 << 8) || packetData & (1 << 9));
 
             feedWatchdog();
             break;
@@ -288,12 +309,19 @@ void UpdateFromRoveComm()
             //j4 data & (1 << 3)
             //p data & (1 << 4)
             //r data & (1 << 5)
-            XState.setClosedLoopOverride(packetData & (1 << 0));
-            J2State.setClosedLoopOverride(packetData & (1 << 1));
-            J3State.setClosedLoopOverride(packetData & (1 << 2));
-            J4State.setClosedLoopOverride(packetData & (1 << 3));
-            PitchState.setClosedLoopOverride(packetData & (1 << 4));
-            RollState.setClosedLoopOverride(packetData & (1 << 5));
+            //XState.setClosedLoopOverride(packetData & (1 << 0));
+            //J2State.setClosedLoopOverride(packetData & (1 << 1));
+            //J3State.setClosedLoopOverride(packetData & (1 << 2));
+            //J4State.setClosedLoopOverride(packetData & (1 << 3));
+            //PitchState.setClosedLoopOverride(packetData & (1 << 4));
+            //RollState.setClosedLoopOverride(packetData & (1 << 5));
+
+            XState.m_closedLoopOverride = packetData & (1 << 0);
+            J2State.m_closedLoopOverride = packetData & (1 << 0);
+            J3State.m_closedLoopOverride = packetData & (1 << 0);
+            J4State.m_closedLoopOverride = packetData & (1 << 0);
+            PitchState.m_closedLoopOverride = packetData & (1 << 0);
+            RollState.m_closedLoopOverride = packetData & (1 << 0);
 
             feedWatchdog();
             break;

@@ -22,6 +22,7 @@ class MotorState
         float m_offsetDegrees;
         bool m_ignoreHardLimit = false;
         bool m_allowNegativeDegrees = false;
+        bool calibrateNext;
 
     public:
         MotorState(Smoco *motor, uint8_t assignedButton)
@@ -31,7 +32,7 @@ class MotorState
         }
 
         void updateMotor(uint8_t buttonInput, bool direction);
-        void setControlMode(uint8_t mode) { m_currentMode = mode; }
+        //void setControlMode(uint8_t mode) { m_currentMode = mode; }
         void setTargetAngle(float angle) { m_targetAngleInDegrees = angle; }
         // void setIgnoreHardLimit(bool ignore) { m_motor->m_ignoreLimit = ignore; }
         // void setDutyCycle(int16_t dutyCycle) { m_dutyCycle = dutyCycle; } 
