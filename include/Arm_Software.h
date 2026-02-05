@@ -20,13 +20,13 @@
 RoveCommEthernet RoveComm;
 
 // Watchdog
-#define WATCHDOG_TIMEOUT 300000
+#define WATCHDOG_TIMEOUT 500000000
 IntervalTimer Watchdog;
 uint8_t watchdogStatus = 0;
 bool watchdogOverride = false;
 
 // Telemetry
-#define TELEMETRY_PERIOD 200000
+#define TELEMETRY_PERIOD 500000
 IntervalTimer Telemetry;
 bool telemetryOverride = false;
 
@@ -34,7 +34,7 @@ bool telemetryOverride = false;
 #define CAN_CHANNEL ACAN_T4::can1
 
 // SMoco IDS
-#define X_ID        1
+#define X_ID        8
 #define J2_ID       2
 #define J3_ID       3
 #define J4_ID       4
@@ -65,21 +65,21 @@ Servo CameraTwoPan, CameraTwoTilt;
 Servo CacheServo;
 
 //Limits
-#define X_REV_LIM       0
-#define X_FWD_LIM       12.6
+#define X_REV_LIM       INT32_MIN
+#define X_FWD_LIM       INT32_MAX
 
-#define J2_REV_LIM      -54
-#define J2_FWD_LIM      140
+#define J2_REV_LIM      INT32_MIN
+#define J2_FWD_LIM      INT32_MAX
 
-#define J3_REV_LIM      -116.8
+#define J3_REV_LIM      INT32_MIN
 #define J3_MID_LIM      30
-#define J3_FWD_LIM      90
+#define J3_FWD_LIM      INT32_MAX
 
-#define J4_REV_LIM      290
-#define J4_FWD_LIM      250
+#define J4_REV_LIM      INT32_MIN
+#define J4_FWD_LIM      INT32_MAX
 
-#define PITCH_REV_LIM   110
-#define PITCH_FWD_LIM   70
+#define PITCH_REV_LIM   INT32_MIN
+#define PITCH_FWD_LIM   INT32_MAX
 
 #define RAD2DEG (180.0f / M_PI)
 #define DEG2RAD (M_PI / 180.0f)

@@ -1,11 +1,14 @@
 #include "Arm_Software.h"
 
+#include <Arduino.h>
+
 // 2026 DEV
 
 void setup() 
 {
 
     Serial.begin(115200);
+    while(!Serial);
     Serial.println("Setup");
 
     // Button pins
@@ -32,7 +35,7 @@ void setup()
     CameraTwoTilt.attach(SERVO_4);
     // CacheServo.attach(nullptr); NOT RIGHT NUMBER
 
-    ACAN_T4_Settings settings(125000); 
+    CAN_CHANNEL.begin(ACAN_T4_Settings{125'000});
 
     // delay(1000); To let settings and serial connect before sending all initial smoco configs over CAN
     // while(!Serial)
@@ -151,6 +154,18 @@ void telemetry()
         if(PitchMotor.m_softLimitAPosition) softLimitsTriggered |= (1 << 8);
         if(PitchMotor.m_softLimitBPosition) softLimitsTriggered |= (1 << 9);
         RoveComm.write(RC_ARMBOARD_SOFTLIMIT_DATA_ID, RC_ARMBOARD_SOFTLIMIT_DATA_COUNT, &softLimitsTriggered);
+
+        /*
+        //xMotor.ping();
+
+        uint16_t pingData[6] = {0,0,0,0,0,0};
+        pingData[0] = xMotor.m_pingTime;
+
+
+        RoveComm.write(RC_ARMBOARD_SMOCOPING_DATA_ID,RC_ARMBOARD_SMOCOPING_DATA_COUNT,pingData);
+        Serial.println("pingdata sent !");
+        Serial.println(xMotor.m_pingTime);
+        */
     }
 
     //Add telemetry data as needed
@@ -267,6 +282,11 @@ void UpdateFromRoveComm()
         {
             uint8_t packetData = *((uint8_t *)packet.data);
             laserOn = (packetData == 0) ? false : true;
+            /*
+            if(laserOn){
+                xMotor.ping();
+            }
+            */
             feedWatchdog();
             break;
         }
@@ -426,7 +446,7 @@ void UpdateArm()
 {
     direction = digitalRead(DIR_SW);
 
-    XState.updateMotor(digitalRead(BTN_1), direction);
+    XState.updateMotor(digitalRead(BTN_LASER) == false, direction);
     J2State.updateMotor(digitalRead(BTN_2), direction);
     J3State.updateMotor(digitalRead(BTN_3), direction);
     J4State.updateMotor(digitalRead(BTN_4), direction);
@@ -441,13 +461,29 @@ void UpdateArm()
     else LinearServo.write(linearServoTarget);
 
     // Laser
-    if (digitalRead(BTN_LASER)) setLaser(true);
+    /*if (digitalRead(BTN_LASER)) setLaser(true);
     else setLaser(laserOn);
+    */
 }
 
 void receiveCANMessages() {
+    /*
     CANMessage receivedMessage;
+    while(CAN_CHANNEL.available()){
     CAN_CHANNEL.receive(receivedMessage);
+Serial.printf("Received CAN packet with ID %d\n", receivedMessage.id);
+        if (0) {
+            Serial.println("Sending packet to VESC");
+            //vesc_process_can_frame(msg.id, msg.data, msg.len);
+        } else {
+            Serial.printf("Sending packet to Smoco (%d)\n", receivedMessage.id & 0xF);
+            if ((receivedMessage.id & 0xF) == 13) {
+                Serial.printf("ERROR:::%d:::\n", ((SmocoCANMessage *)receivedMessage.data)->commandError.commandID);
+            }
+    xMotor.sync(receivedMessage);
+    */
+    
+    /*
 
     switch (receivedMessage.id >> 8) {
         case X_ID:
@@ -474,4 +510,5 @@ void receiveCANMessages() {
         default:
             break;
     }
+            */
 }
