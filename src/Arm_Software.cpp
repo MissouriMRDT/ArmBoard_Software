@@ -5,14 +5,13 @@
 template <typename... Args> unsigned long long bitmask(Args... as) {
     using unused = int[];
     unsigned long long ret{0ull};
-    (void)unused{0, (ret >>= 1, ret |= (as ? 1ull : 0ull) << sizeof...(as) - 1, 0)...};
+    (void)unused{0, (ret >>= 1, ret |= (as ? 1ull : 0ull) << (sizeof...(as) - 1), 0)...};
     return ret;
 }
 
 void setup() {
 
     Serial.begin(115200);
-    while (!Serial);
     Serial.println("Setup");
 
     // Button pins
@@ -39,28 +38,38 @@ void setup() {
     CameraTwoTilt.attach(SERVO_4);
     // CacheServo.attach(nullptr); NOT RIGHT NUMBER
 
-    CAN_CHANNEL.begin(ACAN_T4_Settings{SMOCO_CAN_BAUD_RATE});
+    ACAN_T4_Settings settings{SMOCO_CAN_BAUD_RATE};
+    CAN_CHANNEL.begin(settings);
 
     // delay(1000); To let settings and serial connect before sending all initial smoco configs over CAN
     // while(!Serial)
 
     // Set PID gains
-    xMotor.setPID(1, 0, 0);
-    J2Motor.setPID(1, 0, 0);
-    J3Motor.setPID(1, 0, 0);
-    J4Motor.setPID(1, 0, 0);
-    PitchMotor.setPID(1, 0, 0);
-    RollMotor.setPID(1, 0, 0);
-    GripperMotor.setPID(1, 0, 0);
+    XMotor.setPID(0.7, 0, 0);
+    J2Motor.setPID(0.7, 0, 0);
+    J3Motor.setPID(0.7, 0, 0);
+    J4Motor.setPID(0.7, 0, 0);
+    PitchMotor.setPID(0.7, 0, 0);
+    RollMotor.setPID(0.7, 0, 0);
+    GripperMotor.setPID(0.7, 0, 0);
 
     // Set soft limits
-    xMotor.setSoftLimitPosition(X_REV_LIM, X_FWD_LIM);
+    XMotor.setSoftLimitPosition(X_REV_LIM, X_FWD_LIM);
     J2Motor.setSoftLimitPosition(J2_REV_LIM, J2_FWD_LIM);
     J3Motor.setSoftLimitPosition(J3_REV_LIM, J3_FWD_LIM);
     J4Motor.setSoftLimitPosition(J4_REV_LIM, J4_FWD_LIM);
     PitchMotor.setSoftLimitPosition(PITCH_REV_LIM, PITCH_FWD_LIM);
     RollMotor.setSoftLimitPosition(INT32_MIN, INT32_MAX);
     GripperMotor.setSoftLimitPosition(INT32_MIN, INT32_MAX);
+
+    // Set ramp rates
+    XMotor.setRampRate(100.0);
+    J2Motor.setRampRate(100.0);
+    J3Motor.setRampRate(100.0);
+    J4Motor.setRampRate(100.0);
+    PitchMotor.setRampRate(100.0);
+    RollMotor.setRampRate(100.0);
+    GripperMotor.setRampRate(100.0);
 
     // RoveComm
     Serial.println("RoveComm Initializing...");
@@ -72,22 +81,22 @@ void setup() {
 }
 
 void loop() {
-    UpdateFromRoveComm();
+    updateFromRoveComm();
     receiveCANMessages();
-    UpdateArm();
+    updateArm();
 }
 
 void estop() {
     if (!watchdogOverride) {
         watchdogStatus = 1;
 
-        xMotor.stopAndReset();
-        J2Motor.stopAndReset();
-        J3Motor.stopAndReset();
-        J4Motor.stopAndReset();
-        PitchMotor.stopAndReset();
-        RollMotor.stopAndReset();
-        GripperMotor.stopAndReset();
+        XMotor.driveOpenLoop(0);
+        J2Motor.driveOpenLoop(0);
+        J3Motor.driveOpenLoop(0);
+        J4Motor.driveOpenLoop(0);
+        PitchMotor.driveOpenLoop(0);
+        RollMotor.driveOpenLoop(0);
+        GripperMotor.driveOpenLoop(0);
 
         IKMode = false;
     }
@@ -99,7 +108,7 @@ void telemetry() {
     if (!telemetryOverride) {
         // TODO: calculate in and deg from encoder
         float positions[8] = {
-            xMotor.getPosition(),
+            XMotor.getPosition(),
             J2Motor.getPosition(),
             J3Motor.getPosition(),
             J4Motor.getPosition(),
@@ -108,33 +117,32 @@ void telemetry() {
             0, // TODO: calculate Y
             0, // TODO: calculate Z
         };
-        // Serial.println();
-        // Serial.print(positions[6]);
         RoveComm.write(RC_ARMBOARD_POSITION_DATA_ID, RC_ARMBOARD_POSITION_DATA_COUNT, positions);
 
         uint16_t limitsTriggered = bitmask(
-            xMotor.getLimitSwitchA(), xMotor.getLimitSwitchB(), J2Motor.getLimitSwitchA(), J2Motor.getLimitSwitchB(),
+            XMotor.getLimitSwitchA(), XMotor.getLimitSwitchB(), J2Motor.getLimitSwitchA(), J2Motor.getLimitSwitchB(),
             J3Motor.getLimitSwitchA(), J3Motor.getLimitSwitchB(), J4Motor.getLimitSwitchA(), J4Motor.getLimitSwitchB(),
             PitchMotor.getLimitSwitchA(), PitchMotor.getLimitSwitchB());
         RoveComm.write(RC_ARMBOARD_LIMITSWITCH_DATA_ID, RC_ARMBOARD_LIMITSWITCH_DATA_COUNT, &limitsTriggered);
 
         uint16_t softLimitsTriggered =
-            bitmask(xMotor.getSoftLimitA(), xMotor.getSoftLimitB(), J2Motor.getSoftLimitA(), J2Motor.getSoftLimitB(),
+            bitmask(XMotor.getSoftLimitA(), XMotor.getSoftLimitB(), J2Motor.getSoftLimitA(), J2Motor.getSoftLimitB(),
                     J3Motor.getSoftLimitA(), J3Motor.getSoftLimitB(), J4Motor.getSoftLimitA(), J4Motor.getSoftLimitB(),
                     PitchMotor.getSoftLimitA(), PitchMotor.getSoftLimitB());
         RoveComm.write(RC_ARMBOARD_SOFTLIMIT_DATA_ID, RC_ARMBOARD_SOFTLIMIT_DATA_COUNT, &softLimitsTriggered);
 
-        /*
-        //xMotor.ping();
+        XMotor.ping();
+        J2Motor.ping();
+        J3Motor.ping();
+        J4Motor.ping();
+        PitchMotor.ping();
+        RollMotor.ping();
+        GripperMotor.ping();
 
-        uint16_t pingData[6] = {0,0,0,0,0,0};
-        pingData[0] = xMotor.m_pingTime;
-
-
-        RoveComm.write(RC_ARMBOARD_SMOCOPING_DATA_ID,RC_ARMBOARD_SMOCOPING_DATA_COUNT,pingData);
-        Serial.println("pingdata sent !");
-        Serial.println(xMotor.m_pingTime);
-        */
+        uint16_t pingData[7] = {XMotor.getPingTime(),      J2Motor.getPingTime(),    J3Motor.getPingTime(),
+                                J4Motor.getPingTime(),     PitchMotor.getPingTime(), RollMotor.getPingTime(),
+                                GripperMotor.getPingTime()};
+        RoveComm.write(RC_ARMBOARD_SMOCOPING_DATA_ID, RC_ARMBOARD_SMOCOPING_DATA_COUNT, pingData);
     }
 
     // Add telemetry data as needed
@@ -147,106 +155,54 @@ void feedWatchdog() {
     Watchdog.begin(estop, WATCHDOG_TIMEOUT);
 }
 
-void UpdateFromRoveComm() {
+void updateFromRoveComm() {
     static RoveCommPacket packet;
     RoveComm.read(packet);
 
     switch (packet.dataId) {
     case RC_ARMBOARD_OPENLOOP_DATA_ID: {
-        int16_t *packetData = (int16_t *)packet.data;
-
         // Set motor motorState control mode to open loop
         // if m_currentMode != OPEN_LOOP m_resendParameters = false;
 
-        XState.m_resendParameters = (XState.m_currentMode == MotorState::OPEN_LOOP) ? true : false;
-        J2State.m_resendParameters = (J2State.m_currentMode == MotorState::OPEN_LOOP) ? true : false;
-        J3State.m_resendParameters = (J3State.m_currentMode == MotorState::OPEN_LOOP) ? true : false;
-        J4State.m_resendParameters = (J4State.m_currentMode == MotorState::OPEN_LOOP) ? true : false;
-        PitchState.m_resendParameters = (PitchState.m_currentMode == MotorState::OPEN_LOOP) ? true : false;
-        RollState.m_resendParameters = (RollState.m_currentMode == MotorState::OPEN_LOOP) ? true : false;
-
-        XState.m_currentMode = MotorState::OPEN_LOOP;
-        J2State.m_currentMode = MotorState::OPEN_LOOP;
-        J3State.m_currentMode = MotorState::OPEN_LOOP;
-        J4State.m_currentMode = MotorState::OPEN_LOOP;
-        PitchState.m_currentMode = MotorState::OPEN_LOOP;
-        RollState.m_currentMode = MotorState::OPEN_LOOP;
-
-        xMotor.driveOpenLoop(packetData[0]);
-        J2Motor.driveOpenLoop(packetData[1]);
-        J3Motor.driveOpenLoop(packetData[2]);
-        J4Motor.driveOpenLoop(packetData[3]);
-        PitchMotor.driveOpenLoop(packetData[4]);
-        RollMotor.driveOpenLoop(packetData[5]);
-
-        // XState.setDutyCycle(packetData[0]);
-        // J2State.setDutyCycle(packetData[1]);
-        // J3State.setDutyCycle(packetData[2]);
-        // J4State.setDutyCycle(packetData[3]);
-        // PitchState.setDutyCycle(packetData[4]);
-        // RollState.setDutyCycle(packetData[5]);
-
-        // XState.setControlMode(0);
-        // J2State.setControlMode(0);
-        // J3State.setControlMode(0);
-        // J4State.setControlMode(0);
-        // PitchState.setControlMode(0);
-        // RollState.setControlMode(0);
+        XMotor.driveOpenLoop(packet.i16data[0]);
+        J2Motor.driveOpenLoop(packet.i16data[1]);
+        J3Motor.driveOpenLoop(packet.i16data[2]);
+        J4Motor.driveOpenLoop(packet.i16data[3]);
+        PitchMotor.driveOpenLoop(packet.i16data[4]);
+        RollMotor.driveOpenLoop(packet.i16data[5]);
 
         feedWatchdog();
         break;
     }
     case RC_ARMBOARD_TARGETANGLE_DATA_ID: {
-        float *packetData = (float *)packet.data; // Float not i32?
-        // XState.m_targetAng(packetData[0]);
-        // J2State.setTargetAngle(packetData[1]);
-        // J3State.setTargetAngle(packetData[2]);
-        // J4State.setTargetAngle(packetData[3]);
-        // PitchState.setTargetAngle(packetData[4]);
-        // RollState.setTargetAngle(packetData[5]);
 
-        XState.m_currentMode = MotorState::TARGET_ANGLE;
-        J2State.m_currentMode = MotorState::TARGET_ANGLE;
-        J3State.m_currentMode = MotorState::TARGET_ANGLE;
-        J4State.m_currentMode = MotorState::TARGET_ANGLE;
-        PitchState.m_currentMode = MotorState::TARGET_ANGLE;
-        RollState.m_currentMode = MotorState::TARGET_ANGLE;
-
-        XState.m_targetAngleInDegrees = packetData[0];
-        J2State.m_targetAngleInDegrees = packetData[1];
-        J3State.m_targetAngleInDegrees = packetData[2];
-        J4State.m_targetAngleInDegrees = packetData[3];
-        PitchState.m_targetAngleInDegrees = packetData[4];
-        RollState.m_targetAngleInDegrees = packetData[5];
+        XMotor.driveTargetPosition(packet.fdata[0], 0.05 * 1024);
+        J2Motor.driveTargetPosition(packet.fdata[1], 0.05 * 1024);
+        J3Motor.driveTargetPosition(packet.fdata[2], 0.05 * 1024);
+        J4Motor.driveTargetPosition(packet.fdata[3], 0.05 * 1024);
+        PitchMotor.driveTargetPosition(packet.fdata[4], 0.05 * 1024);
+        RollMotor.driveTargetPosition(packet.fdata[5], 0.05 * 1024);
 
         feedWatchdog();
         break;
     }
     case RC_ARMBOARD_GRIPPEROPENLOOP_DATA_ID: {
-        int16_t *packetData = (int16_t *)packet.data;
-        GripperDutyCycle = packetData[0];
-
+        GripperMotor.driveOpenLoop(packet.i16data[0]);
         feedWatchdog();
         break;
     }
     case RC_ARMBOARD_IKPOSITION_DATA_ID: {
+        // TODO
         feedWatchdog();
         break;
     }
     case RC_ARMBOARD_LINEARSERVO_DATA_ID: {
-        uint8_t packetData = *((uint8_t *)packet.data);
-        linearServoTarget = packetData;
+        LinearServo.write(packet.i8data[0]);
         feedWatchdog();
         break;
     }
     case RC_ARMBOARD_LASER_DATA_ID: {
-        uint8_t packetData = *((uint8_t *)packet.data);
-        laserOn = (packetData == 0) ? false : true;
-        /*
-        if(laserOn){
-            xMotor.ping();
-        }
-        */
+        setLaser(packet.u8data[0]);
         feedWatchdog();
         break;
     }
@@ -263,7 +219,8 @@ void UpdateFromRoveComm() {
         break;
     }
     case RC_ARMBOARD_LIMITSWITCHOVERRIDE_DATA_ID: {
-        uint16_t packetData = *((uint16_t *)packet.data);
+
+        // TODO: State dependent
 
         // x+ data & (1 << 0)
         // x- data & (1 << 1)
@@ -277,7 +234,7 @@ void UpdateFromRoveComm() {
         // p- data & (1 << 9)
 
         // Switch byte order if it doesn't work; pretty sure most-significant bit is X+
-        // xMotor.m_ignoreLimit = (packetData & (1 << 0) || packetData & (1 << 1));
+        // XMotor.m_ignoreLimit = (packetData & (1 << 0) || packetData & (1 << 1));
         // J2Motor.m_ignoreLimit = (packetData & (1 << 2) || packetData & (1 << 3));
         // J3Motor.m_ignoreLimit = (packetData & (1 << 4) || packetData & (1 << 5));
         // J4Motor.m_ignoreLimit = (packetData & (1 << 6) ||  packetData & (1 << 7));
@@ -287,7 +244,8 @@ void UpdateFromRoveComm() {
         break;
     }
     case RC_ARMBOARD_CLOSEDLOOPOVERRIDE_DATA_ID: {
-        uint8_t packetData = *((uint8_t *)packet.data);
+
+        // TODO: State dependent (applies to IK mode, makes certain axes run in openloop with speed 0)
 
         // x data & (1 << 0)
         // j2 data & (1 << 1)
@@ -295,35 +253,24 @@ void UpdateFromRoveComm() {
         // j4 data & (1 << 3)
         // p data & (1 << 4)
         // r data & (1 << 5)
-        // XState.setClosedLoopOverride(packetData & (1 << 0));
-        // J2State.setClosedLoopOverride(packetData & (1 << 1));
-        // J3State.setClosedLoopOverride(packetData & (1 << 2));
-        // J4State.setClosedLoopOverride(packetData & (1 << 3));
-        // PitchState.setClosedLoopOverride(packetData & (1 << 4));
-        // RollState.setClosedLoopOverride(packetData & (1 << 5));
-
-        XState.m_closedLoopOverride = packetData & (1 << 0);
-        J2State.m_closedLoopOverride = packetData & (1 << 0);
-        J3State.m_closedLoopOverride = packetData & (1 << 0);
-        J4State.m_closedLoopOverride = packetData & (1 << 0);
-        PitchState.m_closedLoopOverride = packetData & (1 << 0);
-        RollState.m_closedLoopOverride = packetData & (1 << 0);
 
         feedWatchdog();
         break;
     }
     case RC_ARMBOARD_CALIBRATEENCODER_DATA_ID: {
-        uint8_t packetData = *((uint8_t *)packet.data);
 
         // x data & (1 << 0)
         // roll data & (1 << 1)
+        if (packet.u8data[0] & (1 << 0)) {
+            XMotor.calibratePosition(-INT16_MAX / 2, 0);
+        }
 
         feedWatchdog();
         break;
     }
     case RC_ARMBOARD_SOFTLIMITOVERRIDE_DATA_ID: {
-        uint16_t packetData = *((uint16_t *)packet.data);
-        xMotor.setSoftLimitPosition(packetData & (1 << 0) ? INT32_MIN : X_REV_LIM,
+        uint16_t packetData = packet.i16data[0];
+        XMotor.setSoftLimitPosition(packetData & (1 << 0) ? INT32_MIN : X_REV_LIM,
                                     packetData & (1 << 1) ? INT32_MAX : X_FWD_LIM);
         J2Motor.setSoftLimitPosition(packetData & (1 << 2) ? INT32_MIN : X_REV_LIM,
                                      packetData & (1 << 3) ? INT32_MAX : J2_FWD_LIM);
@@ -355,94 +302,35 @@ void UpdateFromRoveComm() {
         feedWatchdog();
         break;
     }
-
-    // Telemetry packets
-    case RC_ARMBOARD_POSITION_DATA_ID: {
-
-        break;
-    }
-    case RC_ARMBOARD_LIMITSWITCH_DATA_ID: {
-        break;
-    }
-    case RC_ARMBOARD_SOFTLIMIT_DATA_ID: {
-        break;
-    }
-    case RC_ARMBOARD_SMOCOPING_DATA_ID: {
-        break;
-    }
     }
 }
 
-void UpdateArm() {
-    direction = digitalRead(DIR_SW);
+void updateArm() {
+    /*direction = digitalRead(DIR_SW);
 
-    XState.updateMotor(digitalRead(BTN_LASER) == false, direction);
-    J2State.updateMotor(digitalRead(BTN_2), direction);
-    J3State.updateMotor(digitalRead(BTN_3), direction);
-    J4State.updateMotor(digitalRead(BTN_4), direction);
-    PitchState.updateMotor(digitalRead(BTN_5), direction);
-    RollState.updateMotor(digitalRead(BTN_6), direction);
-
-    if (digitalRead(BTN_7))
-        GripperMotor.driveOpenLoop(direction ? -900 : 900, false);
-    else
-        GripperMotor.driveOpenLoop(GripperDutyCycle, false);
+    if (digitalRead(BTN_7)) GripperMotor.driveOpenLoop(direction ? -900 : 900, false);
 
     // Linear Servo
-    if (digitalRead(BTN_LIN_SERVO))
-        LinearServo.write(direction ? 180 : 0);
-    else
-        LinearServo.write(linearServoTarget);
+    if (digitalRead(BTN_LIN_SERVO)) LinearServo.write(direction ? 180 : 0);
 
     // Laser
-    /*if (digitalRead(BTN_LASER)) setLaser(true);
-    else setLaser(laserOn);
-    */
+    if (digitalRead(BTN_LASER))
+        setLaser(true);
+    else
+        setLaser(laserOn);*/
 }
 
 void receiveCANMessages() {
-    /*
     CANMessage receivedMessage;
-    while(CAN_CHANNEL.available()){
-    CAN_CHANNEL.receive(receivedMessage);
-Serial.printf("Received CAN packet with ID %d\n", receivedMessage.id);
-        if (0) {
-            Serial.println("Sending packet to VESC");
-            //vesc_process_can_frame(msg.id, msg.data, msg.len);
-        } else {
-            Serial.printf("Sending packet to Smoco (%d)\n", receivedMessage.id & 0xF);
-            if ((receivedMessage.id & 0xF) == 13) {
-                Serial.printf("ERROR:::%d:::\n", ((SmocoCANMessage *)receivedMessage.data)->commandError.commandID);
-            }
-    xMotor.sync(receivedMessage);
-    */
-
-    /*
-
-    switch (receivedMessage.id >> 8) {
-        case X_ID:
-            xMotor.sync(receivedMessage);
-            break;
-        case J2_ID:
+    while (CAN_CHANNEL.available()) {
+        if (CAN_CHANNEL.receive(receivedMessage)) {
+            XMotor.sync(receivedMessage);
             J2Motor.sync(receivedMessage);
-            break;
-        case J3_ID:
             J3Motor.sync(receivedMessage);
-            break;
-        case J4_ID:
             J4Motor.sync(receivedMessage);
-            break;
-        case PITCH_ID:
             PitchMotor.sync(receivedMessage);
-            break;
-        case ROLL_ID:
             RollMotor.sync(receivedMessage);
-            break;
-        case GRIPPER_ID:
             GripperMotor.sync(receivedMessage);
-            break;
-        default:
-            break;
+        }
     }
-            */
 }

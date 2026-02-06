@@ -13,9 +13,6 @@
 #include <cmath>
 #include <cstdint>
 
-#include "RoveMatrix.h"
-#include "MotorState.h"
-
 // RoveComm
 RoveCommEthernet RoveComm;
 
@@ -34,7 +31,7 @@ bool telemetryOverride = false;
 #define CAN_CHANNEL ACAN_T4::can1
 
 // SMoco IDS
-#define X_ID        8
+#define X_ID        1
 #define J2_ID       2
 #define J3_ID       3
 #define J4_ID       4
@@ -43,20 +40,13 @@ bool telemetryOverride = false;
 #define GRIPPER_ID  7
 
 // Motor
-Smoco xMotor       (&CAN_CHANNEL, X_ID);
+Smoco XMotor       (&CAN_CHANNEL, X_ID);
 Smoco J2Motor      (&CAN_CHANNEL, J2_ID);
 Smoco J3Motor      (&CAN_CHANNEL, J3_ID);
 Smoco J4Motor      (&CAN_CHANNEL, J4_ID);
 Smoco PitchMotor   (&CAN_CHANNEL, PITCH_ID);
 Smoco RollMotor    (&CAN_CHANNEL, ROLL_ID);
 Smoco GripperMotor (&CAN_CHANNEL, GRIPPER_ID);
-
-MotorState XState(&xMotor, BTN_1);
-MotorState J2State(&J2Motor, BTN_2);
-MotorState J3State(&J3Motor, BTN_3);
-MotorState J4State(&J4Motor, BTN_4);
-MotorState PitchState(&PitchMotor, BTN_5);
-MotorState RollState(&RollMotor, BTN_6);
 
 // Servos
 Servo LinearServo;
@@ -72,7 +62,6 @@ Servo CacheServo;
 #define J2_FWD_LIM      INT32_MAX
 
 #define J3_REV_LIM      INT32_MIN
-#define J3_MID_LIM      30
 #define J3_FWD_LIM      INT32_MAX
 
 #define J4_REV_LIM      INT32_MIN
@@ -81,20 +70,6 @@ Servo CacheServo;
 #define PITCH_REV_LIM   INT32_MIN
 #define PITCH_FWD_LIM   INT32_MAX
 
-#define RAD2DEG (180.0f / M_PI)
-#define DEG2RAD (M_PI / 180.0f)
-
-#define J2_LENGTH           18
-#define J3_LENGTH           18.5
-#define WRIST_RAD           2.887499685
-#define SHOULDER_LENGTH     7.328739921
-#define VALK_LENGTH         6.24943834646
-
-#define INTOPIXELS 12.7
-#define PIXELSTOIN (1/12.7)
-
-Vector CartesianCoords = {0,0,0};
-Vector GripperPosition = {0,0,0};
 
 // Control variables
 int16_t GripperDutyCycle = 0;
@@ -116,8 +91,8 @@ void estop();
 void telemetry();
 void feedWatchdog();
 void setLaser(bool on);
-void UpdateFromRoveComm();
-void UpdateArm();
+void updateFromRoveComm();
+void updateArm();
 void receiveCANMessages();
 
 void CalculateInverseKinematics();
