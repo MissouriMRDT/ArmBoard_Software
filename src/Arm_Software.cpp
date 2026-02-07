@@ -43,6 +43,7 @@ void setup() {
 
     // delay(1000); To let settings and serial connect before sending all initial smoco configs over CAN
     // while(!Serial)
+    // delay(3000); // wait for smocos to start up
 
     // Set PID gains
     XMotor.setPID(0.7, 0, 0);
@@ -97,8 +98,6 @@ void estop() {
         PitchMotor.driveOpenLoop(0);
         RollMotor.driveOpenLoop(0);
         GripperMotor.driveOpenLoop(0);
-
-        IKMode = false;
     }
 }
 
@@ -108,12 +107,12 @@ void telemetry() {
     if (!telemetryOverride) {
         // TODO: calculate in and deg from encoder
         float positions[8] = {
-            XMotor.getPosition(),
-            J2Motor.getPosition(),
-            J3Motor.getPosition(),
-            J4Motor.getPosition(),
-            PitchMotor.getPosition(),
-            RollMotor.getPosition(),
+            encToDeg(XMotor.getPosition(), 0, X_ENC_PER_IN),
+            encToDeg(J2Motor.getPosition(), J2_ZERO, J2_ENC_PER_DEG),
+            encToDeg(J3Motor.getPosition(), J3_ZERO, J3_ENC_PER_DEG),
+            encToDeg(J4Motor.getPosition(), J4_ZERO, J4_ENC_PER_DEG),
+            encToDeg(PitchMotor.getPosition(), PITCH_ZERO, PITCH_ENC_PER_DEG),
+            encToDeg(RollMotor.getPosition(), rollZero, ROLL_ENC_PER_DEG),
             0, // TODO: calculate Y
             0, // TODO: calculate Z
         };
@@ -176,12 +175,12 @@ void updateFromRoveComm() {
     }
     case RC_ARMBOARD_TARGETANGLE_DATA_ID: {
 
-        XMotor.driveTargetPosition(packet.fdata[0], 0.05 * 1024);
-        J2Motor.driveTargetPosition(packet.fdata[1], 0.05 * 1024);
-        J3Motor.driveTargetPosition(packet.fdata[2], 0.05 * 1024);
-        J4Motor.driveTargetPosition(packet.fdata[3], 0.05 * 1024);
-        PitchMotor.driveTargetPosition(packet.fdata[4], 0.05 * 1024);
-        RollMotor.driveTargetPosition(packet.fdata[5], 0.05 * 1024);
+        XMotor.driveTargetPosition(degToEnc(packet.fdata[0], 0, X_ENC_PER_IN), 0.05 * 1024);
+        J2Motor.driveTargetPosition(degToEnc(packet.fdata[1], J2_ZERO, J2_ENC_PER_DEG), 0.05 * 1024);
+        J3Motor.driveTargetPosition(degToEnc(packet.fdata[2], J3_ZERO, J3_ENC_PER_DEG), 0.05 * 1024);
+        J4Motor.driveTargetPosition(degToEnc(packet.fdata[3], J4_ZERO, J4_ENC_PER_DEG), 0.05 * 1024);
+        PitchMotor.driveTargetPosition(degToEnc(packet.fdata[4], PITCH_ZERO, PITCH_ENC_PER_DEG), 0.05 * 1024);
+        RollMotor.driveTargetPosition(degToEnc(packet.fdata[5], rollZero, ROLL_ENC_PER_DEG), 0.05 * 1024);
 
         feedWatchdog();
         break;
@@ -220,27 +219,13 @@ void updateFromRoveComm() {
     }
     case RC_ARMBOARD_LIMITSWITCHOVERRIDE_DATA_ID: {
 
-        // TODO: State dependent
-
-        // x+ data & (1 << 0)
-        // x- data & (1 << 1)
-        // j2+ data & (1 << 2)
-        // j2- data & (1 << 3)
-        // j3+ data & (1 << 4)
-        // j3- data & (1 << 5)
-        // j4+ data & (1 << 6)
-        // j4- data & (1 << 7)
-        // p+ data & (1 << 8)
-        // p- data & (1 << 9)
-
-        // Switch byte order if it doesn't work; pretty sure most-significant bit is X+
-        // XMotor.m_ignoreLimit = (packetData & (1 << 0) || packetData & (1 << 1));
-        // J2Motor.m_ignoreLimit = (packetData & (1 << 2) || packetData & (1 << 3));
-        // J3Motor.m_ignoreLimit = (packetData & (1 << 4) || packetData & (1 << 5));
-        // J4Motor.m_ignoreLimit = (packetData & (1 << 6) ||  packetData & (1 << 7));
-        // PitchMotor.m_ignoreLimit = (packetData & (1 << 8) || packetData & (1 << 9));
-
-        feedWatchdog();
+        // not effective until next drive command!
+        int16_t limits = packet.i16data[0];
+        XMotor.configIgnoreLimits(limits & (1 << 0), limits & (1 << 1));
+        J2Motor.configIgnoreLimits(limits & (1 << 2), limits & (1 << 3));
+        J3Motor.configIgnoreLimits(limits & (1 << 4), limits & (1 << 5));
+        J4Motor.configIgnoreLimits(limits & (1 << 6), limits & (1 << 7));
+        PitchMotor.configIgnoreLimits(limits & (1 << 8), limits & (1 << 9));
         break;
     }
     case RC_ARMBOARD_CLOSEDLOOPOVERRIDE_DATA_ID: {
@@ -263,6 +248,8 @@ void updateFromRoveComm() {
         // roll data & (1 << 1)
         if (packet.u8data[0] & (1 << 0)) {
             XMotor.calibratePosition(-INT16_MAX / 2, 0);
+        } else if (packet.u8data[0] & (1 << 1)) {
+            rollZero = RollMotor.getPosition();
         }
 
         feedWatchdog();
@@ -285,19 +272,15 @@ void updateFromRoveComm() {
         break;
     }
     case RC_ARMBOARD_ARMGIMBAL1_DATA_ID: {
-        int16_t *packetData = (int16_t *)packet.data;
-
-        CameraOnePan.write(packetData[0]);
-        CameraOneTilt.write(packetData[1]);
+        CameraOnePan.write(packet.i16data[0]);
+        CameraOneTilt.write(packet.i16data[1]);
 
         feedWatchdog();
         break;
     }
     case RC_ARMBOARD_ARMGIMBAL2_DATA_ID: {
-        int16_t *packetData = (int16_t *)packet.data;
-
-        CameraTwoPan.write(packetData[0]);
-        CameraTwoTilt.write(packetData[1]);
+        CameraTwoPan.write(packet.i16data[0]);
+        CameraTwoTilt.write(packet.i16data[1]);
 
         feedWatchdog();
         break;
@@ -324,6 +307,7 @@ void receiveCANMessages() {
     CANMessage receivedMessage;
     while (CAN_CHANNEL.available()) {
         if (CAN_CHANNEL.receive(receivedMessage)) {
+            // Serial.printf("ID %x CMD %x RTR %s LEN %d\n", receivedMessage.id >> 4, receivedMessage.id & 0xF, receivedMessage.rtr ? "R" : "D", receivedMessage.len);
             XMotor.sync(receivedMessage);
             J2Motor.sync(receivedMessage);
             J3Motor.sync(receivedMessage);
@@ -333,4 +317,12 @@ void receiveCANMessages() {
             GripperMotor.sync(receivedMessage);
         }
     }
+}
+
+float encToDeg(int32_t enc, int32_t encZero, float encPerDeg, bool reversed) {
+    return (enc - encZero) / encPerDeg * (reversed ? -1 : 1);
+}
+
+int32_t degToEnc(float deg, int32_t encZero, float encPerDeg, bool reversed) {
+    return (reversed ? -1 : 1) * (deg * encPerDeg) + encZero;
 }
