@@ -50,8 +50,8 @@ void setup() {
     J2Motor.setPID(0.7, 0, 0);
     J3Motor.setPID(0.7, 0, 0);
     J4Motor.setPID(0.7, 0, 0);
-    PitchMotor.setPID(0.7, 0, 0);
-    RollMotor.setPID(0.7, 0, 0);
+    J5Motor.setPID(0.7, 0, 0);
+    J6Motor.setPID(0.7, 0, 0);
     GripperMotor.setPID(0.7, 0, 0);
 
     // Set soft limits
@@ -59,8 +59,8 @@ void setup() {
     J2Motor.setSoftLimitPosition(J2_REV_LIM, J2_FWD_LIM);
     J3Motor.setSoftLimitPosition(J3_REV_LIM, J3_FWD_LIM);
     J4Motor.setSoftLimitPosition(J4_REV_LIM, J4_FWD_LIM);
-    PitchMotor.setSoftLimitPosition(PITCH_REV_LIM, PITCH_FWD_LIM);
-    RollMotor.setSoftLimitPosition(INT32_MIN, INT32_MAX);
+    J5Motor.setSoftLimitPosition(J5_REV_LIM, J5_FWD_LIM);
+    J6Motor.setSoftLimitPosition(INT32_MIN, INT32_MAX);
     GripperMotor.setSoftLimitPosition(INT32_MIN, INT32_MAX);
 
     // Set ramp rates
@@ -68,8 +68,8 @@ void setup() {
     J2Motor.setRampRate(100.0);
     J3Motor.setRampRate(100.0);
     J4Motor.setRampRate(100.0);
-    PitchMotor.setRampRate(100.0);
-    RollMotor.setRampRate(100.0);
+    J5Motor.setRampRate(100.0);
+    J6Motor.setRampRate(100.0);
     GripperMotor.setRampRate(100.0);
 
     // RoveComm
@@ -95,8 +95,8 @@ void estop() {
         J2Motor.driveOpenLoop(0);
         J3Motor.driveOpenLoop(0);
         J4Motor.driveOpenLoop(0);
-        PitchMotor.driveOpenLoop(0);
-        RollMotor.driveOpenLoop(0);
+        J5Motor.driveOpenLoop(0);
+        J6Motor.driveOpenLoop(0);
         GripperMotor.driveOpenLoop(0);
     }
 }
@@ -111,8 +111,8 @@ void telemetry() {
             encToDeg(J2Motor.getPosition(), J2_ZERO, J2_ENC_PER_DEG),
             encToDeg(J3Motor.getPosition(), J3_ZERO, J3_ENC_PER_DEG),
             encToDeg(J4Motor.getPosition(), J4_ZERO, J4_ENC_PER_DEG),
-            encToDeg(PitchMotor.getPosition(), PITCH_ZERO, PITCH_ENC_PER_DEG),
-            encToDeg(RollMotor.getPosition(), rollZero, ROLL_ENC_PER_DEG),
+            encToDeg(J5Motor.getPosition(), J5_ZERO, J5_ENC_PER_DEG),
+            encToDeg(J6Motor.getPosition(), J6Zero, J6_ENC_PER_DEG),
             0, // TODO: calculate Y
             0, // TODO: calculate Z
         };
@@ -121,25 +121,25 @@ void telemetry() {
         uint16_t limitsTriggered = bitmask(
             XMotor.getLimitSwitchA(), XMotor.getLimitSwitchB(), J2Motor.getLimitSwitchA(), J2Motor.getLimitSwitchB(),
             J3Motor.getLimitSwitchA(), J3Motor.getLimitSwitchB(), J4Motor.getLimitSwitchA(), J4Motor.getLimitSwitchB(),
-            PitchMotor.getLimitSwitchA(), PitchMotor.getLimitSwitchB());
+            J5Motor.getLimitSwitchA(), J5Motor.getLimitSwitchB());
         RoveComm.write(RC_ARMBOARD_LIMITSWITCH_DATA_ID, RC_ARMBOARD_LIMITSWITCH_DATA_COUNT, &limitsTriggered);
 
         uint16_t softLimitsTriggered =
             bitmask(XMotor.getSoftLimitA(), XMotor.getSoftLimitB(), J2Motor.getSoftLimitA(), J2Motor.getSoftLimitB(),
                     J3Motor.getSoftLimitA(), J3Motor.getSoftLimitB(), J4Motor.getSoftLimitA(), J4Motor.getSoftLimitB(),
-                    PitchMotor.getSoftLimitA(), PitchMotor.getSoftLimitB());
+                    J5Motor.getSoftLimitA(), J5Motor.getSoftLimitB());
         RoveComm.write(RC_ARMBOARD_SOFTLIMIT_DATA_ID, RC_ARMBOARD_SOFTLIMIT_DATA_COUNT, &softLimitsTriggered);
 
         XMotor.ping();
         J2Motor.ping();
         J3Motor.ping();
         J4Motor.ping();
-        PitchMotor.ping();
-        RollMotor.ping();
+        J5Motor.ping();
+        J6Motor.ping();
         GripperMotor.ping();
 
         uint16_t pingData[7] = {XMotor.getPingTime(),      J2Motor.getPingTime(),    J3Motor.getPingTime(),
-                                J4Motor.getPingTime(),     PitchMotor.getPingTime(), RollMotor.getPingTime(),
+                                J4Motor.getPingTime(),     J5Motor.getPingTime(), J6Motor.getPingTime(),
                                 GripperMotor.getPingTime()};
         RoveComm.write(RC_ARMBOARD_SMOCOPING_DATA_ID, RC_ARMBOARD_SMOCOPING_DATA_COUNT, pingData);
     }
@@ -167,20 +167,23 @@ void updateFromRoveComm() {
         J2Motor.driveOpenLoop(packet.i16data[1]);
         J3Motor.driveOpenLoop(packet.i16data[2]);
         J4Motor.driveOpenLoop(packet.i16data[3]);
-        PitchMotor.driveOpenLoop(packet.i16data[4]);
-        RollMotor.driveOpenLoop(packet.i16data[5]);
+        J5Motor.driveOpenLoop(packet.i16data[4]);
+        J6Motor.driveOpenLoop(packet.i16data[5]);
 
         feedWatchdog();
         break;
     }
     case RC_ARMBOARD_TARGETANGLE_DATA_ID: {
 
-        XMotor.driveTargetPosition(degToEnc(packet.fdata[0], 0, X_ENC_PER_IN), 0.05 * 1024);
-        J2Motor.driveTargetPosition(degToEnc(packet.fdata[1], J2_ZERO, J2_ENC_PER_DEG), 0.05 * 1024);
-        J3Motor.driveTargetPosition(degToEnc(packet.fdata[2], J3_ZERO, J3_ENC_PER_DEG), 0.05 * 1024);
-        J4Motor.driveTargetPosition(degToEnc(packet.fdata[3], J4_ZERO, J4_ENC_PER_DEG), 0.05 * 1024);
-        PitchMotor.driveTargetPosition(degToEnc(packet.fdata[4], PITCH_ZERO, PITCH_ENC_PER_DEG), 0.05 * 1024);
-        RollMotor.driveTargetPosition(degToEnc(packet.fdata[5], rollZero, ROLL_ENC_PER_DEG), 0.05 * 1024);
+        XMotor.driveTargetPosition(degToEnc(packet.fdata[0], 0, X_ENC_PER_IN), 0.05);
+        J2Motor.driveTargetPosition(degToEnc(packet.fdata[1], J2_ZERO, J2_ENC_PER_DEG), 0.05);
+        J3Motor.driveTargetPosition(degToEnc(packet.fdata[2], J3_ZERO, J3_ENC_PER_DEG), 0.05);
+        J4Motor.driveTargetPosition(degToEnc(packet.fdata[3], J4_ZERO, J4_ENC_PER_DEG), 0.05);
+        J5Motor.driveTargetPosition(degToEnc(packet.fdata[4], J5_ZERO, J5_ENC_PER_DEG), 0.05);
+        J6Motor.driveTargetPosition(degToEnc(packet.fdata[5], J6Zero, J6_ENC_PER_DEG), 0.05);
+
+        Serial.printf("Targets: %f, %f, %f, %f, %f, %f\n", packet.fdata[0], packet.fdata[1], packet.fdata[2],
+                      packet.fdata[3], packet.fdata[4], packet.fdata[5]);
 
         feedWatchdog();
         break;
@@ -225,7 +228,7 @@ void updateFromRoveComm() {
         J2Motor.configIgnoreLimits(limits & (1 << 2), limits & (1 << 3));
         J3Motor.configIgnoreLimits(limits & (1 << 4), limits & (1 << 5));
         J4Motor.configIgnoreLimits(limits & (1 << 6), limits & (1 << 7));
-        PitchMotor.configIgnoreLimits(limits & (1 << 8), limits & (1 << 9));
+        J5Motor.configIgnoreLimits(limits & (1 << 8), limits & (1 << 9));
         break;
     }
     case RC_ARMBOARD_CLOSEDLOOPOVERRIDE_DATA_ID: {
@@ -245,11 +248,11 @@ void updateFromRoveComm() {
     case RC_ARMBOARD_CALIBRATEENCODER_DATA_ID: {
 
         // x data & (1 << 0)
-        // roll data & (1 << 1)
+        // j6 data & (1 << 1)
         if (packet.u8data[0] & (1 << 0)) {
             XMotor.calibratePosition(-INT16_MAX / 2, 0);
         } else if (packet.u8data[0] & (1 << 1)) {
-            rollZero = RollMotor.getPosition();
+            J6Zero = J6Motor.getPosition();
         }
 
         feedWatchdog();
@@ -265,8 +268,8 @@ void updateFromRoveComm() {
                                      packetData & (1 << 5) ? INT32_MAX : J3_FWD_LIM);
         J4Motor.setSoftLimitPosition(packetData & (1 << 6) ? INT32_MIN : J4_REV_LIM,
                                      packetData & (1 << 7) ? INT32_MAX : J4_FWD_LIM);
-        PitchMotor.setSoftLimitPosition(packetData & (1 << 8) ? INT32_MIN : PITCH_REV_LIM,
-                                        packetData & (1 << 9) ? INT32_MAX : PITCH_FWD_LIM);
+        J5Motor.setSoftLimitPosition(packetData & (1 << 8) ? INT32_MIN : J5_REV_LIM,
+                                        packetData & (1 << 9) ? INT32_MAX : J5_FWD_LIM);
 
         feedWatchdog();
         break;
@@ -307,13 +310,14 @@ void receiveCANMessages() {
     CANMessage receivedMessage;
     while (CAN_CHANNEL.available()) {
         if (CAN_CHANNEL.receive(receivedMessage)) {
-            // Serial.printf("ID %x CMD %x RTR %s LEN %d\n", receivedMessage.id >> 4, receivedMessage.id & 0xF, receivedMessage.rtr ? "R" : "D", receivedMessage.len);
+            // Serial.printf("ID %x CMD %x RTR %s LEN %d\n", receivedMessage.id >> 4, receivedMessage.id & 0xF,
+            // receivedMessage.rtr ? "R" : "D", receivedMessage.len);
             XMotor.sync(receivedMessage);
             J2Motor.sync(receivedMessage);
             J3Motor.sync(receivedMessage);
             J4Motor.sync(receivedMessage);
-            PitchMotor.sync(receivedMessage);
-            RollMotor.sync(receivedMessage);
+            J5Motor.sync(receivedMessage);
+            J6Motor.sync(receivedMessage);
             GripperMotor.sync(receivedMessage);
         }
     }

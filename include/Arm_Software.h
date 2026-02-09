@@ -35,8 +35,8 @@ bool telemetryOverride = false;
 #define J2_ID 2
 #define J3_ID 3
 #define J4_ID 4
-#define PITCH_ID 5
-#define ROLL_ID 6
+#define J5_ID 5
+#define J6_ID 6
 #define GRIPPER_ID 7
 
 // Motor
@@ -44,8 +44,8 @@ Smoco XMotor(&CAN_CHANNEL, X_ID);
 Smoco J2Motor(&CAN_CHANNEL, J2_ID);
 Smoco J3Motor(&CAN_CHANNEL, J3_ID);
 Smoco J4Motor(&CAN_CHANNEL, J4_ID);
-Smoco PitchMotor(&CAN_CHANNEL, PITCH_ID);
-Smoco RollMotor(&CAN_CHANNEL, ROLL_ID);
+Smoco J5Motor(&CAN_CHANNEL, J5_ID);
+Smoco J6Motor(&CAN_CHANNEL, J6_ID);
 Smoco GripperMotor(&CAN_CHANNEL, GRIPPER_ID);
 
 // Servos
@@ -75,12 +75,12 @@ Servo CacheServo;
 #define J4_FWD_LIM 6300
 #define J4_ENC_PER_DEG ((2150 - 3200) / 90.0)
 
-#define PITCH_REV_LIM -600
-#define PITCH_ZERO 350
-#define PITCH_FWD_LIM 1350
-#define PITCH_ENC_PER_DEG ((1350 - 350) / 90.0)
+#define J5_REV_LIM -600
+#define J5_ZERO 350
+#define J5_FWD_LIM 1350
+#define J5_ENC_PER_DEG ((1350 - 350) / 90.0)
 
-#define ROLL_ENC_PER_DEG ((12400 - 6170) / 180.0)
+#define J6_ENC_PER_DEG ((12400 - 6170) / 180.0)
 
 float encToDeg(int32_t enc, int32_t encZero, float encPerDeg, bool reversed = false);
 int32_t degToEnc(float deg, int32_t encZero, float encPerDeg, bool reversed = false);
@@ -88,7 +88,7 @@ int32_t degToEnc(float deg, int32_t encZero, float encPerDeg, bool reversed = fa
 // Control variables
 int16_t gripperDutyCycle = 0;
 int8_t linearServoTarget = 0;
-int32_t rollZero = 0;
+int32_t J6Zero = 0;
 
 bool direction = false;
 bool laserOn = false;
