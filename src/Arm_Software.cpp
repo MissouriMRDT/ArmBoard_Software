@@ -46,13 +46,13 @@ void setup() {
     // delay(3000); // wait for smocos to start up
 
     // Set PID gains
-    XMotor.setPID(0.7, 0, 0);
-    J2Motor.setPID(0.7, 0, 0);
-    J3Motor.setPID(0.7, 0, 0);
-    J4Motor.setPID(0.7, 0, 0);
-    J5Motor.setPID(0.7, 0, 0);
-    J6Motor.setPID(0.7, 0, 0);
-    GripperMotor.setPID(0.7, 0, 0);
+    XMotor.setPID(0.02, 0, 0);
+    J2Motor.setPID(0.55, 0, 0.001);
+    J3Motor.setPID(0.25, 0, 0);
+    J4Motor.setPID(0.03, 0, 0);
+    J5Motor.setPID(0.08, 0, 0.001);
+    J6Motor.setPID(0.2, 0, 0);
+    GripperMotor.setPID(0.2, 0, 0);
 
     // Set soft limits
     XMotor.setSoftLimitPosition(X_REV_LIM, X_FWD_LIM);
