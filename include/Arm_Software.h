@@ -5,6 +5,8 @@
 //  IP: 192.168.2.107
 
 #include "PinAssignments.h"
+#include "ArmParameters.h"
+#include "InverseKinematics.h"
 
 #include <ACAN_T4.h>
 #include <RoveComm.h>
@@ -53,37 +55,6 @@ Servo LinearServo;
 Servo CameraOnePan, CameraOneTilt;
 Servo CameraTwoPan, CameraTwoTilt;
 Servo CacheServo;
-
-// Soft Limits
-#define X_REV_LIM INT32_MIN
-#define X_FWD_LIM INT32_MAX
-#define X_ENC_PER_IN ((8300 - 13100) / 1.5)
-
-#define J2_REV_LIM 600
-#define J2_ZERO 1700
-#define J2_FWD_LIM 2400
-#define J2_ENC_PER_DEG ((1700 - 700) / 90.0)
-
-// J3 Encoder Reversed!
-#define J3_REV_LIM -600
-#define J3_ZERO 1200
-#define J3_FWD_LIM 1200
-#define J3_ENC_PER_DEG ((1200 - 300) / 90.0)
-
-#define J4_REV_LIM -2000
-#define J4_ZERO 2150
-#define J4_FWD_LIM 6300
-#define J4_ENC_PER_DEG ((2150 - 3200) / 90.0)
-
-#define J5_REV_LIM -600
-#define J5_ZERO 350
-#define J5_FWD_LIM 1350
-#define J5_ENC_PER_DEG ((1350 - 350) / 90.0)
-
-#define J6_ENC_PER_DEG ((12400 - 6170) / 180.0)
-
-float encToDeg(int32_t enc, int32_t encZero, float encPerDeg, bool reversed = false);
-int32_t degToEnc(float deg, int32_t encZero, float encPerDeg, bool reversed = false);
 
 // Control variables
 int16_t gripperDutyCycle = 0;

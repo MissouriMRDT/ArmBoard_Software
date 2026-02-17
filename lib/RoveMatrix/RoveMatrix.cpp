@@ -1,11 +1,27 @@
 #include "RoveMatrix.h"
 
-TransfMatrix Rotate(float x, float y, float z) 
+TransfMatrix Transpose(const TransfMatrix& mat) {
+    return {
+        mat.m00, mat.m10, mat.m20, 0,
+        mat.m01, mat.m11, mat.m21, 0,
+        mat.m02, mat.m12, mat.m22, 0,
+        // 0, 0, 0, 1
+    };
+}
+
+TransfMatrix Identity(float scale) {
+    return {
+        scale, 0, 0, 0,
+        0, scale, 0, 0,
+        0, 0, scale, 0,
+        // 0, 0, 0, scale
+    };
+}
+
+TransfMatrix Rotation(float x, float y, float z) 
 {
-    TransfMatrix result = { 1.0f, 0.0f, 0.0f, 0.0f,
-                            0.0f, 1.0f, 0.0f, 0.0f,
-                            0.0f, 0.0f, 1.0f, 0.0f,
-                            0.0f, 0.0f, 0.0f, 1.0f };
+    TransfMatrix result = Identity();
+
     float cosz = cosf(-z);
     float sinz = sinf(-z);
     float cosy = cosf(-y);
@@ -13,26 +29,25 @@ TransfMatrix Rotate(float x, float y, float z)
     float cosx = cosf(-x);
     float sinx = sinf(-x);
 
-    result.m0 = cosz*cosy;
-    result.m1 = (cosz*siny*sinx) - (sinz*cosx);
-    result.m2 = (cosz*siny*cosx) + (sinz*sinx);
-    result.m4 = sinz*cosy;
-    result.m5 = (sinz*siny*sinx) + (cosz*cosx);
-    result.m6 = (sinz*siny*cosx) - (cosz*sinx);
-    result.m8 = -siny;
-    result.m9 = cosy*sinx;
-    result.m10= cosy*cosx;
+    result.m00 = cosz*cosy;
+    result.m10 = (cosz*siny*sinx) - (sinz*cosx);
+    result.m20 = (cosz*siny*cosx) + (sinz*sinx);
+    result.m01 = sinz*cosy;
+    result.m11 = (sinz*siny*sinx) + (cosz*cosx);
+    result.m21 = (sinz*siny*cosx) - (cosz*sinx);
+    result.m02 = -siny;
+    result.m12 = cosy*sinx;
+    result.m22 = cosy*cosx;
 
     return result;
 }
 
-TransfMatrix Translate(float x, float y, float z) 
+TransfMatrix Translation(float x, float y, float z) 
 {
-    TransfMatrix result = { 1.0f, 0.0f, 0.0f, x,
-                            0.0f, 1.0f, 0.0f, y,
-                            0.0f, 0.0f, 1.0f, z,
-                            0.0f, 0.0f, 0.0f, 1.0f };
-
+    TransfMatrix result = Identity();
+    result.m03 = x;
+    result.m13 = y;
+    result.m23 = z;
     return result;
 }
 
@@ -40,27 +55,24 @@ TransfMatrix operator * (const TransfMatrix& left, const TransfMatrix& right)
 {
     TransfMatrix result = { 0 };
 
-    result.m0 = left.m0*right.m0 + left.m1*right.m4 + left.m2*right.m8 + left.m3*right.m12;
-    result.m1 = left.m0*right.m1 + left.m1*right.m5 + left.m2*right.m9 + left.m3*right.m13;
-    result.m2 = left.m0*right.m2 + left.m1*right.m6 + left.m2*right.m10 + left.m3*right.m14;
-    result.m3 = left.m0*right.m3 + left.m1*right.m7 + left.m2*right.m11 + left.m3*right.m15;
-    result.m4 = left.m4*right.m0 + left.m5*right.m4 + left.m6*right.m8 + left.m7*right.m12;
-    result.m5 = left.m4*right.m1 + left.m5*right.m5 + left.m6*right.m9 + left.m7*right.m13;
-    result.m6 = left.m4*right.m2 + left.m5*right.m6 + left.m6*right.m10 + left.m7*right.m14;
-    result.m7 = left.m4*right.m3 + left.m5*right.m7 + left.m6*right.m11 + left.m7*right.m15;
-    result.m8 = left.m8*right.m0 + left.m9*right.m4 + left.m10*right.m8 + left.m11*right.m12;
-    result.m9 = left.m8*right.m1 + left.m9*right.m5 + left.m10*right.m9 + left.m11*right.m13;
-    result.m10 = left.m8*right.m2 + left.m9*right.m6 + left.m10*right.m10 + left.m11*right.m14;
-    result.m11 = left.m8*right.m3 + left.m9*right.m7 + left.m10*right.m11 + left.m11*right.m15;
-    result.m12 = left.m12*right.m0 + left.m13*right.m4 + left.m14*right.m8 + left.m15*right.m12;
-    result.m13 = left.m12*right.m1 + left.m13*right.m5 + left.m14*right.m9 + left.m15*right.m13;
-    result.m14 = left.m12*right.m2 + left.m13*right.m6 + left.m14*right.m10 + left.m15*right.m14;
-    result.m15 = left.m12*right.m3 + left.m13*right.m7 + left.m14*right.m11 + left.m15*right.m15;
+    // well, if it ain't broke don't fix it
+    result.m00 = left.m00*right.m00 + left.m01*right.m10 + left.m02*right.m20 + left.m03*0;
+    result.m01 = left.m00*right.m01 + left.m01*right.m11 + left.m02*right.m21 + left.m03*0;
+    result.m02 = left.m00*right.m02 + left.m01*right.m12 + left.m02*right.m22 + left.m03*0;
+    result.m03 = left.m00*right.m03 + left.m01*right.m13 + left.m02*right.m23 + left.m03*1;
+    result.m10 = left.m10*right.m00 + left.m11*right.m10 + left.m12*right.m20 + left.m13*0;
+    result.m11 = left.m10*right.m01 + left.m11*right.m11 + left.m12*right.m21 + left.m13*0;
+    result.m12 = left.m10*right.m02 + left.m11*right.m12 + left.m12*right.m22 + left.m13*0;
+    result.m13 = left.m10*right.m03 + left.m11*right.m13 + left.m12*right.m23 + left.m13*1;
+    result.m20 = left.m20*right.m00 + left.m21*right.m10 + left.m22*right.m20 + left.m23*0;
+    result.m21 = left.m20*right.m01 + left.m21*right.m11 + left.m22*right.m21 + left.m23*0;
+    result.m22 = left.m20*right.m02 + left.m21*right.m12 + left.m22*right.m22 + left.m23*0;
+    result.m23 = left.m20*right.m03 + left.m21*right.m13 + left.m22*right.m23 + left.m23*1;
 
     return result;
 }
 
-Vector operator * (Vector v, TransfMatrix mat)
+Vector operator * (const TransfMatrix& mat, const Vector& v)
 {
     Vector result = { 0, 0, 0 };
 
@@ -68,16 +80,38 @@ Vector operator * (Vector v, TransfMatrix mat)
     float y = v.y;
     float z = v.z;
 
-    result.x = mat.m0*x + mat.m4*y + mat.m8*z + mat.m12;
-    result.y = mat.m1*x + mat.m5*y + mat.m9*z + mat.m13;
-    result.z = mat.m2*x + mat.m6*y + mat.m10*z + mat.m14;
+    result.x = mat.m00*x + mat.m01*y + mat.m02*z + mat.m03;
+    result.y = mat.m10*x + mat.m11*y + mat.m12*z + mat.m13;
+    result.z = mat.m20*x + mat.m21*y + mat.m22*z + mat.m23;
 
     return result;
 }
 
-void operator *= (Vector &v, float n)
-{
+Vector operator * (float n, const Vector& v) {
+    return {
+        n * v.x,
+        n * v.y,
+        n * v.z
+    };
+}
+Vector operator * (const Vector& v, float n) {
+    return {
+        v.x * n,
+        v.y * n,
+        v.z * n
+    };
+}
+
+void operator *= (Vector &v, float n) {
     v.x *= n;
     v.y *= n;
     v.z *= n;
+}
+
+Vector operator + (const Vector &v1, const Vector &v2) {
+    return {v1.x + v2.x, v1.y + v2.y, v1.z + v2.z};
+}
+
+Vector operator - (const Vector &v1, const Vector &v2) {
+    return {v1.x - v2.x, v1.y - v2.y, v1.z - v2.z};
 }
