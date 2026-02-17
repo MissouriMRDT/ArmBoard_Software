@@ -1,5 +1,18 @@
 #include "RoveMatrix.h"
 
+TransfMatrix TransfMatrix::getRotation() const {
+    return {
+        m00, m01, m02, 0,
+        m10, m11, m12, 0,
+        m20, m21, m22, 0,
+        //0, 0, 0, 1
+    };
+}
+
+Vector TransfMatrix::getTranslation() const {
+    return { m03, m13, m23 };
+}
+
 TransfMatrix Transpose(const TransfMatrix& mat) {
     return {
         mat.m00, mat.m10, mat.m20, 0,
@@ -114,4 +127,8 @@ Vector operator + (const Vector &v1, const Vector &v2) {
 
 Vector operator - (const Vector &v1, const Vector &v2) {
     return {v1.x - v2.x, v1.y - v2.y, v1.z - v2.z};
+}
+
+Vector operator-(const Vector& v) {
+    return {-v.x, -v.y, -v.z};
 }

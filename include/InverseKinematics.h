@@ -15,8 +15,6 @@ namespace IK {
 
     // For debug purposes only
     extern IK::DHParameters DHTable[6];
-    // extern IK::DHParameters IKSolution1[6];
-    // extern IK::DHParameters IKSolution2[6];
 
     TransfMatrix TransformFromDH(const DHParameters &params);
     TransfMatrix CalculateForwardTransform(const JointPositions &q);

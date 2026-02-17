@@ -10,6 +10,11 @@ struct Vector {
     float z;
 };
 
+constexpr Vector BASIS_X = {1, 0, 0};
+constexpr Vector BASIS_Y = {0, 1, 0};
+constexpr Vector BASIS_Z = {0, 0, 1};
+constexpr Vector ORIGIN = {0, 0, 0};
+
 // Represents a 4x4 transformation matrix
 struct TransfMatrix {
     union {
@@ -21,6 +26,9 @@ struct TransfMatrix {
         };
         float values[4][4];
     };
+
+    TransfMatrix getRotation() const;
+    Vector getTranslation() const;
 };
 
 TransfMatrix Transpose(const TransfMatrix& mat);
@@ -34,6 +42,7 @@ Vector operator * (const TransfMatrix &mat, const Vector &v);
 
 Vector operator + (const Vector& v1, const Vector& v2);
 Vector operator - (const Vector& v1, const Vector& v2);
+Vector operator-(const Vector& v);
 Vector operator * (float n, const Vector& v);
 Vector operator * (const Vector& v, float n);
 void operator *= (Vector& v, float n);
