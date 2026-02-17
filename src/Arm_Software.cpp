@@ -179,6 +179,7 @@ void updateFromRoveComm() {
     case RC_ARMBOARD_OPENLOOP_DATA_ID: {
         // Set motor motorState control mode to open loop
         // if m_currentMode != OPEN_LOOP m_resendParameters = false;
+        currentMode = ControlMode::OPEN_LOOP;
 
         XMotor.driveOpenLoop(packet.i16data[0]);
         J2Motor.driveOpenLoop(packet.i16data[1]);
@@ -187,92 +188,147 @@ void updateFromRoveComm() {
         J5Motor.driveOpenLoop(packet.i16data[4]);
         J6Motor.driveOpenLoop(packet.i16data[5]);
 
+        targetAngles.X = XMotor.getAngle();
+        targetAngles.J2 = J2Motor.getAngle();
+        targetAngles.J3 = J3Motor.getAngle();
+        targetAngles.J4 = J4Motor.getAngle();
+        targetAngles.J5 = J5Motor.getAngle();
+        targetAngles.J6 = J6Motor.getAngle();
+
         feedWatchdog();
         break;
     }
     case RC_ARMBOARD_TARGETANGLE_DATA_ID: {
-        XMotor.driveTargetAngle(packet.fdata[0], 0.05f);
-        J2Motor.driveTargetAngle(packet.fdata[1], 0.05f);
-        J3Motor.driveTargetAngle(packet.fdata[2], 0.05f);
-        J4Motor.driveTargetAngle(packet.fdata[3], 0.05f);
-        J5Motor.driveTargetAngle(packet.fdata[4], 0.05f);
-        J6Motor.driveTargetAngle(packet.fdata[5], 0.05f);
+        currentMode = ControlMode::CLOSED_LOOP;
+
+        targetAngles.X = packet.fdata[0];
+        targetAngles.J2 = packet.fdata[1];
+        targetAngles.J3 = packet.fdata[2];
+        targetAngles.J4 = packet.fdata[3];
+        targetAngles.J5 = packet.fdata[4];
+        targetAngles.J6 = packet.fdata[5];
+
+        XMotor.driveTargetAngle(targetAngles.X, 0.05f);
+        J2Motor.driveTargetAngle(targetAngles.J2, 0.05f);
+        J3Motor.driveTargetAngle(targetAngles.J3, 0.05f);
+        J4Motor.driveTargetAngle(targetAngles.J4, 0.05f);
+        J5Motor.driveTargetAngle(targetAngles.J5, 0.05f);
+        J6Motor.driveTargetAngle(targetAngles.J6, 0.05f);
 
         feedWatchdog();
         break;
     }
     case RC_ARMBOARD_TARGETANGLEINCREMENT_DATA_ID: {
-        XMotor.driveTargetAngle(XMotor.getAngle() + packet.fdata[0], 0.05f);
-        J2Motor.driveTargetAngle(J2Motor.getAngle() + packet.fdata[1], 0.05f);
-        J3Motor.driveTargetAngle(J3Motor.getAngle() + packet.fdata[2], 0.05f);
-        J4Motor.driveTargetAngle(J4Motor.getAngle() + packet.fdata[3], 0.05f);
-        J5Motor.driveTargetAngle(J5Motor.getAngle() + packet.fdata[4], 0.05f);
-        J6Motor.driveTargetAngle(J6Motor.getAngle() + packet.fdata[5], 0.05f);
+        if (currentMode != ControlMode::CLOSED_LOOP) {
+            targetAngles.X = XMotor.getAngle();
+            targetAngles.J2 = J2Motor.getAngle();
+            targetAngles.J3 = J3Motor.getAngle();
+            targetAngles.J4 = J4Motor.getAngle();
+            targetAngles.J5 = J5Motor.getAngle();
+            targetAngles.J6 = J6Motor.getAngle();
+        }
+        currentMode = ControlMode::CLOSED_LOOP;
+
+        targetAngles.X += packet.fdata[0];
+        targetAngles.J2 += packet.fdata[1];
+        targetAngles.J3 += packet.fdata[2];
+        targetAngles.J4 += packet.fdata[3];
+        targetAngles.J5 += packet.fdata[4];
+        targetAngles.J6 += packet.fdata[5];
+        XMotor.driveTargetAngle( targetAngles.X, 0.05f);
+        J2Motor.driveTargetAngle(targetAngles.J2, 0.05f);
+        J3Motor.driveTargetAngle(targetAngles.J3, 0.05f);
+        J4Motor.driveTargetAngle(targetAngles.J4, 0.05f);
+        J5Motor.driveTargetAngle(targetAngles.J5, 0.05f);
+        J6Motor.driveTargetAngle(targetAngles.J6, 0.05f);
         break;
     }
     // case RC_ARMBOARD_IKPOSITION_DATA_ID:
     case RC_ARMBOARD_IKPOSITIONINCREMENT_DATA_ID: {
-        // SIM CODE:
-        // wristTarget.x += axes[RIGHT_STICK_Y] * IK_TARGET_SPEED * delta;
-		// wristTarget.y += axes[LEFT_STICK_Y] * IK_TARGET_SPEED * delta;
-		// wristTarget.z += axes[RIGHT_STICK_X] * IK_TARGET_SPEED * delta;
-		// TransfMatrix targetPose = 
-		// Translation(0, 0, wristTarget.z)
-		// * Translation(0, wristTarget.y, 0)
-		// * Translation(wristTarget.x, 0, 0);
-		// wristRotation = Rotation(0, axes[LEFT_STICK_X] * LOCKMODE_ANGULAR_SPEED * delta, 0) * wristRotation;
-		// wristRotation = Rotation(0, 0, axes[TRIGGERS] * LOCKMODE_ANGULAR_SPEED * delta) * wristRotation;
-		// wristRotation = Rotation(axes[BUMPERS] * LOCKMODE_ANGULAR_SPEED * delta, 0, 0) * wristRotation;
-		// targetPose = targetPose * wristRotation;
-		//
-        // JointPositions angles = getJointPositions();
-        // if (IK::CalculateInverseKinematics(targetPose, angles)) {
-        //     if (
-        //         XMotor.isAngleWithinLimits(angles.X)
-        //         && J2Motor.isAngleWithinLimits(angles.J2)
-        //         && J3Motor.isAngleWithinLimits(angles.J3)
-        //         && J4Motor.isAngleWithinLimits(angles.J4)
-        //         && J5Motor.isAngleWithinLimits(angles.J5)
-        //         && J6Motor.isAngleWithinLimits(angles.J6)
-        //     ) {
-        //         driveTargetAngles(angles.X, angles.J2, angles.J3, angles.J4, angles.J5, angles.J6);
-        //     } else {
-        //         std::cout << "IK outside limits" << std::endl;
-        //     }
-        // } else {
-        //     std::cout << "IK failed" << std::endl;
-        // }
+                // SIM CODE:
+        wristTarget.x += packet.fdata[0];
+		wristTarget.y += packet.fdata[1];
+		wristTarget.z += packet.fdata[2];
+		TransfMatrix targetPose = 
+		Translation(0, 0, wristTarget.z)
+		* Translation(0, wristTarget.y, 0)
+		* Translation(wristTarget.x, 0, 0);
+		wristRotation = Rotation(0, M_PI_2, 0); // wrist facing forward
+		targetPose = targetPose * wristRotation;
+		
+        targetAngles.X = XMotor.getAngle();
+        targetAngles.J2 = J2Motor.getAngle();
+        targetAngles.J3 = J3Motor.getAngle();
+        targetAngles.J4 = J4Motor.getAngle();
+        targetAngles.J5 = J5Motor.getAngle();
+        targetAngles.J6 = J6Motor.getAngle();
+        if (IK::CalculateInverseKinematics(targetPose, targetAngles)) {
+            targetAngles.J4 = packet.fdata[4];
+            targetAngles.J5 = packet.fdata[5];
+            targetAngles.J6 = packet.fdata[6];
+            if (
+                XMotor.isAngleWithinLimits(targetAngles.X)
+                && J2Motor.isAngleWithinLimits(targetAngles.J2)
+                && J3Motor.isAngleWithinLimits(targetAngles.J3)
+                && J4Motor.isAngleWithinLimits(targetAngles.J4)
+                && J5Motor.isAngleWithinLimits(targetAngles.J5)
+                && J6Motor.isAngleWithinLimits(targetAngles.J6)
+            ) {
+                XMotor.driveTargetAngle( targetAngles.X, 0.05f);
+                J2Motor.driveTargetAngle(targetAngles.J2, 0.05f);
+                J3Motor.driveTargetAngle(targetAngles.J3, 0.05f);
+                J4Motor.driveTargetAngle(targetAngles.J4, 0.05f);
+                J5Motor.driveTargetAngle(targetAngles.J5, 0.05f);
+                J6Motor.driveTargetAngle(targetAngles.J6, 0.05f);
+            } else {
+                // std::cout << "IK outside limits" << std::endl;
+            }
+        } else {
+            // std::cout << "IK failed" << std::endl;
+        }
         break;
     }
     case RC_ARMBOARD_IKPOSEINCREMENT_DATA_ID: {
         // SIM CODE:
-        // wristTarget.x += axes[RIGHT_STICK_Y] * IK_TARGET_SPEED * delta;
-		// wristTarget.y += axes[LEFT_STICK_Y] * IK_TARGET_SPEED * delta;
-		// wristTarget.z += axes[RIGHT_STICK_X] * IK_TARGET_SPEED * delta;
-		// TransfMatrix targetPose = 
-		// Translation(0, 0, wristTarget.z)
-		// * Translation(0, wristTarget.y, 0)
-		// * Translation(wristTarget.x, 0, 0);
-		// wristRotation = Rotation(0, M_PI_2, 0); // wrist facing forward
-		// targetPose = targetPose * wristRotation;
-		// 
-        // JointPositions angles = getJointPositions();
-        // if (IK::CalculateInverseKinematics(targetPose, angles)) {
-        //     if (
-        //         XMotor.isAngleWithinLimits(angles.X)
-        //         && J2Motor.isAngleWithinLimits(angles.J2)
-        //         && J3Motor.isAngleWithinLimits(angles.J3)
-        //         && J4Motor.isAngleWithinLimits(angles.J4)
-        //         && J5Motor.isAngleWithinLimits(angles.J5)
-        //         && J6Motor.isAngleWithinLimits(angles.J6)
-        //     ) {
-        //         driveTargetAngles(angles.X, angles.J2, angles.J3, angles.J4, angles.J5, angles.J6);
-        //     } else {
-        //         std::cout << "IK outside limits" << std::endl;
-        //     }
-        // } else {
-        //     std::cout << "IK failed" << std::endl;
-        // }
+        wristTarget.x += packet.fdata[0];
+		wristTarget.y += packet.fdata[1];
+		wristTarget.z += packet.fdata[2];
+		TransfMatrix targetPose = 
+		Translation(0, 0, wristTarget.z)
+		* Translation(0, wristTarget.y, 0)
+		* Translation(wristTarget.x, 0, 0);
+		wristRotation = Rotation(0, packet.fdata[3], 0) * wristRotation;
+		wristRotation = Rotation(0, 0, packet.fdata[4]) * wristRotation;
+		wristRotation = Rotation(packet.fdata[5], 0, 0) * wristRotation;
+		targetPose = targetPose * wristRotation;
+		
+        targetAngles.X = XMotor.getAngle();
+        targetAngles.J2 = J2Motor.getAngle();
+        targetAngles.J3 = J3Motor.getAngle();
+        targetAngles.J4 = J4Motor.getAngle();
+        targetAngles.J5 = J5Motor.getAngle();
+        targetAngles.J6 = J6Motor.getAngle();
+        if (IK::CalculateInverseKinematics(targetPose, targetAngles)) {
+            if (
+                XMotor.isAngleWithinLimits(targetAngles.X)
+                && J2Motor.isAngleWithinLimits(targetAngles.J2)
+                && J3Motor.isAngleWithinLimits(targetAngles.J3)
+                && J4Motor.isAngleWithinLimits(targetAngles.J4)
+                && J5Motor.isAngleWithinLimits(targetAngles.J5)
+                && J6Motor.isAngleWithinLimits(targetAngles.J6)
+            ) {
+                XMotor.driveTargetAngle( targetAngles.X, 0.05f);
+                J2Motor.driveTargetAngle(targetAngles.J2, 0.05f);
+                J3Motor.driveTargetAngle(targetAngles.J3, 0.05f);
+                J4Motor.driveTargetAngle(targetAngles.J4, 0.05f);
+                J5Motor.driveTargetAngle(targetAngles.J5, 0.05f);
+                J6Motor.driveTargetAngle(targetAngles.J6, 0.05f);
+            } else {
+                // std::cout << "IK outside limits" << std::endl;
+            }
+        } else {
+            // std::cout << "IK failed" << std::endl;
+        }
         break;
     }
     case RC_ARMBOARD_GRIPPEROPENLOOP_DATA_ID: {
