@@ -172,18 +172,28 @@ void updateFromRoveComm() {
         break;
     }
     case RC_ARMBOARD_IKPOSITION_DATA_ID: {
-        TransfMatrix targetPose = Translation(packet.fdata[0], packet.fdata[1], packet.fdata[2]) *
+        // X -> Z
+        // Y -> Y
+        // Z -> X
+        TransfMatrix targetPose = Translation(packet.fdata[2], packet.fdata[1], packet.fdata[1]) *
                                   Rotation(packet.fdata[3], packet.fdata[4], packet.fdata[5]);
+        driveInverseKinematics(targetPose);
         feedWatchdog();
         break;
     }
     case RC_ARMBOARD_IKPOSEINCREMENT_DATA_ID: {
-        incrementInverseKinematicsPose(packet.fdata[0], packet.fdata[1], packet.fdata[2], packet.fdata[3],
+        // X -> Z
+        // Y -> Y
+        // Z -> X
+        incrementInverseKinematicsPose(packet.fdata[2], packet.fdata[1], packet.fdata[0], packet.fdata[3],
                                        packet.fdata[4], packet.fdata[5]);
         break;
     }
     case RC_ARMBOARD_IKPOSITIONINCREMENT_DATA_ID: {
-        incrementInverseKinematicsPosition(packet.fdata[0], packet.fdata[1], packet.fdata[2], packet.fdata[3],
+        // X -> Z
+        // Y -> Y
+        // Z -> X
+        incrementInverseKinematicsPosition(packet.fdata[2], packet.fdata[1], packet.fdata[0], packet.fdata[3],
                                            packet.fdata[4], packet.fdata[5]);
         break;
     }
