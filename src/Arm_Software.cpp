@@ -59,7 +59,7 @@ void setup() {
     J3Motor.setPID(0.25, 0, 0);
     J4Motor.setPID(0.03, 0, 0);
     J5Motor.setPID(0.08, 0, 0.001);
-    J6Motor.setPID(0.2, 0, 0);
+    J6Motor.setPID(0.01, 0, 0);
     GripperMotor.setPID(0.2, 0, 0);
 
     // Set soft limits
@@ -337,7 +337,14 @@ void incrementTargetAngles(float XAngle, float J2Angle, float J3Angle, float J4A
     J3Motor.driveTargetAngle(J3Motor.getTargetAngle() + J3Angle, 0.05);
     J4Motor.driveTargetAngle(J4Motor.getTargetAngle() + J4Angle, 0.05);
     J5Motor.driveTargetAngle(J5Motor.getTargetAngle() + J5Angle, 0.05);
-    J6Motor.driveTargetAngle(J6Motor.getTargetAngle() + J6Angle, 0.05);
+    // J6Motor.driveTargetAngle(J6Motor.getTargetAngle() + J6Angle, 0.05);
+    int16_t j6Duty = 0;
+    if (J6Angle > 0) {
+        j6Duty = INT16_MAX;
+    } else if (J6Angle < 0) {
+        j6Duty = INT16_MIN;
+    }
+    J6Motor.driveOpenLoop(j6Duty);
 }
 
 
@@ -388,7 +395,14 @@ void incrementInverseKinematicsPosition(float x, float y, float z, float j4, flo
     J3Motor.driveTargetAngle(angles.J3, 0.05);
     J4Motor.driveTargetAngle(angles.J4, 0.05);
     J5Motor.driveTargetAngle(angles.J5, 0.05);
-    J6Motor.driveTargetAngle(angles.J6, 0.05);
+    // J6Motor.driveTargetAngle(angles.J6, 0.05);
+    int16_t j6Duty = 0;
+    if (j6 > 0) {
+        j6Duty = INT16_MAX;
+    } else if (j6 < 0) {
+        j6Duty = INT16_MIN;
+    }
+    J6Motor.driveOpenLoop(j6Duty);
 
 }
 
@@ -423,7 +437,7 @@ void driveInverseKinematics(const TransfMatrix& targetPose) {
     J3Motor.driveTargetAngle(angles.J3, 0.05);
     J4Motor.driveTargetAngle(angles.J4, 0.05);
     J5Motor.driveTargetAngle(angles.J5, 0.05);
-    J6Motor.driveTargetAngle(angles.J6, 0.05);
+    // J6Motor.driveTargetAngle(angles.J6, 0.05);
 }
 
 void limitSwitchOverride(uint16_t bitmask) {
