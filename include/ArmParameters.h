@@ -26,10 +26,13 @@ constexpr int32_t degToEnc(float deg, int32_t encZero, float encPerDeg) {
 }
 
 // Soft Limits
-constexpr auto X_ENC_PER_IN = -((13100 - 8300) / 1.5);
-constexpr auto X_REV_LIM = 0;
+constexpr auto X_ENC_PER_IN = -((13557 - -10669) / 14.2);
+// constexpr auto X_REV_LIM = 0;
+// constexpr auto X_ZERO = 0;
+// constexpr auto X_FWD_LIM = 14 * X_ENC_PER_IN;
+constexpr auto X_REV_LIM = INT16_MIN;
 constexpr auto X_ZERO = 0;
-constexpr auto X_FWD_LIM = 14 * X_ENC_PER_IN;
+constexpr auto X_FWD_LIM = INT16_MAX;
 constexpr auto X_ZERO_IN = encToDeg(X_REV_LIM, X_ZERO, X_ENC_PER_IN);
 constexpr auto X_REV_LIM_IN = encToDeg(X_REV_LIM, X_ZERO, X_ENC_PER_IN);
 constexpr auto X_FWD_LIM_IN = encToDeg(X_FWD_LIM, X_ZERO, X_ENC_PER_IN);

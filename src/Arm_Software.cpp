@@ -54,7 +54,7 @@ void setup() {
     J6Motor.configAngleConversion(J6Zero, J6_ENC_PER_DEG);
 
     // Set PID gains
-    XMotor.setPID(0.02, 0, 0);
+    XMotor.setPID(0.05, 0, 0);
     J2Motor.setPID(0.55, 0, 0.001);
     J3Motor.setPID(0.25, 0, 0);
     J4Motor.setPID(0.03, 0, 0);
@@ -103,12 +103,17 @@ void estop() {
 
 void telemetry() {
     // RoveComm.write(RC_ARMBOARD_WATCHDOGSTATUS_DATA_ID, watchdogStatus);
+    Serial.printf("X: %d\n", XMotor.getPosition());
 
     if (!telemetryOverride) {
         JointPositions angles = getJointPositions();
         Vector gripperPos = getGripperCoordinates();
+        // Convert Dr Gant space to BaseStation space
+        // Z -> X
+        // Y -> Y
+        // X -> Z
         float positions[9] = {angles.X,  angles.J2,    angles.J3,    angles.J4,   angles.J5,
-                              angles.J6, gripperPos.x, gripperPos.y, gripperPos.z};
+                              angles.J6, gripperPos.z, gripperPos.y, gripperPos.x};
         RoveComm.write(RC_ARMBOARD_POSITION_DATA_ID, RC_ARMBOARD_POSITION_DATA_COUNT, positions);
 
         uint16_t limitsTriggered = bitmask(
@@ -176,7 +181,7 @@ void updateFromRoveComm() {
         // Y -> Y
         // Z -> X
         TransfMatrix targetPose = Translation(packet.fdata[2], packet.fdata[1], packet.fdata[1]) *
-                                  Rotation(packet.fdata[3], packet.fdata[4], packet.fdata[5]);
+                                  Rotation(packet.fdata[5], packet.fdata[4], packet.fdata[3]);
         driveInverseKinematics(targetPose);
         feedWatchdog();
         break;
@@ -185,16 +190,16 @@ void updateFromRoveComm() {
         // X -> Z
         // Y -> Y
         // Z -> X
-        incrementInverseKinematicsPose(packet.fdata[2], packet.fdata[1], packet.fdata[0], packet.fdata[3],
-                                       packet.fdata[4], packet.fdata[5]);
+        incrementInverseKinematicsPose(packet.fdata[2], packet.fdata[1], packet.fdata[0], packet.fdata[5],
+                                       packet.fdata[4], packet.fdata[3]);
         break;
     }
     case RC_ARMBOARD_IKPOSITIONINCREMENT_DATA_ID: {
         // X -> Z
         // Y -> Y
         // Z -> X
-        incrementInverseKinematicsPosition(packet.fdata[2], packet.fdata[1], packet.fdata[0], packet.fdata[3],
-                                           packet.fdata[4], packet.fdata[5]);
+        incrementInverseKinematicsPosition(packet.fdata[2], packet.fdata[1], packet.fdata[0], packet.fdata[5],
+                                           packet.fdata[4], packet.fdata[3]);
         break;
     }
     case RC_ARMBOARD_GRIPPEROPENLOOP_DATA_ID: {
