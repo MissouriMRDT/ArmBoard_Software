@@ -14,6 +14,7 @@
 #include <Smoco.h>
 #include <cmath>
 #include <cstdint>
+#include <Bounce.h>
 
 // RoveComm
 RoveCommEthernet RoveComm;
@@ -40,6 +41,16 @@ bool telemetryOverride = false;
 #define J5_ID 5
 #define J6_ID 6
 #define GRIPPER_ID 7
+
+// Buttons
+Bounce XButton(BTN_1, 50);
+Bounce J2Button(BTN_2, 50);
+Bounce J3Button(BTN_3, 50);
+Bounce J4Button(BTN_4, 50);
+Bounce J5Button(BTN_5, 50);
+Bounce J6Button(BTN_6, 50);
+Bounce GripperButton(BTN_7, 50);
+Bounce DirectionSwitch(DIR_SW, 50);
 
 // Motor
 Smoco XMotor(&CAN_CHANNEL, X_ID);
@@ -72,6 +83,8 @@ void feedWatchdog();
 void setLaser(bool on);
 void updateFromRoveComm();
 void receiveCANMessages();
+uint64_t getButtonsPressed();
+void handleButtons();
 
 enum class ControlMode {
     OPEN_LOOP,
@@ -80,6 +93,7 @@ enum class ControlMode {
     IK_WRIST
 };
 
+void setControlMode(ControlMode);
 ControlMode currentMode = ControlMode::OPEN_LOOP;
 Vector gripperTarget = {0};
 Vector j4j5j6Target = {0};

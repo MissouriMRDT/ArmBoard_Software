@@ -90,13 +90,17 @@ void setup() {
 }
 
 void loop() {
-    updateFromRoveComm();
+
+    handleButtons();
+    if (getButtonsPressed() == 0) {
+        updateFromRoveComm();
+    }
     receiveCANMessages();
 }
 
 void estop() {
     watchdogStatus = 1;
-    driveOpenLoop(0, 0, 0, 0, 0, 0);
+    GripperMotor.driveOpenLoop(0);
 
     switch(currentMode) {
         case ControlMode::OPEN_LOOP:
@@ -114,7 +118,7 @@ void estop() {
 
 void telemetry() {
     // RoveComm.write(RC_ARMBOARD_WATCHDOGSTATUS_DATA_ID, watchdogStatus);
-    Serial.printf("X: %d\n", XMotor.getPosition());
+    //Serial.printf("X: %d\n", XMotor.getPosition());
 
     if (!telemetryOverride) {
         JointPositions angles = getJointPositions();
@@ -418,7 +422,7 @@ void incrementInverseKinematicsPose(float tx, float ty, float tz, float rx, floa
 }
 
 void driveInverseKinematics(const TransfMatrix& targetPose) {
-    currentMode = ControlMode::IK_POSE;
+    setControlMode(ControlMode::IK_POSE);
     JointPositions angles = getJointPositions();
     if (!IK::CalculateInverseKinematics(targetPose, angles)) return;
     if (!isPositionWithinLimits(angles)) return;
@@ -476,7 +480,7 @@ uint64_t getButtonsPressed() {
     
     uint64_t ret = 
     (!digitalRead(BTN_1) << BTN_1) 
-    | (!digitalRead(BTN_2) << BTN_2) 
+    | (!digitalRead(BTN_2) << BTN_2)
     | (!digitalRead(BTN_3) << BTN_3)
     | (!digitalRead(BTN_4) << BTN_4)
     | (!digitalRead(BTN_5) << BTN_5)
@@ -494,13 +498,104 @@ void handleButtons() {
     J5Button.update();
     J6Button.update();
     GripperButton.update();
+    
+    // if somoeone codes this function in a more condensed way show me how so I can learn 'Malakhi Rivera & Drew Fundaburg UwU'
 
     if (XButton.fallingEdge()) {
         estop();
-        XMotor.driveOpenLoop(0.5);
+        if (digitalRead(DIR_SW) == 0) {
+            XMotor.driveOpenLoop(INT16_MAX * 0.5);
+        }
+        if (digitalRead(DIR_SW) == 1) {
+            XMotor.driveOpenLoop(INT16_MIN * 0.5);
+        }
+    }
+    
+    if (XButton.risingEdge()) {
+        estop();
     }
 
-    if (XButton.risingEdge()) {
+    if (J2Button.fallingEdge()) {
+        estop();
+        if (digitalRead(DIR_SW) == 0) {
+            J2Motor.driveOpenLoop(INT16_MAX * 0.3);
+        }
+        if (digitalRead(DIR_SW) == 1) {
+            J2Motor.driveOpenLoop(INT16_MIN * 0.3);
+        }
+    }
+    
+    if (J2Button.risingEdge()) {
+        estop();
+    }
+    
+    if (J3Button.fallingEdge()) {
+        estop();
+        if (digitalRead(DIR_SW) == 0) {
+            J3Motor.driveOpenLoop(INT16_MAX * 0.5);
+        }
+        if (digitalRead(DIR_SW) == 1) {
+            J3Motor.driveOpenLoop(INT16_MIN * 0.5);
+        }
+    }
+    
+    if (J3Button.risingEdge()) {
+        estop();
+    } 
+    
+    if (J4Button.fallingEdge()) {
+        estop();
+        if (digitalRead(DIR_SW) == 0) {
+            J4Motor.driveOpenLoop(INT16_MAX * 0.5);
+        }
+        if (digitalRead(DIR_SW) == 1) {
+            J4Motor.driveOpenLoop(INT16_MIN * 0.5);
+        }
+    }
+    
+    if (J4Button.risingEdge()) {
+        estop();
+    }
+
+    if (J5Button.fallingEdge()) {
+        estop();
+        if (digitalRead(DIR_SW) == 0) {
+            J5Motor.driveOpenLoop(INT16_MAX * 0.5);
+        }
+        if (digitalRead(DIR_SW) == 1) {
+            J5Motor.driveOpenLoop(INT16_MIN * 0.5);
+        }
+    }
+    
+    if (J5Button.risingEdge()) {
+        estop();
+    }
+
+    if (J6Button.fallingEdge()) {
+        estop();
+        if (digitalRead(DIR_SW) == 0) {
+            J6Motor.driveOpenLoop(INT16_MAX * 0.5);
+        }
+        if (digitalRead(DIR_SW) == 1) {
+            J6Motor.driveOpenLoop(INT16_MIN * 0.5);
+        }
+    }
+    
+    if (J6Button.risingEdge()) {
+        estop();
+    }
+
+    if (GripperButton.fallingEdge()) {
+        estop();
+        if (digitalRead(DIR_SW) == 0) {
+            GripperMotor.driveOpenLoop(INT16_MAX * 0.2);
+        }
+        if (digitalRead(DIR_SW) == 1) {
+            GripperMotor.driveOpenLoop(INT16_MIN * 0.2);
+        }
+    }
+    
+    if (GripperButton.risingEdge()) {
         estop();
     }
 }
