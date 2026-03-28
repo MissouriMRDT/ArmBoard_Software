@@ -91,6 +91,7 @@ void setup() {
 
 void loop() {
 
+    Serial.printf("%05d\t%05d\t%05d\t%05d\t%05d\t%05d\t\n", XMotor.getPosition(), J2Motor.getPosition(), J3Motor.getPosition(), J4Motor.getPosition(), J5Motor.getPosition(), J6Motor.getPosition());
     handleButtons();
     if (getButtonsPressed() == 0) {
         updateFromRoveComm();
