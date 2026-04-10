@@ -108,7 +108,9 @@ void incrementTargetAngles(float XAngle, float J2Angle, float J3Angle, float J4A
 
 void incrementInverseKinematicsPosition(float x, float y, float z, float j4, float j5, float j6);
 
-void incrementInverseKinematicsPose(float tx, float ty, float tz, float rx, float ry, float rz);
+void incrementInverseKinematicsWorldPose(float tx, float ty, float tz, float rx, float ry, float rz);
+
+void incrementInverseKinematicsToolPose(float tx, float ty, float tz, float rx, float ry, float rz);
 
 void driveInverseKinematics(const TransfMatrix& targetPose);
 // Configure limits
