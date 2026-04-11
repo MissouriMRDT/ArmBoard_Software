@@ -63,13 +63,13 @@ void setup() {
     GripperMotor.setPID(0.2, 0, 0);
 
     // Set soft limits
-    XMotor.setSoftLimitPosition(INT32_MIN, INT32_MAX);
-    J2Motor.setSoftLimitPosition(J2_REV_LIM, J2_FWD_LIM);
-    J3Motor.setSoftLimitPosition(J3_REV_LIM, J3_FWD_LIM);
-    J4Motor.setSoftLimitPosition(J4_REV_LIM, J4_FWD_LIM);
-    J5Motor.setSoftLimitPosition(J5_REV_LIM, J5_FWD_LIM);
-    J6Motor.setSoftLimitPosition(INT32_MIN, INT32_MAX);
-    GripperMotor.setSoftLimitPosition(INT32_MIN, INT32_MAX);
+    XMotor.setSoftLimitPosition(INT32_MAX, INT32_MIN);
+    J2Motor.setSoftLimitPosition(J2_FWD_LIM, J2_REV_LIM);
+    J3Motor.setSoftLimitPosition(J3_FWD_LIM, J3_REV_LIM);
+    J4Motor.setSoftLimitPosition(J4_FWD_LIM, J4_REV_LIM);
+    J5Motor.setSoftLimitPosition(J5_FWD_LIM, J5_REV_LIM);
+    J6Motor.setSoftLimitPosition(INT32_MAX, INT32_MIN);
+    GripperMotor.setSoftLimitPosition(INT32_MAX, INT32_MIN);
 
     // Set ramp rates
     XMotor.setRampRate(100.0);
@@ -133,15 +133,15 @@ void telemetry() {
         RoveComm.write(RC_ARMBOARD_POSITION_DATA_ID, RC_ARMBOARD_POSITION_DATA_COUNT, positions);
 
         uint16_t limitsTriggered = bitmask(
-            XMotor.getLimitSwitchA(), XMotor.getLimitSwitchB(), J2Motor.getLimitSwitchA(), J2Motor.getLimitSwitchB(),
-            J3Motor.getLimitSwitchA(), J3Motor.getLimitSwitchB(), J4Motor.getLimitSwitchA(), J4Motor.getLimitSwitchB(),
-            J5Motor.getLimitSwitchA(), J5Motor.getLimitSwitchB());
+            XMotor.getLimitSwitchForward(), XMotor.getLimitSwitchReverse(), J2Motor.getLimitSwitchForward(), J2Motor.getLimitSwitchReverse(),
+            J3Motor.getLimitSwitchForward(), J3Motor.getLimitSwitchReverse(), J4Motor.getLimitSwitchForward(), J4Motor.getLimitSwitchReverse(),
+            J5Motor.getLimitSwitchForward(), J5Motor.getLimitSwitchReverse());
         RoveComm.write(RC_ARMBOARD_LIMITSWITCH_DATA_ID, RC_ARMBOARD_LIMITSWITCH_DATA_COUNT, &limitsTriggered);
 
-        uint16_t softLimitsTriggered =
-            bitmask(XMotor.getSoftLimitA(), XMotor.getSoftLimitB(), J2Motor.getSoftLimitA(), J2Motor.getSoftLimitB(),
-                    J3Motor.getSoftLimitA(), J3Motor.getSoftLimitB(), J4Motor.getSoftLimitA(), J4Motor.getSoftLimitB(),
-                    J5Motor.getSoftLimitA(), J5Motor.getSoftLimitB());
+        uint16_t softLimitsTriggered = bitmask(
+            XMotor.getSoftLimitForward(), XMotor.getLimitSwitchReverse(), J2Motor.getSoftLimitForward(), J2Motor.getLimitSwitchReverse(),
+            J3Motor.getSoftLimitForward(), J3Motor.getLimitSwitchReverse(), J4Motor.getSoftLimitForward(), J4Motor.getLimitSwitchReverse(),
+            J5Motor.getSoftLimitForward(), J5Motor.getLimitSwitchReverse());
         RoveComm.write(RC_ARMBOARD_SOFTLIMIT_DATA_ID, RC_ARMBOARD_SOFTLIMIT_DATA_COUNT, &softLimitsTriggered);
 
         XMotor.ping();
@@ -243,11 +243,11 @@ void updateFromRoveComm() {
 
         // not effective until next drive command!
         int16_t limits = packet.i16data[0];
-        XMotor.configIgnoreLimits(limits & (1 << 0), limits & (1 << 1));
-        J2Motor.configIgnoreLimits(limits & (1 << 2), limits & (1 << 3));
-        J3Motor.configIgnoreLimits(limits & (1 << 4), limits & (1 << 5));
-        J4Motor.configIgnoreLimits(limits & (1 << 6), limits & (1 << 7));
-        J5Motor.configIgnoreLimits(limits & (1 << 8), limits & (1 << 9));
+        XMotor.setIgnoreLimit(limits & (1 << 0), limits & (1 << 1));
+        J2Motor.setIgnoreLimit(limits & (1 << 2), limits & (1 << 3));
+        J3Motor.setIgnoreLimit(limits & (1 << 4), limits & (1 << 5));
+        J4Motor.setIgnoreLimit(limits & (1 << 6), limits & (1 << 7));
+        J5Motor.setIgnoreLimit(limits & (1 << 8), limits & (1 << 9));
         break;
     }
     case RC_ARMBOARD_CLOSEDLOOPOVERRIDE_DATA_ID: {
@@ -461,25 +461,25 @@ void driveInverseKinematics(const TransfMatrix& targetPose) {
 }
 
 void limitSwitchOverride(uint16_t bitmask) {
-    XMotor.configIgnoreLimits(bitmask & (1 << 0), bitmask & (1 << 1));
-    J2Motor.configIgnoreLimits(bitmask & (1 << 2), bitmask & (1 << 3));
-    J3Motor.configIgnoreLimits(bitmask & (1 << 4), bitmask & (1 << 5));
-    J4Motor.configIgnoreLimits(bitmask & (1 << 6), bitmask & (1 << 7));
-    J5Motor.configIgnoreLimits(bitmask & (1 << 8), bitmask & (1 << 9));
+    XMotor.setIgnoreLimit(bitmask & (1 << 0), bitmask & (1 << 1));
+    J2Motor.setIgnoreLimit(bitmask & (1 << 2), bitmask & (1 << 3));
+    J3Motor.setIgnoreLimit(bitmask & (1 << 4), bitmask & (1 << 5));
+    J4Motor.setIgnoreLimit(bitmask & (1 << 6), bitmask & (1 << 7));
+    J5Motor.setIgnoreLimit(bitmask & (1 << 8), bitmask & (1 << 9));
 }
 
 // Configure soft limits
 void softLimitOverride(uint16_t bitmask) {
-    XMotor.setSoftLimitPosition(bitmask & (1 << 0) ? INT32_MIN : X_REV_LIM, //
-                                bitmask & (1 << 1) ? INT32_MAX : X_FWD_LIM);
-    J2Motor.setSoftLimitPosition(bitmask & (1 << 2) ? INT32_MIN : X_REV_LIM,
-                                 bitmask & (1 << 3) ? INT32_MAX : J2_FWD_LIM);
-    J3Motor.setSoftLimitPosition(bitmask & (1 << 4) ? INT32_MIN : X_REV_LIM,
-                                 bitmask & (1 << 5) ? INT32_MAX : J3_FWD_LIM);
-    J4Motor.setSoftLimitPosition(bitmask & (1 << 6) ? INT32_MIN : J4_REV_LIM,
-                                 bitmask & (1 << 7) ? INT32_MAX : J4_FWD_LIM);
-    J5Motor.setSoftLimitPosition(bitmask & (1 << 8) ? INT32_MIN : J5_REV_LIM,
-                                 bitmask & (1 << 9) ? INT32_MAX : J5_FWD_LIM);
+    XMotor.setSoftLimitPosition(bitmask & (1 << 0) ? INT32_MIN : X_FWD_LIM, //
+                                bitmask & (1 << 1) ? INT32_MAX : X_REV_LIM);
+    J2Motor.setSoftLimitPosition(bitmask & (1 << 2) ? INT32_MIN : J2_FWD_LIM,
+                                 bitmask & (1 << 3) ? INT32_MAX : J2_REV_LIM);
+    J3Motor.setSoftLimitPosition(bitmask & (1 << 4) ? INT32_MIN : J3_FWD_LIM,
+                                 bitmask & (1 << 5) ? INT32_MAX : J3_REV_LIM);
+    J4Motor.setSoftLimitPosition(bitmask & (1 << 6) ? INT32_MIN : J4_FWD_LIM,
+                                 bitmask & (1 << 7) ? INT32_MAX : J4_REV_LIM);
+    J5Motor.setSoftLimitPosition(bitmask & (1 << 8) ? INT32_MIN : J5_FWD_LIM,
+                                 bitmask & (1 << 9) ? INT32_MAX : J5_REV_LIM);
 }
 
 bool isPositionWithinLimits(const JointPositions& angles) {
