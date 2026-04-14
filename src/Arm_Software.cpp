@@ -54,22 +54,22 @@ void setup() {
     J6Motor.configAngleConversion(J6Zero, J6_ENC_PER_DEG);
 
     // Set PID gains
-    XMotor.setPID(0.05, 0, 0);
-    J2Motor.setPID(0.55, 0, 0.001);
-    J3Motor.setPID(0.25, 0, 0);
-    J4Motor.setPID(0.03, 0, 0);
-    J5Motor.setPID(0.08, 0, 0.001);
-    J6Motor.setPID(0.01, 0, 0);
-    GripperMotor.setPID(0.2, 0, 0);
+    XMotor.setPID(0.005, 0, 0);
+    J2Motor.setPID(0.035, 0, 0);
+    J3Motor.setPID(0.025, 0, 0);
+    J4Motor.setPID(0.003, 0, 0);
+    J5Motor.setPID(0.008, 0, 0);
+    J6Motor.setPID(0.001, 0, 0);
+    GripperMotor.setPID(0.02, 0, 0);
 
     // Set soft limits
-    XMotor.setSoftLimitPosition(INT32_MAX, INT32_MIN);
-    J2Motor.setSoftLimitPosition(J2_FWD_LIM, J2_REV_LIM);
-    J3Motor.setSoftLimitPosition(J3_FWD_LIM, J3_REV_LIM);
-    J4Motor.setSoftLimitPosition(J4_FWD_LIM, J4_REV_LIM);
-    J5Motor.setSoftLimitPosition(J5_FWD_LIM, J5_REV_LIM);
-    J6Motor.setSoftLimitPosition(INT32_MAX, INT32_MIN);
-    GripperMotor.setSoftLimitPosition(INT32_MAX, INT32_MIN);
+    XMotor.setSoftLimitPosition(X_REV_LIM, X_FWD_LIM);
+    J2Motor.setSoftLimitPosition(J2_REV_LIM, J2_FWD_LIM);
+    J3Motor.setSoftLimitPosition(J3_REV_LIM, J3_FWD_LIM);
+    J4Motor.setSoftLimitPosition(J4_REV_LIM, J4_FWD_LIM);
+    J5Motor.setSoftLimitPosition(J5_REV_LIM, J5_FWD_LIM);
+    J6Motor.setSoftLimitPosition(J6_REV_LIM, J6_FWD_LIM);
+    GripperMotor.setSoftLimitPosition(INT32_MIN, INT32_MAX);
 
     // Set ramp rates
     XMotor.setRampRate(100.0);
@@ -91,7 +91,8 @@ void setup() {
 
 void loop() {
 
-    Serial.printf("%05d\t%05d\t%05d\t%05d\t%05d\t%05d\t\n", XMotor.getPosition(), J2Motor.getPosition(), J3Motor.getPosition(), J4Motor.getPosition(), J5Motor.getPosition(), J6Motor.getPosition());
+    Serial.printf("%05d\t%05d\t%05d\t%05d\t%05d\t%05d\t\n", XMotor.getPosition(), J2Motor.getPosition(),
+                  J3Motor.getPosition(), J4Motor.getPosition(), J5Motor.getPosition(), J6Motor.getPosition());
     handleButtons();
     if (getButtonsPressed() == 0) {
         updateFromRoveComm();
@@ -103,23 +104,23 @@ void estop() {
     watchdogStatus = 1;
     GripperMotor.driveOpenLoop(0);
 
-    switch(currentMode) {
-        case ControlMode::OPEN_LOOP:
-            driveOpenLoop(0, 0, 0, 0, 0, 0);
-            break;
-        case ControlMode::IK_WRIST:
-        case ControlMode::IK_POSE: 
-        case ControlMode::CLOSED_LOOP:
-            driveTargetAngles(XMotor.getAngle(), J2Motor.getAngle(), J3Motor.getAngle(), J4Motor.getAngle(),
-                            J5Motor.getAngle(), J6Motor.getAngle());
-            setControlMode(ControlMode::CLOSED_LOOP);
-            break;
+    switch (currentMode) {
+    case ControlMode::OPEN_LOOP:
+        driveOpenLoop(0, 0, 0, 0, 0, 0);
+        break;
+    case ControlMode::IK_WRIST:
+    case ControlMode::IK_POSE:
+    case ControlMode::CLOSED_LOOP:
+        driveTargetAngles(XMotor.getAngle(), J2Motor.getAngle(), J3Motor.getAngle(), J4Motor.getAngle(),
+                          J5Motor.getAngle(), J6Motor.getAngle());
+        setControlMode(ControlMode::CLOSED_LOOP);
+        break;
     }
 }
 
 void telemetry() {
     // RoveComm.write(RC_ARMBOARD_WATCHDOGSTATUS_DATA_ID, watchdogStatus);
-    //Serial.printf("X: %d\n", XMotor.getPosition());
+    // Serial.printf("X: %d\n", XMotor.getPosition());
 
     if (!telemetryOverride) {
         JointPositions angles = getJointPositions();
@@ -132,16 +133,18 @@ void telemetry() {
                               angles.J6, gripperPos.z, gripperPos.y, gripperPos.x};
         RoveComm.write(RC_ARMBOARD_POSITION_DATA_ID, RC_ARMBOARD_POSITION_DATA_COUNT, positions);
 
-        uint16_t limitsTriggered = bitmask(
-            XMotor.getLimitSwitchForward(), XMotor.getLimitSwitchReverse(), J2Motor.getLimitSwitchForward(), J2Motor.getLimitSwitchReverse(),
-            J3Motor.getLimitSwitchForward(), J3Motor.getLimitSwitchReverse(), J4Motor.getLimitSwitchForward(), J4Motor.getLimitSwitchReverse(),
-            J5Motor.getLimitSwitchForward(), J5Motor.getLimitSwitchReverse());
+        uint16_t limitsTriggered =
+            bitmask(XMotor.getLimitSwitchForward(), XMotor.getLimitSwitchReverse(), J2Motor.getLimitSwitchForward(),
+                    J2Motor.getLimitSwitchReverse(), J3Motor.getLimitSwitchForward(), J3Motor.getLimitSwitchReverse(),
+                    J4Motor.getLimitSwitchForward(), J4Motor.getLimitSwitchReverse(), J5Motor.getLimitSwitchForward(),
+                    J5Motor.getLimitSwitchReverse());
         RoveComm.write(RC_ARMBOARD_LIMITSWITCH_DATA_ID, RC_ARMBOARD_LIMITSWITCH_DATA_COUNT, &limitsTriggered);
 
-        uint16_t softLimitsTriggered = bitmask(
-            XMotor.getSoftLimitForward(), XMotor.getLimitSwitchReverse(), J2Motor.getSoftLimitForward(), J2Motor.getLimitSwitchReverse(),
-            J3Motor.getSoftLimitForward(), J3Motor.getLimitSwitchReverse(), J4Motor.getSoftLimitForward(), J4Motor.getLimitSwitchReverse(),
-            J5Motor.getSoftLimitForward(), J5Motor.getLimitSwitchReverse());
+        uint16_t softLimitsTriggered =
+            bitmask(XMotor.getSoftLimitForward(), XMotor.getLimitSwitchReverse(), J2Motor.getSoftLimitForward(),
+                    J2Motor.getLimitSwitchReverse(), J3Motor.getSoftLimitForward(), J3Motor.getLimitSwitchReverse(),
+                    J4Motor.getSoftLimitForward(), J4Motor.getLimitSwitchReverse(), J5Motor.getSoftLimitForward(),
+                    J5Motor.getLimitSwitchReverse());
         RoveComm.write(RC_ARMBOARD_SOFTLIMIT_DATA_ID, RC_ARMBOARD_SOFTLIMIT_DATA_COUNT, &softLimitsTriggered);
 
         XMotor.ping();
@@ -358,7 +361,6 @@ void incrementTargetAngles(float XAngle, float J2Angle, float J3Angle, float J4A
     J6Motor.driveOpenLoop(j6Duty);
 }
 
-
 void incrementInverseKinematicsPosition(float x, float y, float z, float j4, float j5, float j6) {
     setControlMode(ControlMode::IK_WRIST);
 
@@ -367,26 +369,23 @@ void incrementInverseKinematicsPosition(float x, float y, float z, float j4, flo
     // Y -> Y
     // Z -> X
 
-    TransfMatrix targetPose = Translation(gripperTarget.x + z, gripperTarget.y + y, gripperTarget.z + x) // gripper coords
-                                * Rotation(0, M_PI_2, 0); // wrist facing forward
+    TransfMatrix targetPose =
+        Translation(gripperTarget.x + z, gripperTarget.y + y, gripperTarget.z + x) // gripper coords
+        * Rotation(0, M_PI_2, 0);                                                  // wrist facing forward
     // calculate IK up to wrist
     JointPositions levelAngles = getJointPositions();
     // pretend the last 3 angles are always zero so that only one solution is chosen
     levelAngles.J4 = 0;
     levelAngles.J5 = 0;
-    levelAngles.J6 = 0; 
+    levelAngles.J6 = 0;
     if (!IK::CalculateInverseKinematics(targetPose, levelAngles)) return;
 
-    JointPositions newAngles = {
-        levelAngles.X,
-        levelAngles.J2,
-        levelAngles.J3,
-        levelAngles.J4 + j4j5j6Target.x + j4,
-        (levelAngles.J5 * cos((levelAngles.J4 + j4j5j6Target.x + j4) * M_PI / 180)) + j4j5j6Target.y + j5,
-        // levelAngles.J5 + j4j5j6Target.y + j5,
-        levelAngles.J6 + j4j5j6Target.z + j6
-    };
-    
+    JointPositions newAngles = {levelAngles.X, levelAngles.J2, levelAngles.J3, levelAngles.J4 + j4j5j6Target.x + j4,
+                                (levelAngles.J5 * cos((levelAngles.J4 + j4j5j6Target.x + j4) * M_PI / 180)) +
+                                    j4j5j6Target.y + j5,
+                                // levelAngles.J5 + j4j5j6Target.y + j5,
+                                levelAngles.J6 + j4j5j6Target.z + j6};
+
     if (!isPositionWithinLimits(newAngles)) return;
 
     gripperTarget.x += z;
@@ -409,7 +408,6 @@ void incrementInverseKinematicsPosition(float x, float y, float z, float j4, flo
         j6Duty = INT16_MIN;
     }
     J6Motor.driveOpenLoop(j6Duty);
-
 }
 
 void incrementInverseKinematicsWorldPose(float tx, float ty, float tz, float rx, float ry, float rz) {
@@ -421,11 +419,11 @@ void incrementInverseKinematicsWorldPose(float tx, float ty, float tz, float rx,
     // Z -> X
 
     TransfMatrix targetPose = Translation(gripperTarget.x + tz, gripperTarget.y + ty, gripperTarget.z + tx)
-    // incrementally rotate wrist in world space
-    * Rotation(0, ry * M_PI / 180, 0) // rotate about Y
-    * Rotation(rz * M_PI / 180, 0, 0) // rotate about X
-    * Rotation(0, 0, rx * M_PI / 180) // rotate about Z
-    * wristRotation;
+                              // incrementally rotate wrist in world space
+                              * Rotation(0, ry * M_PI / 180, 0) // rotate about Y
+                              * Rotation(rz * M_PI / 180, 0, 0) // rotate about X
+                              * Rotation(0, 0, rx * M_PI / 180) // rotate about Z
+                              * wristRotation;
 
     driveInverseKinematics(targetPose);
 }
@@ -433,10 +431,9 @@ void incrementInverseKinematicsWorldPose(float tx, float ty, float tz, float rx,
 void incrementInverseKinematicsToolPose(float tx, float ty, float tz, float rx, float ry, float rz) {
     setControlMode(ControlMode::IK_POSE);
 
-    TransfMatrix newWristRotation = wristRotation
-    * Rotation(0, ry * M_PI / 180, 0) // rotate about Y
-    * Rotation(rx * M_PI / 180, 0, 0) // rotate about X
-    * Rotation(0, 0, rz * M_PI / 180); // rotate about Z
+    TransfMatrix newWristRotation = wristRotation * Rotation(0, ry * M_PI / 180, 0) // rotate about Y
+                                    * Rotation(rx * M_PI / 180, 0, 0)               // rotate about X
+                                    * Rotation(0, 0, rz * M_PI / 180);              // rotate about Z
     TransfMatrix targetPose = Translation(gripperTarget.x, gripperTarget.y, gripperTarget.z) * newWristRotation;
     Vector newGripperTarget = targetPose * Vector{tx, ty, tz};
 
@@ -501,16 +498,10 @@ Vector getGripperCoordinates() {
 }
 
 uint64_t getButtonsPressed() {
-    
-    uint64_t ret = 
-    (!digitalRead(BTN_1) << BTN_1) 
-    | (!digitalRead(BTN_2) << BTN_2)
-    | (!digitalRead(BTN_3) << BTN_3)
-    | (!digitalRead(BTN_4) << BTN_4)
-    | (!digitalRead(BTN_5) << BTN_5)
-    | (!digitalRead(BTN_6) << BTN_6)
-    | (!digitalRead(BTN_7) << BTN_7)
-    | (!digitalRead(BTN_8) << BTN_8);
+
+    uint64_t ret = (!digitalRead(BTN_1) << BTN_1) | (!digitalRead(BTN_2) << BTN_2) | (!digitalRead(BTN_3) << BTN_3) |
+                   (!digitalRead(BTN_4) << BTN_4) | (!digitalRead(BTN_5) << BTN_5) | (!digitalRead(BTN_6) << BTN_6) |
+                   (!digitalRead(BTN_7) << BTN_7) | (!digitalRead(BTN_8) << BTN_8);
     return ret;
 }
 
@@ -522,8 +513,9 @@ void handleButtons() {
     J5Button.update();
     J6Button.update();
     GripperButton.update();
-    
-    // if somoeone codes this function in a more condensed way show me how so I can learn 'Malakhi Rivera & Drew Fundaburg UwU'
+
+    // if somoeone codes this function in a more condensed way show me how so I can learn 'Malakhi Rivera & Drew
+    // Fundaburg UwU'
 
     if (XButton.fallingEdge()) {
         estop();
@@ -534,7 +526,7 @@ void handleButtons() {
             XMotor.driveOpenLoop(INT16_MIN * 0.5);
         }
     }
-    
+
     if (XButton.risingEdge()) {
         estop();
     }
@@ -548,11 +540,11 @@ void handleButtons() {
             J2Motor.driveOpenLoop(INT16_MIN * 0.3);
         }
     }
-    
+
     if (J2Button.risingEdge()) {
         estop();
     }
-    
+
     if (J3Button.fallingEdge()) {
         estop();
         if (digitalRead(DIR_SW) == 0) {
@@ -562,11 +554,11 @@ void handleButtons() {
             J3Motor.driveOpenLoop(INT16_MIN * 0.5);
         }
     }
-    
+
     if (J3Button.risingEdge()) {
         estop();
-    } 
-    
+    }
+
     if (J4Button.fallingEdge()) {
         estop();
         if (digitalRead(DIR_SW) == 0) {
@@ -576,7 +568,7 @@ void handleButtons() {
             J4Motor.driveOpenLoop(INT16_MIN * 0.5);
         }
     }
-    
+
     if (J4Button.risingEdge()) {
         estop();
     }
@@ -590,7 +582,7 @@ void handleButtons() {
             J5Motor.driveOpenLoop(INT16_MIN * 0.5);
         }
     }
-    
+
     if (J5Button.risingEdge()) {
         estop();
     }
@@ -604,7 +596,7 @@ void handleButtons() {
             J6Motor.driveOpenLoop(INT16_MIN * 0.5);
         }
     }
-    
+
     if (J6Button.risingEdge()) {
         estop();
     }
@@ -618,7 +610,7 @@ void handleButtons() {
             GripperMotor.driveOpenLoop(INT16_MIN * 0.2);
         }
     }
-    
+
     if (GripperButton.risingEdge()) {
         estop();
     }
@@ -629,43 +621,42 @@ void setControlMode(ControlMode newMode) {
         return;
     }
     currentMode = newMode;
-    switch(newMode) {
-        case ControlMode::OPEN_LOOP:
-            Serial.println("SETTING TO OPEN LOOP");
-            break;
-        case ControlMode::CLOSED_LOOP:
-            Serial.println("SETTING TO CLOSED LOOP");
-            driveTargetAngles(XMotor.getAngle(), J2Motor.getAngle(), J3Motor.getAngle(), J4Motor.getAngle(),
-                            J5Motor.getAngle(), J6Motor.getAngle());            
-            break;
-        case ControlMode::IK_WRIST: {
-            JointPositions levelAngles = getJointPositions();
-            // wrist center
-            TransfMatrix currentPose = IK::CalculateForwardTransform(levelAngles);
-            Vector wristCoords = currentPose.getTranslation() - currentPose.getRotation() * ((WRIST_LENGTH+GRIPPER_LENGTH)*BASIS_Z);
-            // gripper center
-            gripperTarget = wristCoords + (WRIST_LENGTH+GRIPPER_LENGTH)*BASIS_X;
-            // compute what the angles would be
-            levelAngles.J4 = 0;
-            levelAngles.J5 = 0;
-            levelAngles.J6 = 0;
-            IK::CalculateInverseKinematics(Translation(gripperTarget.x, gripperTarget.y, gripperTarget.z)*Rotation(0, M_PI_2, 0), levelAngles);
-            levelAngles.J5 *= cos((levelAngles.J4 + J4Motor.getAngle()) * M_PI / 180);
-            // compute what the angles should be
-            j4j5j6Target = {
-                J4Motor.getAngle() - levelAngles.J4,
-                J5Motor.getAngle() - levelAngles.J5,
-                J6Motor.getAngle() - levelAngles.J6
-            };
-            Serial.println("SETTING TO WRIST CONTROL");
-            break;
-        }
-        case ControlMode::IK_POSE: {
-            TransfMatrix currentPose = IK::CalculateForwardTransform(getJointPositions());
-            gripperTarget = currentPose.getTranslation();
-            wristRotation = currentPose.getRotation();
-            Serial.println("SETTING TO POSE CONTROL");
+    switch (newMode) {
+    case ControlMode::OPEN_LOOP:
+        Serial.println("SETTING TO OPEN LOOP");
         break;
-        }
+    case ControlMode::CLOSED_LOOP:
+        Serial.println("SETTING TO CLOSED LOOP");
+        driveTargetAngles(XMotor.getAngle(), J2Motor.getAngle(), J3Motor.getAngle(), J4Motor.getAngle(),
+                          J5Motor.getAngle(), J6Motor.getAngle());
+        break;
+    case ControlMode::IK_WRIST: {
+        JointPositions levelAngles = getJointPositions();
+        // wrist center
+        TransfMatrix currentPose = IK::CalculateForwardTransform(levelAngles);
+        Vector wristCoords =
+            currentPose.getTranslation() - currentPose.getRotation() * ((WRIST_LENGTH + GRIPPER_LENGTH) * BASIS_Z);
+        // gripper center
+        gripperTarget = wristCoords + (WRIST_LENGTH + GRIPPER_LENGTH) * BASIS_X;
+        // compute what the angles would be
+        levelAngles.J4 = 0;
+        levelAngles.J5 = 0;
+        levelAngles.J6 = 0;
+        IK::CalculateInverseKinematics(
+            Translation(gripperTarget.x, gripperTarget.y, gripperTarget.z) * Rotation(0, M_PI_2, 0), levelAngles);
+        levelAngles.J5 *= cos((levelAngles.J4 + J4Motor.getAngle()) * M_PI / 180);
+        // compute what the angles should be
+        j4j5j6Target = {J4Motor.getAngle() - levelAngles.J4, J5Motor.getAngle() - levelAngles.J5,
+                        J6Motor.getAngle() - levelAngles.J6};
+        Serial.println("SETTING TO WRIST CONTROL");
+        break;
+    }
+    case ControlMode::IK_POSE: {
+        TransfMatrix currentPose = IK::CalculateForwardTransform(getJointPositions());
+        gripperTarget = currentPose.getTranslation();
+        wristRotation = currentPose.getRotation();
+        Serial.println("SETTING TO POSE CONTROL");
+        break;
+    }
     }
 }
