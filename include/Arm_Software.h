@@ -95,6 +95,8 @@ enum class ControlMode {
 
 void setControlMode(ControlMode);
 ControlMode currentMode = ControlMode::OPEN_LOOP;
+void setOpenLoopOverride(int16_t bitmask);
+uint16_t closedLoopOverride = 0;
 Vector gripperTarget = {0};
 Vector j4j5j6Target = {0};
 TransfMatrix wristRotation = Rotation(0, M_PI_2, 0);

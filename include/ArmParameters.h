@@ -22,7 +22,7 @@ constexpr float encToDeg(int32_t enc, int32_t encZero, float encPerDeg) { return
 constexpr int32_t degToEnc(float deg, int32_t encZero, float encPerDeg) { return (deg * encPerDeg) + encZero; }
 
 // Soft Limits
-constexpr auto X_ENC_PER_IN = ((-16257 - 8046) / (17.27 - 3)); // 0 and -3856
+constexpr auto X_ENC_PER_IN = ((8046 - -16257) / (17.27 - 3)); // 0 and -3856
 constexpr auto X_REV_LIM = INT16_MIN;
 constexpr auto X_ZERO = 0;
 constexpr auto X_LIMIT_SWITCH = 11000;
@@ -31,18 +31,18 @@ constexpr auto X_ZERO_IN = encToDeg(X_REV_LIM, X_ZERO, X_ENC_PER_IN);
 constexpr auto X_REV_LIM_IN = encToDeg(X_REV_LIM, X_ZERO, X_ENC_PER_IN);
 constexpr auto X_FWD_LIM_IN = encToDeg(X_FWD_LIM, X_ZERO, X_ENC_PER_IN);
 
-constexpr auto J2_REV_LIM = INT16_MIN;
+constexpr auto J2_REV_LIM = 530;
 constexpr auto J2_ZERO = 1697;
 constexpr auto J2_FWD_LIM = 2220;
-constexpr auto J2_ENC_PER_DEG = ((2220 - 690) / 90.0);
+constexpr auto J2_ENC_PER_DEG = ((1697 - 734) / 90.0);
 constexpr auto J2_ZERO_DEG = encToDeg(J2_REV_LIM, J2_ZERO, J2_ENC_PER_DEG);
 constexpr auto J2_REV_LIM_DEG = encToDeg(J2_REV_LIM, J2_ZERO, J2_ENC_PER_DEG);
 constexpr auto J2_FWD_LIM_DEG = encToDeg(J2_FWD_LIM, J2_ZERO, J2_ENC_PER_DEG);
 
 // J3 Startup Threshold (set in SMOCO config.cmake) 1600
-constexpr auto J3_REV_LIM = -700;
-constexpr auto J3_ZERO = 255;
-constexpr auto J3_FWD_LIM = 1200;
+constexpr auto J3_REV_LIM = 700;
+constexpr auto J3_ZERO = 1680;
+constexpr auto J3_FWD_LIM = 4300;
 constexpr auto J3_ENC_PER_DEG = ((255 - (-752)) / 90.0);
 constexpr auto J3_ZERO_DEG = encToDeg(J3_REV_LIM, J3_ZERO, J3_ENC_PER_DEG);
 constexpr auto J3_REV_LIM_DEG = encToDeg(J3_REV_LIM, J3_ZERO, J3_ENC_PER_DEG);
