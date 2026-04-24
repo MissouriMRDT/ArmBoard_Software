@@ -31,7 +31,8 @@ void setup() {
     pinMode(BTN_LIN_SERVO, INPUT_PULLUP);
     pinMode(DIR_SW, INPUT_PULLUP);
 
-    LinearServo.attach(LINEAR_SERVO);
+    LinearServo.attach(LINEAR_SERVO, 600, 2000);
+    LinearServo.write(0);
     CameraOnePan.attach(SERVO_1);
     CameraOneTilt.attach(SERVO_2);
     CameraTwoPan.attach(SERVO_3);
@@ -226,6 +227,7 @@ void updateFromRoveComm() {
         break;
     }
     case RC_ARMBOARD_LINEARSERVO_DATA_ID: {
+        Serial.print(packet.u8data[0]);
         LinearServo.write(packet.u8data[0]);
         feedWatchdog();
         break;
