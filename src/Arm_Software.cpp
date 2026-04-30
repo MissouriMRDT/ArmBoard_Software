@@ -137,19 +137,24 @@ void telemetry() {
                               angles.J6, gripperPos.x, gripperPos.y, gripperPos.z};
         RoveComm.write(RC_ARMBOARD_POSITION_DATA_ID, RC_ARMBOARD_POSITION_DATA_COUNT, positions);
 
+        float targets[9] = {XMotor.getTargetAngle(),  J2Motor.getTargetAngle(), J3Motor.getTargetAngle(),
+                            J4Motor.getTargetAngle(), J5Motor.getTargetAngle(), J6Motor.getTargetAngle(),
+                            gripperTarget.x,          gripperTarget.y,          gripperTarget.z};
+        RoveComm.write(RC_ARMBOARD_TARGET_DATA_ID, RC_ARMBOARD_TARGET_DATA_COUNT, targets);
+
         uint16_t limitsTriggered =
             bitmask(XMotor.getLimitSwitchForward(), XMotor.getLimitSwitchReverse(), J2Motor.getLimitSwitchForward(),
                     J2Motor.getLimitSwitchReverse(), J3Motor.getLimitSwitchForward(), J3Motor.getLimitSwitchReverse(),
                     J4Motor.getLimitSwitchForward(), J4Motor.getLimitSwitchReverse(), J5Motor.getLimitSwitchForward(),
                     J5Motor.getLimitSwitchReverse());
-        RoveComm.write(RC_ARMBOARD_LIMITSWITCH_DATA_ID, RC_ARMBOARD_LIMITSWITCH_DATA_COUNT, &limitsTriggered);
+        RoveComm.write(RC_ARMBOARD_LIMITSWITCH_DATA_ID, limitsTriggered);
 
         uint16_t softLimitsTriggered =
             bitmask(XMotor.getSoftLimitForward(), XMotor.getSoftLimitReverse(), J2Motor.getSoftLimitForward(),
                     J2Motor.getSoftLimitReverse(), J3Motor.getSoftLimitForward(), J3Motor.getSoftLimitReverse(),
                     J4Motor.getSoftLimitForward(), J4Motor.getSoftLimitReverse(), J5Motor.getSoftLimitForward(),
                     J5Motor.getSoftLimitReverse());
-        RoveComm.write(RC_ARMBOARD_SOFTLIMIT_DATA_ID, RC_ARMBOARD_SOFTLIMIT_DATA_COUNT, &softLimitsTriggered);
+        RoveComm.write(RC_ARMBOARD_SOFTLIMIT_DATA_ID, softLimitsTriggered);
 
         XMotor.ping();
         J2Motor.ping();
@@ -206,14 +211,19 @@ void updateFromRoveComm() {
         feedWatchdog();
         break;
     }
-    case RC_ARMBOARD_IKPOSEINCREMENT_DATA_ID: {
+    case RC_ARMBOARD_IKWORLDINCREMENT_DATA_ID: {
         incrementInverseKinematicsWorldPose(packet.fdata[0], packet.fdata[1], packet.fdata[2], packet.fdata[3],
                                             packet.fdata[4], packet.fdata[5]);
         break;
     }
-    case RC_ARMBOARD_IKPOSITIONINCREMENT_DATA_ID: {
-        incrementInverseKinematicsPosition(packet.fdata[0], packet.fdata[1], packet.fdata[2], packet.fdata[3],
+    case RC_ARMBOARD_IKTOOLINCREMENT_DATA_ID: {
+        incrementInverseKinematicsToolPose(packet.fdata[0], packet.fdata[1], packet.fdata[2], packet.fdata[3],
                                            packet.fdata[4], packet.fdata[5]);
+        break;
+    }
+    case RC_ARMBOARD_IKWRISTINCREMENT_DATA_ID: {
+        incrementInverseKinematicsWrist(packet.fdata[0], packet.fdata[1], packet.fdata[2], packet.fdata[3],
+                                        packet.fdata[4], packet.fdata[5]);
         break;
     }
     case RC_ARMBOARD_GRIPPEROPENLOOP_DATA_ID: {
@@ -360,7 +370,7 @@ void incrementTargetAngles(float XAngle, float J2Angle, float J3Angle, float J4A
     J6Motor.driveTargetAngle(J6Motor.getTargetAngle() + J6Angle, 0);
 }
 
-void incrementInverseKinematicsPosition(float x, float y, float z, float j4, float j5, float j6) {
+void incrementInverseKinematicsWrist(float x, float y, float z, float j4, float j5, float j6) {
     setControlMode(ControlMode::IK_WRIST);
 
     TransfMatrix targetPose =

@@ -108,7 +108,7 @@ void driveTargetAngles(float XAngle, float J2Angle, float J3Angle, float J4Angle
 // Increment joint targets
 void incrementTargetAngles(float XAngle, float J2Angle, float J3Angle, float J4Angle, float J5Angle, float J6Angle);
 
-void incrementInverseKinematicsPosition(float x, float y, float z, float j4, float j5, float j6);
+void incrementInverseKinematicsWrist(float x, float y, float z, float j4, float j5, float j6);
 
 void incrementInverseKinematicsWorldPose(float tx, float ty, float tz, float rx, float ry, float rz);
 
