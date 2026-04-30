@@ -6,7 +6,7 @@
 
 #include "PinAssignments.h"
 #include "ArmParameters.h"
-#include "InverseKinematics.h"
+#include "RoveMatrix.h"
 
 #include <ACAN_T4.h>
 #include <RoveComm.h>
@@ -99,7 +99,7 @@ void setOpenLoopOverride(int16_t bitmask);
 uint16_t closedLoopOverride = 0;
 Vector gripperTarget = {0};
 Vector j4j5j6Target = {0};
-TransfMatrix wristRotation = Rotation(0, M_PI_2, 0);
+TransfMatrix wristRotation = Rotation(0, M_PI, 0);
 
 // Drive joints with given powers
 void driveOpenLoop(int16_t XDuty, int16_t J2Duty, int16_t J3Duty, int16_t J4Duty, int16_t J5Duty, int16_t J6Duty);

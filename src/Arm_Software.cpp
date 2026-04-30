@@ -1,4 +1,5 @@
 #include "Arm_Software.h"
+#include "InverseKinematics.h"
 
 #include <Arduino.h>
 
@@ -99,9 +100,8 @@ void setup() {
 }
 
 void loop() {
-
-    Serial.printf("%05d\t%05d\t%05d\t%05d\t%05d\t%05d\t\n", XMotor.getPosition(), J2Motor.getPosition(),
-                  J3Motor.getPosition(), J4Motor.getPosition(), J5Motor.getPosition(), J6Motor.getPosition());
+    // Serial.printf("%05d\t%05d\t%05d\t%05d\t%05d\t%05d\t\n", XMotor.getPosition(), J2Motor.getPosition(),
+    //               J3Motor.getPosition(), J4Motor.getPosition(), J5Motor.getPosition(), J6Motor.getPosition());
     handleButtons();
     if (getButtonsPressed() == 0) {
         updateFromRoveComm();
@@ -129,17 +129,12 @@ void estop() {
 
 void telemetry() {
     // RoveComm.write(RC_ARMBOARD_WATCHDOGSTATUS_DATA_ID, watchdogStatus);
-    // Serial.printf("X: %d\n", XMotor.getPosition());
 
     if (!telemetryOverride) {
         JointPositions angles = getJointPositions();
         Vector gripperPos = getGripperCoordinates();
-        // Convert Dr Gant space to BaseStation space
-        // Z -> X
-        // Y -> Y
-        // X -> Z
         float positions[9] = {angles.X,  angles.J2,    angles.J3,    angles.J4,   angles.J5,
-                              angles.J6, gripperPos.z, gripperPos.y, gripperPos.x};
+                              angles.J6, gripperPos.x, gripperPos.y, gripperPos.z};
         RoveComm.write(RC_ARMBOARD_POSITION_DATA_ID, RC_ARMBOARD_POSITION_DATA_COUNT, positions);
 
         uint16_t limitsTriggered =
@@ -227,7 +222,6 @@ void updateFromRoveComm() {
         break;
     }
     case RC_ARMBOARD_LINEARSERVO_DATA_ID: {
-        Serial.print(packet.u8data[0]);
         LinearServo.write(packet.u8data[0]);
         feedWatchdog();
         break;
@@ -276,7 +270,11 @@ void updateFromRoveComm() {
         // x data & (1 << 0)
         // j6 data & (1 << 1)
         if (packet.u8data[0] & (1 << 0)) {
-            XMotor.calibratePosition(-INT16_MAX / 2, XMotor.degreesToSteps(-7.06));
+            XMotor.calibrateAngle(INT16_MIN / 2, -7.06);
+            uint32_t timeout = millis() + 10000;
+            while (!XMotor.getCalibrated() || millis() < timeout) {
+                feedWatchdog();
+            }
         }
         if (packet.u8data[0] & (1 << 1)) {
             J6Zero = J6Motor.getPosition();
@@ -365,14 +363,9 @@ void incrementTargetAngles(float XAngle, float J2Angle, float J3Angle, float J4A
 void incrementInverseKinematicsPosition(float x, float y, float z, float j4, float j5, float j6) {
     setControlMode(ControlMode::IK_WRIST);
 
-    // Gant space doesn't quite match traditional Rover space
-    // X -> Z
-    // Y -> Y
-    // Z -> X
-
     TransfMatrix targetPose =
-        Translation(gripperTarget.x + z, gripperTarget.y + y, gripperTarget.z + x) // gripper coords
-        * Rotation(0, M_PI_2, 0);                                                  // wrist facing forward
+        Translation(gripperTarget.x + x, gripperTarget.y + y, gripperTarget.z + z) // gripper coords
+        * Rotation(0, M_PI, 0);                                                    // wrist facing forward
     // calculate IK up to wrist
     JointPositions levelAngles = getJointPositions();
     // pretend the last 3 angles are always zero so that only one solution is chosen
@@ -382,16 +375,14 @@ void incrementInverseKinematicsPosition(float x, float y, float z, float j4, flo
     if (!IK::CalculateInverseKinematics(targetPose, levelAngles)) return;
 
     JointPositions newAngles = {levelAngles.X, levelAngles.J2, levelAngles.J3, levelAngles.J4 + j4j5j6Target.x + j4,
-                                (levelAngles.J5 * cos((levelAngles.J4 + j4j5j6Target.x + j4) * M_PI / 180)) +
-                                    j4j5j6Target.y + j5,
+                                (levelAngles.J5 * cosf((levelAngles.J4 + j4j5j6Target.x + j4) * M_PI / 180)) + j4j5j6Target.y + j5,
                                 // levelAngles.J5 + j4j5j6Target.y + j5,
                                 levelAngles.J6 + j4j5j6Target.z + j6};
 
     if (!isPositionWithinLimits(newAngles)) return;
 
-    gripperTarget.x += z;
-    gripperTarget.y += y;
-    gripperTarget.z += x;
+    gripperTarget = targetPose.getTranslation();
+    wristRotation = targetPose.getRotation();
     j4j5j6Target.x += j4;
     j4j5j6Target.y += j5;
     j4j5j6Target.z += j6;
@@ -407,16 +398,11 @@ void incrementInverseKinematicsPosition(float x, float y, float z, float j4, flo
 void incrementInverseKinematicsWorldPose(float tx, float ty, float tz, float rx, float ry, float rz) {
     setControlMode(ControlMode::IK_POSE);
 
-    // Gant space doesn't quite match traditional Rover space
-    // X -> Z
-    // Y -> Y
-    // Z -> X
-
-    TransfMatrix targetPose = Translation(gripperTarget.x + tz, gripperTarget.y + ty, gripperTarget.z + tx)
+    TransfMatrix targetPose = Translation(gripperTarget.x + tx, gripperTarget.y + ty, gripperTarget.z + tz)
                               // incrementally rotate wrist in world space
-                              * Rotation(0, ry * M_PI / 180, 0) // rotate about Y
-                              * Rotation(rz * M_PI / 180, 0, 0) // rotate about X
-                              * Rotation(0, 0, rx * M_PI / 180) // rotate about Z
+                              * Rotation(0, ry * M_PI / 180, 0) // rotate about Y (yaw)
+                              * Rotation(rx * M_PI / 180, 0, 0) // rotate about X (pitch)
+                              * Rotation(0, 0, rz * M_PI / 180) // rotate about Z (roll)
                               * wristRotation;
 
     driveInverseKinematics(targetPose);
@@ -425,9 +411,10 @@ void incrementInverseKinematicsWorldPose(float tx, float ty, float tz, float rx,
 void incrementInverseKinematicsToolPose(float tx, float ty, float tz, float rx, float ry, float rz) {
     setControlMode(ControlMode::IK_POSE);
 
-    TransfMatrix newWristRotation = wristRotation * Rotation(0, ry * M_PI / 180, 0) // rotate about Y
-                                    * Rotation(rx * M_PI / 180, 0, 0)               // rotate about X
-                                    * Rotation(0, 0, rz * M_PI / 180);              // rotate about Z
+    TransfMatrix newWristRotation = wristRotation
+                                    * Rotation(0, ry * M_PI / 180, 0)  // rotate about Y (yaw)
+                                    * Rotation(rx * M_PI / 180, 0, 0)  // rotate about X (pitch)
+                                    * Rotation(0, 0, rz * M_PI / 180); // rotate about Z (roll)
     TransfMatrix targetPose = Translation(gripperTarget.x, gripperTarget.y, gripperTarget.z) * newWristRotation;
     Vector newGripperTarget = targetPose * Vector{tx, ty, tz};
 
@@ -628,20 +615,17 @@ void setControlMode(ControlMode newMode) {
         JointPositions levelAngles = getJointPositions();
         // wrist center
         TransfMatrix currentPose = IK::CalculateForwardTransform(levelAngles);
-        Vector wristCoords =
-            currentPose.getTranslation() - currentPose.getRotation() * ((WRIST_LENGTH + GRIPPER_LENGTH) * BASIS_Z);
+        Vector wristCoords = currentPose.getTranslation() - currentPose.getRotation() * (DH_6.d*BASIS_Z);
         // gripper center
-        gripperTarget = wristCoords + (WRIST_LENGTH + GRIPPER_LENGTH) * BASIS_X;
+        gripperTarget = wristCoords + DH_6.d*-BASIS_Z;
         // compute what the angles would be
         levelAngles.J4 = 0;
         levelAngles.J5 = 0;
         levelAngles.J6 = 0;
-        IK::CalculateInverseKinematics(
-            Translation(gripperTarget.x, gripperTarget.y, gripperTarget.z) * Rotation(0, M_PI_2, 0), levelAngles);
-        levelAngles.J5 *= cos((levelAngles.J4 + J4Motor.getAngle()) * M_PI / 180);
+        IK::CalculateInverseKinematics(Translation(gripperTarget.x, gripperTarget.y, gripperTarget.z) * Rotation(0, M_PI, 0), levelAngles);
+        levelAngles.J5 *= cosf((levelAngles.J4 + J4Motor.getAngle()) * M_PI / 180);
         // compute what the angles should be
-        j4j5j6Target = {J4Motor.getAngle() - levelAngles.J4, J5Motor.getAngle() - levelAngles.J5,
-                        J6Motor.getAngle() - levelAngles.J6};
+        j4j5j6Target = {J4Motor.getAngle() - levelAngles.J4, J5Motor.getAngle() - levelAngles.J5, J6Motor.getAngle() - levelAngles.J6};
         Serial.println("SETTING TO WRIST CONTROL");
         break;
     }

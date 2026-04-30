@@ -10,13 +10,6 @@ IK::DHParameters IK::DHTable[6] = {
     { 0 /*q6*/, WRIST_LENGTH + GRIPPER_LENGTH, 0, 0 }
 };
 
-#define DH_1 IK::DHTable[0]
-#define DH_2 IK::DHTable[1]
-#define DH_3 IK::DHTable[2]
-#define DH_4 IK::DHTable[3]
-#define DH_5 IK::DHTable[4]
-#define DH_6 IK::DHTable[5]
-
 // sqrt() is not constexpr until C++26 :(
 
 // The hypotenuse of the right triangle formed by a3 and d4
@@ -61,7 +54,7 @@ TransfMatrix IK::CalculateForwardTransform(const JointPositions &q) {
     params[3].theta = q.J4 * M_PI/180;
     params[4].theta = q.J5 * M_PI/180;
     params[5].theta = q.J6 * M_PI/180;
-    TransfMatrix forward = Identity();
+    TransfMatrix forward = BASE_FRAME;
     for (const DHParameters &param : params) {
         forward = forward * TransformFromDH(param); // recall associative property of matrices
     }
@@ -76,8 +69,9 @@ float angularDiff(float q1, float q2) {
 }
 
 bool IK::CalculateInverseKinematics(const TransfMatrix &targetPose, JointPositions &outPositions) {
-    Vector p06 = targetPose.getTranslation();
-    TransfMatrix R06 = targetPose.getRotation();
+    TransfMatrix gantSpaceTargetPose = INVERSE_BASE_FRAME * targetPose;
+    Vector p06 = gantSpaceTargetPose.getTranslation();
+    TransfMatrix R06 = gantSpaceTargetPose.getRotation();
     Vector z06 = R06 * BASIS_Z;
     // Wrist center
     Vector p0w = p06 - DH_6.d * z06;
@@ -151,7 +145,7 @@ bool IK::CalculateInverseKinematics(const TransfMatrix &targetPose, JointPositio
     float q5_2 = -q5_1;
 
     // Check if J4 and J6 are aligned (J5 is near zero)
-    if (abs(sin(q5_1)) <= 0.01) {
+    if (fabs(sin(q5_1)) <= 0.01) {
         q5 = 0;
         // Keep q4 the same
         q4 = prev_q4;
@@ -180,7 +174,7 @@ bool IK::CalculateInverseKinematics(const TransfMatrix &targetPose, JointPositio
         float q6_2 = atan2(s6, c6);
 
         // Choose the solution which minimizes change in q4
-        if (abs(angularDiff(q4_1, prev_q4)) < abs(angularDiff(q4_2, prev_q4))) {
+        if (fabs(angularDiff(q4_1, prev_q4)) < fabs(angularDiff(q4_2, prev_q4))) {
             q5 = q5_1;
             q6 = q6_1;
             q4 = q4_1;

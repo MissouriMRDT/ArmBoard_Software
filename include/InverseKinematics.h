@@ -4,7 +4,17 @@
 #include "RoveMatrix.h"
 #include "ArmParameters.h"
 
+#define DH_1 IK::DHTable[0]
+#define DH_2 IK::DHTable[1]
+#define DH_3 IK::DHTable[2]
+#define DH_4 IK::DHTable[3]
+#define DH_5 IK::DHTable[4]
+#define DH_6 IK::DHTable[5]
+
 namespace IK {
+
+    const TransfMatrix BASE_FRAME = Rotation(0, M_PI_2, 0);
+    const TransfMatrix INVERSE_BASE_FRAME = Transpose(BASE_FRAME);
 
     struct DHParameters {
         float theta; // Angle about previous Z from old X to new X
