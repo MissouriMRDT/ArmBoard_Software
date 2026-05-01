@@ -56,12 +56,12 @@ void setup() {
     J6Motor.configAngleConversion(J6Zero, J6_ENC_PER_DEG);
 
     // Set PID gains
-    XMotor.setPID(0.03, 0, 0);
+    XMotor.setPID(0.015, 0, 0);
     J2Motor.setPID(0.007, 0, 0);
     J3Motor.setPID(0.005, 0, 0);
     J4Motor.setPID(0.003, 0, 0.15);
-    J5Motor.setPID(0.012, 0, 0.1);
-    J6Motor.setPID(0.02, 0, 0);
+    J5Motor.setPID(0.004, 0, 0.1);
+    J6Motor.setPID(0.005, 0, 0);
     GripperMotor.setPID(0.02, 0, 0);
 
     XMotor.setDutyCycleRange(0, INT16_MAX, 0, INT16_MIN);
