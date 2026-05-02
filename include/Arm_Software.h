@@ -20,15 +20,10 @@
 RoveCommEthernet RoveComm;
 
 // Watchdog
-#define WATCHDOG_TIMEOUT 500000000
+#define WATCHDOG_TIMEOUT 1000000
 IntervalTimer Watchdog;
 uint8_t watchdogStatus = 0;
 bool watchdogOverride = false;
-
-// Telemetry
-#define TELEMETRY_PERIOD 500000
-IntervalTimer Telemetry;
-bool telemetryOverride = false;
 
 // CAN
 #define CAN_CHANNEL ACAN_T4::can3
@@ -78,13 +73,20 @@ void setLaser(bool on);
 
 // Methods
 void estop();
-void telemetry();
 void feedWatchdog();
 void setLaser(bool on);
 void updateFromRoveComm();
 void receiveCANMessages();
 uint64_t getButtonsPressed();
 void handleButtons();
+
+void telemetry();
+uint32_t nextTelemetry;
+#define TELEMETRY_PERIOD 500
+
+void pingJoints();
+uint32_t nextPing;
+#define PING_PERIOD 1000
 
 enum class ControlMode {
     OPEN_LOOP,

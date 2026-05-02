@@ -96,7 +96,8 @@ void setup() {
     Serial.println("Complete");
 
     feedWatchdog();
-    Telemetry.begin(telemetry, TELEMETRY_PERIOD);
+    nextTelemetry = millis();
+    nextPing = millis();
 }
 
 void loop() {
@@ -107,6 +108,14 @@ void loop() {
         updateFromRoveComm();
     }
     receiveCANMessages();
+    if (millis() >= nextPing) {
+        pingJoints();
+        nextPing += PING_PERIOD;
+    }
+    if (millis() >= nextTelemetry) {
+        telemetry();
+        nextTelemetry += TELEMETRY_PERIOD;
+    }
 }
 
 void estop() {
@@ -130,55 +139,45 @@ void estop() {
 void telemetry() {
     // RoveComm.write(RC_ARMBOARD_WATCHDOGSTATUS_DATA_ID, watchdogStatus);
 
-    if (!telemetryOverride) {
-        JointPositions angles = getJointPositions();
-        Vector gripperPos = getGripperCoordinates();
-        float positions[9] = {angles.X,  angles.J2,    angles.J3,    angles.J4,   angles.J5,
-                              angles.J6, gripperPos.x, gripperPos.y, gripperPos.z};
-        RoveComm.write(RC_ARMBOARD_POSITION_DATA_ID, RC_ARMBOARD_POSITION_DATA_COUNT, positions);
+    JointPositions angles = getJointPositions();
+    Vector gripperPos = getGripperCoordinates();
+    float positions[9] = {angles.X,  angles.J2,    angles.J3,    angles.J4,   angles.J5,
+                          angles.J6, gripperPos.x, gripperPos.y, gripperPos.z};
+    RoveComm.write(RC_ARMBOARD_POSITION_DATA_ID, RC_ARMBOARD_POSITION_DATA_COUNT, positions);
 
-        float targets[9] = {XMotor.getTargetAngle(),  J2Motor.getTargetAngle(), J3Motor.getTargetAngle(),
-                            J4Motor.getTargetAngle(), J5Motor.getTargetAngle(), J6Motor.getTargetAngle(),
-                            gripperTarget.x,          gripperTarget.y,          gripperTarget.z};
-        RoveComm.write(RC_ARMBOARD_TARGET_DATA_ID, RC_ARMBOARD_TARGET_DATA_COUNT, targets);
+    float targets[9] = {XMotor.getTargetAngle(),  J2Motor.getTargetAngle(), J3Motor.getTargetAngle(),
+                        J4Motor.getTargetAngle(), J5Motor.getTargetAngle(), J6Motor.getTargetAngle(),
+                        gripperTarget.x,          gripperTarget.y,          gripperTarget.z};
+    RoveComm.write(RC_ARMBOARD_TARGET_DATA_ID, RC_ARMBOARD_TARGET_DATA_COUNT, targets);
 
-        uint16_t limitsTriggered =
-            bitmask(XMotor.getLimitSwitchForward(), XMotor.getLimitSwitchReverse(), J2Motor.getLimitSwitchForward(),
-                    J2Motor.getLimitSwitchReverse(), J3Motor.getLimitSwitchForward(), J3Motor.getLimitSwitchReverse(),
-                    J4Motor.getLimitSwitchForward(), J4Motor.getLimitSwitchReverse(), J5Motor.getLimitSwitchForward(),
-                    J5Motor.getLimitSwitchReverse());
-        RoveComm.write(RC_ARMBOARD_LIMITSWITCH_DATA_ID, limitsTriggered);
+    uint16_t limitsTriggered =
+        bitmask(XMotor.getLimitSwitchForward(), XMotor.getLimitSwitchReverse(), J2Motor.getLimitSwitchForward(),
+                J2Motor.getLimitSwitchReverse(), J3Motor.getLimitSwitchForward(), J3Motor.getLimitSwitchReverse(),
+                J4Motor.getLimitSwitchForward(), J4Motor.getLimitSwitchReverse(), J5Motor.getLimitSwitchForward(),
+                J5Motor.getLimitSwitchReverse());
+    RoveComm.write(RC_ARMBOARD_LIMITSWITCH_DATA_ID, limitsTriggered);
 
-        uint16_t softLimitsTriggered =
-            bitmask(XMotor.getSoftLimitForward(), XMotor.getSoftLimitReverse(), J2Motor.getSoftLimitForward(),
-                    J2Motor.getSoftLimitReverse(), J3Motor.getSoftLimitForward(), J3Motor.getSoftLimitReverse(),
-                    J4Motor.getSoftLimitForward(), J4Motor.getSoftLimitReverse(), J5Motor.getSoftLimitForward(),
-                    J5Motor.getSoftLimitReverse());
-        RoveComm.write(RC_ARMBOARD_SOFTLIMIT_DATA_ID, softLimitsTriggered);
+    uint16_t softLimitsTriggered =
+        bitmask(XMotor.getSoftLimitForward(), XMotor.getSoftLimitReverse(), J2Motor.getSoftLimitForward(),
+                J2Motor.getSoftLimitReverse(), J3Motor.getSoftLimitForward(), J3Motor.getSoftLimitReverse(),
+                J4Motor.getSoftLimitForward(), J4Motor.getSoftLimitReverse(), J5Motor.getSoftLimitForward(),
+                J5Motor.getSoftLimitReverse());
+    RoveComm.write(RC_ARMBOARD_SOFTLIMIT_DATA_ID, softLimitsTriggered);
 
-        XMotor.ping();
-        J2Motor.ping();
-        J3Motor.ping();
-        J4Motor.ping();
-        J5Motor.ping();
-        J6Motor.ping();
-        GripperMotor.ping();
-
-        uint16_t pingData[7] = {(uint16_t)XMotor.getPingTime(),      (uint16_t)J2Motor.getPingTime(),
-                                (uint16_t)J3Motor.getPingTime(),     (uint16_t)J4Motor.getPingTime(),
-                                (uint16_t)J5Motor.getPingTime(),     (uint16_t)J6Motor.getPingTime(),
-                                (uint16_t)GripperMotor.getPingTime()};
-        RoveComm.write(RC_ARMBOARD_SMOCOPING_DATA_ID, RC_ARMBOARD_SMOCOPING_DATA_COUNT, pingData);
-    }
-
-    // Add telemetry data as needed
+    uint16_t pingData[7] = {(uint16_t)XMotor.getPingTime(),      (uint16_t)J2Motor.getPingTime(),
+                            (uint16_t)J3Motor.getPingTime(),     (uint16_t)J4Motor.getPingTime(),
+                            (uint16_t)J5Motor.getPingTime(),     (uint16_t)J6Motor.getPingTime(),
+                            (uint16_t)GripperMotor.getPingTime()};
+    RoveComm.write(RC_ARMBOARD_SMOCOPING_DATA_ID, RC_ARMBOARD_SMOCOPING_DATA_COUNT, pingData);
 }
 
 void setLaser(bool on) { digitalWrite(LASER, on ? HIGH : LOW); }
 
 void feedWatchdog() {
     watchdogStatus = 0;
-    Watchdog.begin(estop, WATCHDOG_TIMEOUT);
+    if (!watchdogOverride) {
+        Watchdog.begin(estop, WATCHDOG_TIMEOUT);
+    }
 }
 
 void updateFromRoveComm() {
@@ -214,16 +213,19 @@ void updateFromRoveComm() {
     case RC_ARMBOARD_IKWORLDINCREMENT_DATA_ID: {
         incrementInverseKinematicsWorldPose(packet.fdata[0], packet.fdata[1], packet.fdata[2], packet.fdata[3],
                                             packet.fdata[4], packet.fdata[5]);
+        feedWatchdog();
         break;
     }
     case RC_ARMBOARD_IKTOOLINCREMENT_DATA_ID: {
         incrementInverseKinematicsToolPose(packet.fdata[0], packet.fdata[1], packet.fdata[2], packet.fdata[3],
                                            packet.fdata[4], packet.fdata[5]);
+        feedWatchdog();
         break;
     }
     case RC_ARMBOARD_IKWRISTINCREMENT_DATA_ID: {
         incrementInverseKinematicsWrist(packet.fdata[0], packet.fdata[1], packet.fdata[2], packet.fdata[3],
                                         packet.fdata[4], packet.fdata[5]);
+        feedWatchdog();
         break;
     }
     case RC_ARMBOARD_GRIPPEROPENLOOP_DATA_ID: {
@@ -276,14 +278,17 @@ void updateFromRoveComm() {
         break;
     }
     case RC_ARMBOARD_CALIBRATEENCODER_DATA_ID: {
+        estop();
 
         // x data & (1 << 0)
         // j6 data & (1 << 1)
         if (packet.u8data[0] & (1 << 0)) {
             XMotor.calibrateAngle(INT16_MIN / 2, -7.06);
             uint32_t timeout = millis() + 10000;
-            while (!XMotor.getCalibrated() || millis() < timeout) {
+            while (!XMotor.getCalibrated() && millis() < timeout) {
                 feedWatchdog();
+                receiveCANMessages();
+                delay(100);
             }
         }
         if (packet.u8data[0] & (1 << 1)) {
@@ -331,6 +336,16 @@ void receiveCANMessages() {
             GripperMotor.sync(receivedMessage);
         }
     }
+}
+
+void pingJoints() {
+    XMotor.ping();
+    J2Motor.ping();
+    J3Motor.ping();
+    J4Motor.ping();
+    J5Motor.ping();
+    J6Motor.ping();
+    GripperMotor.ping();
 }
 
 void setOpenLoopOverride(int16_t bitmask){
