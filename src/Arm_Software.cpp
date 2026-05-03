@@ -56,7 +56,7 @@ void setup() {
     J6Motor.configAngleConversion(J6Zero, J6_ENC_PER_DEG);
 
     // Set PID gains
-    XMotor.setPID(0.015, 0, 0);
+    XMotor.setPID(0.005, 0, 0);
     J2Motor.setPID(0.007, 0, 0);
     J3Motor.setPID(0.005, 0, 0);
     J4Motor.setPID(0.003, 0, 0.15);
@@ -290,6 +290,7 @@ void updateFromRoveComm() {
                 receiveCANMessages();
                 delay(100);
             }
+            estop(); // this will reset the target angles if in closed loop
         }
         if (packet.u8data[0] & (1 << 1)) {
             J6Zero = J6Motor.getPosition();
