@@ -33,7 +33,7 @@ void setup() {
     pinMode(DIR_SW, INPUT_PULLUP);
 
     LinearServo.attach(LINEAR_SERVO, 600, 2000);
-    LinearServo.write(0);
+    LinearServo.write(30);
     CameraOnePan.attach(SERVO_1);
     CameraOneTilt.attach(SERVO_2);
     CameraTwoPan.attach(SERVO_3);
@@ -56,11 +56,11 @@ void setup() {
     J6Motor.configAngleConversion(J6Zero, J6_ENC_PER_DEG);
 
     // Set PID gains
-    XMotor.setPID(0.005, 0, 0);
+    XMotor.setPID(0.001, 0, 0);
     J2Motor.setPID(0.007, 0, 0);
     J3Motor.setPID(0.005, 0, 0);
     J4Motor.setPID(0.003, 0, 0.15);
-    J5Motor.setPID(0.004, 0, 0.1);
+    J5Motor.setPID(0.008, 0, 0.1);
     J6Motor.setPID(0.005, 0, 0);
     GripperMotor.setPID(0.02, 0, 0);
 
@@ -125,12 +125,14 @@ void estop() {
     switch (currentMode) {
     case ControlMode::OPEN_LOOP:
         driveOpenLoop(0, 0, 0, 0, 0, 0);
+       // LinearServo.write(LinearServo.read());
         break;
     case ControlMode::IK_WRIST:
     case ControlMode::IK_POSE:
     case ControlMode::CLOSED_LOOP:
         driveTargetAngles(XMotor.getAngle(), J2Motor.getAngle(), J3Motor.getAngle(), J4Motor.getAngle(),
                           J5Motor.getAngle(), J6Motor.getAngle());
+        LinearServo.write(LinearServo.read());
         setControlMode(ControlMode::CLOSED_LOOP);
         break;
     }
@@ -508,7 +510,7 @@ uint64_t getButtonsPressed() {
 
     uint64_t ret = (!digitalRead(BTN_1) << BTN_1) | (!digitalRead(BTN_2) << BTN_2) | (!digitalRead(BTN_3) << BTN_3) |
                    (!digitalRead(BTN_4) << BTN_4) | (!digitalRead(BTN_5) << BTN_5) | (!digitalRead(BTN_6) << BTN_6) |
-                   (!digitalRead(BTN_7) << BTN_7) | (!digitalRead(BTN_8) << BTN_8);
+                   (!digitalRead(BTN_7) << BTN_7) | (!digitalRead(BTN_8) << BTN_8) | (!digitalRead(BTN_LIN_SERVO) << BTN_LIN_SERVO);
     return ret;
 }
 
@@ -519,6 +521,7 @@ void handleButtons() {
     J4Button.update();
     J5Button.update();
     J6Button.update();
+    LinearSButton.update();
     GripperButton.update();
 
     // if somoeone codes this function in a more condensed way show me how so I can learn 'Malakhi Rivera & Drew
@@ -619,6 +622,21 @@ void handleButtons() {
     }
 
     if (GripperButton.risingEdge()) {
+        estop();
+    }
+     if (!LinearSButton.read()) {
+        estop();
+        Serial.println(LinearServo.read());
+        if (digitalRead(DIR_SW) == 0) {
+            LinearServo.write(LinearServo.read()+2);
+        }
+        if (digitalRead(DIR_SW) == 1) {
+            LinearServo.write(LinearServo.read()-2);
+        }
+        delay(50);
+    }
+
+    if (XButton.risingEdge()) {
         estop();
     }
 }
