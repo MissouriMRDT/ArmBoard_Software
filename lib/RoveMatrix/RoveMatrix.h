@@ -1,6 +1,7 @@
 #ifndef ROVE_MATRIX_H
 #define ROVE_MATRIX_H
 
+#define _USE_MATH_DEFINES
 #include <math.h>
 
 // Represents a column vector of [x, y, z, 1]
@@ -24,14 +25,20 @@ struct TransfMatrix {
             float m20, m21, m22, m23; // Matrix third row (4 components)
             // float m30, m31, m32, m33; // Assume fourth row is [0, 0, 0, 1]
         };
-        float values[4][4];
+        float values[3][4];
     };
 
     TransfMatrix getRotation() const;
     Vector getTranslation() const;
+    Vector getBasisX() const;
+    Vector getBasisY() const;
+    Vector getBasisZ() const;
 };
 
 TransfMatrix Transpose(const TransfMatrix& mat);
+TransfMatrix Inverse(const TransfMatrix& mat);
+TransfMatrix FromRotationTranslation(const TransfMatrix& rotation, const Vector &translation);
+TransfMatrix FromBasis(const Vector& basisX, const Vector& basisY, const Vector& basisZ);
 
 TransfMatrix Identity(float scale = 1.0f);
 TransfMatrix Rotation(float x, float y, float z);
@@ -45,6 +52,13 @@ Vector operator - (const Vector& v1, const Vector& v2);
 Vector operator-(const Vector& v);
 Vector operator * (float n, const Vector& v);
 Vector operator * (const Vector& v, float n);
+Vector operator / (const Vector& v, float n);
 void operator *= (Vector& v, float n);
+
+float Dot(const Vector& v1, const Vector& v2);
+Vector Cross(const Vector& v1, const Vector& v2);
+float Length(const Vector& v);
+Vector Normalize(const Vector& v);
+Vector Project(const Vector& onto, const Vector& v);
 
 #endif /*ROVE_MATRIX_H*/

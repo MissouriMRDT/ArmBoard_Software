@@ -1,4 +1,5 @@
 #include "RoveMatrix.h"
+#include <cmath>
 
 TransfMatrix TransfMatrix::getRotation() const {
     return {
@@ -13,6 +14,28 @@ Vector TransfMatrix::getTranslation() const {
     return { m03, m13, m23 };
 }
 
+Vector TransfMatrix::getBasisX() const {
+    return {m00, m10, m20};
+}
+
+Vector TransfMatrix::getBasisY() const {
+    return {m01, m11, m21};
+}
+
+Vector TransfMatrix::getBasisZ() const {
+    return {m02, m12, m22};
+}
+
+TransfMatrix FromBasis(const Vector& basisX, const Vector& basisY, const Vector& basisZ) {
+    return {
+        basisX.x, basisY.x, basisZ.x, 0,
+        basisX.y, basisY.y, basisZ.y, 0,
+        basisX.z, basisY.z, basisZ.z, 0,
+        // 0, 0, 0, 1
+    };
+}
+
+
 TransfMatrix Transpose(const TransfMatrix& mat) {
     return {
         mat.m00, mat.m10, mat.m20, 0,
@@ -20,6 +43,18 @@ TransfMatrix Transpose(const TransfMatrix& mat) {
         mat.m02, mat.m12, mat.m22, 0,
         // 0, 0, 0, 1
     };
+}
+
+TransfMatrix Inverse(const TransfMatrix& mat) {
+    return FromRotationTranslation(Transpose(mat.getRotation()), -mat.getTranslation());
+}
+
+TransfMatrix FromRotationTranslation(const TransfMatrix& rotation, const Vector &translation) {
+    TransfMatrix transform = rotation;
+    transform.m03 = translation.x;
+    transform.m13 = translation.y;
+    transform.m23 = translation.z;
+    return transform;
 }
 
 TransfMatrix Identity(float scale) {
@@ -115,6 +150,10 @@ Vector operator * (const Vector& v, float n) {
     };
 }
 
+Vector operator / (const Vector& v, float n) {
+    return v * (1/n);
+}
+
 void operator *= (Vector &v, float n) {
     v.x *= n;
     v.y *= n;
@@ -131,4 +170,28 @@ Vector operator - (const Vector &v1, const Vector &v2) {
 
 Vector operator-(const Vector& v) {
     return {-v.x, -v.y, -v.z};
+}
+
+float Dot(const Vector& v1, const Vector& v2) {
+    return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
+}
+
+Vector Cross(const Vector& v1, const Vector& v2) {
+    return {
+        v1.y*v2.z - v2.y*v1.z,
+        v2.x*v1.z - v1.x*v2.z,
+        v1.x*v2.y - v2.x*v1.y
+    };
+}
+
+float Length(const Vector& v) {
+    return sqrt(v.x*v.x + v.y*v.y + v.z*v.z);
+}
+
+Vector Normalize(const Vector& v) {
+    return v / Length(v);
+}
+
+Vector Project(const Vector& onto, const Vector& v) {
+    return Dot(v, onto) / Dot(onto, onto) * onto;
 }

@@ -410,7 +410,7 @@ void incrementInverseKinematicsWrist(float x, float y, float z, float j4, float 
     if (!isPositionWithinLimits(newAngles)) return;
 
     gripperTarget = targetPose.getTranslation();
-    wristRotation = targetPose.getRotation();
+    gripperRotation = targetPose.getRotation();
     j4j5j6Target.x += j4;
     j4j5j6Target.y += j5;
     j4j5j6Target.z += j6;
@@ -426,12 +426,17 @@ void incrementInverseKinematicsWrist(float x, float y, float z, float j4, float 
 void incrementInverseKinematicsWorldPose(float tx, float ty, float tz, float rx, float ry, float rz) {
     setControlMode(ControlMode::IK_POSE);
 
+    float xSkew = fabs(gripperRotation.getBasisZ().x);
+    if (xSkew > 0.001 && xSkew < snappingThreshold && (tx || ty || tz) && !(rx || ry || rz)) {
+        snapTargetPoseToYZ();
+    }
+
     TransfMatrix targetPose = Translation(gripperTarget.x + tx, gripperTarget.y + ty, gripperTarget.z + tz)
                               // incrementally rotate wrist in world space
                               * Rotation(0, ry * M_PI / 180, 0) // rotate about Y (yaw)
                               * Rotation(rx * M_PI / 180, 0, 0) // rotate about X (pitch)
                               * Rotation(0, 0, rz * M_PI / 180) // rotate about Z (roll)
-                              * wristRotation;
+                              * gripperRotation;
 
     driveInverseKinematics(targetPose);
 }
@@ -439,14 +444,19 @@ void incrementInverseKinematicsWorldPose(float tx, float ty, float tz, float rx,
 void incrementInverseKinematicsToolPose(float tx, float ty, float tz, float rx, float ry, float rz) {
     setControlMode(ControlMode::IK_POSE);
 
-    TransfMatrix newWristRotation = wristRotation
+    float xSkew = fabs(gripperRotation.getBasisZ().x);
+    if (xSkew > 0.001 && xSkew < snappingThreshold && (tx || ty || tz) && !(rx || ry || rz)) {
+        snapTargetPoseToYZ();
+    }
+
+    TransfMatrix newGripperRotation = gripperRotation
                                     * Rotation(0, ry * M_PI / 180, 0)  // rotate about Y (yaw)
                                     * Rotation(rx * M_PI / 180, 0, 0)  // rotate about X (pitch)
                                     * Rotation(0, 0, rz * M_PI / 180); // rotate about Z (roll)
-    TransfMatrix targetPose = Translation(gripperTarget.x, gripperTarget.y, gripperTarget.z) * newWristRotation;
+    TransfMatrix targetPose = Translation(gripperTarget.x, gripperTarget.y, gripperTarget.z) * newGripperRotation;
     Vector newGripperTarget = targetPose * Vector{tx, ty, tz};
 
-    targetPose = Translation(newGripperTarget.x, newGripperTarget.y, newGripperTarget.z) * newWristRotation;
+    targetPose = Translation(newGripperTarget.x, newGripperTarget.y, newGripperTarget.z) * newGripperRotation;
 
     driveInverseKinematics(targetPose);
 }
@@ -457,13 +467,27 @@ void driveInverseKinematics(const TransfMatrix& targetPose) {
     if (!IK::CalculateInverseKinematics(targetPose, angles)) return;
     if (!isPositionWithinLimits(angles)) return;
     gripperTarget = targetPose.getTranslation();
-    wristRotation = targetPose.getRotation();
+    gripperRotation = targetPose.getRotation();
     XMotor.driveTargetAngle(angles.X, 0);
     J2Motor.driveTargetAngle(angles.J2, 0);
     J3Motor.driveTargetAngle(angles.J3, 0);
     J4Motor.driveTargetAngle(angles.J4, 0);
     J5Motor.driveTargetAngle(angles.J5, 0);
     J6Motor.driveTargetAngle(angles.J6, 0);
+}
+
+void snapTargetPoseToYZ() {
+    // Vector newBasisZ = Project(BASIS_Z, gripperRotation.getBasisZ());
+    Vector newBasisZ = gripperRotation.getBasisZ();
+    newBasisZ.x = 0; // project onto YZ plane
+    Vector newBasisX = Cross(gripperRotation.getBasisY(), newBasisZ);
+    Vector newBasisY = Cross(newBasisZ, newBasisX);
+    gripperRotation = FromBasis(Normalize(newBasisX), Normalize(newBasisY), Normalize(newBasisZ));
+    Serial.println("Snapped poze to YZ plane.");
+}
+
+void setYZSnappingThreshold(float threshold) {
+    snappingThreshold = threshold;
 }
 
 void limitSwitchOverride(uint16_t bitmask) {
@@ -510,7 +534,8 @@ uint64_t getButtonsPressed() {
 
     uint64_t ret = (!digitalRead(BTN_1) << BTN_1) | (!digitalRead(BTN_2) << BTN_2) | (!digitalRead(BTN_3) << BTN_3) |
                    (!digitalRead(BTN_4) << BTN_4) | (!digitalRead(BTN_5) << BTN_5) | (!digitalRead(BTN_6) << BTN_6) |
-                   (!digitalRead(BTN_7) << BTN_7) | (!digitalRead(BTN_8) << BTN_8) | (!digitalRead(BTN_LIN_SERVO) << BTN_LIN_SERVO);
+                   (!digitalRead(BTN_7) << BTN_7) | (!digitalRead(BTN_8) << BTN_8) |
+                   (((uint64_t)!digitalRead(BTN_LIN_SERVO)) << BTN_LIN_SERVO);
     return ret;
 }
 
@@ -676,7 +701,7 @@ void setControlMode(ControlMode newMode) {
     case ControlMode::IK_POSE: {
         TransfMatrix currentPose = IK::CalculateForwardTransform(getJointPositions());
         gripperTarget = currentPose.getTranslation();
-        wristRotation = currentPose.getRotation();
+        gripperRotation = currentPose.getRotation();
         Serial.println("SETTING TO POSE CONTROL");
         break;
     }

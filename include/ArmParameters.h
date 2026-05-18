@@ -67,7 +67,7 @@ constexpr auto J5_FWD_LIM_DEG = encToDeg(J5_FWD_LIM, J5_ZERO, J5_ENC_PER_DEG);
 
 constexpr auto J6_ENC_PER_DEG = ((38860 - 0) / 360.0);
 
-constexpr auto J6_REV_LIM = INT16_MIN;
-constexpr auto J6_FWD_LIM = INT16_MAX;
+constexpr auto J6_REV_LIM = INT32_MIN;
+constexpr auto J6_FWD_LIM = INT32_MAX;
 
 #endif // ARM_PARAMETERS_H

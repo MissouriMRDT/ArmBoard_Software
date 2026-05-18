@@ -101,7 +101,8 @@ void setOpenLoopOverride(int16_t bitmask);
 uint16_t closedLoopOverride = 0;
 Vector gripperTarget = {0};
 Vector j4j5j6Target = {0};
-TransfMatrix wristRotation = Rotation(0, M_PI, 0);
+TransfMatrix gripperRotation = Rotation(0, M_PI, 0);
+float snappingThreshold = 0.15; // set to 0 to disable
 
 // Drive joints with given powers
 void driveOpenLoop(int16_t XDuty, int16_t J2Duty, int16_t J3Duty, int16_t J4Duty, int16_t J5Duty, int16_t J6Duty);
@@ -117,6 +118,11 @@ void incrementInverseKinematicsWorldPose(float tx, float ty, float tz, float rx,
 void incrementInverseKinematicsToolPose(float tx, float ty, float tz, float rx, float ry, float rz);
 
 void driveInverseKinematics(const TransfMatrix& targetPose);
+
+void snapTargetPoseToYZ();
+
+void setYZSnappingThreshold(float threshold);
+
 // Configure limits
 void limitSwitchOverride(uint16_t bitmask);
 void softLimitOverride(uint16_t bitmask);
