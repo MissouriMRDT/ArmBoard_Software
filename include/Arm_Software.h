@@ -47,6 +47,9 @@ Bounce J6Button(BTN_6, 50);
 Bounce GripperButton(BTN_7, 50);
 Bounce DirectionSwitch(DIR_SW, 50);
 Bounce LinearSButton(BTN_LIN_SERVO, 50);
+Bounce DickSButton(BTN_4_SERVO, 50);
+Bounce J4SButton(BTN_2_SERVO, 50);
+
 // Motor
 Smoco XMotor(&CAN_CHANNEL, X_ID);
 Smoco J2Motor(&CAN_CHANNEL, J2_ID);
@@ -78,6 +81,7 @@ void setLaser(bool on);
 void updateFromRoveComm();
 void receiveCANMessages();
 uint64_t getButtonsPressed();
+void handleJointButton(Smoco& joint, Bounce& button, float speed);
 void handleButtons();
 
 void telemetry();

@@ -132,7 +132,6 @@ void estop() {
     case ControlMode::CLOSED_LOOP:
         driveTargetAngles(XMotor.getAngle(), J2Motor.getAngle(), J3Motor.getAngle(), J4Motor.getAngle(),
                           J5Motor.getAngle(), J6Motor.getAngle());
-        LinearServo.write(LinearServo.read());
         setControlMode(ControlMode::CLOSED_LOOP);
         break;
     }
@@ -535,8 +534,18 @@ uint64_t getButtonsPressed() {
     uint64_t ret = (!digitalRead(BTN_1) << BTN_1) | (!digitalRead(BTN_2) << BTN_2) | (!digitalRead(BTN_3) << BTN_3) |
                    (!digitalRead(BTN_4) << BTN_4) | (!digitalRead(BTN_5) << BTN_5) | (!digitalRead(BTN_6) << BTN_6) |
                    (!digitalRead(BTN_7) << BTN_7) | (!digitalRead(BTN_8) << BTN_8) |
-                   (((uint64_t)!digitalRead(BTN_LIN_SERVO)) << BTN_LIN_SERVO);
+                   (((uint64_t)!digitalRead(BTN_LIN_SERVO)) << BTN_LIN_SERVO)| (((uint64_t)!digitalRead(BTN_4_SERVO)) << BTN_4_SERVO)|
+                   (((uint64_t)!digitalRead(BTN_2_SERVO)) << BTN_2_SERVO);
     return ret;
+}
+
+void handleJointButton(Smoco& joint, Bounce& button, float speed) {
+    if (button.fallingEdge()) {
+        estop();
+        joint.driveOpenLoop(speed * (digitalRead(DIR_SW) ? INT16_MIN :INT16_MAX));
+    }
+    if (!button.read()) feedWatchdog();
+    if (button.risingEdge()) estop();
 }
 
 void handleButtons() {
@@ -547,94 +556,19 @@ void handleButtons() {
     J5Button.update();
     J6Button.update();
     LinearSButton.update();
+    DickSButton.update();
+    J4SButton.update();
     GripperButton.update();
 
     // if somoeone codes this function in a more condensed way show me how so I can learn 'Malakhi Rivera & Drew
     // Fundaburg UwU'
 
-    if (XButton.fallingEdge()) {
-        estop();
-        if (digitalRead(DIR_SW) == 0) {
-            XMotor.driveOpenLoop(INT16_MAX * 0.5);
-        }
-        if (digitalRead(DIR_SW) == 1) {
-            XMotor.driveOpenLoop(INT16_MIN * 0.5);
-        }
-    }
-
-    if (XButton.risingEdge()) {
-        estop();
-    }
-
-    if (J2Button.fallingEdge()) {
-        estop();
-        if (digitalRead(DIR_SW) == 0) {
-            J2Motor.driveOpenLoop(INT16_MAX * 0.3);
-        }
-        if (digitalRead(DIR_SW) == 1) {
-            J2Motor.driveOpenLoop(INT16_MIN * 0.3);
-        }
-    }
-
-    if (J2Button.risingEdge()) {
-        estop();
-    }
-
-    if (J3Button.fallingEdge()) {
-        estop();
-        if (digitalRead(DIR_SW) == 0) {
-            J3Motor.driveOpenLoop(INT16_MAX * 0.5);
-        }
-        if (digitalRead(DIR_SW) == 1) {
-            J3Motor.driveOpenLoop(INT16_MIN * 0.5);
-        }
-    }
-
-    if (J3Button.risingEdge()) {
-        estop();
-    }
-
-    if (J4Button.fallingEdge()) {
-        estop();
-        if (digitalRead(DIR_SW) == 0) {
-            J4Motor.driveOpenLoop(INT16_MAX * 0.5);
-        }
-        if (digitalRead(DIR_SW) == 1) {
-            J4Motor.driveOpenLoop(INT16_MIN * 0.5);
-        }
-    }
-
-    if (J4Button.risingEdge()) {
-        estop();
-    }
-
-    if (J5Button.fallingEdge()) {
-        estop();
-        if (digitalRead(DIR_SW) == 0) {
-            J5Motor.driveOpenLoop(INT16_MAX * 0.5);
-        }
-        if (digitalRead(DIR_SW) == 1) {
-            J5Motor.driveOpenLoop(INT16_MIN * 0.5);
-        }
-    }
-
-    if (J5Button.risingEdge()) {
-        estop();
-    }
-
-    if (J6Button.fallingEdge()) {
-        estop();
-        if (digitalRead(DIR_SW) == 0) {
-            J6Motor.driveOpenLoop(INT16_MAX * 0.5);
-        }
-        if (digitalRead(DIR_SW) == 1) {
-            J6Motor.driveOpenLoop(INT16_MIN * 0.5);
-        }
-    }
-
-    if (J6Button.risingEdge()) {
-        estop();
-    }
+    handleJointButton(XMotor, XButton, 0.5);
+    handleJointButton(J2Motor, J2Button, 0.3);
+    handleJointButton(J3Motor, J3Button, 0.5);
+    handleJointButton(J4Motor, J4Button, 0.5);
+    handleJointButton(J5Motor, J5Button, 0.5);
+    handleJointButton(J6Motor, J6Button, 0.5);
 
     if (GripperButton.fallingEdge()) {
         estop();
@@ -651,7 +585,6 @@ void handleButtons() {
     }
      if (!LinearSButton.read()) {
         estop();
-        Serial.println(LinearServo.read());
         if (digitalRead(DIR_SW) == 0) {
             LinearServo.write(LinearServo.read()+2);
         }
@@ -661,9 +594,32 @@ void handleButtons() {
         delay(50);
     }
 
-    if (XButton.risingEdge()) {
+     if (!DickSButton.read()) {
+        Serial.println(CameraTwoTilt.read());
+        estop();
+        if (digitalRead(DIR_SW) == 0) {
+            CameraTwoTilt.write(CameraTwoTilt.read()+2);
+        }
+        if (digitalRead(DIR_SW) == 1) {
+            CameraTwoTilt.write(CameraTwoTilt.read()-2);
+        }
+        delay(50);
         estop();
     }
+
+    if (!J4SButton.read()) {
+        Serial.println(CameraOneTilt.read());
+        estop();
+        if (digitalRead(DIR_SW) == 0) {
+            CameraOneTilt.write(CameraOneTilt.read()+2);
+        }
+        if (digitalRead(DIR_SW) == 1) {
+            CameraOneTilt.write(CameraOneTilt.read()-2);
+        }
+        delay(50);
+    }
+
+    
 }
 
 void setControlMode(ControlMode newMode) {

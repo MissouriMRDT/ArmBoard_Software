@@ -41,7 +41,7 @@ constexpr auto J2_FWD_LIM_DEG = encToDeg(J2_FWD_LIM, J2_ZERO, J2_ENC_PER_DEG);
 
 constexpr auto J3_REV_LIM = 700;
 constexpr auto J3_ZERO = 1680;
-constexpr auto J3_FWD_LIM = 4300;
+constexpr auto J3_FWD_LIM = 4100;
 constexpr auto J3_ENC_PER_DEG = ((255 - (-752)) / 90.0);
 constexpr auto J3_ZERO_DEG = encToDeg(J3_REV_LIM, J3_ZERO, J3_ENC_PER_DEG);
 constexpr auto J3_REV_LIM_DEG = encToDeg(J3_REV_LIM, J3_ZERO, J3_ENC_PER_DEG);
