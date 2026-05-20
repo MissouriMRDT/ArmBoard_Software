@@ -83,6 +83,7 @@ void receiveCANMessages();
 uint64_t getButtonsPressed();
 void handleJointButton(Smoco& joint, Bounce& button, float speed);
 void handleButtons();
+void dynamicSoftLimits();
 
 void telemetry();
 uint32_t nextTelemetry;

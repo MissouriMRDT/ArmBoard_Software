@@ -41,6 +41,7 @@ void setup() {
     // CacheServo.attach(nullptr); NOT RIGHT NUMBER
 
     ACAN_T4_Settings settings{SMOCO_CAN_BAUD_RATE};
+    delay(1000);
     CAN_CHANNEL.begin(settings);
 
     // delay(1000); To let settings and serial connect before sending all initial smoco configs over CAN
@@ -116,6 +117,10 @@ void loop() {
         telemetry();
         nextTelemetry += TELEMETRY_PERIOD;
     }
+
+    dynamicSoftLimits();
+
+
 }
 
 void estop() {
@@ -283,7 +288,7 @@ void updateFromRoveComm() {
 
         // x data & (1 << 0)
         // j6 data & (1 << 1)
-        if (packet.u8data[0] & (1 << 0)) {
+        if (packet.u8data[0] & (1 << 0) && J2Motor.getAngle() < 0) {
             XMotor.calibrateAngle(INT16_MIN / 2, -7.06);
             uint32_t timeout = millis() + 10000;
             while (!XMotor.getCalibrated() && millis() < timeout) {
@@ -357,8 +362,9 @@ void setOpenLoopOverride(int16_t bitmask){
 // Drive joints with given powers
 void driveOpenLoop(int16_t XDuty, int16_t J2Duty, int16_t J3Duty, int16_t J4Duty, int16_t J5Duty, int16_t J6Duty) {
     setControlMode(ControlMode::OPEN_LOOP);
-    XMotor.driveOpenLoop(XDuty);
-    J2Motor.driveOpenLoop(J2Duty);
+
+   XMotor.driveOpenLoop(XDuty);
+   J2Motor.driveOpenLoop(J2Duty);
     J3Motor.driveOpenLoop(J3Duty);
     J4Motor.driveOpenLoop(J4Duty);
     J5Motor.driveOpenLoop(J5Duty);
@@ -368,7 +374,9 @@ void driveOpenLoop(int16_t XDuty, int16_t J2Duty, int16_t J3Duty, int16_t J4Duty
 // Drive joints to target angles
 void driveTargetAngles(float XAngle, float J2Angle, float J3Angle, float J4Angle, float J5Angle, float J6Angle) {
     setControlMode(ControlMode::CLOSED_LOOP);
-    XMotor.driveTargetAngle(XAngle, 0);
+
+
+   XMotor.driveTargetAngle(XAngle, 0);
     J2Motor.driveTargetAngle(J2Angle, 0);
     J3Motor.driveTargetAngle(J3Angle, 0);
     J4Motor.driveTargetAngle(J4Angle, 0);
@@ -495,6 +503,45 @@ void limitSwitchOverride(uint16_t bitmask) {
     J3Motor.setIgnoreLimit(bitmask & (1 << 4), bitmask & (1 << 5));
     J4Motor.setIgnoreLimit(bitmask & (1 << 6), bitmask & (1 << 7));
     J5Motor.setIgnoreLimit(bitmask & (1 << 8), bitmask & (1 << 9));
+}
+
+void dynamicSoftLimits(){
+
+    float GantryLeftPos = -5;
+    float GantryRightPos = 5;
+    float J2BadPos = 0;
+
+    // Prevent too many CAN updates
+    static int n = -1;
+    static int m = -1;
+
+    if (XMotor.getCalibrated()) {
+        return;
+    }
+
+    if ((J2Motor.getAngle() > J2BadPos)) {
+        if (n != 0) {
+            XMotor.setSoftLimitAngle(GantryLeftPos, GantryRightPos);
+        }
+        n = 0;
+    } else {
+        if (n != 1) {
+            XMotor.setSoftLimitPosition(X_REV_LIM, X_FWD_LIM);
+        }
+        n = 1;
+    }
+
+    if ((XMotor.getAngle() > GantryRightPos || XMotor.getAngle() < GantryLeftPos)) {
+        if (m != 0) {
+            J2Motor.setSoftLimitAngle(J2_REV_LIM_DEG, J2BadPos);
+        }
+        m = 0;
+    } else {
+        if (m != 1) {
+            J2Motor.setSoftLimitPosition(J2_REV_LIM, J2_FWD_LIM);
+        }
+        m = 1;
+    }
 }
 
 // Configure soft limits
