@@ -23,23 +23,23 @@ constexpr int32_t degToEnc(float deg, int32_t encZero, float encPerDeg) { return
 
 // Soft Limits
 constexpr auto X_ENC_PER_IN = ((8046 - -16257) / (17.27 - 3)); // 0 and -3856
-constexpr auto X_REV_LIM = INT16_MIN;
+constexpr auto X_REV_LIM = degToEnc(-7.06, 0, X_ENC_PER_IN);
 constexpr auto X_ZERO = 0;
 constexpr auto X_LIMIT_SWITCH = 11000;
-constexpr auto X_FWD_LIM = INT16_MAX;
+constexpr auto X_FWD_LIM = degToEnc(7.02, 0, X_ENC_PER_IN);
 constexpr auto X_ZERO_IN = encToDeg(X_REV_LIM, X_ZERO, X_ENC_PER_IN);
 constexpr auto X_REV_LIM_IN = encToDeg(X_REV_LIM, X_ZERO, X_ENC_PER_IN);
 constexpr auto X_FWD_LIM_IN = encToDeg(X_FWD_LIM, X_ZERO, X_ENC_PER_IN);
 
 constexpr auto J2_REV_LIM = 530;
 constexpr auto J2_ZERO = 1697;
-constexpr auto J2_FWD_LIM = 2220;
+constexpr auto J2_FWD_LIM = 2435;
 constexpr auto J2_ENC_PER_DEG = ((1697 - 734) / 90.0);
 constexpr auto J2_ZERO_DEG = encToDeg(J2_REV_LIM, J2_ZERO, J2_ENC_PER_DEG);
 constexpr auto J2_REV_LIM_DEG = encToDeg(J2_REV_LIM, J2_ZERO, J2_ENC_PER_DEG);
 constexpr auto J2_FWD_LIM_DEG = encToDeg(J2_FWD_LIM, J2_ZERO, J2_ENC_PER_DEG);
 
-constexpr auto J3_REV_LIM = 700;
+constexpr auto J3_REV_LIM = 818;
 constexpr auto J3_ZERO = 1680;
 constexpr auto J3_FWD_LIM = 4100;
 constexpr auto J3_ENC_PER_DEG = ((255 - (-752)) / 90.0);
@@ -47,9 +47,9 @@ constexpr auto J3_ZERO_DEG = encToDeg(J3_REV_LIM, J3_ZERO, J3_ENC_PER_DEG);
 constexpr auto J3_REV_LIM_DEG = encToDeg(J3_REV_LIM, J3_ZERO, J3_ENC_PER_DEG);
 constexpr auto J3_FWD_LIM_DEG = encToDeg(J3_FWD_LIM, J3_ZERO, J3_ENC_PER_DEG);
 
-constexpr auto J4_REV_LIM = -4000;
+constexpr auto J4_REV_LIM = -5943;
 constexpr auto J4_ZERO = 2165;
-constexpr auto J4_FWD_LIM = 4000;
+constexpr auto J4_FWD_LIM = 10273;
 constexpr auto J4_ENC_PER_DEG = ((2165 - 138) / 180.0);
 constexpr auto J4_ZERO_DEG = encToDeg(J4_REV_LIM, J4_ZERO, J4_ENC_PER_DEG);
 constexpr auto J4_REV_LIM_DEG = encToDeg(J4_REV_LIM, J4_ZERO, J4_ENC_PER_DEG);

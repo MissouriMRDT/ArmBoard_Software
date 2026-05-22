@@ -74,7 +74,7 @@ void setup() {
     GripperMotor.setDutyCycleRange(0, INT16_MAX, 0, INT16_MIN);
 
     // Set soft limits
-    XMotor.setSoftLimitPosition(X_REV_LIM, X_FWD_LIM);
+    XMotor.setSoftLimitPosition(INT32_MIN, INT32_MAX);
     J2Motor.setSoftLimitPosition(J2_REV_LIM, J2_FWD_LIM);
     J3Motor.setSoftLimitPosition(J3_REV_LIM, J3_FWD_LIM);
     J4Motor.setSoftLimitPosition(J4_REV_LIM, J4_FWD_LIM);
@@ -374,9 +374,7 @@ void driveOpenLoop(int16_t XDuty, int16_t J2Duty, int16_t J3Duty, int16_t J4Duty
 // Drive joints to target angles
 void driveTargetAngles(float XAngle, float J2Angle, float J3Angle, float J4Angle, float J5Angle, float J6Angle) {
     setControlMode(ControlMode::CLOSED_LOOP);
-
-
-   XMotor.driveTargetAngle(XAngle, 0);
+    XMotor.driveTargetAngle(XAngle, 0);
     J2Motor.driveTargetAngle(J2Angle, 0);
     J3Motor.driveTargetAngle(J3Angle, 0);
     J4Motor.driveTargetAngle(J4Angle, 0);
@@ -505,21 +503,27 @@ void limitSwitchOverride(uint16_t bitmask) {
     J5Motor.setIgnoreLimit(bitmask & (1 << 8), bitmask & (1 << 9));
 }
 
-void dynamicSoftLimits(){
+void dynamicSoftLimits() {
 
-    float GantryLeftPos = -5;
-    float GantryRightPos = 5;
-    float J2BadPos = 0;
+    const float GantryLeftPos = -3.5;
+    const float GantryRightPos = 3.5;
+    const float J2BadPos = 12;
 
     // Prevent too many CAN updates
     static int n = -1;
     static int m = -1;
+    static uint32_t nextExpiredTime = 0;
+    if (millis() > nextExpiredTime) {
+        n = -1;
+        m = -1;
+        nextExpiredTime = millis() + 1000;
+    }
 
-    if (XMotor.getCalibrated()) {
+    if (!XMotor.getCalibrated()) {
         return;
     }
 
-    if ((J2Motor.getAngle() > J2BadPos)) {
+    if ((J2Motor.getAngle() > J2BadPos+2)) {
         if (n != 0) {
             XMotor.setSoftLimitAngle(GantryLeftPos, GantryRightPos);
         }
@@ -531,7 +535,7 @@ void dynamicSoftLimits(){
         n = 1;
     }
 
-    if ((XMotor.getAngle() > GantryRightPos || XMotor.getAngle() < GantryLeftPos)) {
+    if ((XMotor.getAngle() > GantryRightPos+0.25 || XMotor.getAngle() < GantryLeftPos-0.25)) {
         if (m != 0) {
             J2Motor.setSoftLimitAngle(J2_REV_LIM_DEG, J2BadPos);
         }
