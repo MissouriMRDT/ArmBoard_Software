@@ -620,57 +620,25 @@ void handleButtons() {
     handleJointButton(J4Motor, J4Button, 0.5);
     handleJointButton(J5Motor, J5Button, 0.5);
     handleJointButton(J6Motor, J6Button, 0.5);
+    handleJointButton(GripperMotor, GripperButton, 0.2);
 
-    if (GripperButton.fallingEdge()) {
-        estop();
-        if (digitalRead(DIR_SW) == 0) {
-            GripperMotor.driveOpenLoop(INT16_MAX * 0.2);
-        }
-        if (digitalRead(DIR_SW) == 1) {
-            GripperMotor.driveOpenLoop(INT16_MIN * 0.2);
-        }
-    }
-
-    if (GripperButton.risingEdge()) {
-        estop();
-    }
      if (!LinearSButton.read()) {
         estop();
-        if (digitalRead(DIR_SW) == 0) {
-            LinearServo.write(LinearServo.read()+2);
-        }
-        if (digitalRead(DIR_SW) == 1) {
-            LinearServo.write(LinearServo.read()-2);
-        }
+        LinearServo.write(LinearServo.read() + digitalRead(DIR_SW) ? -2 : 2);
         delay(50);
     }
 
      if (!DickSButton.read()) {
-        Serial.println(CameraTwoTilt.read());
         estop();
-        if (digitalRead(DIR_SW) == 0) {
-            CameraTwoTilt.write(CameraTwoTilt.read()+2);
-        }
-        if (digitalRead(DIR_SW) == 1) {
-            CameraTwoTilt.write(CameraTwoTilt.read()-2);
-        }
+        CameraTwoTilt.write(CameraTwoTilt.read() + digitalRead(DIR_SW) ? -2 : 2);
         delay(50);
-        estop();
     }
 
     if (!J4SButton.read()) {
-        Serial.println(CameraOneTilt.read());
         estop();
-        if (digitalRead(DIR_SW) == 0) {
-            CameraOneTilt.write(CameraOneTilt.read()+2);
-        }
-        if (digitalRead(DIR_SW) == 1) {
-            CameraOneTilt.write(CameraOneTilt.read()-2);
-        }
+        CameraOneTilt.write(CameraOneTilt.read() + digitalRead(DIR_SW) ? -2 : 2);
         delay(50);
-    }
-
-    
+    }    
 }
 
 void setControlMode(ControlMode newMode) {
