@@ -13,6 +13,11 @@ constexpr auto FOREARM_LENGTH = FOREARM_ROLL_PARTIAL_LENGTH + FOREARM_PARTIAL_LE
 constexpr auto WRIST_LENGTH = 2.926;
 constexpr auto GRIPPER_LENGTH = 6.5; // ish
 
+
+const float X_LEFT_MAST_BOUND_IN = -3.5;
+const float X_RIGHT_MAST_BOUND_IN = 3.5;
+const float J2_MAST_BOUND_DEG = 12;
+
 struct JointPositions {
     float X, J2, J3, J4, J5, J6;
 };
@@ -25,7 +30,6 @@ constexpr int32_t degToEnc(float deg, int32_t encZero, float encPerDeg) { return
 constexpr auto X_ENC_PER_IN = ((8046 - -16257) / (17.27 - 3)); // 0 and -3856
 constexpr auto X_REV_LIM = degToEnc(-7.06, 0, X_ENC_PER_IN);
 constexpr auto X_ZERO = 0;
-constexpr auto X_LIMIT_SWITCH = 11000;
 constexpr auto X_FWD_LIM = degToEnc(7.02, 0, X_ENC_PER_IN);
 constexpr auto X_ZERO_IN = encToDeg(X_REV_LIM, X_ZERO, X_ENC_PER_IN);
 constexpr auto X_REV_LIM_IN = encToDeg(X_REV_LIM, X_ZERO, X_ENC_PER_IN);

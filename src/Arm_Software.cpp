@@ -170,6 +170,10 @@ void telemetry() {
                 J5Motor.getSoftLimitReverse());
     RoveComm.write(RC_ARMBOARD_SOFTLIMIT_DATA_ID, softLimitsTriggered);
 
+    if (ikJointErrors) {
+        // RoveComm.write(RC_ARMBOARD_IKSOFTLIMIT_DATA_ID, ikJointErrors);
+    }
+
     uint16_t pingData[7] = {(uint16_t)XMotor.getPingTime(),      (uint16_t)J2Motor.getPingTime(),
                             (uint16_t)J3Motor.getPingTime(),     (uint16_t)J4Motor.getPingTime(),
                             (uint16_t)J5Motor.getPingTime(),     (uint16_t)J6Motor.getPingTime(),
@@ -177,7 +181,10 @@ void telemetry() {
     RoveComm.write(RC_ARMBOARD_SMOCOPING_DATA_ID, RC_ARMBOARD_SMOCOPING_DATA_COUNT, pingData);
 }
 
-void setLaser(bool on) { digitalWrite(LASER, on ? HIGH : LOW); }
+void setLaser(bool on) {
+    laserOn = on;
+    digitalWrite(LASER, laserOn ? HIGH : LOW);
+}
 
 void feedWatchdog() {
     watchdogStatus = 0;
@@ -412,7 +419,8 @@ void incrementInverseKinematicsWrist(float x, float y, float z, float j4, float 
                                 // levelAngles.J5 + j4j5j6Target.y + j5,
                                 levelAngles.J6 + j4j5j6Target.z + j6};
 
-    if (!isPositionWithinLimits(newAngles)) return;
+    ikJointErrors = wouldViolateSoftLimits(newAngles);
+    if (ikJointErrors) return;
 
     gripperTarget = targetPose.getTranslation();
     gripperRotation = targetPose.getRotation();
@@ -470,7 +478,8 @@ void driveInverseKinematics(const TransfMatrix& targetPose) {
     setControlMode(ControlMode::IK_POSE);
     JointPositions angles = getJointPositions();
     if (!IK::CalculateInverseKinematics(targetPose, angles)) return;
-    if (!isPositionWithinLimits(angles)) return;
+    ikJointErrors = wouldViolateSoftLimits(angles);
+    if (ikJointErrors) return;
     gripperTarget = targetPose.getTranslation();
     gripperRotation = targetPose.getRotation();
     XMotor.driveTargetAngle(angles.X, 0);
@@ -505,10 +514,6 @@ void limitSwitchOverride(uint16_t bitmask) {
 
 void dynamicSoftLimits() {
 
-    const float GantryLeftPos = -3.5;
-    const float GantryRightPos = 3.5;
-    const float J2BadPos = 12;
-
     // Prevent too many CAN updates
     static int n = -1;
     static int m = -1;
@@ -523,9 +528,9 @@ void dynamicSoftLimits() {
         return;
     }
 
-    if ((J2Motor.getAngle() > J2BadPos+2)) {
+    if ((J2Motor.getAngle() > J2_MAST_BOUND_DEG+2)) {
         if (n != 0) {
-            XMotor.setSoftLimitAngle(GantryLeftPos, GantryRightPos);
+            XMotor.setSoftLimitAngle(X_LEFT_MAST_BOUND_IN, X_RIGHT_MAST_BOUND_IN);
         }
         n = 0;
     } else {
@@ -535,9 +540,9 @@ void dynamicSoftLimits() {
         n = 1;
     }
 
-    if ((XMotor.getAngle() > GantryRightPos+0.25 || XMotor.getAngle() < GantryLeftPos-0.25)) {
+    if ((XMotor.getAngle() > X_RIGHT_MAST_BOUND_IN+0.25 || XMotor.getAngle() < X_LEFT_MAST_BOUND_IN-0.25)) {
         if (m != 0) {
-            J2Motor.setSoftLimitAngle(J2_REV_LIM_DEG, J2BadPos);
+            J2Motor.setSoftLimitAngle(J2_REV_LIM_DEG, J2_MAST_BOUND_DEG);
         }
         m = 0;
     } else {
@@ -562,10 +567,10 @@ void softLimitOverride(uint16_t bitmask) {
                                  bitmask & (1 << 9) ? INT32_MAX : J5_REV_LIM);
 }
 
-bool isPositionWithinLimits(const JointPositions& angles) {
-    return XMotor.isAngleWithinLimits(angles.X) && J2Motor.isAngleWithinLimits(angles.J2) &&
-           J3Motor.isAngleWithinLimits(angles.J3) && J4Motor.isAngleWithinLimits(angles.J4) &&
-           J5Motor.isAngleWithinLimits(angles.J5) && J6Motor.isAngleWithinLimits(angles.J6);
+uint8_t wouldViolateSoftLimits(const JointPositions& angles) {
+    return bitmask(!XMotor.isAngleWithinLimits(angles.X), !J2Motor.isAngleWithinLimits(angles.J2),
+                   !J3Motor.isAngleWithinLimits(angles.J3), !J4Motor.isAngleWithinLimits(angles.J4),
+                   !J5Motor.isAngleWithinLimits(angles.J5), !J6Motor.isAngleWithinLimits(angles.J6));
 }
 
 JointPositions getJointPositions() {
@@ -611,9 +616,6 @@ void handleButtons() {
     J4SButton.update();
     GripperButton.update();
 
-    // if somoeone codes this function in a more condensed way show me how so I can learn 'Malakhi Rivera & Drew
-    // Fundaburg UwU'
-
     handleJointButton(XMotor, XButton, 0.5);
     handleJointButton(J2Motor, J2Button, 0.3);
     handleJointButton(J3Motor, J3Button, 0.5);
@@ -624,21 +626,27 @@ void handleButtons() {
 
      if (!LinearSButton.read()) {
         estop();
-        LinearServo.write(LinearServo.read() + digitalRead(DIR_SW) ? -2 : 2);
+        LinearServo.write(LinearServo.read() + (digitalRead(DIR_SW) ? -2 : 2));
         delay(50);
     }
 
      if (!DickSButton.read()) {
         estop();
-        CameraTwoTilt.write(CameraTwoTilt.read() + digitalRead(DIR_SW) ? -2 : 2);
+        CameraTwoTilt.write(CameraTwoTilt.read() + (digitalRead(DIR_SW) ? -2 : 2));
         delay(50);
     }
 
     if (!J4SButton.read()) {
         estop();
-        CameraOneTilt.write(CameraOneTilt.read() + digitalRead(DIR_SW) ? -2 : 2);
+        CameraOneTilt.write(CameraOneTilt.read() + (digitalRead(DIR_SW) ? -2 : 2));
         delay(50);
-    }    
+    }
+
+    if (!digitalRead(BTN_LASER)) {
+        digitalWrite(LASER, HIGH);
+    } else {
+        digitalWrite(LASER, laserOn);
+    }
 }
 
 void setControlMode(ControlMode newMode) {

@@ -109,6 +109,10 @@ Vector j4j5j6Target = {0};
 TransfMatrix gripperRotation = Rotation(0, M_PI, 0);
 float snappingThreshold = 0.15; // set to 0 to disable
 
+// As output by wouldViolateSoftLimits()
+#define RC_ARMBOARD_IKSOFTLIMIT_DATA_ID 8200
+uint8_t ikJointErrors = 0; 
+
 // Drive joints with given powers
 void driveOpenLoop(int16_t XDuty, int16_t J2Duty, int16_t J3Duty, int16_t J4Duty, int16_t J5Duty, int16_t J6Duty);
 // Drive joints to target angles
@@ -134,6 +138,6 @@ void softLimitOverride(uint16_t bitmask);
 
 JointPositions getJointPositions();
 Vector getGripperCoordinates();
-bool isPositionWithinLimits(const JointPositions& angles);
+uint8_t wouldViolateSoftLimits(const JointPositions& angles);
 
 #endif /*ARMBOARD_SOFTWARE_2026_H*/
