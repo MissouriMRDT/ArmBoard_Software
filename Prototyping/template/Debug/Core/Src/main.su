@@ -1,0 +1,16 @@
+../Core/Src/main.c:113:5:main	104	static
+../Core/Src/main.c:264:6:SystemClock_Config	120	static
+../Core/Src/main.c:316:13:MX_FDCAN1_Init	8	static
+../Core/Src/main.c:359:13:MX_I2C1_Init	8	static
+../Core/Src/main.c:407:13:MX_ICACHE_Init	8	static
+../Core/Src/main.c:439:13:MX_TIM3_Init	72	static
+../Core/Src/main.c:513:13:MX_TIM4_Init	64	static
+../Core/Src/main.c:572:13:MX_TIM5_Init	56	static
+../Core/Src/main.c:626:13:MX_GPIO_Init	40	static
+../Core/Src/main.c:663:6:HAL_FDCAN_RxFifo0Callback	16	static
+../Core/Src/main.c:691:7:uint_to_float	32	static
+../Core/Src/main.c:699:5:float_to_uint	32	static
+../Core/Src/main.c:707:6:HAL_TIM_IC_CaptureCallback	32	static
+../Core/Src/main.c:734:6:CAN_Drive_Motor_Velocity_Mode	32	static
+../Core/Src/main.c:759:6:MPU_Config	32	static
+../Core/Src/main.c:795:6:Error_Handler	4	static,ignoring_inline_asm
