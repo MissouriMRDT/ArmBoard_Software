@@ -21,7 +21,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <stdio.h>
+#include <stdlib.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -42,6 +43,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 FDCAN_HandleTypeDef hfdcan1;
+FDCAN_HandleTypeDef hfdcan2;
 
 /* USER CODE BEGIN PV */
 
@@ -49,10 +51,12 @@ FDCAN_HandleTypeDef hfdcan1;
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
+void PeriphCommonClock_Config(void);
 static void MPU_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_FDCAN1_Init(void);
 static void MX_ICACHE_Init(void);
+static void MX_FDCAN2_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -88,6 +92,9 @@ int main(void)
   /* Configure the system clock */
   SystemClock_Config();
 
+  /* Configure the peripherals common clocks */
+  PeriphCommonClock_Config();
+
   /* USER CODE BEGIN SysInit */
 
   /* USER CODE END SysInit */
@@ -96,6 +103,7 @@ int main(void)
   MX_GPIO_Init();
   MX_FDCAN1_Init();
   MX_ICACHE_Init();
+  MX_FDCAN2_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -105,7 +113,132 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-
+	  if (1 == 1) //(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_2) == 1)if in joint mode
+	  {
+		  if (HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_6) == 0)//if button 1 pressed
+		  {
+			  HAL_GPIO_WritePin(GPIOC,GPIO_PIN_0,1);
+			  //move moto
+		  }
+		  else
+		  {
+			  HAL_GPIO_WritePin(GPIOC,GPIO_PIN_0,0);
+			  // no move motor
+		  }
+		  if (HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_8) == 0)//if button 2 pressed
+		  		  {
+		  			  HAL_GPIO_WritePin(GPIOC,GPIO_PIN_0,1);
+		  			  //move moto
+		  		  }
+		  		  else
+		  		  {
+		  			  HAL_GPIO_WritePin(GPIOC,GPIO_PIN_0,0);
+		  			  // no move motor
+		  		  }
+		  if (HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_9) == 0)//if button 3 pressed
+		  		  {
+		  			  HAL_GPIO_WritePin(GPIOC,GPIO_PIN_0,1);
+		  			  //move moto
+		  		  }
+		  		  else
+		  		  {
+		  			  HAL_GPIO_WritePin(GPIOC,GPIO_PIN_0,0);
+		  			  // no move motor
+		  		  }
+		  if (HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_8) == 0)//if button 4 pressed
+		  		  {
+		  			  HAL_GPIO_WritePin(GPIOC,GPIO_PIN_0,1);
+		  			  //move moto
+		  		  }
+		  		  else
+		  		  {
+		  			  HAL_GPIO_WritePin(GPIOC,GPIO_PIN_0,0);
+		  			  // no move motor
+		  		  }
+		  if (HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_9) == 0)//if button 5 pressed
+		  		  {
+		  			  HAL_GPIO_WritePin(GPIOC,GPIO_PIN_0,1);
+		  			  //move moto
+		  		  }
+		  		  else
+		  		  {
+		  			  HAL_GPIO_WritePin(GPIOC,GPIO_PIN_0,0);
+		  			  // no move motor
+		  		  }
+		  if (HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_10) == 0)//if button 1 pressed
+		  		  {
+		  			  HAL_GPIO_WritePin(GPIOC,GPIO_PIN_0,1);
+		  			  //move moto
+		  		  }
+		  		  else
+		  		  {
+		  			  HAL_GPIO_WritePin(GPIOC,GPIO_PIN_0,0);
+		  			  // no move motor
+		  		  }
+	  }
+	  else// in servo mode
+	  {
+		  if (HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_6) == 0)//if button 1 pressed
+		 		  {
+		 			  HAL_GPIO_WritePin(GPIOC,GPIO_PIN_0,1);
+		 			  //move moto
+		 		  }
+		 		  else
+		 		  {
+		 			  HAL_GPIO_WritePin(GPIOC,GPIO_PIN_0,0);
+		 			  // no move motor
+		 		  }
+		 		  if (HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_8) == 0)//if button 2 pressed
+		 		  		  {
+		 		  			  HAL_GPIO_WritePin(GPIOC,GPIO_PIN_0,1);
+		 		  			  //move moto
+		 		  		  }
+		 		  		  else
+		 		  		  {
+		 		  			  HAL_GPIO_WritePin(GPIOC,GPIO_PIN_0,0);
+		 		  			  // no move motor
+		 		  		  }
+		 		  if (HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_9) == 0)//if button 3 pressed
+		 		  		  {
+		 		  			  HAL_GPIO_WritePin(GPIOC,GPIO_PIN_0,1);
+		 		  			  //move moto
+		 		  		  }
+		 		  		  else
+		 		  		  {
+		 		  			  HAL_GPIO_WritePin(GPIOC,GPIO_PIN_0,0);
+		 		  			  // no move motor
+		 		  		  }
+		 		  if (HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_8) == 0)//if button 4 pressed
+		 		  		  {
+		 		  			  HAL_GPIO_WritePin(GPIOC,GPIO_PIN_0,1);
+		 		  			  //move moto
+		 		  		  }
+		 		  		  else
+		 		  		  {
+		 		  			  HAL_GPIO_WritePin(GPIOC,GPIO_PIN_0,0);
+		 		  			  // no move motor
+		 		  		  }
+		 		  if (HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_9) == 0)//if button 5 pressed
+		 		  		  {
+		 		  			  HAL_GPIO_WritePin(GPIOC,GPIO_PIN_0,1);
+		 		  			  //move moto
+		 		  		  }
+		 		  		  else
+		 		  		  {
+		 		  			  HAL_GPIO_WritePin(GPIOC,GPIO_PIN_0,0);
+		 		  			  // no move motor
+		 		  		  }
+		 		  if (HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_10) == 0)//if button 1 pressed
+		 		  		  {
+		 		  			  HAL_GPIO_WritePin(GPIOC,GPIO_PIN_0,1);
+		 		  			  //move moto
+		 		  		  }
+		 		  		  else
+		 		  		  {
+		 		  			  HAL_GPIO_WritePin(GPIOC,GPIO_PIN_0,0);
+		 		  			  // no move motor
+		 		  		  }
+	  }
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -163,6 +296,34 @@ void SystemClock_Config(void)
 }
 
 /**
+  * @brief Peripherals Common Clock Configuration
+  * @retval None
+  */
+void PeriphCommonClock_Config(void)
+{
+  RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {0};
+
+  /** Initializes the peripherals clock
+  */
+  PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_FDCAN;
+  PeriphClkInitStruct.PLL2.PLL2Source = RCC_PLL2_SOURCE_CSI;
+  PeriphClkInitStruct.PLL2.PLL2M = 1;
+  PeriphClkInitStruct.PLL2.PLL2N = 32;
+  PeriphClkInitStruct.PLL2.PLL2P = 2;
+  PeriphClkInitStruct.PLL2.PLL2Q = 4;
+  PeriphClkInitStruct.PLL2.PLL2R = 2;
+  PeriphClkInitStruct.PLL2.PLL2RGE = RCC_PLL2_VCIRANGE_2;
+  PeriphClkInitStruct.PLL2.PLL2VCOSEL = RCC_PLL2_VCORANGE_WIDE;
+  PeriphClkInitStruct.PLL2.PLL2FRACN = 0;
+  PeriphClkInitStruct.PLL2.PLL2ClockOut = RCC_PLL2_DIVQ;
+  PeriphClkInitStruct.FdcanClockSelection = RCC_FDCANCLKSOURCE_PLL2Q;
+  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
+  {
+    Error_Handler();
+  }
+}
+
+/**
   * @brief FDCAN1 Initialization Function
   * @param None
   * @retval None
@@ -202,6 +363,49 @@ static void MX_FDCAN1_Init(void)
   /* USER CODE BEGIN FDCAN1_Init 2 */
 
   /* USER CODE END FDCAN1_Init 2 */
+
+}
+
+/**
+  * @brief FDCAN2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_FDCAN2_Init(void)
+{
+
+  /* USER CODE BEGIN FDCAN2_Init 0 */
+
+  /* USER CODE END FDCAN2_Init 0 */
+
+  /* USER CODE BEGIN FDCAN2_Init 1 */
+
+  /* USER CODE END FDCAN2_Init 1 */
+  hfdcan2.Instance = FDCAN2;
+  hfdcan2.Init.ClockDivider = FDCAN_CLOCK_DIV1;
+  hfdcan2.Init.FrameFormat = FDCAN_FRAME_CLASSIC;
+  hfdcan2.Init.Mode = FDCAN_MODE_NORMAL;
+  hfdcan2.Init.AutoRetransmission = DISABLE;
+  hfdcan2.Init.TransmitPause = DISABLE;
+  hfdcan2.Init.ProtocolException = DISABLE;
+  hfdcan2.Init.NominalPrescaler = 16;
+  hfdcan2.Init.NominalSyncJumpWidth = 1;
+  hfdcan2.Init.NominalTimeSeg1 = 1;
+  hfdcan2.Init.NominalTimeSeg2 = 1;
+  hfdcan2.Init.DataPrescaler = 1;
+  hfdcan2.Init.DataSyncJumpWidth = 1;
+  hfdcan2.Init.DataTimeSeg1 = 1;
+  hfdcan2.Init.DataTimeSeg2 = 1;
+  hfdcan2.Init.StdFiltersNbr = 0;
+  hfdcan2.Init.ExtFiltersNbr = 0;
+  hfdcan2.Init.TxFifoQueueMode = FDCAN_TX_FIFO_OPERATION;
+  if (HAL_FDCAN_Init(&hfdcan2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN FDCAN2_Init 2 */
+
+  /* USER CODE END FDCAN2_Init 2 */
 
 }
 
@@ -255,14 +459,50 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(HEARTBEAT_GPIO_Port, HEARTBEAT_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, HEARTBEAT_Pin|GPIO_PIN_11, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin : HEARTBEAT_Pin */
-  GPIO_InitStruct.Pin = HEARTBEAT_Pin;
+  /*Configure GPIO pins : HEARTBEAT_Pin PC11 */
+  GPIO_InitStruct.Pin = HEARTBEAT_Pin|GPIO_PIN_11;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(HEARTBEAT_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : PA0 PA6 */
+  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_6;
+  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : PB0 PB1 */
+  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1;
+  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : PB2 PB10 */
+  GPIO_InitStruct.Pin = GPIO_PIN_2|GPIO_PIN_10;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : PC6 PC8 PC9 */
+  GPIO_InitStruct.Pin = GPIO_PIN_6|GPIO_PIN_8|GPIO_PIN_9;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PC7 */
+  GPIO_InitStruct.Pin = GPIO_PIN_7;
+  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : PA8 PA9 PA10 */
+  GPIO_InitStruct.Pin = GPIO_PIN_8|GPIO_PIN_9|GPIO_PIN_10;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 
